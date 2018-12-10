@@ -121,11 +121,14 @@ type testGraph struct {
 
 // testNode represents a node within the test graph above. We skip certain
 // information such as the node's IP address as that information isn't needed
-// for our tests.
+// for our tests. Private keys are optional. If set, they should be consistent
+// with the public key. The private key is used to sign error messages
+// sent from the node.
 type testNode struct {
-	Source bool   `json:"source"`
-	PubKey string `json:"pubkey"`
-	Alias  string `json:"alias"`
+	Source  bool   `json:"source"`
+	PubKey  string `json:"pubkey"`
+	PrivKey string `json:"privkey"`
+	Alias   string `json:"alias"`
 }
 
 // testChan represents the JSON version of a payment channel. This struct
@@ -203,6 +206,7 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 	}
 
 	aliasMap := make(map[string]route.Vertex)
+	privKeyMap := make(map[string]*secp256k1.PrivateKey)
 	var source *channeldb.LightningNode
 
 	// First we insert all the nodes within the graph as vertexes.
@@ -233,6 +237,34 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 		// for easy lookup.
 		aliasMap[node.Alias] = dbNode.PubKeyBytes
 
+		// private keys are needed for signing error messages. If set
+		// check the consistency with the public key.
+		privBytes, err := hex.DecodeString(node.PrivKey)
+		if err != nil {
+			return nil, err
+		}
+		if len(privBytes) > 0 {
+			key := secp256k1.PrivKeyFromBytes(
+				privBytes,
+			)
+			derivedPub := key.PubKey()
+
+			if !bytes.Equal(
+				pubBytes, derivedPub.SerializeCompressed(),
+			) {
+
+				return nil, fmt.Errorf("%s public key and "+
+					"private key are inconsistent\n"+
+					"got  %x\nwant %x\n",
+					node.Alias,
+					derivedPub.SerializeCompressed(),
+					pubBytes,
+				)
+			}
+
+			privKeyMap[node.Alias] = key
+		}
+
 		// If the node is tagged as the source, then we create a
 		// pointer to is so we can mark the source in the graph
 		// properly.
@@ -243,7 +275,8 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 			// node can be the source in the graph.
 			if source != nil {
 				return nil, errors.New("JSON is invalid " +
-					"multiple nodes are tagged as the source")
+					"multiple nodes are tagged as the " +
+					"source")
 			}
 
 			source = dbNode
@@ -330,9 +363,10 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 	}
 
 	return &testGraphInstance{
-		graph:    graph,
-		cleanUp:  cleanUp,
-		aliasMap: aliasMap,
+		graph:      graph,
+		cleanUp:    cleanUp,
+		aliasMap:   aliasMap,
+		privKeyMap: privKeyMap,
 	}, nil
 }
 
