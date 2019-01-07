@@ -65,6 +65,8 @@ const (
 	defaultMaxLogFileSize                = 10
 	defaultMinBackoff                    = time.Second
 	defaultMaxBackoff                    = time.Hour
+	defaultLetsEncryptDirname            = "letsencrypt"
+	defaultLetsEncryptPort               = 80
 
 	defaultTorSOCKSPort            = 9050
 	defaultTorDNSHost              = "soa.nodes.lightning.directory"
@@ -128,8 +130,9 @@ var (
 
 	defaultTowerDir = filepath.Join(defaultDataDir, defaultTowerSubDirname)
 
-	defaultTLSCertPath = filepath.Join(DefaultLndDir, defaultTLSCertFilename)
-	defaultTLSKeyPath  = filepath.Join(DefaultLndDir, defaultTLSKeyFilename)
+	defaultTLSCertPath    = filepath.Join(DefaultLndDir, defaultTLSCertFilename)
+	defaultTLSKeyPath     = filepath.Join(DefaultLndDir, defaultTLSKeyFilename)
+	defaultLetsEncryptDir = filepath.Join(DefaultLndDir, defaultLetsEncryptDirname)
 
 	defaultDcrdDir         = dcrutil.AppDataDir("dcrd", false)
 	defaultDcrdRPCCertFile = filepath.Join(defaultDcrdDir, "rpc.cert")
@@ -173,6 +176,10 @@ type Config struct {
 	PipeTx            *uint `long:"pipetx" description:"File descriptor or handle of write end pipe to enable child -> parent process communication"`
 	PipeRx            *uint `long:"piperx" description:"File descriptor or handle of read end pipe to enable parent -> child process communication"`
 	RPCListenerEvents bool  `long:"rpclistenerevents" description:"Notify JSON-RPC and gRPC listener addresses over the TX pipe"`
+
+	LetsEncryptDir    string `long:"letsencryptdir" description:"The directory to store Let's Encrypt certificates within"`
+	LetsEncryptPort   int    `long:"letsencryptport" description:"The port on which lnd will listen for Let's Encrypt challenges. Let's Encrypt will always try to contact on port 80. Often non-root processes are not allowed to bind to ports lower than 1024. This configuration option allows a different port to be used, but must be used in combination with port forwarding from port 80."`
+	LetsEncryptDomain string `long:"letsencryptdomain" description:"Request a Let's Encrypt certificate for this domain. Note that the certicate is only requested and stored when the first rpc connection comes in."`
 
 	// We'll parse these 'raw' string arguments into real net.Addrs in the
 	// loadConfig function. We need to expose the 'raw' strings so the
@@ -323,6 +330,8 @@ func DefaultConfig() Config {
 		DebugLevel:      defaultLogLevel,
 		TLSCertPath:     defaultTLSCertPath,
 		TLSKeyPath:      defaultTLSKeyPath,
+		LetsEncryptDir:  defaultLetsEncryptDir,
+		LetsEncryptPort: defaultLetsEncryptPort,
 		LogDir:          defaultLogDir,
 		MaxLogFiles:     defaultMaxLogFiles,
 		MaxLogFileSize:  defaultMaxLogFileSize,
@@ -507,6 +516,9 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	lndDir := CleanAndExpandPath(cfg.LndDir)
 	if lndDir != DefaultLndDir {
 		cfg.DataDir = filepath.Join(lndDir, defaultDataDirname)
+		cfg.LetsEncryptDir = filepath.Join(
+			lndDir, defaultLetsEncryptDirname,
+		)
 		cfg.TLSCertPath = filepath.Join(lndDir, defaultTLSCertFilename)
 		cfg.TLSKeyPath = filepath.Join(lndDir, defaultTLSKeyFilename)
 		cfg.LogDir = filepath.Join(lndDir, defaultLogDirname)
@@ -545,6 +557,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	cfg.DataDir = CleanAndExpandPath(cfg.DataDir)
 	cfg.TLSCertPath = CleanAndExpandPath(cfg.TLSCertPath)
 	cfg.TLSKeyPath = CleanAndExpandPath(cfg.TLSKeyPath)
+	cfg.LetsEncryptDir = CleanAndExpandPath(cfg.LetsEncryptDir)
 	cfg.AdminMacPath = CleanAndExpandPath(cfg.AdminMacPath)
 	cfg.ReadMacPath = CleanAndExpandPath(cfg.ReadMacPath)
 	cfg.InvoiceMacPath = CleanAndExpandPath(cfg.InvoiceMacPath)
