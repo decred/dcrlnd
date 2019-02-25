@@ -1,10 +1,10 @@
 # Installation
 
 ### Preliminaries
-  In order to work with [`lnd`](https://github.com/lightningnetwork/lnd), the
+  In order to work with [`dcrlnd`](https://github.com/decred/dcrlnd), the
   following build dependencies are required:
   
-  * **Go:** `lnd` is written in Go. To install, run one of the following commands:
+  * **Go:** `dcrlnd` is written in Go. To install, run one of the following commands:
 
   
     **Note**: The minimum version of Go supported is Go 1.8.
@@ -48,64 +48,64 @@
 
 ### Installing lnd
 
-With the preliminary steps completed, to install `lnd`, `lncli`, and all
+With the preliminary steps completed, to install `dcrlnd`, `dcrlncli`, and all
 related dependencies run the following commands:
 ```
-git clone https://github.com/lightningnetwork/lnd $GOPATH/src/github.com/lightningnetwork/lnd
-cd $GOPATH/src/github.com/lightningnetwork/lnd
+git clone https://github.com/decred/dcrlnd $GOPATH/src/github.com/decred
+cd $GOPATH/src/github.com/decred/dcrlnd
 glide install
 go install . ./cmd/...
 ```
 
 **Updating**
 
-To update your version of `lnd` to the latest version run the following 
+To update your version of `dcrlnd` to the latest version run the following 
 commands:
 ```
-cd $GOPATH/src/github.com/lightningnetwork/lnd
+cd $GOPATH/src/github.com/decred/dcrlnd
 git pull && glide install
 go install . ./cmd/...
 ```
 
 **Tests**
 
-To check that `lnd` was installed properly run the following command:
+To check that `dcrlnd` was installed properly run the following command:
 ```
 go install; go test -v -p 1 $(go list ./... | grep -v  '/vendor/')
 ```
 
-### Installing btcd
+### Installing dcrd
 
-`lnd` currently requires `btcd` with segwit support, which is not yet merged
-into the master branch. Instead, [roasbeef](https://github.com/roasbeef/btcd)
+`dcrlnd` currently requires `dcrd` with segwit support, which is not yet merged
+into the master branch. Instead, [dcrd](https://github.com/decred/dcrd)
 maintains a fork with his segwit implementation applied. To install, run the
 following commands:
 
-Install **btcd**: (must be from roasbeef fork, not from btcsuite)
+Install **dcrd**: (must be from roasbeef fork, not from btcsuite)
 ```
-git clone https://github.com/roasbeef/btcd $GOPATH/src/github.com/roasbeef/btcd
-cd $GOPATH/src/github.com/roasbeef/btcd
+git clone https://github.com/decred/dcrd $GOPATH/src/github.com/decred/dcrd
+cd $GOPATH/src/github.com/decred/dcrd
 glide install
 go install . ./cmd/...
 ```
 
-### Starting btcd
+### Starting dcrd
 
-Running the following command will create `rpc.cert` and default `btcd.conf`.
+Running the following command will create `rpc.cert` and default `dcrd.conf`.
 
 ```
-btcd --testnet --txindex --rpcuser=kek --rpcpass=kek
+dcrd --testnet --txindex --rpcuser=kek --rpcpass=kek
 ```
-If you want to use `lnd` on testnet, `btcd` needs to first fully sync the
+If you want to use `dcrlnd` on testnet, `dcrd` needs to first fully sync the
 testnet blockchain. Depending on your hardware, this may take up to a few
 hours.
 
 (NOTE: It may take several minutes to find segwit-enabled peers.)
 
-While `btcd` is syncing you can check on its progress using btcd's `getinfo`
+While `dcrd` is syncing you can check on its progress using btcd's `getinfo`
 RPC command:
 ```
-btcctl --testnet --rpcuser=kek --rpcpass=kek getinfo
+dcrctl --testnet --rpcuser=kek --rpcpass=kek getinfo
 {
   "version": 120000,
   "protocolversion": 70002,
@@ -123,58 +123,58 @@ btcctl --testnet --rpcuser=kek --rpcpass=kek getinfo
 Additionally, you can monitor btcd's logs to track its syncing progress in real
 time. 
 
-You can test your `btcd` node's connectivity using the `getpeerinfo` command:
+You can test your `dcrd` node's connectivity using the `getpeerinfo` command:
 ```
-btcctl --testnet --rpcuser=kek --rpcpass=kek getpeerinfo | more
+dcrctl --testnet --rpcuser=kek --rpcpass=kek getpeerinfo | more
 ```
 
-### lnd
+### dcrlnd
 
 #### Simnet vs. Testnet Development
 
 If you are doing local development, such as for the tutorial, you'll want to
-start both `btcd` and `lnd` in the `simnet` mode. Simnet is similar to regtest
-in that you'll be able to instantly mine blocks as needed to test `lnd`
+start both `dcrd` and `dcrlnd` in the `simnet` mode. Simnet is similar to regtest
+in that you'll be able to instantly mine blocks as needed to test `dcrlnd`
 locally. In order to start either daemon in the `simnet` mode use `simnet`
 instead of `testnet`, adding the `--bitcoin.simnet` flag instead of the
 `--bitcoin.testnet` flag.
 
-Another relevant command line flag for local testing of new `lnd` developments
-is the `--debughtlc` flag. When starting `lnd` with this flag, it'll be able to
+Another relevant command line flag for local testing of new `dcrlnd` developments
+is the `--debughtlc` flag. When starting `dcrlnd` with this flag, it'll be able to
 automatically settle a special type of HTLC sent to it. This means that you
 won't need to manually insert invoices in order to test payment connectivity.
 To send this "special" HTLC type, include the `--debugsend` command at the end
 of your `sendpayment` commands.
 
 
-There are currently two primary ways to run `lnd`, one requires a local `btcd`
+There are currently two primary ways to run `dcrlnd`, one requires a local `dcrd`
 instance with the RPC service exposed, and the other uses a fully integrate
 light client powered by [neutrino](https://github.com/lightninglabs/neutrino).
 
 #### Running lnd in light client mode
 
-In order to run `lnd` in its light client mode, you'll need to locate a
+In order to run `dcrlnd` in its light client mode, you'll need to locate a
 full-node which is capable of serving this new light client mode. A [BIP
 draft](https://github.com/Roasbeef/bips/blob/master/gcs_light_client.mediawiki)
 exists, and will be finalized in the near future, but for now you'll need to be
 running `roasbeef`'s fork of btcd. A public instance of such a node can be
 found at `faucet.lightning.community`.
 
-To run lnd in neutrino mode, run `lnd` with the following arguments, (swapping
+To run lnd in neutrino mode, run `dcrlnd` with the following arguments, (swapping
 in `--bitcoin.simnet` for `simnet` mode if needed), and also your own `btcd`
 node if available:
 ```
-lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.connect=faucet.lightning.community
+dcrlnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.connect=faucet.lightning.community
 ```
 
 #### Running lnd using the btcd backend
 
-If you are on testnet, run this command after `btcd` has finished syncing.
+If you are on testnet, run this command after `dcrd` has finished syncing.
 Otherwise, replace `--bitcoin.testnet` with `--bitcoin.simnet`. If you are
 installing `lnd` in preparation for the
 [tutorial](http://dev.lightning.community/tutorial), you may skip this step.
 ```
-lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --btcd.rpcuser=kek --btcd.rpcpass=kek --externalip=X.X.X.X
+dcrlnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --btcd.rpcuser=kek --btcd.rpcpass=kek --externalip=X.X.X.X
 ```
 
 #### Running lnd using the bitcoind backend
