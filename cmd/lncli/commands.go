@@ -229,7 +229,7 @@ func sendCoins(ctx *cli.Context) error {
 
 var sendManyCommand = cli.Command{
 	Name:      "sendmany",
-	Usage:     "send bitcoin on-chain to multiple addresses.",
+	Usage:     "send dcr on-chain to multiple addresses.",
 	ArgsUsage: "send-json-string [--conf_target=N] [--sat_per_byte=P]",
 	Description: `
 	Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
