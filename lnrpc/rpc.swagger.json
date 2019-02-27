@@ -17,11 +17,11 @@
   "paths": {
     "/v1/balance/blockchain": {
       "get": {
-        "summary": "* lncli: `walletbalance`\nWalletBalance returns total unspent outputs(confirmed and unconfirmed), all confirmed unspent outputs and all unconfirmed unspent outputs under control\nby the wallet. This method can be modified by having the request specify\nonly witness outputs should be factored into the final output sum.",
+        "summary": "* dcrlncli: `walletbalance`\nWalletBalance returns total unspent outputs(confirmed and unconfirmed), all confirmed unspent outputs and all unconfirmed unspent outputs under control\nby the wallet. This method can be modified by having the request specify\nonly witness outputs should be factored into the final output sum.",
         "operationId": "WalletBalance",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcWalletBalanceResponse"
             }
@@ -44,11 +44,11 @@
     },
     "/v1/balance/channels": {
       "get": {
-        "summary": "* lncli: `channelbalance`\nChannelBalance returns the total funds available across all open channels\nin satoshis.",
+        "summary": "* dcrlncli: `channelbalance`\nChannelBalance returns the total funds available across all open channels\nin satoshis.",
         "operationId": "ChannelBalance",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcChannelBalanceResponse"
             }
@@ -61,11 +61,11 @@
     },
     "/v1/channels": {
       "get": {
-        "summary": "* lncli: `listchannels`\nListChannels returns a description of all the open channels that this node\nis a participant in.",
+        "summary": "* dcrlncli: `listchannels`\nListChannels returns a description of all the open channels that this node\nis a participant in.",
         "operationId": "ListChannels",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcListChannelsResponse"
             }
@@ -80,7 +80,7 @@
         "operationId": "OpenChannelSync",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcChannelPoint"
             }
@@ -103,11 +103,11 @@
     },
     "/v1/channels/pending": {
       "get": {
-        "summary": "* lncli: `pendingchannels`\nPendingChannels returns a list of all the channels that are currently\nconsidered \"pending\". A channel is pending if it has finished the funding\nworkflow and is waiting for confirmations for the funding txn, or is in the\nprocess of closure, either initiated cooperatively or non-cooperatively.",
+        "summary": "* dcrlncli: `pendingchannels`\nPendingChannels returns a list of all the channels that are currently\nconsidered \"pending\". A channel is pending if it has finished the funding\nworkflow and is waiting for confirmations for the funding txn, or is in the\nprocess of closure, either initiated cooperatively or non-cooperatively.",
         "operationId": "PendingChannels",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcPendingChannelsResponse"
             }
@@ -124,7 +124,7 @@
         "operationId": "SendPaymentSync",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcSendResponse"
             }
@@ -147,19 +147,20 @@
     },
     "/v1/channels/{channel_point.funding_txid}/{channel_point.output_index}": {
       "delete": {
-        "summary": "* lncli: `closechannel`\nCloseChannel attempts to close an active channel identified by its channel\noutpoint (ChannelPoint). The actions of this method can additionally be\naugmented to attempt a force close after a timeout period in the case of an\ninactive peer. If a non-force close (cooperative closure) is requested,\nthen the user can specify either a target number of blocks until the\nclosure transaction is confirmed, or a manual fee rate. If neither are\nspecified, then a default lax, block confirmation target is used.",
+        "summary": "* dcrlncli: `closechannel`\nCloseChannel attempts to close an active channel identified by its channel\noutpoint (ChannelPoint). The actions of this method can additionally be\naugmented to attempt a force close after a timeout period in the case of an\ninactive peer. If a non-force close (cooperative closure) is requested,\nthen the user can specify either a target number of blocks until the\nclosure transaction is confirmed, or a manual fee rate. If neither are\nspecified, then a default lax, block confirmation target is used.",
         "operationId": "CloseChannel",
         "responses": {
           "200": {
-            "description": "(streaming responses)",
+            "description": "A successful response.(streaming responses)",
             "schema": {
-              "$ref": "#/definitions/lnrpcCloseStatusUpdate"
+              "$ref": "#/x-stream-definitions/lnrpcCloseStatusUpdate"
             }
           }
         },
         "parameters": [
           {
             "name": "channel_point.funding_txid",
+            "description": "/ Txid of the funding transaction",
             "in": "path",
             "required": true,
             "type": "string",
@@ -167,9 +168,41 @@
           },
           {
             "name": "channel_point.output_index",
+            "description": "/ The index of the output of the funding transaction",
             "in": "path",
             "required": true,
             "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "channel_point.funding_txid_str",
+            "description": "/ Hex-encoded string representing the funding transaction.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "force",
+            "description": "/ If true, then the channel will be closed forcibly. This means the current commitment transaction will be signed and broadcast.",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "target_conf",
+            "description": "/ The target number of blocks that the closure transaction should be confirmed by.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sat_per_byte",
+            "description": "/ A manual fee rate set in sat/byte that should be used when crafting the closure transaction.",
+            "in": "query",
+            "required": false,
+            "type": "string",
             "format": "int64"
           }
         ],
@@ -180,11 +213,11 @@
     },
     "/v1/createwallet": {
       "post": {
-        "summary": "* lncli: `create`\nCreateWallet is used at lnd startup to set the encryption password for\nthe wallet database.",
+        "summary": "* dcrlncli: `create`\nCreateWallet is used at lnd startup to set the encryption password for\nthe wallet database.",
         "operationId": "CreateWallet",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcCreateWalletResponse"
             }
@@ -207,11 +240,11 @@
     },
     "/v1/fees": {
       "get": {
-        "summary": "* lncli: `feereport`\nFeeReport allows the caller to obtain a report detailing the current fee\nschedule enforced by the node globally for each channel.",
+        "summary": "* dcrlncli: `feereport`\nFeeReport allows the caller to obtain a report detailing the current fee\nschedule enforced by the node globally for each channel.",
         "operationId": "FeeReport",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcFeeReportResponse"
             }
@@ -222,11 +255,11 @@
         ]
       },
       "post": {
-        "summary": "* lncli: `updatechanpolicy`\nUpdateChannelPolicy allows the caller to update the fee schedule and\nchannel policies for all channels globally, or a particular channel.",
+        "summary": "* dcrlncli: `updatechanpolicy`\nUpdateChannelPolicy allows the caller to update the fee schedule and\nchannel policies for all channels globally, or a particular channel.",
         "operationId": "UpdateChannelPolicy",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcPolicyUpdateResponse"
             }
@@ -249,11 +282,11 @@
     },
     "/v1/getinfo": {
       "get": {
-        "summary": "* lncli: `getinfo`\nGetInfo returns general information concerning the lightning node including\nit's identity pubkey, alias, the chains it is connected to, and information\nconcerning the number of open+pending channels.",
+        "summary": "* dcrlncli: `getinfo`\nGetInfo returns general information concerning the lightning node including\nit's identity pubkey, alias, the chains it is connected to, and information\nconcerning the number of open+pending channels.",
         "operationId": "GetInfo",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcGetInfoResponse"
             }
@@ -266,11 +299,11 @@
     },
     "/v1/graph": {
       "get": {
-        "summary": "* lncli: `describegraph`\nDescribeGraph returns a description of the latest graph state from the\npoint of view of the node. The graph information is partitioned into two\ncomponents: all the nodes/vertexes, and all the edges that connect the\nvertexes themselves.  As this is a directed graph, the edges also contain\nthe node directional specific routing policy which includes: the time lock\ndelta, fee information, etc.",
+        "summary": "* dcrlncli: `describegraph`\nDescribeGraph returns a description of the latest graph state from the\npoint of view of the node. The graph information is partitioned into two\ncomponents: all the nodes/vertexes, and all the edges that connect the\nvertexes themselves.  As this is a directed graph, the edges also contain\nthe node directional specific routing policy which includes: the time lock\ndelta, fee information, etc.",
         "operationId": "DescribeGraph",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcChannelGraph"
             }
@@ -283,11 +316,11 @@
     },
     "/v1/graph/edge/{chan_id}": {
       "get": {
-        "summary": "* lncli: `getchaninfo`\nGetChanInfo returns the latest authenticated network announcement for the\ngiven channel identified by its channel ID: an 8-byte integer which\nuniquely identifies the location of transaction's funding output within the\nblockchain.",
+        "summary": "* dcrlncli: `getchaninfo`\nGetChanInfo returns the latest authenticated network announcement for the\ngiven channel identified by its channel ID: an 8-byte integer which\nuniquely identifies the location of transaction's funding output within the\nblockchain.",
         "operationId": "GetChanInfo",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcChannelEdge"
             }
@@ -296,6 +329,7 @@
         "parameters": [
           {
             "name": "chan_id",
+            "description": "*\nThe unique channel ID for the channel. The first 3 bytes are the block\nheight, the next 3 the index within the block, and the last 2 bytes are the\noutput index for the channel.",
             "in": "path",
             "required": true,
             "type": "string",
@@ -309,11 +343,11 @@
     },
     "/v1/graph/info": {
       "get": {
-        "summary": "* lncli: `getnetworkinfo`\nGetNetworkInfo returns some basic stats about the known channel graph from\nthe point of view of the node.",
+        "summary": "* dcrlncli: `getnetworkinfo`\nGetNetworkInfo returns some basic stats about the known channel graph from\nthe point of view of the node.",
         "operationId": "GetNetworkInfo",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcNetworkInfo"
             }
@@ -326,11 +360,11 @@
     },
     "/v1/graph/node/{pub_key}": {
       "get": {
-        "summary": "* lncli: `getnodeinfo`\nGetNodeInfo returns the latest advertised, aggregated, and authenticated\nchannel information for the specified node identified by its public key.",
+        "summary": "* dcrlncli: `getnodeinfo`\nGetNodeInfo returns the latest advertised, aggregated, and authenticated\nchannel information for the specified node identified by its public key.",
         "operationId": "GetNodeInfo",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcNodeInfo"
             }
@@ -339,6 +373,7 @@
         "parameters": [
           {
             "name": "pub_key",
+            "description": "/ The 33-byte hex-encoded compressed public of the target node",
             "in": "path",
             "required": true,
             "type": "string"
@@ -351,11 +386,11 @@
     },
     "/v1/graph/routes/{pub_key}/{amt}": {
       "get": {
-        "summary": "* lncli: `queryroutes`\nQueryRoutes attempts to query the daemon's Channel Router for a possible\nroute to a target destination capable of carrying a specific amount of\nsatoshis. The retuned route contains the full details required to craft and\nsend an HTLC, also including the necessary information that should be\npresent within the Sphinx packet encapsualted within the HTLC.",
+        "summary": "* dcrlncli: `queryroutes`\nQueryRoutes attempts to query the daemon's Channel Router for a possible\nroute to a target destination capable of carrying a specific amount of\nsatoshis. The retuned route contains the full details required to craft and\nsend an HTLC, also including the necessary information that should be\npresent within the Sphinx packet encapsualted within the HTLC.",
         "operationId": "QueryRoutes",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcQueryRoutesResponse"
             }
@@ -364,12 +399,14 @@
         "parameters": [
           {
             "name": "pub_key",
+            "description": "/ The 33-byte hex-encoded public key for the payment destination",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
             "name": "amt",
+            "description": "/ The amount to send expressed in satoshis",
             "in": "path",
             "required": true,
             "type": "string",
@@ -383,11 +420,11 @@
     },
     "/v1/invoices": {
       "post": {
-        "summary": "* lncli: `addinvoice`\nAddInvoice attempts to add a new invoice to the invoice database. Any\nduplicated invoices are rejected, therefore all invoices *must* have a\nunique payment preimage.",
+        "summary": "* dcrlncli: `addinvoice`\nAddInvoice attempts to add a new invoice to the invoice database. Any\nduplicated invoices are rejected, therefore all invoices *must* have a\nunique payment preimage.",
         "operationId": "AddInvoice",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcAddInvoiceResponse"
             }
@@ -414,9 +451,9 @@
         "operationId": "SubscribeInvoices",
         "responses": {
           "200": {
-            "description": "(streaming responses)",
+            "description": "A successful response.(streaming responses)",
             "schema": {
-              "$ref": "#/definitions/lnrpcInvoice"
+              "$ref": "#/x-stream-definitions/lnrpcInvoice"
             }
           }
         },
@@ -427,11 +464,11 @@
     },
     "/v1/invoices/{pending_only}": {
       "get": {
-        "summary": "* lncli: `listinvoices`\nListInvoices returns a list of all the invoices currently stored within the\ndatabase. Any active debug invoices are ignored.",
+        "summary": "* dcrlncli: `listinvoices`\nListInvoices returns a list of all the invoices currently stored within the\ndatabase. Any active debug invoices are ignored.",
         "operationId": "ListInvoices",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcListInvoiceResponse"
             }
@@ -440,6 +477,7 @@
         "parameters": [
           {
             "name": "pending_only",
+            "description": "/ Toggles if all invoices should be returned, or only those that are currently unsettled.",
             "in": "path",
             "required": true,
             "type": "boolean",
@@ -453,11 +491,11 @@
     },
     "/v1/invoices/{r_hash_str}": {
       "get": {
-        "summary": "* lncli: `lookupinvoice`\nLookupInvoice attemps to look up an invoice according to its payment hash.\nThe passed payment hash *must* be exactly 32 bytes, if not, an error is\nreturned.",
+        "summary": "* dcrlncli: `lookupinvoice`\nLookupInvoice attemps to look up an invoice according to its payment hash.\nThe passed payment hash *must* be exactly 32 bytes, if not, an error is\nreturned.",
         "operationId": "LookupInvoice",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcInvoice"
             }
@@ -466,6 +504,7 @@
         "parameters": [
           {
             "name": "r_hash_str",
+            "description": "*\nThe hex-encoded payment hash of the invoice to be looked up. The passed\npayment hash must be exactly 32 bytes, otherwise an error is returned.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -490,7 +529,7 @@
         "operationId": "NewWitnessAddress",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcNewAddressResponse"
             }
@@ -503,11 +542,11 @@
     },
     "/v1/payments": {
       "get": {
-        "summary": "* lncli: `listpayments`\nListPayments returns a list of all outgoing payments.",
+        "summary": "* dcrlncli: `listpayments`\nListPayments returns a list of all outgoing payments.",
         "operationId": "ListPayments",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcListPaymentsResponse"
             }
@@ -522,7 +561,7 @@
         "operationId": "DeleteAllPayments",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcDeleteAllPaymentsResponse"
             }
@@ -535,11 +574,11 @@
     },
     "/v1/payreq/{pay_req}": {
       "get": {
-        "summary": "* lncli: `decodepayreq`\nDecodePayReq takes an encoded payment request string and attempts to decode\nit, returning a full description of the conditions encoded within the\npayment request.",
+        "summary": "* dcrlncli: `decodepayreq`\nDecodePayReq takes an encoded payment request string and attempts to decode\nit, returning a full description of the conditions encoded within the\npayment request.",
         "operationId": "DecodePayReq",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcPayReq"
             }
@@ -548,6 +587,7 @@
         "parameters": [
           {
             "name": "pay_req",
+            "description": "/ The payment request string to be decoded",
             "in": "path",
             "required": true,
             "type": "string"
@@ -560,11 +600,11 @@
     },
     "/v1/peers": {
       "get": {
-        "summary": "* lncli: `listpeers`\nListPeers returns a verbose listing of all currently active peers.",
+        "summary": "* dcrlncli: `listpeers`\nListPeers returns a verbose listing of all currently active peers.",
         "operationId": "ListPeers",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcListPeersResponse"
             }
@@ -575,11 +615,11 @@
         ]
       },
       "post": {
-        "summary": "* lncli: `connect`\nConnectPeer attempts to establish a connection to a remote peer. This is at\nthe networking level, and is used for communication between nodes. This is\ndistinct from establishing a channel with a peer.",
+        "summary": "* dcrlncli: `connect`\nConnectPeer attempts to establish a connection to a remote peer. This is at\nthe networking level, and is used for communication between nodes. This is\ndistinct from establishing a channel with a peer.",
         "operationId": "ConnectPeer",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcConnectPeerResponse"
             }
@@ -602,11 +642,11 @@
     },
     "/v1/peers/{pub_key}": {
       "delete": {
-        "summary": "* lncli: `disconnect`\nDisconnectPeer attempts to disconnect one peer from another identified by a\ngiven pubKey. In the case that we currently have a pending or active channel\nwith the target peer, then this action will be not be allowed.",
+        "summary": "* dcrlncli: `disconnect`\nDisconnectPeer attempts to disconnect one peer from another identified by a\ngiven pubKey. In the case that we currently have a pending or active channel\nwith the target peer, then this action will be not be allowed.",
         "operationId": "DisconnectPeer",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcDisconnectPeerResponse"
             }
@@ -615,6 +655,7 @@
         "parameters": [
           {
             "name": "pub_key",
+            "description": "/ The pubkey of the node to disconnect from",
             "in": "path",
             "required": true,
             "type": "string"
@@ -627,11 +668,11 @@
     },
     "/v1/transactions": {
       "get": {
-        "summary": "* lncli: `listchaintxns`\nGetTransactions returns a list describing all the known transactions\nrelevant to the wallet.",
+        "summary": "* dcrlncli: `listchaintxns`\nGetTransactions returns a list describing all the known transactions\nrelevant to the wallet.",
         "operationId": "GetTransactions",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcTransactionDetails"
             }
@@ -642,11 +683,11 @@
         ]
       },
       "post": {
-        "summary": "* lncli: `sendcoins`\nSendCoins executes a request to send coins to a particular address. Unlike\nSendMany, this RPC call only allows creating a single output at a time. If\nneither target_conf, or sat_per_byte are set, then the internal wallet will\nconsult its fee model to determine a fee for the default confirmation\ntarget.",
+        "summary": "* dcrlncli: `sendcoins`\nSendCoins executes a request to send coins to a particular address. Unlike\nSendMany, this RPC call only allows creating a single output at a time. If\nneither target_conf, or sat_per_byte are set, then the internal wallet will\nconsult its fee model to determine a fee for the default confirmation\ntarget.",
         "operationId": "SendCoins",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcSendCoinsResponse"
             }
@@ -669,11 +710,11 @@
     },
     "/v1/unlockwallet": {
       "post": {
-        "summary": "* lncli: `unlock`\nUnlockWallet is used at startup of lnd to provide a password to unlock\nthe wallet database.",
+        "summary": "* dcrlncli: `unlock`\nUnlockWallet is used at startup of lnd to provide a password to unlock\nthe wallet database.",
         "operationId": "UnlockWallet",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/lnrpcUnlockWalletResponse"
             }
@@ -696,6 +737,15 @@
     }
   },
   "definitions": {
+    "NewAddressRequestAddressType": {
+      "type": "string",
+      "enum": [
+        "WITNESS_PUBKEY_HASH",
+        "NESTED_PUBKEY_HASH",
+        "PUBKEY_HASH"
+      ],
+      "default": "WITNESS_PUBKEY_HASH"
+    },
     "PendingChannelsResponseClosedChannel": {
       "type": "object",
       "properties": {
@@ -1906,7 +1956,7 @@
         "amount": {
           "type": "string",
           "format": "int64",
-          "title": "/ The amount in satoshis to send"
+          "title": "/ The amount in atoms to send"
         },
         "target_conf": {
           "type": "integer",
@@ -2099,6 +2149,117 @@
           "title": "/ The unconfirmed balance of a wallet(with 0 confirmations)"
         }
       }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  },
+  "x-stream-definitions": {
+    "lnrpcCloseStatusUpdate": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/lnrpcCloseStatusUpdate"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of lnrpcCloseStatusUpdate"
+    },
+    "lnrpcGraphTopologyUpdate": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/lnrpcGraphTopologyUpdate"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of lnrpcGraphTopologyUpdate"
+    },
+    "lnrpcInvoice": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/lnrpcInvoice"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of lnrpcInvoice"
+    },
+    "lnrpcOpenStatusUpdate": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/lnrpcOpenStatusUpdate"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of lnrpcOpenStatusUpdate"
+    },
+    "lnrpcSendResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/lnrpcSendResponse"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of lnrpcSendResponse"
+    },
+    "lnrpcTransaction": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/lnrpcTransaction"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of lnrpcTransaction"
     }
   }
 }
