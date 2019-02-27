@@ -28,7 +28,7 @@ package lnrpc;
 // The WalletUnlocker service is used to set up a wallet password for
 // lnd at first startup, and unlock a previously set up wallet.
 service WalletUnlocker {
-    /** lncli: `create`
+    /** dcrlncli: `create`
     CreateWallet is used at lnd startup to set the encryption password for
     the wallet database.
     */
@@ -39,7 +39,7 @@ service WalletUnlocker {
         };
     }
 
-    /** lncli: `unlock`
+    /** dcrlncli: `unlock`
     UnlockWallet is used at startup of lnd to provide a password to unlock
     the wallet database.
     */
@@ -63,7 +63,7 @@ message UnlockWalletRequest {
 message UnlockWalletResponse {}
 
 service Lightning {
-    /** lncli: `walletbalance`
+    /** dcrlncli: `walletbalance`
     WalletBalance returns total unspent outputs(confirmed and unconfirmed), all confirmed unspent outputs and all unconfirmed unspent outputs under control
     by the wallet. This method can be modified by having the request specify
     only witness outputs should be factored into the final output sum.
@@ -74,7 +74,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `channelbalance`
+    /** dcrlncli: `channelbalance`
     ChannelBalance returns the total funds available across all open channels
     in satoshis.
     */
@@ -84,7 +84,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `listchaintxns`
+    /** dcrlncli: `listchaintxns`
     GetTransactions returns a list describing all the known transactions
     relevant to the wallet.
     */
@@ -94,7 +94,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `sendcoins`
+    /** dcrlncli: `sendcoins`
     SendCoins executes a request to send coins to a particular address. Unlike
     SendMany, this RPC call only allows creating a single output at a time. If
     neither target_conf, or sat_per_byte are set, then the internal wallet will
@@ -115,7 +115,7 @@ service Lightning {
     */
     rpc SubscribeTransactions (GetTransactionsRequest) returns (stream Transaction);
 
-    /** lncli: `sendmany`
+    /** dcrlncli: `sendmany`
     SendMany handles a request for a transaction that creates multiple specified
     outputs in parallel. If neither target_conf, or sat_per_byte are set, then
     the internal wallet will consult its fee model to determine a fee for the
@@ -123,7 +123,7 @@ service Lightning {
     */
     rpc SendMany (SendManyRequest) returns (SendManyResponse);
 
-    /** lncli: `newaddress`
+    /** dcrlncli: `newaddress`
     NewAddress creates a new address under control of the local wallet.
     */
     rpc NewAddress (NewAddressRequest) returns (NewAddressResponse);
@@ -137,14 +137,14 @@ service Lightning {
         };
     }
 
-    /** lncli: `signmessage`
+    /** dcrlncli: `signmessage`
     SignMessage signs a message with this node's private key. The returned
     signature string is `zbase32` encoded and pubkey recoverable, meaning that
     only the message digest and signature are needed for verification.
     */
     rpc SignMessage (SignMessageRequest) returns (SignMessageResponse);
 
-    /** lncli: `verifymessage`
+    /** dcrlncli: `verifymessage`
     VerifyMessage verifies a signature over a msg. The signature must be
     zbase32 encoded and signed by an active node in the resident node's
     channel database. In addition to returning the validity of the signature,
@@ -152,7 +152,7 @@ service Lightning {
     */
     rpc VerifyMessage (VerifyMessageRequest) returns (VerifyMessageResponse);
 
-    /** lncli: `connect`
+    /** dcrlncli: `connect`
     ConnectPeer attempts to establish a connection to a remote peer. This is at
     the networking level, and is used for communication between nodes. This is
     distinct from establishing a channel with a peer.
@@ -164,7 +164,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `disconnect`
+    /** dcrlncli: `disconnect`
     DisconnectPeer attempts to disconnect one peer from another identified by a
     given pubKey. In the case that we currently have a pending or active channel
     with the target peer, then this action will be not be allowed.
@@ -175,7 +175,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `listpeers`
+    /** dcrlncli: `listpeers`
     ListPeers returns a verbose listing of all currently active peers.
     */
     rpc ListPeers (ListPeersRequest) returns (ListPeersResponse) {
@@ -184,7 +184,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `getinfo`
+    /** dcrlncli: `getinfo`
     GetInfo returns general information concerning the lightning node including
     it's identity pubkey, alias, the chains it is connected to, and information
     concerning the number of open+pending channels.
@@ -196,7 +196,7 @@ service Lightning {
     }
 
     // TODO(roasbeef): merge with below with bool?
-    /** lncli: `pendingchannels`
+    /** dcrlncli: `pendingchannels`
     PendingChannels returns a list of all the channels that are currently
     considered "pending". A channel is pending if it has finished the funding
     workflow and is waiting for confirmations for the funding txn, or is in the
@@ -208,7 +208,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `listchannels`
+    /** dcrlncli: `listchannels`
     ListChannels returns a description of all the open channels that this node
     is a participant in.
     */
@@ -231,7 +231,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `openchannel`
+    /** dcrlncli: `openchannel`
     OpenChannel attempts to open a singly funded channel specified in the
     request to a remote peer. Users are able to specify a target number of
     blocks that the funding transaction should be confirmed in, or a manual fee
@@ -240,7 +240,7 @@ service Lightning {
     */
     rpc OpenChannel (OpenChannelRequest) returns (stream OpenStatusUpdate);
 
-    /** lncli: `closechannel`
+    /** dcrlncli: `closechannel`
     CloseChannel attempts to close an active channel identified by its channel
     outpoint (ChannelPoint). The actions of this method can additionally be
     augmented to attempt a force close after a timeout period in the case of an
@@ -255,7 +255,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `sendpayment`
+    /** dcrlncli: `sendpayment`
     SendPayment dispatches a bi-directional streaming RPC for sending payments
     through the Lightning Network. A single RPC invocation creates a persistent
     bi-directional stream allowing clients to rapidly send payments through the
@@ -276,7 +276,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `addinvoice`
+    /** dcrlncli: `addinvoice`
     AddInvoice attempts to add a new invoice to the invoice database. Any
     duplicated invoices are rejected, therefore all invoices *must* have a
     unique payment preimage.
@@ -288,7 +288,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `listinvoices`
+    /** dcrlncli: `listinvoices`
     ListInvoices returns a list of all the invoices currently stored within the
     database. Any active debug invoices are ignored.
     */
@@ -298,7 +298,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `lookupinvoice`
+    /** dcrlncli: `lookupinvoice`
     LookupInvoice attemps to look up an invoice according to its payment hash.
     The passed payment hash *must* be exactly 32 bytes, if not, an error is
     returned.
@@ -319,7 +319,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `decodepayreq`
+    /** dcrlncli: `decodepayreq`
     DecodePayReq takes an encoded payment request string and attempts to decode
     it, returning a full description of the conditions encoded within the
     payment request.
@@ -330,7 +330,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `listpayments`
+    /** dcrlncli: `listpayments`
     ListPayments returns a list of all outgoing payments.
     */
     rpc ListPayments (ListPaymentsRequest) returns (ListPaymentsResponse) {
@@ -348,7 +348,7 @@ service Lightning {
         };
     };
 
-    /** lncli: `describegraph`
+    /** dcrlncli: `describegraph`
     DescribeGraph returns a description of the latest graph state from the
     point of view of the node. The graph information is partitioned into two
     components: all the nodes/vertexes, and all the edges that connect the
@@ -362,7 +362,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `getchaninfo`
+    /** dcrlncli: `getchaninfo`
     GetChanInfo returns the latest authenticated network announcement for the
     given channel identified by its channel ID: an 8-byte integer which
     uniquely identifies the location of transaction's funding output within the
@@ -374,7 +374,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `getnodeinfo`
+    /** dcrlncli: `getnodeinfo`
     GetNodeInfo returns the latest advertised, aggregated, and authenticated
     channel information for the specified node identified by its public key.
     */
@@ -384,7 +384,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `queryroutes`
+    /** dcrlncli: `queryroutes`
     QueryRoutes attempts to query the daemon's Channel Router for a possible
     route to a target destination capable of carrying a specific amount of
     satoshis. The retuned route contains the full details required to craft and
@@ -397,7 +397,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `getnetworkinfo`
+    /** dcrlncli: `getnetworkinfo`
     GetNetworkInfo returns some basic stats about the known channel graph from
     the point of view of the node.
     */
@@ -407,7 +407,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `stop`
+    /** dcrlncli: `stop`
     StopDaemon will send a shutdown request to the interrupt handler, triggering
     a graceful shutdown of the daemon.
     */
@@ -423,7 +423,7 @@ service Lightning {
     */
     rpc SubscribeChannelGraph(GraphTopologySubscription) returns (stream GraphTopologyUpdate);
 
-    /** lncli: `debuglevel`
+    /** dcrlncli: `debuglevel`
     DebugLevel allows a caller to programmatically set the logging verbosity of
     lnd. The logging can be targeted according to a coarse daemon-wide logging
     level, or in a granular fashion to specify the logging for a target
@@ -431,7 +431,7 @@ service Lightning {
     */
     rpc DebugLevel (DebugLevelRequest) returns (DebugLevelResponse);
 
-    /** lncli: `feereport`
+    /** dcrlncli: `feereport`
     FeeReport allows the caller to obtain a report detailing the current fee
     schedule enforced by the node globally for each channel.
     */
@@ -441,7 +441,7 @@ service Lightning {
         };
     }
 
-    /** lncli: `updatechanpolicy`
+    /** dcrlncli: `updatechanpolicy`
     UpdateChannelPolicy allows the caller to update the fee schedule and
     channel policies for all channels globally, or a particular channel.
     */
@@ -554,7 +554,7 @@ message SendCoinsRequest {
     /// The address to send coins to 
     string addr = 1;
 
-    /// The amount in satoshis to send
+    /// The amount in atoms to send
     int64 amount = 2;
 
     /// The target number of blocks that this transaction should be confirmed by.
