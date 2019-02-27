@@ -1,32 +1,32 @@
 lnrpc
 =====
 
-[![Build Status](http://img.shields.io/travis/lightningnetwork/lnd.svg)](https://travis-ci.org/lightningnetwork/lnd) 
+[![Build Status](http://img.shields.io/travis/lightningnetwork/lnd.svg)](https://travis-ci.org/lightningnetwork/lnd)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lightningnetwork/lnd/blob/master/LICENSE)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/lightningnetwork/lnd/lnrpc)
 
-This lnrpc package implements both a client and server for `lnd`s RPC system
+This lnrpc package implements both a client and server for `dcrlnd`s RPC system
 which is based off of the high-performance cross-platform
 [gRPC](http://www.grpc.io/) RPC framework. By default, only the Go
 client+server libraries are compiled within the package. In order to compile
 the client side libraries for other supported languages, the `protoc` tool will
 need to be used to generate the compiled protos for a specific language.
 
-The following languages are supported as clients to `lnrpc`: C++, Go, Node.js,
+The following languages are supported as clients to `dcrlnrpc`: C++, Go, Node.js,
 Java, Ruby, Android Java, PHP, Python, C#, Objective-C.
 
 The list of defined RPC's on the main service are the following (with a brief
 description):
 
   * WalletBalance
-     * Returns the wallet's current confirmed balance in BTC.
+     * Returns the wallet's current confirmed balance in DCR.
   * ChannelBalance
-     * Returns the daemons' available aggregate channel balance in BTC.
+     * Returns the daemons' available aggregate channel balance in DCR.
   * GetTransactions
      * Returns a list of on-chain transactions that pay to or are spends from
-       `lnd`.
+       `dcrlnd`.
   * SendCoins
-     * Sends an amount of satoshis to a specific address.
+     * Sends an amount of atoms to a specific address.
   * SubscribeTransactions
      * Returns a stream which sends async notifications each time a transaction
        is created or one is received that pays to us.
@@ -90,8 +90,31 @@ description):
   * GetNetworkInfo
      * Returns some network level statistics.
 
+## Build lnrpc code form protobuf
+
+First, please install this via your local package manager or by downloading one of the releases
+from the official repository:
+
+https://github.com/protocolbuffers/protobuf/releases
+
+
+Then, `go get -u` as usual the following packages:
+
+```bash
+go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+```
+
+This will place three binaries in your `$GOBIN`;
+
+* `protoc-gen-grpc-gateway`
+* `protoc-gen-grpc-swagger`
+
+Make sure that your `$GOBIN` is in your `$PATH`.
+
+
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/lightningnetwork/lnd/lnrpc
+go get -u github.com/decred/dcrlnd
 ```

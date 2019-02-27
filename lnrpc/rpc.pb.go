@@ -516,7 +516,7 @@ func (m *SendManyResponse) GetTxid() string {
 type SendCoinsRequest struct {
 	// / The address to send coins to
 	Addr string `protobuf:"bytes,1,opt,name=addr" json:"addr,omitempty"`
-	// / The amount in satoshis to send
+	// / The amount in atoms to send
 	Amount int64 `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
 	// / The target number of blocks that this transaction should be confirmed by.
 	TargetConf int32 `protobuf:"varint,3,opt,name=target_conf,json=targetConf" json:"target_conf,omitempty"`
@@ -1375,9 +1375,7 @@ func (m *CloseStatusUpdate) String() string            { return proto.CompactTex
 func (*CloseStatusUpdate) ProtoMessage()               {}
 func (*CloseStatusUpdate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{39} }
 
-type isCloseStatusUpdate_Update interface {
-	isCloseStatusUpdate_Update()
-}
+type isCloseStatusUpdate_Update interface{ isCloseStatusUpdate_Update() }
 
 type CloseStatusUpdate_ClosePending struct {
 	ClosePending *PendingUpdate `protobuf:"bytes,1,opt,name=close_pending,oneof"`
@@ -1640,9 +1638,7 @@ func (m *OpenStatusUpdate) String() string            { return proto.CompactText
 func (*OpenStatusUpdate) ProtoMessage()               {}
 func (*OpenStatusUpdate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{42} }
 
-type isOpenStatusUpdate_Update interface {
-	isOpenStatusUpdate_Update()
-}
+type isOpenStatusUpdate_Update interface{ isOpenStatusUpdate_Update() }
 
 type OpenStatusUpdate_ChanPending struct {
 	ChanPending *PendingUpdate `protobuf:"bytes,1,opt,name=chan_pending,oneof"`
@@ -3504,9 +3500,7 @@ func (m *PolicyUpdateRequest) String() string            { return proto.CompactT
 func (*PolicyUpdateRequest) ProtoMessage()               {}
 func (*PolicyUpdateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{90} }
 
-type isPolicyUpdateRequest_Scope interface {
-	isPolicyUpdateRequest_Scope()
-}
+type isPolicyUpdateRequest_Scope interface{ isPolicyUpdateRequest_Scope() }
 
 type PolicyUpdateRequest_Global struct {
 	Global bool `protobuf:"varint,1,opt,name=global,oneof"`
@@ -3752,11 +3746,11 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for WalletUnlocker service
 
 type WalletUnlockerClient interface {
-	// * lncli: `create`
+	// * dcrlncli: `create`
 	// CreateWallet is used at lnd startup to set the encryption password for
 	// the wallet database.
 	CreateWallet(ctx context.Context, in *CreateWalletRequest, opts ...grpc.CallOption) (*CreateWalletResponse, error)
-	// * lncli: `unlock`
+	// * dcrlncli: `unlock`
 	// UnlockWallet is used at startup of lnd to provide a password to unlock
 	// the wallet database.
 	UnlockWallet(ctx context.Context, in *UnlockWalletRequest, opts ...grpc.CallOption) (*UnlockWalletResponse, error)
@@ -3791,11 +3785,11 @@ func (c *walletUnlockerClient) UnlockWallet(ctx context.Context, in *UnlockWalle
 // Server API for WalletUnlocker service
 
 type WalletUnlockerServer interface {
-	// * lncli: `create`
+	// * dcrlncli: `create`
 	// CreateWallet is used at lnd startup to set the encryption password for
 	// the wallet database.
 	CreateWallet(context.Context, *CreateWalletRequest) (*CreateWalletResponse, error)
-	// * lncli: `unlock`
+	// * dcrlncli: `unlock`
 	// UnlockWallet is used at startup of lnd to provide a password to unlock
 	// the wallet database.
 	UnlockWallet(context.Context, *UnlockWalletRequest) (*UnlockWalletResponse, error)
@@ -3861,20 +3855,20 @@ var _WalletUnlocker_serviceDesc = grpc.ServiceDesc{
 // Client API for Lightning service
 
 type LightningClient interface {
-	// * lncli: `walletbalance`
+	// * dcrlncli: `walletbalance`
 	// WalletBalance returns total unspent outputs(confirmed and unconfirmed), all confirmed unspent outputs and all unconfirmed unspent outputs under control
 	// by the wallet. This method can be modified by having the request specify
 	// only witness outputs should be factored into the final output sum.
 	WalletBalance(ctx context.Context, in *WalletBalanceRequest, opts ...grpc.CallOption) (*WalletBalanceResponse, error)
-	// * lncli: `channelbalance`
+	// * dcrlncli: `channelbalance`
 	// ChannelBalance returns the total funds available across all open channels
 	// in satoshis.
 	ChannelBalance(ctx context.Context, in *ChannelBalanceRequest, opts ...grpc.CallOption) (*ChannelBalanceResponse, error)
-	// * lncli: `listchaintxns`
+	// * dcrlncli: `listchaintxns`
 	// GetTransactions returns a list describing all the known transactions
 	// relevant to the wallet.
 	GetTransactions(ctx context.Context, in *GetTransactionsRequest, opts ...grpc.CallOption) (*TransactionDetails, error)
-	// * lncli: `sendcoins`
+	// * dcrlncli: `sendcoins`
 	// SendCoins executes a request to send coins to a particular address. Unlike
 	// SendMany, this RPC call only allows creating a single output at a time. If
 	// neither target_conf, or sat_per_byte are set, then the internal wallet will
@@ -3886,54 +3880,54 @@ type LightningClient interface {
 	// the client in which any newly discovered transactions relevant to the
 	// wallet are sent over.
 	SubscribeTransactions(ctx context.Context, in *GetTransactionsRequest, opts ...grpc.CallOption) (Lightning_SubscribeTransactionsClient, error)
-	// * lncli: `sendmany`
+	// * dcrlncli: `sendmany`
 	// SendMany handles a request for a transaction that creates multiple specified
 	// outputs in parallel. If neither target_conf, or sat_per_byte are set, then
 	// the internal wallet will consult its fee model to determine a fee for the
 	// default confirmation target.
 	SendMany(ctx context.Context, in *SendManyRequest, opts ...grpc.CallOption) (*SendManyResponse, error)
-	// * lncli: `newaddress`
+	// * dcrlncli: `newaddress`
 	// NewAddress creates a new address under control of the local wallet.
 	NewAddress(ctx context.Context, in *NewAddressRequest, opts ...grpc.CallOption) (*NewAddressResponse, error)
 	// *
 	// NewWitnessAddress creates a new witness address under control of the local wallet.
 	NewWitnessAddress(ctx context.Context, in *NewWitnessAddressRequest, opts ...grpc.CallOption) (*NewAddressResponse, error)
-	// * lncli: `signmessage`
+	// * dcrlncli: `signmessage`
 	// SignMessage signs a message with this node's private key. The returned
 	// signature string is `zbase32` encoded and pubkey recoverable, meaning that
 	// only the message digest and signature are needed for verification.
 	SignMessage(ctx context.Context, in *SignMessageRequest, opts ...grpc.CallOption) (*SignMessageResponse, error)
-	// * lncli: `verifymessage`
+	// * dcrlncli: `verifymessage`
 	// VerifyMessage verifies a signature over a msg. The signature must be
 	// zbase32 encoded and signed by an active node in the resident node's
 	// channel database. In addition to returning the validity of the signature,
 	// VerifyMessage also returns the recovered pubkey from the signature.
 	VerifyMessage(ctx context.Context, in *VerifyMessageRequest, opts ...grpc.CallOption) (*VerifyMessageResponse, error)
-	// * lncli: `connect`
+	// * dcrlncli: `connect`
 	// ConnectPeer attempts to establish a connection to a remote peer. This is at
 	// the networking level, and is used for communication between nodes. This is
 	// distinct from establishing a channel with a peer.
 	ConnectPeer(ctx context.Context, in *ConnectPeerRequest, opts ...grpc.CallOption) (*ConnectPeerResponse, error)
-	// * lncli: `disconnect`
+	// * dcrlncli: `disconnect`
 	// DisconnectPeer attempts to disconnect one peer from another identified by a
 	// given pubKey. In the case that we currently have a pending or active channel
 	// with the target peer, then this action will be not be allowed.
 	DisconnectPeer(ctx context.Context, in *DisconnectPeerRequest, opts ...grpc.CallOption) (*DisconnectPeerResponse, error)
-	// * lncli: `listpeers`
+	// * dcrlncli: `listpeers`
 	// ListPeers returns a verbose listing of all currently active peers.
 	ListPeers(ctx context.Context, in *ListPeersRequest, opts ...grpc.CallOption) (*ListPeersResponse, error)
-	// * lncli: `getinfo`
+	// * dcrlncli: `getinfo`
 	// GetInfo returns general information concerning the lightning node including
 	// it's identity pubkey, alias, the chains it is connected to, and information
 	// concerning the number of open+pending channels.
 	GetInfo(ctx context.Context, in *GetInfoRequest, opts ...grpc.CallOption) (*GetInfoResponse, error)
-	// * lncli: `pendingchannels`
+	// * dcrlncli: `pendingchannels`
 	// PendingChannels returns a list of all the channels that are currently
 	// considered "pending". A channel is pending if it has finished the funding
 	// workflow and is waiting for confirmations for the funding txn, or is in the
 	// process of closure, either initiated cooperatively or non-cooperatively.
 	PendingChannels(ctx context.Context, in *PendingChannelsRequest, opts ...grpc.CallOption) (*PendingChannelsResponse, error)
-	// * lncli: `listchannels`
+	// * dcrlncli: `listchannels`
 	// ListChannels returns a description of all the open channels that this node
 	// is a participant in.
 	ListChannels(ctx context.Context, in *ListChannelsRequest, opts ...grpc.CallOption) (*ListChannelsResponse, error)
@@ -3943,14 +3937,14 @@ type LightningClient interface {
 	// other sync calls, all byte slices are intended to be populated as hex
 	// encoded strings.
 	OpenChannelSync(ctx context.Context, in *OpenChannelRequest, opts ...grpc.CallOption) (*ChannelPoint, error)
-	// * lncli: `openchannel`
+	// * dcrlncli: `openchannel`
 	// OpenChannel attempts to open a singly funded channel specified in the
 	// request to a remote peer. Users are able to specify a target number of
 	// blocks that the funding transaction should be confirmed in, or a manual fee
 	// rate to us for the funding transaction. If neither are specified, then a
 	// lax block confirmation target is used.
 	OpenChannel(ctx context.Context, in *OpenChannelRequest, opts ...grpc.CallOption) (Lightning_OpenChannelClient, error)
-	// * lncli: `closechannel`
+	// * dcrlncli: `closechannel`
 	// CloseChannel attempts to close an active channel identified by its channel
 	// outpoint (ChannelPoint). The actions of this method can additionally be
 	// augmented to attempt a force close after a timeout period in the case of an
@@ -3959,7 +3953,7 @@ type LightningClient interface {
 	// closure transaction is confirmed, or a manual fee rate. If neither are
 	// specified, then a default lax, block confirmation target is used.
 	CloseChannel(ctx context.Context, in *CloseChannelRequest, opts ...grpc.CallOption) (Lightning_CloseChannelClient, error)
-	// * lncli: `sendpayment`
+	// * dcrlncli: `sendpayment`
 	// SendPayment dispatches a bi-directional streaming RPC for sending payments
 	// through the Lightning Network. A single RPC invocation creates a persistent
 	// bi-directional stream allowing clients to rapidly send payments through the
@@ -3971,16 +3965,16 @@ type LightningClient interface {
 	// Additionally, this RPC expects the destination's public key and the payment
 	// hash (if any) to be encoded as hex strings.
 	SendPaymentSync(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*SendResponse, error)
-	// * lncli: `addinvoice`
+	// * dcrlncli: `addinvoice`
 	// AddInvoice attempts to add a new invoice to the invoice database. Any
 	// duplicated invoices are rejected, therefore all invoices *must* have a
 	// unique payment preimage.
 	AddInvoice(ctx context.Context, in *Invoice, opts ...grpc.CallOption) (*AddInvoiceResponse, error)
-	// * lncli: `listinvoices`
+	// * dcrlncli: `listinvoices`
 	// ListInvoices returns a list of all the invoices currently stored within the
 	// database. Any active debug invoices are ignored.
 	ListInvoices(ctx context.Context, in *ListInvoiceRequest, opts ...grpc.CallOption) (*ListInvoiceResponse, error)
-	// * lncli: `lookupinvoice`
+	// * dcrlncli: `lookupinvoice`
 	// LookupInvoice attemps to look up an invoice according to its payment hash.
 	// The passed payment hash *must* be exactly 32 bytes, if not, an error is
 	// returned.
@@ -3989,18 +3983,18 @@ type LightningClient interface {
 	// SubscribeInvoices returns a uni-directional stream (sever -> client) for
 	// notifying the client of newly added/settled invoices.
 	SubscribeInvoices(ctx context.Context, in *InvoiceSubscription, opts ...grpc.CallOption) (Lightning_SubscribeInvoicesClient, error)
-	// * lncli: `decodepayreq`
+	// * dcrlncli: `decodepayreq`
 	// DecodePayReq takes an encoded payment request string and attempts to decode
 	// it, returning a full description of the conditions encoded within the
 	// payment request.
 	DecodePayReq(ctx context.Context, in *PayReqString, opts ...grpc.CallOption) (*PayReq, error)
-	// * lncli: `listpayments`
+	// * dcrlncli: `listpayments`
 	// ListPayments returns a list of all outgoing payments.
 	ListPayments(ctx context.Context, in *ListPaymentsRequest, opts ...grpc.CallOption) (*ListPaymentsResponse, error)
 	// *
 	// DeleteAllPayments deletes all outgoing payments from DB.
 	DeleteAllPayments(ctx context.Context, in *DeleteAllPaymentsRequest, opts ...grpc.CallOption) (*DeleteAllPaymentsResponse, error)
-	// * lncli: `describegraph`
+	// * dcrlncli: `describegraph`
 	// DescribeGraph returns a description of the latest graph state from the
 	// point of view of the node. The graph information is partitioned into two
 	// components: all the nodes/vertexes, and all the edges that connect the
@@ -4008,28 +4002,28 @@ type LightningClient interface {
 	// the node directional specific routing policy which includes: the time lock
 	// delta, fee information, etc.
 	DescribeGraph(ctx context.Context, in *ChannelGraphRequest, opts ...grpc.CallOption) (*ChannelGraph, error)
-	// * lncli: `getchaninfo`
+	// * dcrlncli: `getchaninfo`
 	// GetChanInfo returns the latest authenticated network announcement for the
 	// given channel identified by its channel ID: an 8-byte integer which
 	// uniquely identifies the location of transaction's funding output within the
 	// blockchain.
 	GetChanInfo(ctx context.Context, in *ChanInfoRequest, opts ...grpc.CallOption) (*ChannelEdge, error)
-	// * lncli: `getnodeinfo`
+	// * dcrlncli: `getnodeinfo`
 	// GetNodeInfo returns the latest advertised, aggregated, and authenticated
 	// channel information for the specified node identified by its public key.
 	GetNodeInfo(ctx context.Context, in *NodeInfoRequest, opts ...grpc.CallOption) (*NodeInfo, error)
-	// * lncli: `queryroutes`
+	// * dcrlncli: `queryroutes`
 	// QueryRoutes attempts to query the daemon's Channel Router for a possible
 	// route to a target destination capable of carrying a specific amount of
 	// satoshis. The retuned route contains the full details required to craft and
 	// send an HTLC, also including the necessary information that should be
 	// present within the Sphinx packet encapsualted within the HTLC.
 	QueryRoutes(ctx context.Context, in *QueryRoutesRequest, opts ...grpc.CallOption) (*QueryRoutesResponse, error)
-	// * lncli: `getnetworkinfo`
+	// * dcrlncli: `getnetworkinfo`
 	// GetNetworkInfo returns some basic stats about the known channel graph from
 	// the point of view of the node.
 	GetNetworkInfo(ctx context.Context, in *NetworkInfoRequest, opts ...grpc.CallOption) (*NetworkInfo, error)
-	// * lncli: `stop`
+	// * dcrlncli: `stop`
 	// StopDaemon will send a shutdown request to the interrupt handler, triggering
 	// a graceful shutdown of the daemon.
 	StopDaemon(ctx context.Context, in *StopRequest, opts ...grpc.CallOption) (*StopResponse, error)
@@ -4041,17 +4035,17 @@ type LightningClient interface {
 	// channels being advertised, updates in the routing policy for a directional
 	// channel edge, and when channels are closed on-chain.
 	SubscribeChannelGraph(ctx context.Context, in *GraphTopologySubscription, opts ...grpc.CallOption) (Lightning_SubscribeChannelGraphClient, error)
-	// * lncli: `debuglevel`
+	// * dcrlncli: `debuglevel`
 	// DebugLevel allows a caller to programmatically set the logging verbosity of
 	// lnd. The logging can be targeted according to a coarse daemon-wide logging
 	// level, or in a granular fashion to specify the logging for a target
 	// sub-system.
 	DebugLevel(ctx context.Context, in *DebugLevelRequest, opts ...grpc.CallOption) (*DebugLevelResponse, error)
-	// * lncli: `feereport`
+	// * dcrlncli: `feereport`
 	// FeeReport allows the caller to obtain a report detailing the current fee
 	// schedule enforced by the node globally for each channel.
 	FeeReport(ctx context.Context, in *FeeReportRequest, opts ...grpc.CallOption) (*FeeReportResponse, error)
-	// * lncli: `updatechanpolicy`
+	// * dcrlncli: `updatechanpolicy`
 	// UpdateChannelPolicy allows the caller to update the fee schedule and
 	// channel policies for all channels globally, or a particular channel.
 	UpdateChannelPolicy(ctx context.Context, in *PolicyUpdateRequest, opts ...grpc.CallOption) (*PolicyUpdateResponse, error)
@@ -4547,20 +4541,20 @@ func (c *lightningClient) UpdateChannelPolicy(ctx context.Context, in *PolicyUpd
 // Server API for Lightning service
 
 type LightningServer interface {
-	// * lncli: `walletbalance`
+	// * dcrlncli: `walletbalance`
 	// WalletBalance returns total unspent outputs(confirmed and unconfirmed), all confirmed unspent outputs and all unconfirmed unspent outputs under control
 	// by the wallet. This method can be modified by having the request specify
 	// only witness outputs should be factored into the final output sum.
 	WalletBalance(context.Context, *WalletBalanceRequest) (*WalletBalanceResponse, error)
-	// * lncli: `channelbalance`
+	// * dcrlncli: `channelbalance`
 	// ChannelBalance returns the total funds available across all open channels
 	// in satoshis.
 	ChannelBalance(context.Context, *ChannelBalanceRequest) (*ChannelBalanceResponse, error)
-	// * lncli: `listchaintxns`
+	// * dcrlncli: `listchaintxns`
 	// GetTransactions returns a list describing all the known transactions
 	// relevant to the wallet.
 	GetTransactions(context.Context, *GetTransactionsRequest) (*TransactionDetails, error)
-	// * lncli: `sendcoins`
+	// * dcrlncli: `sendcoins`
 	// SendCoins executes a request to send coins to a particular address. Unlike
 	// SendMany, this RPC call only allows creating a single output at a time. If
 	// neither target_conf, or sat_per_byte are set, then the internal wallet will
@@ -4572,54 +4566,54 @@ type LightningServer interface {
 	// the client in which any newly discovered transactions relevant to the
 	// wallet are sent over.
 	SubscribeTransactions(*GetTransactionsRequest, Lightning_SubscribeTransactionsServer) error
-	// * lncli: `sendmany`
+	// * dcrlncli: `sendmany`
 	// SendMany handles a request for a transaction that creates multiple specified
 	// outputs in parallel. If neither target_conf, or sat_per_byte are set, then
 	// the internal wallet will consult its fee model to determine a fee for the
 	// default confirmation target.
 	SendMany(context.Context, *SendManyRequest) (*SendManyResponse, error)
-	// * lncli: `newaddress`
+	// * dcrlncli: `newaddress`
 	// NewAddress creates a new address under control of the local wallet.
 	NewAddress(context.Context, *NewAddressRequest) (*NewAddressResponse, error)
 	// *
 	// NewWitnessAddress creates a new witness address under control of the local wallet.
 	NewWitnessAddress(context.Context, *NewWitnessAddressRequest) (*NewAddressResponse, error)
-	// * lncli: `signmessage`
+	// * dcrlncli: `signmessage`
 	// SignMessage signs a message with this node's private key. The returned
 	// signature string is `zbase32` encoded and pubkey recoverable, meaning that
 	// only the message digest and signature are needed for verification.
 	SignMessage(context.Context, *SignMessageRequest) (*SignMessageResponse, error)
-	// * lncli: `verifymessage`
+	// * dcrlncli: `verifymessage`
 	// VerifyMessage verifies a signature over a msg. The signature must be
 	// zbase32 encoded and signed by an active node in the resident node's
 	// channel database. In addition to returning the validity of the signature,
 	// VerifyMessage also returns the recovered pubkey from the signature.
 	VerifyMessage(context.Context, *VerifyMessageRequest) (*VerifyMessageResponse, error)
-	// * lncli: `connect`
+	// * dcrlncli: `connect`
 	// ConnectPeer attempts to establish a connection to a remote peer. This is at
 	// the networking level, and is used for communication between nodes. This is
 	// distinct from establishing a channel with a peer.
 	ConnectPeer(context.Context, *ConnectPeerRequest) (*ConnectPeerResponse, error)
-	// * lncli: `disconnect`
+	// * dcrlncli: `disconnect`
 	// DisconnectPeer attempts to disconnect one peer from another identified by a
 	// given pubKey. In the case that we currently have a pending or active channel
 	// with the target peer, then this action will be not be allowed.
 	DisconnectPeer(context.Context, *DisconnectPeerRequest) (*DisconnectPeerResponse, error)
-	// * lncli: `listpeers`
+	// * dcrlncli: `listpeers`
 	// ListPeers returns a verbose listing of all currently active peers.
 	ListPeers(context.Context, *ListPeersRequest) (*ListPeersResponse, error)
-	// * lncli: `getinfo`
+	// * dcrlncli: `getinfo`
 	// GetInfo returns general information concerning the lightning node including
 	// it's identity pubkey, alias, the chains it is connected to, and information
 	// concerning the number of open+pending channels.
 	GetInfo(context.Context, *GetInfoRequest) (*GetInfoResponse, error)
-	// * lncli: `pendingchannels`
+	// * dcrlncli: `pendingchannels`
 	// PendingChannels returns a list of all the channels that are currently
 	// considered "pending". A channel is pending if it has finished the funding
 	// workflow and is waiting for confirmations for the funding txn, or is in the
 	// process of closure, either initiated cooperatively or non-cooperatively.
 	PendingChannels(context.Context, *PendingChannelsRequest) (*PendingChannelsResponse, error)
-	// * lncli: `listchannels`
+	// * dcrlncli: `listchannels`
 	// ListChannels returns a description of all the open channels that this node
 	// is a participant in.
 	ListChannels(context.Context, *ListChannelsRequest) (*ListChannelsResponse, error)
@@ -4629,14 +4623,14 @@ type LightningServer interface {
 	// other sync calls, all byte slices are intended to be populated as hex
 	// encoded strings.
 	OpenChannelSync(context.Context, *OpenChannelRequest) (*ChannelPoint, error)
-	// * lncli: `openchannel`
+	// * dcrlncli: `openchannel`
 	// OpenChannel attempts to open a singly funded channel specified in the
 	// request to a remote peer. Users are able to specify a target number of
 	// blocks that the funding transaction should be confirmed in, or a manual fee
 	// rate to us for the funding transaction. If neither are specified, then a
 	// lax block confirmation target is used.
 	OpenChannel(*OpenChannelRequest, Lightning_OpenChannelServer) error
-	// * lncli: `closechannel`
+	// * dcrlncli: `closechannel`
 	// CloseChannel attempts to close an active channel identified by its channel
 	// outpoint (ChannelPoint). The actions of this method can additionally be
 	// augmented to attempt a force close after a timeout period in the case of an
@@ -4645,7 +4639,7 @@ type LightningServer interface {
 	// closure transaction is confirmed, or a manual fee rate. If neither are
 	// specified, then a default lax, block confirmation target is used.
 	CloseChannel(*CloseChannelRequest, Lightning_CloseChannelServer) error
-	// * lncli: `sendpayment`
+	// * dcrlncli: `sendpayment`
 	// SendPayment dispatches a bi-directional streaming RPC for sending payments
 	// through the Lightning Network. A single RPC invocation creates a persistent
 	// bi-directional stream allowing clients to rapidly send payments through the
@@ -4657,16 +4651,16 @@ type LightningServer interface {
 	// Additionally, this RPC expects the destination's public key and the payment
 	// hash (if any) to be encoded as hex strings.
 	SendPaymentSync(context.Context, *SendRequest) (*SendResponse, error)
-	// * lncli: `addinvoice`
+	// * dcrlncli: `addinvoice`
 	// AddInvoice attempts to add a new invoice to the invoice database. Any
 	// duplicated invoices are rejected, therefore all invoices *must* have a
 	// unique payment preimage.
 	AddInvoice(context.Context, *Invoice) (*AddInvoiceResponse, error)
-	// * lncli: `listinvoices`
+	// * dcrlncli: `listinvoices`
 	// ListInvoices returns a list of all the invoices currently stored within the
 	// database. Any active debug invoices are ignored.
 	ListInvoices(context.Context, *ListInvoiceRequest) (*ListInvoiceResponse, error)
-	// * lncli: `lookupinvoice`
+	// * dcrlncli: `lookupinvoice`
 	// LookupInvoice attemps to look up an invoice according to its payment hash.
 	// The passed payment hash *must* be exactly 32 bytes, if not, an error is
 	// returned.
@@ -4675,18 +4669,18 @@ type LightningServer interface {
 	// SubscribeInvoices returns a uni-directional stream (sever -> client) for
 	// notifying the client of newly added/settled invoices.
 	SubscribeInvoices(*InvoiceSubscription, Lightning_SubscribeInvoicesServer) error
-	// * lncli: `decodepayreq`
+	// * dcrlncli: `decodepayreq`
 	// DecodePayReq takes an encoded payment request string and attempts to decode
 	// it, returning a full description of the conditions encoded within the
 	// payment request.
 	DecodePayReq(context.Context, *PayReqString) (*PayReq, error)
-	// * lncli: `listpayments`
+	// * dcrlncli: `listpayments`
 	// ListPayments returns a list of all outgoing payments.
 	ListPayments(context.Context, *ListPaymentsRequest) (*ListPaymentsResponse, error)
 	// *
 	// DeleteAllPayments deletes all outgoing payments from DB.
 	DeleteAllPayments(context.Context, *DeleteAllPaymentsRequest) (*DeleteAllPaymentsResponse, error)
-	// * lncli: `describegraph`
+	// * dcrlncli: `describegraph`
 	// DescribeGraph returns a description of the latest graph state from the
 	// point of view of the node. The graph information is partitioned into two
 	// components: all the nodes/vertexes, and all the edges that connect the
@@ -4694,28 +4688,28 @@ type LightningServer interface {
 	// the node directional specific routing policy which includes: the time lock
 	// delta, fee information, etc.
 	DescribeGraph(context.Context, *ChannelGraphRequest) (*ChannelGraph, error)
-	// * lncli: `getchaninfo`
+	// * dcrlncli: `getchaninfo`
 	// GetChanInfo returns the latest authenticated network announcement for the
 	// given channel identified by its channel ID: an 8-byte integer which
 	// uniquely identifies the location of transaction's funding output within the
 	// blockchain.
 	GetChanInfo(context.Context, *ChanInfoRequest) (*ChannelEdge, error)
-	// * lncli: `getnodeinfo`
+	// * dcrlncli: `getnodeinfo`
 	// GetNodeInfo returns the latest advertised, aggregated, and authenticated
 	// channel information for the specified node identified by its public key.
 	GetNodeInfo(context.Context, *NodeInfoRequest) (*NodeInfo, error)
-	// * lncli: `queryroutes`
+	// * dcrlncli: `queryroutes`
 	// QueryRoutes attempts to query the daemon's Channel Router for a possible
 	// route to a target destination capable of carrying a specific amount of
 	// satoshis. The retuned route contains the full details required to craft and
 	// send an HTLC, also including the necessary information that should be
 	// present within the Sphinx packet encapsualted within the HTLC.
 	QueryRoutes(context.Context, *QueryRoutesRequest) (*QueryRoutesResponse, error)
-	// * lncli: `getnetworkinfo`
+	// * dcrlncli: `getnetworkinfo`
 	// GetNetworkInfo returns some basic stats about the known channel graph from
 	// the point of view of the node.
 	GetNetworkInfo(context.Context, *NetworkInfoRequest) (*NetworkInfo, error)
-	// * lncli: `stop`
+	// * dcrlncli: `stop`
 	// StopDaemon will send a shutdown request to the interrupt handler, triggering
 	// a graceful shutdown of the daemon.
 	StopDaemon(context.Context, *StopRequest) (*StopResponse, error)
@@ -4727,17 +4721,17 @@ type LightningServer interface {
 	// channels being advertised, updates in the routing policy for a directional
 	// channel edge, and when channels are closed on-chain.
 	SubscribeChannelGraph(*GraphTopologySubscription, Lightning_SubscribeChannelGraphServer) error
-	// * lncli: `debuglevel`
+	// * dcrlncli: `debuglevel`
 	// DebugLevel allows a caller to programmatically set the logging verbosity of
 	// lnd. The logging can be targeted according to a coarse daemon-wide logging
 	// level, or in a granular fashion to specify the logging for a target
 	// sub-system.
 	DebugLevel(context.Context, *DebugLevelRequest) (*DebugLevelResponse, error)
-	// * lncli: `feereport`
+	// * dcrlncli: `feereport`
 	// FeeReport allows the caller to obtain a report detailing the current fee
 	// schedule enforced by the node globally for each channel.
 	FeeReport(context.Context, *FeeReportRequest) (*FeeReportResponse, error)
-	// * lncli: `updatechanpolicy`
+	// * dcrlncli: `updatechanpolicy`
 	// UpdateChannelPolicy allows the caller to update the fee schedule and
 	// channel policies for all channels globally, or a particular channel.
 	UpdateChannelPolicy(context.Context, *PolicyUpdateRequest) (*PolicyUpdateResponse, error)
