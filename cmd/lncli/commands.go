@@ -73,8 +73,8 @@ func actionDecorator(f func(*cli.Context) error) func(*cli.Context) error {
 			s, ok := status.FromError(err)
 			if ok && s.Code() == codes.Unimplemented {
 				return fmt.Errorf("Wallet is encrypted. " +
-					"Please unlock using 'lncli unlock', " +
-					"or set password using 'lncli create'" +
+					"Please unlock using 'dcrlncli unlock', " +
+					"or set password using 'dcrlncli create'" +
 					" if this is the first time starting " +
 					"lnd.")
 			}
@@ -131,10 +131,10 @@ func newAddress(ctx *cli.Context) error {
 
 var sendCoinsCommand = cli.Command{
 	Name:      "sendcoins",
-	Usage:     "send bitcoin on-chain to an address",
+	Usage:     "send dcr on-chain to an address",
 	ArgsUsage: "addr amt",
 	Description: `
-	Send amt coins in satoshis to the BASE58 encoded bitcoin address addr.
+	Send amt coins in atoms to the BASE58 encoded dcr address addr.
 
 	Fees used when sending the transaction can be specified via the --conf_target, or 
 	--sat_per_byte optional flags.
@@ -144,12 +144,12 @@ var sendCoinsCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "addr",
-			Usage: "the BASE58 encoded bitcoin address to send coins to on-chain",
+			Usage: "the BASE58 encoded dcr address to send coins to on-chain",
 		},
 		// TODO(roasbeef): switch to BTC on command line? int may not be sufficient
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "the number of bitcoin denominated in satoshis to send",
+			Usage: "the number of dcr denominated in atoms to send",
 		},
 		cli.Int64Flag{
 			Name: "conf_target",
@@ -229,7 +229,7 @@ func sendCoins(ctx *cli.Context) error {
 
 var sendManyCommand = cli.Command{
 	Name:      "sendmany",
-	Usage:     "send bitcoin on-chain to multiple addresses.",
+	Usage:     "send dcr on-chain to multiple addresses.",
 	ArgsUsage: "send-json-string [--conf_target=N] [--sat_per_byte=P]",
 	Description: `
 	Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
@@ -379,8 +379,8 @@ var openChannelCommand = cli.Command{
 	Attempt to open a new channel to an existing peer with the key node-key
 	optionally blocking until the channel is 'open'.
 
-	The channel will be initialized with local-amt satoshis local and push-amt
-	satoshis for the remote node. Once the channel is open, a channelPoint (txid:vout) 
+	The channel will be initialized with local-amt atoms local and push-amt
+	atoms for the remote node. Once the channel is open, a channelPoint (txid:vout) 
 	of the funding output is returned. 
 
 	One can manually set the fee to be used for the funding transaction via either
@@ -400,11 +400,11 @@ var openChannelCommand = cli.Command{
 		},
 		cli.IntFlag{
 			Name:  "local_amt",
-			Usage: "the number of satoshis the wallet should commit to the channel",
+			Usage: "the number of atoms the wallet should commit to the channel",
 		},
 		cli.IntFlag{
 			Name: "push_amt",
-			Usage: "the number of satoshis to push to the remote " +
+			Usage: "the number of atoms to push to the remote " +
 				"side as part of the initial commitment state",
 		},
 		cli.BoolFlag{
@@ -961,7 +961,7 @@ var sendPaymentCommand = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "amt, a",
-			Usage: "number of satoshis to send",
+			Usage: "number of atoms to send",
 		},
 		cli.StringFlag{
 			Name:  "payment_hash, r",
@@ -1134,7 +1134,7 @@ var addInvoiceCommand = cli.Command{
 	Description: `
 	Add a new invoice, expressing intent for a future payment.
 	
-	The value of the invoice in satoshis is necessary for the creation, 
+	The value of the invoice in atoms is necessary for the creation, 
 	the remaining parameters are optional.`,
 	ArgsUsage: "value preimage",
 	Flags: []cli.Flag{
@@ -1156,7 +1156,7 @@ var addInvoiceCommand = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "value",
-			Usage: "the value of this invoice in satoshis",
+			Usage: "the value of this invoice in atoms",
 		},
 		cli.StringFlag{
 			Name: "description_hash",
@@ -1478,7 +1478,7 @@ func drawChannelGraph(graph *lnrpc.ChannelGraph) error {
 		edgeLabel := fmt.Sprintf(`"cid:%v"`, truncateStr(chanIDStr, 7))
 
 		// We'll also use a normalized version of the channels'
-		// capacity in satoshis in order to modulate the "thickness" of
+		// capacity in atoms in order to modulate the "thickness" of
 		// the line that creates the edge within the graph.
 		normalizedCapacity := normalize(edge.Capacity)
 		edgeThickness := strconv.FormatFloat(normalizedCapacity, 'f', -1, 64)
@@ -1662,7 +1662,7 @@ var queryRoutesCommand = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "the amount to send expressed in satoshis",
+			Usage: "the amount to send expressed in atoms",
 		},
 	},
 	Action: actionDecorator(queryRoutes),
@@ -2007,7 +2007,7 @@ var updateChannelPolicyCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name: "base_fee_msat",
-			Usage: "the base fee in milli-satoshis that will " +
+			Usage: "the base fee in milli-atoms that will " +
 				"be charged for each forwarded HTLC, regardless " +
 				"of payment size",
 		},

@@ -11,15 +11,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/macaroon.v1"
+	"github.com/decred/dcrlnd/lnrpc"
 
-	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/macaroons"
 	"github.com/roasbeef/btcutil"
 	"github.com/urfave/cli"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"gopkg.in/macaroon.v1"
 )
 
 const (
@@ -34,7 +34,7 @@ var (
 )
 
 func fatal(err error) {
-	fmt.Fprintf(os.Stderr, "[lncli] %v\n", err)
+	fmt.Fprintf(os.Stderr, "[dcrlncli] %v\n", err)
 	os.Exit(1)
 }
 
@@ -126,9 +126,9 @@ func getClientConn(ctx *cli.Context) *grpc.ClientConn {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "lncli"
+	app.Name = "dcrlncli"
 	app.Version = "0.3"
-	app.Usage = "control plane for your Lightning Network Daemon (lnd)"
+	app.Usage = "control plane for your Decred Lightning Network Daemon (dcrlnd)"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "rpcserver",
