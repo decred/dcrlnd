@@ -170,7 +170,7 @@ func (u *UnlockerService) GenSeed(ctx context.Context,
 	}
 
 	return &lnrpc.GenSeedResponse{
-		CipherSeedMnemonic: []string(mnemonic[:]),
+		CipherSeedMnemonic: mnemonic[:],
 		EncipheredSeed:     encipheredSeed[:],
 	}, nil
 }

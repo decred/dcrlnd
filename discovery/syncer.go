@@ -571,7 +571,7 @@ func (g *gossipSyncer) genChanRangeQuery() (*lnwire.QueryChannelRange, error) {
 		startHeight = 0
 
 	default:
-		startHeight = uint32(newestChan.BlockHeight - chanRangeQueryBuffer)
+		startHeight = newestChan.BlockHeight - chanRangeQueryBuffer
 	}
 
 	log.Infof("gossipSyncer(%x): requesting new chans from height=%v "+

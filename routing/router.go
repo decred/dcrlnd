@@ -35,7 +35,7 @@ const (
 	// defaultPayAttemptTimeout is a duration that we'll use to determine
 	// if we should give up on a payment attempt. This will be used if a
 	// value isn't specified in the LightningNode struct.
-	defaultPayAttemptTimeout = time.Duration(time.Second * 60)
+	defaultPayAttemptTimeout = time.Second * 60
 )
 
 var (
@@ -1525,7 +1525,7 @@ func generateSphinxPacket(route *Route, paymentHash []byte) ([]byte,
 	hopPayloads := route.ToHopPayloads()
 
 	log.Tracef("Constructed per-hop payloads for payment_hash=%x: %v",
-		paymentHash[:], newLogClosure(func() string {
+		paymentHash, newLogClosure(func() string {
 			return spew.Sdump(hopPayloads)
 		}),
 	)

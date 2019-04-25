@@ -402,7 +402,7 @@ func (hn *HarnessNode) start(lndError chan<- error) error {
 func (hn *HarnessNode) Init(ctx context.Context,
 	initReq *lnrpc.InitWalletRequest) error {
 
-	timeout := time.Duration(time.Second * 15)
+	timeout := time.Second * 15
 	ctxt, _ := context.WithTimeout(ctx, timeout)
 	_, err := hn.InitWallet(ctxt, initReq)
 	if err != nil {

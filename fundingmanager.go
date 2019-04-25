@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/wire"
@@ -1013,7 +1012,7 @@ func (f *fundingManager) handleFundingOpen(fmsg *fundingOpenMsg) {
 	if amt < f.cfg.MinChanSize {
 		f.failFundingFlow(
 			fmsg.peer, fmsg.msg.PendingChannelID,
-			lnwallet.ErrChanTooSmall(amt, dcrutil.Amount(f.cfg.MinChanSize)),
+			lnwallet.ErrChanTooSmall(amt, f.cfg.MinChanSize),
 		)
 		return
 	}
@@ -1044,7 +1043,7 @@ func (f *fundingManager) handleFundingOpen(fmsg *fundingOpenMsg) {
 	// reservation attempt may be rejected. Note that since we're on the
 	// responding side of a single funder workflow, we don't commit any
 	// funds to the channel ourselves.
-	chainHash := chainhash.Hash(msg.ChainHash)
+	chainHash := msg.ChainHash
 	req := &lnwallet.InitFundingReserveMsg{
 		ChainHash:       &chainHash,
 		NodeID:          fmsg.peer.IdentityKey(),

@@ -98,7 +98,7 @@ func (nonNegative) Generate(rand *rand.Rand, size int) reflect.Value {
 		if r < 0.01*float64(size) {
 			r = 0
 		}
-		w[i] = float64(r)
+		w[i] = r
 	}
 	return reflect.ValueOf(w)
 }

@@ -545,7 +545,7 @@ func TestLightningWireProtocol(t *testing.T) {
 			numExtraBytes := r.Int31n(1000)
 			if numExtraBytes > 0 {
 				req.ExtraOpaqueData = make([]byte, numExtraBytes)
-				_, err := r.Read(req.ExtraOpaqueData[:])
+				_, err := r.Read(req.ExtraOpaqueData)
 				if err != nil {
 					t.Fatalf("unable to generate opaque "+
 						"bytes: %v", err)
@@ -587,7 +587,7 @@ func TestLightningWireProtocol(t *testing.T) {
 			numExtraBytes := r.Int31n(1000)
 			if numExtraBytes > 0 {
 				req.ExtraOpaqueData = make([]byte, numExtraBytes)
-				_, err := r.Read(req.ExtraOpaqueData[:])
+				_, err := r.Read(req.ExtraOpaqueData)
 				if err != nil {
 					t.Fatalf("unable to generate opaque "+
 						"bytes: %v", err)
@@ -622,7 +622,7 @@ func TestLightningWireProtocol(t *testing.T) {
 			numExtraBytes := r.Int31n(1000)
 			if numExtraBytes > 0 {
 				req.ExtraOpaqueData = make([]byte, numExtraBytes)
-				_, err := r.Read(req.ExtraOpaqueData[:])
+				_, err := r.Read(req.ExtraOpaqueData)
 				if err != nil {
 					t.Fatalf("unable to generate opaque "+
 						"bytes: %v", err)
@@ -658,7 +658,7 @@ func TestLightningWireProtocol(t *testing.T) {
 			numExtraBytes := r.Int31n(1000)
 			if numExtraBytes > 0 {
 				req.ExtraOpaqueData = make([]byte, numExtraBytes)
-				_, err := r.Read(req.ExtraOpaqueData[:])
+				_, err := r.Read(req.ExtraOpaqueData)
 				if err != nil {
 					t.Fatalf("unable to generate opaque "+
 						"bytes: %v", err)

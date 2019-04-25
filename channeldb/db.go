@@ -346,7 +346,7 @@ func (d *DB) fetchOpenChannels(tx *bolt.Tx,
 		chainBucket := nodeChanBucket.Bucket(chainHash)
 		if chainBucket == nil {
 			return fmt.Errorf("unable to read bucket for chain=%x",
-				chainHash[:])
+				chainHash)
 		}
 
 		// Finally, we both of the necessary buckets retrieved, fetch
@@ -355,7 +355,7 @@ func (d *DB) fetchOpenChannels(tx *bolt.Tx,
 		if err != nil {
 			return fmt.Errorf("unable to read channel for "+
 				"chain_hash=%x, node_key=%x: %v",
-				chainHash[:], pub, err)
+				chainHash, pub, err)
 		}
 
 		channels = append(channels, nodeChannels...)
@@ -512,14 +512,14 @@ func fetchChannels(d *DB, pending, waitingClose bool) ([]*OpenChannel, error) {
 				chainBucket := nodeChanBucket.Bucket(chainHash)
 				if chainBucket == nil {
 					return fmt.Errorf("unable to read "+
-						"bucket for chain=%x", chainHash[:])
+						"bucket for chain=%x", chainHash)
 				}
 
 				nodeChans, err := d.fetchNodeChannels(chainBucket)
 				if err != nil {
 					return fmt.Errorf("unable to read "+
 						"channel for chain_hash=%x, "+
-						"node_key=%x: %v", chainHash[:], k, err)
+						"node_key=%x: %v", chainHash, k, err)
 				}
 				for _, channel := range nodeChans {
 					if channel.IsPending != pending {

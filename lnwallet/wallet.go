@@ -279,11 +279,11 @@ type LightningWallet struct {
 // NewLightningWallet creates/opens and initializes a LightningWallet instance.
 // If the wallet has never been created (according to the passed dataDir),
 // first-time setup is executed.
-func NewLightningWallet(Cfg Config) (*LightningWallet, error) {
+func NewLightningWallet(cfg Config) (*LightningWallet, error) {
 	return &LightningWallet{
-		Cfg:              Cfg,
-		SecretKeyRing:    Cfg.SecretKeyRing,
-		WalletController: Cfg.WalletController,
+		Cfg:              cfg,
+		SecretKeyRing:    cfg.SecretKeyRing,
+		WalletController: cfg.WalletController,
 		msgChan:          make(chan interface{}, msgBufferSize),
 		nextFundingID:    0,
 		fundingLimbo:     make(map[uint64]*ChannelReservation),
@@ -1408,7 +1408,7 @@ func coinSelect(feeRate AtomPerKByte, amt dcrutil.Amount,
 		// amount isn't enough to pay fees, then increase the requested
 		// coin amount by the estimate required fee, performing another
 		// round of coin selection.
-		totalSize := int64(sizeEstimate.Size())
+		totalSize := sizeEstimate.Size()
 		requiredFee := feeRate.FeeForSize(totalSize)
 		if overShootAmt < requiredFee {
 			amtNeeded = amt + requiredFee

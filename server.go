@@ -359,7 +359,7 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB, cc *chainControl,
 	if cfg.NAT {
 		srvrLog.Info("Scanning local network for a UPnP enabled device")
 
-		discoveryTimeout := time.Duration(10 * time.Second)
+		discoveryTimeout := 10 * time.Second
 
 		ctx, cancel := context.WithTimeout(
 			context.Background(), discoveryTimeout,
@@ -525,8 +525,8 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB, cc *chainControl,
 				firstHop, htlcAdd, errorDecryptor,
 			)
 		},
-		ChannelPruneExpiry: time.Duration(time.Hour * 24 * 14),
-		GraphPruneInterval: time.Duration(time.Hour),
+		ChannelPruneExpiry: time.Hour * 24 * 14,
+		GraphPruneInterval: time.Hour * 1,
 		QueryBandwidth: func(edge *channeldb.ChannelEdgeInfo) lnwire.MilliAtom {
 			// If we aren't on either side of this edge, then we'll
 			// just thread through the capacity of the edge as we

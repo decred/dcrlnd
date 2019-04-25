@@ -127,7 +127,7 @@ func generateRandomBytes(n int) ([]byte, error) {
 	// TODO(roasbeef): should use counter in tests (atomic) rather than
 	// this
 
-	_, err := rand.Read(b[:])
+	_, err := rand.Read(b)
 	// Note that Err == nil only if we read len(b) bytes.
 	if err != nil {
 		return nil, err

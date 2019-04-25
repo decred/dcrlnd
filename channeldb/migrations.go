@@ -178,7 +178,7 @@ func migrateInvoiceTimeSeries(tx *bolt.Tx) error {
 		}
 		var seqNoBytes [8]byte
 		byteOrder.PutUint64(seqNoBytes[:], nextAddSeqNo)
-		err = addIndex.Put(seqNoBytes[:], invoiceNum[:])
+		err = addIndex.Put(seqNoBytes[:], invoiceNum)
 		if err != nil {
 			return err
 		}
@@ -248,7 +248,7 @@ func migrateInvoiceTimeSeriesOutgoingPayments(tx *bolt.Tx) error {
 	log.Infof("Migrating invoice database to new outgoing payment format")
 
 	err := payBucket.ForEach(func(payID, paymentBytes []byte) error {
-		log.Tracef("Migrating payment %x", payID[:])
+		log.Tracef("Migrating payment %x", payID)
 
 		// The internal invoices for each payment only contain a
 		// populated contract term, and creation date, as a result,
@@ -270,7 +270,7 @@ func migrateInvoiceTimeSeriesOutgoingPayments(tx *bolt.Tx) error {
 		// also add padding for the new 24 bytes of fields, and finally
 		// append the remainder of the outgoing payment.
 		paymentCopy := make([]byte, len(invoiceBytes))
-		copy(paymentCopy[:], invoiceBytes)
+		copy(paymentCopy, invoiceBytes)
 
 		padding := bytes.Repeat([]byte{0}, 24)
 		paymentCopy = append(paymentCopy, padding...)
@@ -413,7 +413,7 @@ func paymentStatusesMigration(tx *bolt.Tx) error {
 			paymentHash := v[payHashOffset : payHashOffset+32]
 
 			return paymentStatuses.Put(
-				paymentHash[:], StatusInFlight.Bytes(),
+				paymentHash, StatusInFlight.Bytes(),
 			)
 		})
 		if err != nil {
@@ -449,7 +449,7 @@ func paymentStatusesMigration(tx *bolt.Tx) error {
 		// Update status for current payment to completed. If it fails,
 		// the migration is aborted and the payment bucket is returned
 		// to its previous state.
-		return paymentStatuses.Put(paymentHash[:], StatusCompleted.Bytes())
+		return paymentStatuses.Put(paymentHash, StatusCompleted.Bytes())
 	})
 	if err != nil {
 		return err
@@ -556,7 +556,7 @@ func migratePruneEdgeUpdateIndex(tx *bolt.Tx) error {
 
 		// Skip any entries with unknown policies as there will not be
 		// any entries for them in the edge update index.
-		if bytes.Equal(edgePolicyBytes[:], unknownPolicy) {
+		if bytes.Equal(edgePolicyBytes, unknownPolicy) {
 			continue
 		}
 

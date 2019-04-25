@@ -708,7 +708,7 @@ func parsePaymentHash(data []byte) (*[32]byte, error) {
 		return nil, err
 	}
 
-	copy(paymentHash[:], hash[:])
+	copy(paymentHash[:], hash)
 
 	return &paymentHash, nil
 }
@@ -759,7 +759,7 @@ func parseDescriptionHash(data []byte) (*[32]byte, error) {
 		return nil, err
 	}
 
-	copy(descriptionHash[:], hash[:])
+	copy(descriptionHash[:], hash)
 
 	return &descriptionHash, nil
 }
@@ -915,7 +915,7 @@ func writeTaggedFields(bufferBase32 *bytes.Buffer, invoice *Invoice) error {
 	}
 
 	if invoice.minFinalCLTVExpiry != nil {
-		finalDelta := uint64ToBase32(uint64(*invoice.minFinalCLTVExpiry))
+		finalDelta := uint64ToBase32(*invoice.minFinalCLTVExpiry)
 		err := writeTaggedField(bufferBase32, fieldTypeC, finalDelta)
 		if err != nil {
 			return err
@@ -1073,7 +1073,7 @@ func uint64ToBase32(num uint64) []byte {
 	for num > 0 {
 		i--
 		arr[i] = byte(num & uint64(31)) // 0b11111 in binary
-		num = num >> 5
+		num >>= 5
 	}
 
 	// We only return non-zero leading groups.

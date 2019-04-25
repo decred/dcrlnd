@@ -977,7 +977,7 @@ func SerializeHtlcs(b io.Writer, htlcs ...HTLC) error {
 	for _, htlc := range htlcs {
 		if err := WriteElements(b,
 			htlc.Signature, htlc.RHash, htlc.Amt, htlc.RefundTimeout,
-			htlc.OutputIndex, htlc.Incoming, htlc.OnionBlob[:],
+			htlc.OutputIndex, htlc.Incoming, htlc.OnionBlob,
 			htlc.HtlcIndex, htlc.LogIndex,
 		); err != nil {
 			return err
@@ -1027,7 +1027,7 @@ func (h *HTLC) Copy() HTLC {
 		RefundTimeout: h.RefundTimeout,
 		OutputIndex:   h.OutputIndex,
 	}
-	copy(clone.Signature[:], h.Signature)
+	copy(clone.Signature, h.Signature)
 	copy(clone.RHash[:], h.RHash[:])
 
 	return clone
@@ -2382,9 +2382,9 @@ func deserializeChanCommit(r io.Reader) (ChannelCommitment, error) {
 func fetchChanCommitment(chanBucket *bolt.Bucket, local bool) (ChannelCommitment, error) {
 	var commitKey []byte
 	if local {
-		commitKey = append(chanCommitmentKey, byte(0x00))
+		commitKey = append(chanCommitmentKey, 0x00)
 	} else {
-		commitKey = append(chanCommitmentKey, byte(0x01))
+		commitKey = append(chanCommitmentKey, 0x01)
 	}
 
 	commitBytes := chanBucket.Get(commitKey)

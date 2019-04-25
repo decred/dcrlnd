@@ -59,8 +59,8 @@ func xorTxid(cid *ChannelID, outputIndex uint16) {
 	var buf [32]byte
 	binary.BigEndian.PutUint16(buf[30:], outputIndex)
 
-	cid[30] = cid[30] ^ buf[30]
-	cid[31] = cid[31] ^ buf[31]
+	cid[30] ^= buf[30]
+	cid[31] ^= buf[31]
 }
 
 // GenPossibleOutPoints generates all the possible outputs given a channel ID.

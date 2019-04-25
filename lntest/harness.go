@@ -304,7 +304,7 @@ func (n *NetworkHarness) NewNodeWithSeed(name string, extraArgs []string,
 		return nil, nil, err
 	}
 
-	timeout := time.Duration(time.Second * 15)
+	timeout := time.Second * 15
 	ctxb := context.Background()
 
 	// Create a request to generate a new aezeed. The new seed will have the

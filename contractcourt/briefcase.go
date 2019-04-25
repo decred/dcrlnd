@@ -362,7 +362,7 @@ func (b *boltArbitratorLog) writeResolver(contractBucket *bolt.Bucket,
 	case *commitSweepResolver:
 		rType = resolverUnilateralSweep
 	}
-	if _, err := buf.Write([]byte{byte(rType)}); err != nil {
+	if _, err := buf.Write([]byte{rType}); err != nil {
 		return err
 	}
 

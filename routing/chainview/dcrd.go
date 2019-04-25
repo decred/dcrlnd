@@ -370,7 +370,7 @@ func (b *DcrdFilteredChainView) chainFilterer() {
 			// with dcrd applying the newly loaded filter to each
 			// block.
 			for i := update.updateHeight + 1; i < bestHeight+1; i++ {
-				blockHash, err := b.dcrdConn.GetBlockHash(int64(i))
+				blockHash, err := b.dcrdConn.GetBlockHash(i)
 				if err != nil {
 					log.Warnf("Unable to get block hash "+
 						"for block at height %d: %v",

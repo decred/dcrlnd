@@ -783,7 +783,7 @@ func (n *DcrdNotifier) RegisterSpendNtfn(outpoint *wire.OutPoint,
 				"block %v: %v", blockHash, err)
 		}
 
-		if uint32(blockHeader.Height) > historicalDispatch.StartHeight {
+		if blockHeader.Height > historicalDispatch.StartHeight {
 			startHeight = blockHeader.Height
 		}
 	}

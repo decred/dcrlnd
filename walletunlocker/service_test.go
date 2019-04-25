@@ -212,7 +212,7 @@ func TestInitWallet(t *testing.T) {
 	ctx := context.Background()
 	req := &lnrpc.InitWalletRequest{
 		WalletPassword:     testPassword,
-		CipherSeedMnemonic: []string(mnemonic[:]),
+		CipherSeedMnemonic: mnemonic[:],
 		AezeedPassphrase:   pass,
 		RecoveryWindow:     int32(testRecoveryWindow),
 	}

@@ -391,7 +391,7 @@ func TestChannelStateTransition(t *testing.T) {
 			HtlcIndex:     uint64(i),
 		}
 		htlc.OnionBlob = make([]byte, 10)
-		copy(htlc.OnionBlob[:], bytes.Repeat([]byte{2}, 10))
+		copy(htlc.OnionBlob, bytes.Repeat([]byte{2}, 10))
 		htlcs = append(htlcs, htlc)
 		htlcAmt += htlc.Amt
 	}
@@ -437,7 +437,7 @@ func TestChannelStateTransition(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read commitment height from disk: %v", err)
 	}
-	if numDiskUpdates != uint64(commitment.CommitHeight) {
+	if numDiskUpdates != commitment.CommitHeight {
 		t.Fatalf("num disk updates doesn't match: %v vs %v",
 			numDiskUpdates, commitment.CommitHeight)
 	}

@@ -879,7 +879,7 @@ func (d *AuthenticatedGossiper) resendAnnounceSignatures() error {
 					"unexpectedly did not exist")
 			}
 
-			return bucket.Delete(t.dbKey[:])
+			return bucket.Delete(t.dbKey)
 		}); err != nil {
 			return fmt.Errorf("failed deleting message from database: %v", err)
 		}

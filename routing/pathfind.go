@@ -371,7 +371,7 @@ func NewRouteFromHops(amtToSend lnwire.MilliAtom, timeLock uint32,
 	// Then we'll update the node and channel index, to indicate that this
 	// Vertex and incoming channel link are present within this route.
 	for _, hop := range hops {
-		v := Vertex(hop.PubKeyBytes)
+		v := hop.PubKeyBytes
 		route.nodeIndex[v] = struct{}{}
 		route.chanIndex[hop.ChannelID] = struct{}{}
 	}
@@ -562,7 +562,7 @@ func findPath(g *graphParams, r *restrictParams,
 		// TODO(halseth): also ignore disable flags for non-local
 		// channels if bandwidth hint is set?
 		isSourceChan := fromVertex == sourceVertex
-		edgeFlags := lnwire.ChanUpdateFlag(edge.Flags)
+		edgeFlags := edge.Flags
 		isDisabled := edgeFlags&lnwire.ChanUpdateDisabled != 0
 
 		if !isSourceChan && isDisabled {

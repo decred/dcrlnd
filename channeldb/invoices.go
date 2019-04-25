@@ -232,7 +232,7 @@ func (d *DB) AddInvoice(newInvoice *Invoice) (uint64, error) {
 		paymentHash := chainhash.HashB(
 			newInvoice.Terms.PaymentPreimage[:],
 		)
-		if invoiceIndex.Get(paymentHash[:]) != nil {
+		if invoiceIndex.Get(paymentHash) != nil {
 			return ErrDuplicateInvoice
 		}
 
@@ -724,7 +724,7 @@ func putInvoice(invoices, invoiceIndex, addIndex *bolt.Bucket,
 	// identify if we can settle an incoming payment, and also to possibly
 	// allow a single invoice to have multiple payment installations.
 	paymentHash := chainhash.HashB(i.Terms.PaymentPreimage[:])
-	err := invoiceIndex.Put(paymentHash[:], invoiceKey[:])
+	err := invoiceIndex.Put(paymentHash, invoiceKey[:])
 	if err != nil {
 		return 0, err
 	}
@@ -762,13 +762,13 @@ func putInvoice(invoices, invoiceIndex, addIndex *bolt.Bucket,
 }
 
 func serializeInvoice(w io.Writer, i *Invoice) error {
-	if err := wire.WriteVarBytes(w, 0, i.Memo[:]); err != nil {
+	if err := wire.WriteVarBytes(w, 0, i.Memo); err != nil {
 		return err
 	}
-	if err := wire.WriteVarBytes(w, 0, i.Receipt[:]); err != nil {
+	if err := wire.WriteVarBytes(w, 0, i.Receipt); err != nil {
 		return err
 	}
-	if err := wire.WriteVarBytes(w, 0, i.PaymentRequest[:]); err != nil {
+	if err := wire.WriteVarBytes(w, 0, i.PaymentRequest); err != nil {
 		return err
 	}
 
@@ -927,7 +927,7 @@ func settleInvoice(invoices, settleIndex *bolt.Bucket, invoiceNum []byte,
 		return nil, err
 	}
 
-	if err := invoices.Put(invoiceNum[:], buf.Bytes()); err != nil {
+	if err := invoices.Put(invoiceNum, buf.Bytes()); err != nil {
 		return nil, err
 	}
 

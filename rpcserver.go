@@ -1782,7 +1782,7 @@ func (r *rpcServer) GetInfo(ctx context.Context,
 		Chains:              activeChains,
 		Uris:                uris,
 		Alias:               nodeAnn.Alias.String(),
-		BestHeaderTimestamp: int64(bestHeaderTimestamp),
+		BestHeaderTimestamp: bestHeaderTimestamp,
 		Version:             build.Version(),
 	}, nil
 }
@@ -2741,7 +2741,7 @@ func (r *rpcServer) checkCanSendPayment(payIntent *rpcPaymentIntent) error {
 		// currently has minus what the remote node requires us to
 		// maintain at all times (chan_reserve).
 		capacity := channel.LocalCommitment.LocalBalance.ToAtoms() -
-			dcrutil.Amount(channel.LocalChanCfg.ChannelConstraints.ChanReserve)
+			channel.LocalChanCfg.ChannelConstraints.ChanReserve
 
 		if capacity >= amt {
 			// Found an online channel with enough capacity. Signal
@@ -3157,7 +3157,7 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 		// has (the remote_balance from our pov) minus what we require the
 		// remote node to maintain at all times (chan_reserve).
 		capacity := channel.RemoteCommitment.RemoteBalance.ToAtoms() -
-			dcrutil.Amount(channel.RemoteChanCfg.ChannelConstraints.ChanReserve)
+			channel.RemoteChanCfg.ChannelConstraints.ChanReserve
 
 		if capacity >= amt {
 			// Found an online channel with enough capacity. Signal success.
@@ -4147,7 +4147,7 @@ func (r *rpcServer) marshallRoute(route *routing.Route) *lnrpc.Route {
 			AmtToForwardMAtoms: int64(hop.AmtToForward),
 			Fee:                int64(fee.ToAtoms()),
 			FeeMAtoms:          int64(fee),
-			Expiry:             uint32(hop.OutgoingTimeLock),
+			Expiry:             hop.OutgoingTimeLock,
 			PubKey: hex.EncodeToString(
 				hop.PubKeyBytes[:]),
 		}
@@ -4745,7 +4745,7 @@ func (r *rpcServer) FeeReport(ctx context.Context,
 	// Before we perform the queries below, we'll instruct the switch to
 	// flush any pending events to disk. This ensure we get a complete
 	// snapshot at this particular time.
-	if r.server.htlcSwitch.FlushForwardingEvents(); err != nil {
+	if err := r.server.htlcSwitch.FlushForwardingEvents(); err != nil {
 		return nil, fmt.Errorf("unable to flush forwarding "+
 			"events: %v", err)
 	}

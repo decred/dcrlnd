@@ -1314,7 +1314,7 @@ func SetStateNumHint(commitTx *wire.MsgTx, stateNum uint64,
 	copy(obfs[2:], obfuscator[:])
 	xorInt := binary.BigEndian.Uint64(obfs[:])
 
-	stateNum = stateNum ^ xorInt
+	stateNum ^= xorInt
 
 	// Set the height bit of the sequence number in order to disable any
 	// sequence locks semantics.

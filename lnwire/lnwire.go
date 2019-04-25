@@ -215,7 +215,7 @@ func WriteElement(w io.Writer, element interface{}) error {
 			return err
 		}
 	case []byte:
-		if _, err := w.Write(e[:]); err != nil {
+		if _, err := w.Write(e); err != nil {
 			return err
 		}
 	case PkScript:
@@ -671,7 +671,7 @@ func ReadElement(r io.Reader, element interface{}) error {
 		// With the number of addresses, read, we'll now pull in the
 		// buffer of the encoded addresses into memory.
 		addrs := make([]byte, addrsLen)
-		if _, err := io.ReadFull(r, addrs[:]); err != nil {
+		if _, err := io.ReadFull(r, addrs); err != nil {
 			return err
 		}
 		addrBuf := bytes.NewReader(addrs)

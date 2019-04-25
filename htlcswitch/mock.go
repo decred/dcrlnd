@@ -48,7 +48,7 @@ func (m *mockPreimageCache) AddPreimage(preimage []byte) error {
 	m.Lock()
 	defer m.Unlock()
 
-	m.preimageMap[chainhash.HashH(preimage[:])] = preimage
+	m.preimageMap[chainhash.HashH(preimage)] = preimage
 
 	return nil
 }
@@ -739,7 +739,7 @@ func (i *mockInvoiceRegistry) AddInvoice(invoice channeldb.Invoice) error {
 	defer i.Unlock()
 
 	rhash := chainhash.HashH(invoice.Terms.PaymentPreimage[:])
-	i.invoices[chainhash.Hash(rhash)] = invoice
+	i.invoices[rhash] = invoice
 
 	return nil
 }

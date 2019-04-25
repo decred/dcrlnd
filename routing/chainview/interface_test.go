@@ -706,7 +706,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 			// oldHeight - 5 (the 5 disconnected blocks) + (i-5)
 			// (subtract 5 since the 5 first iterations consumed
 			// disconnected blocks) + 1
-			expectedHeight := int64(oldHeight) - 9 + i
+			expectedHeight := oldHeight - 9 + i
 			if block.Height != expectedHeight {
 				t.Fatalf("expected to receive connected "+
 					"block at height %d, instead got at %d",
@@ -717,7 +717,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 				t.Fatalf("did not expect to get stale block "+
 					"in iteration %d", i)
 			}
-			expectedHeight := int64(oldHeight) - i
+			expectedHeight := oldHeight - i
 			if block.Height != expectedHeight {
 				t.Fatalf("expected to receive disconnected "+
 					"block at height %d, instead got at %d",

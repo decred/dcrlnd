@@ -813,7 +813,7 @@ func TestPrematureAnnouncement(t *testing.T) {
 func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 	t.Parallel()
 
-	ctx, cleanup, err := createTestCtx(uint32(proofMatureDelta))
+	ctx, cleanup, err := createTestCtx(proofMatureDelta)
 	if err != nil {
 		t.Fatalf("can't create context: %v", err)
 	}
@@ -1017,7 +1017,7 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 func TestOrphanSignatureAnnouncement(t *testing.T) {
 	t.Parallel()
 
-	ctx, cleanup, err := createTestCtx(uint32(proofMatureDelta))
+	ctx, cleanup, err := createTestCtx(proofMatureDelta)
 	if err != nil {
 		t.Fatalf("can't create context: %v", err)
 	}
@@ -1227,7 +1227,7 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 func TestSignatureAnnouncementRetry(t *testing.T) {
 	t.Parallel()
 
-	ctx, cleanup, err := createTestCtx(uint32(proofMatureDelta))
+	ctx, cleanup, err := createTestCtx(proofMatureDelta)
 	if err != nil {
 		t.Fatalf("can't create context: %v", err)
 	}
@@ -1453,7 +1453,7 @@ func TestSignatureAnnouncementRetry(t *testing.T) {
 func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 	t.Parallel()
 
-	ctx, cleanup, err := createTestCtx(uint32(proofMatureDelta))
+	ctx, cleanup, err := createTestCtx(proofMatureDelta)
 	if err != nil {
 		t.Fatalf("can't create context: %v", err)
 	}
@@ -1715,7 +1715,7 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 	t.Parallel()
 
-	ctx, cleanup, err := createTestCtx(uint32(proofMatureDelta))
+	ctx, cleanup, err := createTestCtx(proofMatureDelta)
 	if err != nil {
 		t.Fatalf("can't create context: %v", err)
 	}
@@ -2301,7 +2301,7 @@ func TestForwardPrivateNodeAnnouncement(t *testing.T) {
 func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 	t.Parallel()
 
-	ctx, cleanup, err := createTestCtx(uint32(proofMatureDelta))
+	ctx, cleanup, err := createTestCtx(proofMatureDelta)
 	if err != nil {
 		t.Fatalf("can't create context: %v", err)
 	}

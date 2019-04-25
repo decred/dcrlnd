@@ -79,7 +79,7 @@ func (b *WalletKeyRing) createAccountsUpTo(keyFam KeyFamily) error {
 		}
 	}
 
-	for i := uint32(maxExistAccount + 1); i <= uint32(keyFam); i++ {
+	for i := maxExistAccount + 1; i <= uint32(keyFam); i++ {
 		keychainLog.Debugf("Creating account %d", i)
 		_, err = b.wallet.NextAccount(fmt.Sprintf("%d", i))
 		if err != nil {

@@ -1105,7 +1105,7 @@ func DecodeFailure(r io.Reader, pver uint32) (FailureMessage, error) {
 		if err := f.Decode(dataReader, pver); err != nil {
 			return nil, fmt.Errorf("unable to decode error "+
 				"update (type=%T, len_bytes=%v, bytes=%x): %v",
-				failure, failureLength, failureData[:], err)
+				failure, failureLength, failureData, err)
 		}
 	}
 

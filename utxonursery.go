@@ -656,8 +656,7 @@ func (u *utxoNursery) reloadPreschool() error {
 // is called during the startup of the UTXO Nursery.
 func (u *utxoNursery) reloadClasses(bestHeight uint32) error {
 	// Loading all active heights up to and including the current block.
-	activeHeights, err := u.cfg.Store.HeightsBelowOrEqual(
-		uint32(bestHeight))
+	activeHeights, err := u.cfg.Store.HeightsBelowOrEqual(bestHeight)
 	if err != nil {
 		return err
 	}

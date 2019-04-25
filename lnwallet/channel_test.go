@@ -805,7 +805,7 @@ func TestForceClose(t *testing.T) {
 		t.Fatalf("bob incorrect output value in SelfOutputSignDesc, "+
 			"expected %v, got %v",
 			bobAmount.ToAtoms(),
-			int64(bobCommitResolution.SelfOutputSignDesc.Output.Value))
+			bobCommitResolution.SelfOutputSignDesc.Output.Value)
 	}
 	if bobCommitResolution.MaturityDelay !=
 		uint32(bobChannel.channelState.LocalChanCfg.CsvDelay) {
@@ -1828,7 +1828,7 @@ func TestCooperativeCloseDustAdherence(t *testing.T) {
 	// Both sides currently have over 1 DCR settled as part of their
 	// balances. As a result, performing a cooperative closure now result
 	// in both sides having an output within the closure transaction.
-	aliceFee := dcrutil.Amount(aliceChannel.CalcFee(aliceFeeRate)) + 1000
+	aliceFee := aliceChannel.CalcFee(aliceFeeRate) + 1000
 	aliceSig, _, _, err := aliceChannel.CreateCloseProposal(aliceFee,
 		aliceDeliveryScript, bobDeliveryScript)
 	if err != nil {
@@ -1836,7 +1836,7 @@ func TestCooperativeCloseDustAdherence(t *testing.T) {
 	}
 	aliceCloseSig := append(aliceSig, byte(txscript.SigHashAll))
 
-	bobFee := dcrutil.Amount(bobChannel.CalcFee(bobFeeRate)) + 1000
+	bobFee := bobChannel.CalcFee(bobFeeRate) + 1000
 	bobSig, _, _, err := bobChannel.CreateCloseProposal(bobFee,
 		bobDeliveryScript, aliceDeliveryScript)
 	if err != nil {
@@ -1900,7 +1900,7 @@ func TestCooperativeCloseDustAdherence(t *testing.T) {
 	if closeTx.TxOut[0].Value != int64(aliceExpectedBalance) {
 		t.Fatalf("alice's balance is incorrect: expected %v, got %v",
 			aliceExpectedBalance,
-			int64(closeTx.TxOut[0].Value))
+			closeTx.TxOut[0].Value)
 	}
 
 	// Finally, we'll modify the current balances and dust limits such that
@@ -5150,7 +5150,6 @@ func TestChanReserve(t *testing.T) {
 	//	Bob:	5.0
 	htlcAmt := lnwire.NewMAtomsFromAtoms(0.5 * dcrutil.AtomsPerCoin)
 	htlc, _ := createHTLC(aliceIndex, htlcAmt)
-	aliceIndex++
 	if _, err := aliceChannel.AddHTLC(htlc, nil); err != nil {
 		t.Fatalf("unable to add htlc: %v", err)
 	}
@@ -5177,7 +5176,6 @@ func TestChanReserve(t *testing.T) {
 	//	Alice:	4.5
 	//	Bob:	5.0
 	htlc, _ = createHTLC(bobIndex, htlcAmt)
-	bobIndex++
 	_, err := bobChannel.AddHTLC(htlc, nil)
 	if err != ErrBelowChanReserve {
 		t.Fatalf("expected ErrBelowChanReserve, instead received: %v", err)
@@ -5198,7 +5196,6 @@ func TestChanReserve(t *testing.T) {
 	defer cleanUp()
 
 	aliceIndex = 0
-	bobIndex = 0
 
 	// Now we'll add HTLC of 3.5 DCR to Alice's commitment, this should put
 	// Alice's balance at 1.5 DCR.
@@ -5224,7 +5221,6 @@ func TestChanReserve(t *testing.T) {
 	// balance dip below.
 	htlcAmt = lnwire.NewMAtomsFromAtoms(1 * dcrutil.AtomsPerCoin)
 	htlc, _ = createHTLC(aliceIndex, htlcAmt)
-	aliceIndex++
 	_, err = aliceChannel.AddHTLC(htlc, nil)
 	if err != ErrBelowChanReserve {
 		t.Fatalf("expected ErrBelowChanReserve, instead received: %v", err)
@@ -5254,7 +5250,6 @@ func TestChanReserve(t *testing.T) {
 	//	Bob:	7.0
 	htlcAmt = lnwire.NewMAtomsFromAtoms(2 * dcrutil.AtomsPerCoin)
 	htlc, preimage := createHTLC(aliceIndex, htlcAmt)
-	aliceIndex++
 	aliceHtlcIndex, err := aliceChannel.AddHTLC(htlc, nil)
 	if err != nil {
 		t.Fatalf("unable to add htlc: %v", err)
@@ -5294,7 +5289,6 @@ func TestChanReserve(t *testing.T) {
 	// the fee this is okay.
 	htlcAmt = lnwire.NewMAtomsFromAtoms(1 * dcrutil.AtomsPerCoin)
 	htlc, _ = createHTLC(bobIndex, htlcAmt)
-	bobIndex++
 	if _, err := bobChannel.AddHTLC(htlc, nil); err != nil {
 		t.Fatalf("unable to add htlc: %v", err)
 	}
@@ -5607,7 +5601,7 @@ func TestChannelRestoreUpdateLogs(t *testing.T) {
 	// and remote commit chains are updated in an async fashion. Since the
 	// remote chain was updated with the latest state (since Bob sent the
 	// revocation earlier) we can keep advancing the remote commit chain.
-	aliceSig, _, err = aliceChannel.SignNextCommitment()
+	_, _, err = aliceChannel.SignNextCommitment()
 	if err != nil {
 		t.Fatalf("unable to sign commitment: %v", err)
 	}
@@ -6170,7 +6164,7 @@ func TestChannelRestoreCommitHeight(t *testing.T) {
 
 	// Sign a new state for Alice, making Bob have a pending remote
 	// commitment.
-	bobSig, _, err = bobChannel.SignNextCommitment()
+	_, _, err = bobChannel.SignNextCommitment()
 	if err != nil {
 		t.Fatalf("unable to sign commitment: %v", err)
 	}

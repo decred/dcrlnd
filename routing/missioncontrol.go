@@ -19,7 +19,7 @@ const (
 	// larger than edgeDecay as an edge failure typical indicates an
 	// unbalanced channel, while a vertex failure indicates a node is not
 	// online and active.
-	vertexDecay = time.Duration(time.Minute * 5)
+	vertexDecay = time.Minute * 5
 
 	// edgeDecay is the decay period of colored edges added to
 	// missionControl. Once edgeDecay passed after an entry has been added,
@@ -28,7 +28,7 @@ const (
 	// that a channel was unbalanced, a condition which may quickly change.
 	//
 	// TODO(roasbeef): instead use random delay on each?
-	edgeDecay = time.Duration(time.Second * 5)
+	edgeDecay = time.Second * 5
 )
 
 // missionControl contains state which summarizes the past attempts of HTLC

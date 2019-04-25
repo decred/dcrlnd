@@ -347,7 +347,7 @@ func (s *Server) handleCreateSession(peer Peer, id *wtdb.SessionID,
 		log.Debugf("Already have session for %s", id)
 		return s.replyCreateSession(
 			peer, id, wtwire.CreateSessionCodeAlreadyExists,
-			[]byte(existingInfo.RewardAddress),
+			existingInfo.RewardAddress,
 		)
 
 	// Some other database error occurred, return a temporary failure.

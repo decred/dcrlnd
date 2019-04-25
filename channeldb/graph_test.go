@@ -51,7 +51,7 @@ func createTestVertex(db *DB) (*LightningNode, error) {
 		AuthSigBytes:         testSig.Serialize(),
 		LastUpdate:           time.Unix(updateTime, 0),
 		Color:                color.RGBA{1, 2, 3, 0},
-		Alias:                "kek" + string(pub[:]),
+		Alias:                "kek" + string(pub),
 		Features:             testFeatures,
 		Addresses:            testAddrs,
 		db:                   db,
@@ -500,7 +500,7 @@ func TestDisconnectBlockAtHeight(t *testing.T) {
 
 	// Call DisconnectBlockAtHeight, which should prune every channel
 	// that has a funding height of 'height' or greater.
-	removed, err := graph.DisconnectBlockAtHeight(uint32(height))
+	removed, err := graph.DisconnectBlockAtHeight(height)
 	if err != nil {
 		t.Fatalf("unable to prune %v", err)
 	}
@@ -851,6 +851,7 @@ func TestGraphTraversal(t *testing.T) {
 		firstNode = nodes[0]
 		secondNode = nodes[1]
 	} else {
+		// XXX: matches above
 		firstNode = nodes[0]
 		secondNode = nodes[1]
 	}
@@ -1783,7 +1784,7 @@ func TestFilterChannelRange(t *testing.T) {
 	for i := 0; i < numChans; i++ {
 		chanHeight := endHeight
 		channel, chanID := createEdge(
-			uint32(chanHeight), uint32(i+1), 0, 0, node1, node2,
+			chanHeight, uint32(i+1), 0, 0, node1, node2,
 		)
 
 		if err := graph.AddChannelEdge(&channel); err != nil {

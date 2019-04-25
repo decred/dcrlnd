@@ -58,7 +58,7 @@ func generateInputPartitionings(sweepableInputs []Input,
 		}
 
 		yields[*input.OutPoint()] = input.SignDesc().Output.Value -
-			int64(feePerKB.FeeForSize(int64(size)))
+			int64(feePerKB.FeeForSize(size))
 	}
 
 	sort.Slice(sweepableInputs, func(i, j int) bool {

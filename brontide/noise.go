@@ -385,9 +385,7 @@ func NewBrontideMachine(initiator bool, localPub *secp256k1.PrivateKey,
 
 	// With the initial base machine created, we'll assign our default
 	// version of the ephemeral key generator.
-	m.ephemeralGen = func() (*secp256k1.PrivateKey, error) {
-		return secp256k1.GeneratePrivateKey()
-	}
+	m.ephemeralGen = secp256k1.GeneratePrivateKey
 
 	// With the default options established, we'll now process all the
 	// options passed in as parameters.
@@ -452,7 +450,7 @@ func (b *Machine) GenActOne() ([ActOneSize]byte, error) {
 
 	// es
 	s := ecdh(b.remoteStatic, b.localEphemeral)
-	b.mixKey(s[:])
+	b.mixKey(s)
 
 	authPayload := b.EncryptAndHash([]byte{})
 

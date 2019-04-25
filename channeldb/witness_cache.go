@@ -132,7 +132,7 @@ func (w *WitnessCache) LookupWitness(wType WitnessType, witnessKey []byte) ([]by
 		}
 
 		witness = make([]byte, len(dbWitness))
-		copy(witness[:], dbWitness)
+		copy(witness, dbWitness)
 
 		return nil
 	})

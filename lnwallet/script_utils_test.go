@@ -334,7 +334,7 @@ func TestHTLCSenderSpendValidation(t *testing.T) {
 	// Generate a payment preimage to be used below.
 	paymentPreimage := revokePreimage
 	paymentPreimage[0] ^= 1
-	paymentHash := chainhash.HashB(paymentPreimage[:])
+	paymentHash := chainhash.HashB(paymentPreimage)
 
 	// We'll also need some tests keys for alice and bob, and metadata of
 	// the HTLC output.
@@ -351,7 +351,7 @@ func TestHTLCSenderSpendValidation(t *testing.T) {
 
 	// Generate the raw HTLC redemption scripts, and its p2wsh counterpart.
 	htlcWitnessScript, err := senderHTLCScript(aliceLocalKey, bobLocalKey,
-		revocationKey, paymentHash[:])
+		revocationKey, paymentHash)
 	if err != nil {
 		t.Fatalf("unable to create htlc sender script: %v", err)
 	}
@@ -475,7 +475,7 @@ func TestHTLCSenderSpendValidation(t *testing.T) {
 				}
 
 				return SenderHtlcSpendRedeem(bobSigner, signDesc,
-					sweepTx, paymentPreimage[:])
+					sweepTx, paymentPreimage)
 			}),
 			true,
 		},
@@ -589,7 +589,7 @@ func TestHTLCReceiverSpendValidation(t *testing.T) {
 	// Generate a payment preimage to be used below.
 	paymentPreimage := revokePreimage
 	paymentPreimage[0] ^= 1
-	paymentHash := chainhash.HashB(paymentPreimage[:])
+	paymentHash := chainhash.HashB(paymentPreimage)
 
 	// We'll also need some tests keys for alice and bob, and metadata of
 	// the HTLC output.
@@ -608,7 +608,7 @@ func TestHTLCReceiverSpendValidation(t *testing.T) {
 
 	// Generate the raw HTLC redemption scripts, and its p2wsh counterpart.
 	htlcWitnessScript, err := receiverHTLCScript(cltvTimeout, aliceLocalKey,
-		bobLocalKey, revocationKey, paymentHash[:])
+		bobLocalKey, revocationKey, paymentHash)
 	if err != nil {
 		t.Fatalf("unable to create htlc sender script: %v", err)
 	}
@@ -716,7 +716,7 @@ func TestHTLCReceiverSpendValidation(t *testing.T) {
 				}
 
 				return receiverHtlcSpendRedeem(aliceSenderSig,
-					paymentPreimage[:], bobSigner,
+					paymentPreimage, bobSigner,
 					signDesc, sweepTx)
 			}),
 			true,
@@ -1109,7 +1109,7 @@ func TestCommitTxStateHint(t *testing.T) {
 		}
 
 		for i := test.from; i <= test.to; i++ {
-			stateNum := uint64(i)
+			stateNum := i
 
 			err := SetStateNumHint(commitTx, stateNum, obfuscator)
 			if err != nil && !test.shouldFail {

@@ -115,7 +115,7 @@ func CreateTestChannels() (*LightningChannel, *LightningChannel, func(), error) 
 	csvTimeoutBob := uint32(4)
 
 	prevOut := &wire.OutPoint{
-		Hash:  chainhash.Hash(testHdSeed),
+		Hash:  testHdSeed,
 		Index: 0,
 	}
 	fundingTxIn := wire.NewTxIn(prevOut, 0, nil) // TODO(decred): Need correct input value
@@ -128,14 +128,14 @@ func CreateTestChannels() (*LightningChannel, *LightningChannel, func(), error) 
 	)
 	for i := 0; i < 5; i++ {
 		key := make([]byte, len(testWalletPrivKey))
-		copy(key[:], testWalletPrivKey[:])
+		copy(key, testWalletPrivKey)
 		key[0] ^= byte(i + 1)
 
 		aliceKey, _ := secp256k1.PrivKeyFromBytes(key)
 		aliceKeys = append(aliceKeys, aliceKey)
 
 		key = make([]byte, len(bobsPrivKey))
-		copy(key[:], bobsPrivKey)
+		copy(key, bobsPrivKey)
 		key[0] ^= byte(i + 1)
 
 		bobKey, _ := secp256k1.PrivKeyFromBytes(key)
@@ -514,7 +514,7 @@ func (m *mockPreimageCache) AddPreimage(preimage []byte) error {
 	m.Lock()
 	defer m.Unlock()
 
-	m.preimageMap[chainhash.HashH(preimage[:])] = preimage
+	m.preimageMap[chainhash.HashH(preimage)] = preimage
 
 	return nil
 }

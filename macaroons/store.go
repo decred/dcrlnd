@@ -137,7 +137,7 @@ func (r *RootKeyStorage) Get(_ context.Context, id []byte) ([]byte, error) {
 		}
 
 		rootKey = make([]byte, len(decKey))
-		copy(rootKey[:], decKey)
+		copy(rootKey, decKey)
 		return nil
 	})
 	if err != nil {
@@ -169,14 +169,14 @@ func (r *RootKeyStorage) RootKey(_ context.Context) ([]byte, []byte, error) {
 			}
 
 			rootKey = make([]byte, len(decKey))
-			copy(rootKey[:], decKey[:])
+			copy(rootKey, decKey)
 			return nil
 		}
 
 		// Otherwise, create a RootKeyLen-byte root key, encrypt it,
 		// and store it in the bucket.
 		rootKey = make([]byte, RootKeyLen)
-		if _, err := io.ReadFull(rand.Reader, rootKey[:]); err != nil {
+		if _, err := io.ReadFull(rand.Reader, rootKey); err != nil {
 			return err
 		}
 

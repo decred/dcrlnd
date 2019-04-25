@@ -37,9 +37,9 @@ func TestWitnessCacheRetrieval(t *testing.T) {
 		t.Fatalf("unable to look up witness: %v", err)
 	}
 
-	if !reflect.DeepEqual(witness, dbWitness[:]) {
+	if !reflect.DeepEqual(witness, dbWitness) {
 		t.Fatalf("witnesses don't match: expected %x, got %x",
-			witness[:], dbWitness[:])
+			witness, dbWitness)
 	}
 }
 

@@ -499,7 +499,7 @@ func createTestGraphFromChannels(testChannels []*testChannel) (*testGraphInstanc
 
 		edgePolicy = &channeldb.ChannelEdgePolicy{
 			SigBytes:                  testSig.Serialize(),
-			Flags:                     lnwire.ChanUpdateFlag(lnwire.ChanUpdateDirection),
+			Flags:                     lnwire.ChanUpdateDirection,
 			ChannelID:                 channelID,
 			LastUpdate:                testTime,
 			TimeLockDelta:             testChannel.Node2.Expiry,
@@ -511,8 +511,6 @@ func createTestGraphFromChannels(testChannels []*testChannel) (*testGraphInstanc
 		if err := graph.UpdateEdgePolicy(edgePolicy); err != nil {
 			return nil, err
 		}
-
-		channelID++
 	}
 
 	return &testGraphInstance{

@@ -91,8 +91,8 @@ var (
 )
 
 func init() {
-	copy(testPaymentHash[:], testPaymentHashSlice[:])
-	copy(testDescriptionHash[:], testDescriptionHashSlice[:])
+	copy(testPaymentHash[:], testPaymentHashSlice)
+	copy(testDescriptionHash[:], testDescriptionHashSlice)
 }
 
 // TestDecodeEncode tests that an encoded invoice gets decoded into the expected

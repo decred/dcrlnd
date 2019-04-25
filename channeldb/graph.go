@@ -1045,8 +1045,8 @@ func (c *ChannelGraph) PruneTip() (*chainhash.Hash, uint32, error) {
 
 		// Once we have the prune tip, the value will be the block hash,
 		// and the key the block height.
-		copy(tipHash[:], v[:])
-		tipHeight = byteOrder.Uint32(k[:])
+		copy(tipHash[:], v)
+		tipHeight = byteOrder.Uint32(k)
 
 		return nil
 	})
@@ -3225,7 +3225,7 @@ func putChanEdgePolicy(edges, nodes *bolt.Bucket, edge *ChannelEdgePolicy,
 	// An unknown policy value does not have a update time recorded, so
 	// it also does not need to be removed.
 	if edgeBytes := edges.Get(edgeKey[:]); edgeBytes != nil &&
-		!bytes.Equal(edgeBytes[:], unknownPolicy) {
+		!bytes.Equal(edgeBytes, unknownPolicy) {
 
 		// In order to delete the old entry, we'll need to obtain the
 		// *prior* update time in order to delete it. To do this, we'll
@@ -3254,7 +3254,7 @@ func putChanEdgePolicy(edges, nodes *bolt.Bucket, edge *ChannelEdgePolicy,
 		return err
 	}
 
-	return edges.Put(edgeKey[:], b.Bytes()[:])
+	return edges.Put(edgeKey[:], b.Bytes())
 }
 
 // putChanEdgePolicyUnknown marks the edge policy as unknown
@@ -3279,7 +3279,7 @@ func fetchChanEdgePolicy(edges *bolt.Bucket, chanID []byte,
 
 	var edgeKey [33 + 8]byte
 	copy(edgeKey[:], nodePub)
-	copy(edgeKey[33:], chanID[:])
+	copy(edgeKey[33:], chanID)
 
 	edgeBytes := edges.Get(edgeKey[:])
 	if edgeBytes == nil {
@@ -3287,7 +3287,7 @@ func fetchChanEdgePolicy(edges *bolt.Bucket, chanID []byte,
 	}
 
 	// No need to deserialize unknown policy.
-	if bytes.Equal(edgeBytes[:], unknownPolicy) {
+	if bytes.Equal(edgeBytes, unknownPolicy) {
 		return nil, nil
 	}
 

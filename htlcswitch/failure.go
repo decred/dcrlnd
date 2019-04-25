@@ -250,7 +250,7 @@ func (s *SphinxErrorDecrypter) DecryptError(reason lnwire.OpaqueReason) (*Forwar
 	}
 
 	return &ForwardingError{
-		ErrorSource:    (*secp256k1.PublicKey)(source),
+		ErrorSource:    source,
 		FailureMessage: failureMsg,
 	}, nil
 }

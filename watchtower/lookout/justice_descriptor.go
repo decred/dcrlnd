@@ -190,7 +190,7 @@ func (p *JusticeDescriptor) assembleJusticeTxn(txSize int64,
 
 	// Add the sweep and reward outputs to the justice transaction.
 	justiceTxn.AddTxOut(&wire.TxOut{
-		PkScript: p.JusticeKit.SweepAddress[:],
+		PkScript: p.JusticeKit.SweepAddress,
 		Value:    int64(sweepAmt),
 		Version:  txscript.DefaultScriptVersion,
 	})
@@ -287,7 +287,7 @@ func (p *JusticeDescriptor) CreateJusticeTxn() (*wire.MsgTx, error) {
 
 	// TODO(conner): sweep htlc outputs
 
-	txSize := int64(sizeEstimate.Size())
+	txSize := sizeEstimate.Size()
 
 	return p.assembleJusticeTxn(txSize, sweepInputs...)
 }

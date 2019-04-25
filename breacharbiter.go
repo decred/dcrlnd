@@ -1012,7 +1012,7 @@ func (b *breachArbiter) createJusticeTx(
 		spendableOutputs = append(spendableOutputs, input)
 	}
 
-	txSize := int64(sizeEstimate.Size())
+	txSize := sizeEstimate.Size()
 	return b.sweepSpendableOutputsTxn(txSize, spendableOutputs...)
 }
 

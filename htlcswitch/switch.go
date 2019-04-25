@@ -2205,7 +2205,7 @@ func (s *Switch) FlushForwardingEvents() error {
 	}
 
 	events := make([]channeldb.ForwardingEvent, len(s.pendingFwdingEvents))
-	copy(events[:], s.pendingFwdingEvents[:])
+	copy(events, s.pendingFwdingEvents)
 
 	// With the copy obtained, we can now clear out the header pointer of
 	// the current slice. This way, we can re-use the underlying storage
