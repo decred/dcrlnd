@@ -109,8 +109,6 @@ func (h *harnessTest) RunTestCase(testCase *testCase,
 	}()
 
 	testCase.test(net, h)
-
-	return
 }
 
 func (h *harnessTest) Logf(format string, args ...interface{}) {
@@ -357,10 +355,9 @@ func waitForChannelPendingForceClose(ctx context.Context,
 		return true
 	}, time.Second*15)
 	if err != nil {
-		return predErr
+		return err
 	}
-
-	return nil
+	return predErr
 }
 
 // cleanupForceClose mines a force close commitment found in the mempool and
@@ -455,45 +452,44 @@ func assertNumConnections(t *harnessTest, alice, bob *lntest.HarnessNode,
 	tick := time.NewTicker(300 * time.Millisecond)
 	defer tick.Stop()
 
-	for i := nPolls - 1; i >= 0; i-- {
-		select {
-		case <-tick.C:
-			ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-			aNumPeers, err := alice.ListPeers(ctxt, &lnrpc.ListPeersRequest{})
-			if err != nil {
-				t.Fatalf("unable to fetch alice's node (%v) list peers %v",
-					alice.NodeID, err)
-			}
-
-			ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-			bNumPeers, err := bob.ListPeers(ctxt, &lnrpc.ListPeersRequest{})
-			if err != nil {
-				t.Fatalf("unable to fetch bob's node (%v) list peers %v",
-					bob.NodeID, err)
-			}
-			if len(aNumPeers.Peers) != expected {
-				// Continue polling if this is not the final
-				// loop.
-				if i > 0 {
-					continue
-				}
-				t.Fatalf("number of peers connected to alice is incorrect: "+
-					"expected %v, got %v", expected, len(aNumPeers.Peers))
-			}
-			if len(bNumPeers.Peers) != expected {
-				// Continue polling if this is not the final
-				// loop.
-				if i > 0 {
-					continue
-				}
-				t.Fatalf("number of peers connected to bob is incorrect: "+
-					"expected %v, got %v", expected, len(bNumPeers.Peers))
-			}
-
-			// Alice and Bob both have the required number of
-			// peers, stop polling and return to caller.
-			return
+	pollsLeft := nPolls
+	for range tick.C {
+		pollsLeft--
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
+		aNumPeers, err := alice.ListPeers(ctxt, &lnrpc.ListPeersRequest{})
+		if err != nil {
+			t.Fatalf("unable to fetch alice's node (%v) list peers %v",
+				alice.NodeID, err)
 		}
+
+		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		bNumPeers, err := bob.ListPeers(ctxt, &lnrpc.ListPeersRequest{})
+		if err != nil {
+			t.Fatalf("unable to fetch bob's node (%v) list peers %v",
+				bob.NodeID, err)
+		}
+		if len(aNumPeers.Peers) != expected {
+			// Continue polling if this is not the final
+			// loop.
+			if pollsLeft > 0 {
+				continue
+			}
+			t.Fatalf("number of peers connected to alice is incorrect: "+
+				"expected %v, got %v", expected, len(aNumPeers.Peers))
+		}
+		if len(bNumPeers.Peers) != expected {
+			// Continue polling if this is not the final
+			// loop.
+			if pollsLeft > 0 {
+				continue
+			}
+			t.Fatalf("number of peers connected to bob is incorrect: "+
+				"expected %v, got %v", expected, len(bNumPeers.Peers))
+		}
+
+		// Alice and Bob both have the required number of
+		// peers, stop polling and return to caller.
+		return
 	}
 }
 
@@ -686,11 +682,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 			// Verify that Carol's balance matches our expected
 			// amount.
 			currBalance = resp.ConfirmedBalance
-			if expAmount != currBalance {
-				return false
-			}
-
-			return true
+			return expAmount == currBalance
 		}, 15*time.Second)
 		if err != nil {
 			t.Fatalf("expected restored node to have %d atoms, "+
@@ -2410,10 +2402,7 @@ func testChannelForceClosure(net *lntest.NetworkHarness, t *harnessTest) {
 	var predErr error
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numInvoices)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -2937,11 +2926,7 @@ func testChannelForceClosure(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 
 		predErr = checkPendingChannelNumHtlcs(forceClose, numInvoices)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, 15*time.Second)
 	if err != nil {
 		t.Fatalf(predErr.Error())
@@ -6398,11 +6383,7 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 
 		predErr = checkNumForceClosedChannels(pendingChanResp, 0)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("channels not marked as fully resolved: %v", predErr)
@@ -7338,11 +7319,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 
 		// The sole input should be spending from the commit tx.
 		txIn := secondLevel.MsgTx().TxIn[0]
-		if !bytes.Equal(txIn.PreviousOutPoint.Hash[:], commitTxid[:]) {
-			return false
-		}
-
-		return true
+		return bytes.Equal(txIn.PreviousOutPoint.Hash[:], commitTxid[:])
 	}
 
 	// Check that all the inputs of this transaction are spending outputs
@@ -8797,7 +8774,7 @@ func testAsyncPayments(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	t.Log("\tBenchmark info: Elapsed time: ", timeTaken)
-	t.Log("\tBenchmark info: TPS: ", float64(numInvoices)/float64(timeTaken.Seconds()))
+	t.Log("\tBenchmark info: TPS: ", float64(numInvoices)/timeTaken.Seconds())
 
 	// Finally, immediately close the channel. This function will also
 	// block until the channel is closed and will additionally assert the
@@ -9278,11 +9255,7 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest) {
 	nodes := []*lntest.HarnessNode{net.Alice, net.Bob, carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, dustPayHash, payHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -9321,11 +9294,7 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest) {
 	nodes = []*lntest.HarnessNode{net.Alice}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, payHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -9390,10 +9359,7 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest) {
 	nodes = []*lntest.HarnessNode{net.Alice}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("alice's channel still has active htlc's: %v", predErr)
@@ -9504,11 +9470,7 @@ func testMultiHopReceiverChainClaim(net *lntest.NetworkHarness, t *harnessTest) 
 	nodes := []*lntest.HarnessNode{net.Alice, net.Bob, carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, carolInvoice.RHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -9633,10 +9595,7 @@ func testMultiHopReceiverChainClaim(net *lntest.NetworkHarness, t *harnessTest) 
 	nodes = []*lntest.HarnessNode{net.Alice}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -9736,11 +9695,7 @@ func testMultiHopLocalForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 	nodes := []*lntest.HarnessNode{net.Alice, net.Bob, carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, payHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", err)
@@ -9855,10 +9810,7 @@ func testMultiHopLocalForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 	nodes = []*lntest.HarnessNode{net.Alice}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("alice's channel still has active htlc's: %v", predErr)
@@ -9998,11 +9950,7 @@ func testMultiHopRemoteForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 	nodes := []*lntest.HarnessNode{net.Alice, net.Bob, carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, payHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -10124,10 +10072,7 @@ func testMultiHopRemoteForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 	nodes = []*lntest.HarnessNode{net.Alice}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("alice's channel still has active htlc's: %v", predErr)
@@ -10213,11 +10158,7 @@ func testMultiHopHtlcLocalChainClaim(net *lntest.NetworkHarness, t *harnessTest)
 	nodes := []*lntest.HarnessNode{net.Alice, net.Bob, carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, carolInvoice.RHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", err)
@@ -10554,11 +10495,7 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 	nodes := []*lntest.HarnessNode{net.Alice, net.Bob, carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertActiveHtlcs(nodes, carolInvoice.RHash)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", err)
@@ -10596,7 +10533,7 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 	// We mine up to just before the deadline to check the transaction is in
 	// the mempool.
 	claimDelta := uint32(2 * defaultBroadcastDelta)
-	numBlocks := uint32(defaultDecredTimeLockDelta-claimDelta) - defaultCSV - 1
+	numBlocks := defaultDecredTimeLockDelta - claimDelta - defaultCSV - 1
 	if _, err := net.Generate(numBlocks); err != nil {
 		t.Fatalf("unable to generate blocks")
 	}
@@ -10963,10 +10900,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	var predErr error
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11001,11 +10935,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	// Ensure all nodes in the network still have 5 outstanding htlcs.
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
-		if predErr != nil {
-			return false
-		}
-		return true
-
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11028,11 +10958,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	// the nodes in the network.
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
-
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11303,10 +11229,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	var predErr error
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11329,10 +11252,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	// for the duration of the interval.
 	err = lntest.WaitInvariant(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*2)
 	if err != nil {
 		t.Fatalf("htlc change: %v", predErr)
@@ -11356,10 +11276,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	carolNode := []*lntest.HarnessNode{carol}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(carolNode, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11375,10 +11292,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	// Wait until all outstanding htlcs in the network have been settled.
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11648,11 +11562,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 	var predErr error
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
-		if predErr != nil {
-			return false
-		}
-		return true
-
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11660,7 +11570,6 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Disconnect the two intermediaries, Alice and Dave, by shutting down
 	// Alice.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	if err := net.StopNode(net.Alice); err != nil {
 		t.Fatalf("unable to shutdown alice: %v", err)
 	}
@@ -11690,10 +11599,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 		}
 
 		predErr = assertNumActiveHtlcsChanPoint(dave, carolFundPoint, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -11727,10 +11633,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 	// the way back to the sender. All nodes should report no active htlcs.
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -12007,10 +11910,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 	var predErr error
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -12018,7 +11918,6 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 
 	// Disconnect the two intermediaries, Alice and Dave, so that when carol
 	// restarts, the response will be held by Dave.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	if err := net.StopNode(net.Alice); err != nil {
 		t.Fatalf("unable to shutdown alice: %v", err)
 	}
@@ -12039,11 +11938,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 		}
 
 		predErr = assertNumActiveHtlcsChanPoint(dave, carolFundPoint, 0)
-		if predErr != nil {
-			return false
-		}
-
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -12085,10 +11980,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 	nodesMinusCarol := []*lntest.HarnessNode{net.Bob, net.Alice, dave}
 	err = lntest.WaitPredicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodesMinusCarol, 0)
-		if predErr != nil {
-			return false
-		}
-		return true
+		return predErr == nil
 	}, time.Second*15)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
@@ -12579,7 +12471,7 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 	// route using Carol as an intermediate hop is 10% of the payment's
 	// amount, we'll use a lower percentage in order to invalid that route.
 	feeLimitPercent := &lnrpc.FeeLimit{
-		Limit: &lnrpc.FeeLimit_Percent{baseFee/1000 - 1},
+		Limit: &lnrpc.FeeLimit_Percent{Percent: baseFee/1000 - 1},
 	}
 	testFeeCutoff(feeLimitPercent)
 
@@ -12587,7 +12479,7 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 	// fee for the route using Carol as an intermediate hop earlier, we can
 	// use a smaller value in order to invalidate that route.
 	feeLimitFixed := &lnrpc.FeeLimit{
-		Limit: &lnrpc.FeeLimit_Fixed{int64(carolFee.ToAtoms()) - 1},
+		Limit: &lnrpc.FeeLimit_Fixed{Fixed: int64(carolFee.ToAtoms()) - 1},
 	}
 	testFeeCutoff(feeLimitFixed)
 
@@ -13730,14 +13622,8 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	// case should naturally as a result and we log the server error here to
 	// help debug.
 	go func() {
-		for {
-			select {
-			case err, more := <-lndHarness.ProcessErrors():
-				if !more {
-					return
-				}
-				ht.Logf("lnd finished with error (stderr):\n%v", err)
-			}
+		for err := range lndHarness.ProcessErrors() {
+			ht.Logf("lnd finished with error (stderr):\n%v", err)
 		}
 	}()
 
