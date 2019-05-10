@@ -1280,7 +1280,7 @@ func (n *TxNotifier) updateHints(height uint32) {
 //
 // NOTE: This method must be called with the TxNotifier's lock held.
 func (n *TxNotifier) unconfirmedTxs() []chainhash.Hash {
-	var unconfirmedTxs []chainhash.Hash
+	unconfirmedTxs := make([]chainhash.Hash, 0, len(n.confNotifications))
 	for tx, confNtfnSet := range n.confNotifications {
 		// If the notification is already aware of its confirmation
 		// details, or it's in the process of learning them, we'll skip

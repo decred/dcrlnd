@@ -693,7 +693,7 @@ func TestParseFallbackAddr(t *testing.T) {
 func TestParseRouteHint(t *testing.T) {
 	t.Parallel()
 
-	var testSingleHopData []byte
+	testSingleHopData := make([]byte, 0, len(testSingleHop))
 	for _, r := range testSingleHop {
 		base256 := make([]byte, 51)
 		copy(base256[:33], r.NodeID.SerializeCompressed())
@@ -705,7 +705,7 @@ func TestParseRouteHint(t *testing.T) {
 	}
 	testSingleHopData, _ = bech32.ConvertBits(testSingleHopData, 8, 5, true)
 
-	var testDoubleHopData []byte
+	testDoubleHopData := make([]byte, 0, len(testDoubleHop))
 	for _, r := range testDoubleHop {
 		base256 := make([]byte, 51)
 		copy(base256[:33], r.NodeID.SerializeCompressed())

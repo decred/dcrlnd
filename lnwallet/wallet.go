@@ -955,7 +955,7 @@ func (l *LightningWallet) handleFundingCounterPartySigs(msg *addCounterPartySigs
 			// height-hint
 			//
 			// (decred): The pkscript is only used on neutrino clients and is
-			// overwritten by he currentt GetUTXO() implementations, so we can
+			// overwritten by the current GetUTXO() implementations, so we can
 			// ignore this for now.
 			var pkScript []byte
 			output, err := l.Cfg.ChainIO.GetUtxo(

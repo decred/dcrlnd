@@ -308,9 +308,9 @@ func getSizeEstimate(inputs []Input) ([]Input, int64, int, int) {
 	// size of its witness, and add it to the proper set of spendable
 	// outputs.
 	var (
-		sweepInputs         []Input
 		csvCount, cltvCount int
 	)
+	sweepInputs := make([]Input, 0, len(inputs))
 	for i := range inputs {
 		input := inputs[i]
 

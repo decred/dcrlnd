@@ -597,7 +597,9 @@ func TestForceClose(t *testing.T) {
 
 	// Before we force close Alice's channel, we'll add the pre-image of
 	// Bob's HTLC to her preimage cache.
-	aliceChannel.pCache.AddPreimage(preimageBob[:])
+	if err = aliceChannel.pCache.AddPreimage(preimageBob[:]); err != nil {
+		t.Fatalf("alice failed to add preimage bob: %v", err)
+	}
 
 	// With the cache populated, we'll now attempt the force close
 	// initiated by Alice.
@@ -2013,7 +2015,9 @@ func TestUpdateFeeFail(t *testing.T) {
 
 	// Bob receives the update, that will apply to his commitment
 	// transaction.
-	bobChannel.ReceiveUpdateFee(111)
+	if err = bobChannel.ReceiveUpdateFee(111); err != nil {
+		t.Fatalf("bob unable to receive update fee: %v", err)
+	}
 
 	// Alice sends signature for commitment that does not cover any fee
 	// update.
@@ -2067,8 +2071,12 @@ func TestUpdateFeeSenderCommits(t *testing.T) {
 
 	// Simulate Alice sending update fee message to bob.
 	fee := AtomPerKByte(111)
-	aliceChannel.UpdateFee(fee)
-	bobChannel.ReceiveUpdateFee(fee)
+	if err = aliceChannel.UpdateFee(fee); err != nil {
+		t.Fatalf("alice unable to update fee: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee); err != nil {
+		t.Fatalf("bob unable to receive update fee: %v", err)
+	}
 
 	// Alice signs a commitment, which will cover everything sent to Bob
 	// (the HTLC and the fee update), and everything acked by Bob (nothing
@@ -2179,9 +2187,12 @@ func TestUpdateFeeReceiverCommits(t *testing.T) {
 
 	// Simulate Alice sending update fee message to bob
 	fee := AtomPerKByte(111)
-	aliceChannel.UpdateFee(fee)
-	bobChannel.ReceiveUpdateFee(fee)
-
+	if err = aliceChannel.UpdateFee(fee); err != nil {
+		t.Fatalf("unable to update fee: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee); err != nil {
+		t.Fatalf("unable to receive update fee: %v", err)
+	}
 	// Bob commits to every change he has sent since last time (none). He
 	// does not commit to the received HTLC and fee update, since Alice
 	// cannot know if he has received them.
@@ -2330,9 +2341,15 @@ func TestUpdateFeeMultipleUpdates(t *testing.T) {
 	fee1 := AtomPerKByte(111)
 	fee2 := AtomPerKByte(222)
 	fee := AtomPerKByte(333)
-	aliceChannel.UpdateFee(fee1)
-	aliceChannel.UpdateFee(fee2)
-	aliceChannel.UpdateFee(fee)
+	if err = aliceChannel.UpdateFee(fee1); err != nil {
+		t.Fatalf("alice unable to update fee1: %v", err)
+	}
+	if err = aliceChannel.UpdateFee(fee2); err != nil {
+		t.Fatalf("alice unable to update fee2: %v", err)
+	}
+	if err = aliceChannel.UpdateFee(fee); err != nil {
+		t.Fatalf("alice unable to update fee: %v", err)
+	}
 
 	// Alice signs a commitment, which will cover everything sent to Bob
 	// (the HTLC and the fee update), and everything acked by Bob (nothing
@@ -2342,9 +2359,15 @@ func TestUpdateFeeMultipleUpdates(t *testing.T) {
 		t.Fatalf("alice unable to sign commitment: %v", err)
 	}
 
-	bobChannel.ReceiveUpdateFee(fee1)
-	bobChannel.ReceiveUpdateFee(fee2)
-	bobChannel.ReceiveUpdateFee(fee)
+	if err = bobChannel.ReceiveUpdateFee(fee1); err != nil {
+		t.Fatalf("bob unable to receive update fee1: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee2); err != nil {
+		t.Fatalf("bob unable to receive update fee2: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee); err != nil {
+		t.Fatalf("bob unable to receive update fee: %v", err)
+	}
 
 	// Bob receives this signature message, and verifies that it is
 	// consistent with the state he had for Alice, including the received
@@ -2363,12 +2386,24 @@ func TestUpdateFeeMultipleUpdates(t *testing.T) {
 	fee3 := AtomPerKByte(444)
 	fee4 := AtomPerKByte(555)
 	fee5 := AtomPerKByte(666)
-	aliceChannel.UpdateFee(fee3)
-	aliceChannel.UpdateFee(fee4)
-	aliceChannel.UpdateFee(fee5)
-	bobChannel.ReceiveUpdateFee(fee3)
-	bobChannel.ReceiveUpdateFee(fee4)
-	bobChannel.ReceiveUpdateFee(fee5)
+	if err = aliceChannel.UpdateFee(fee3); err != nil {
+		t.Fatalf("alice unable to update fee3: %v", err)
+	}
+	if err = aliceChannel.UpdateFee(fee4); err != nil {
+		t.Fatalf("alice unable to update fee4: %v", err)
+	}
+	if err = aliceChannel.UpdateFee(fee5); err != nil {
+		t.Fatalf("alice unable to update fee5: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee3); err != nil {
+		t.Fatalf("bob unable to receive update fee3: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee4); err != nil {
+		t.Fatalf("bob unable to receive update fee4: %v", err)
+	}
+	if err = bobChannel.ReceiveUpdateFee(fee5); err != nil {
+		t.Fatalf("bob unable to receive update fee5; %v", err)
+	}
 
 	// Bob can revoke the prior commitment he had. This should lock in the
 	// fee update for him.
@@ -4635,8 +4670,10 @@ func TestChannelUnilateralCloseHtlcResolution(t *testing.T) {
 	// Now that Bob has force closed, we'll modify Alice's pre image cache
 	// such that she now gains the ability to also settle the incoming HTLC
 	// from Bob.
-	aliceChannel.pCache.AddPreimage(preimageBob[:])
-
+	err = aliceChannel.pCache.AddPreimage(preimageBob[:])
+	if err != nil {
+		t.Fatalf("unable to add preimage: %v\n", err)
+	}
 	// We'll then use Bob's transaction to trigger a spend notification for
 	// Alice.
 	closeTx := bobForceClose.CloseTx

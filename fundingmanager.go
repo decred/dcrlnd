@@ -900,14 +900,13 @@ func (f *fundingManager) reservationCoordinator() {
 // currently pending channels waiting for the final phase of the funding
 // workflow (funding txn confirmation).
 func (f *fundingManager) handlePendingChannels(msg *pendingChansReq) {
-	var pendingChannels []*pendingChannel
-
 	dbPendingChannels, err := f.cfg.Wallet.Cfg.Database.FetchPendingChannels()
 	if err != nil {
 		msg.err <- err
 		return
 	}
 
+	pendingChannels := make([]*pendingChannel, 0, len(dbPendingChannels))
 	for _, dbPendingChan := range dbPendingChannels {
 		pendingChan := &pendingChannel{
 			identityPub:   dbPendingChan.IdentityPub,

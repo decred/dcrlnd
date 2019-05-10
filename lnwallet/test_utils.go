@@ -330,8 +330,9 @@ func CreateTestChannels() (*LightningChannel, *LightningChannel, func(), error) 
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	alicePool.Start()
-
+	if err = alicePool.Start(); err != nil {
+		return nil, nil, nil, err
+	}
 	bobPool := NewSigPool(1, bobSigner)
 	channelBob, err := NewLightningChannel(
 		bobSigner, pCache, bobChannelState, bobPool,
@@ -339,8 +340,9 @@ func CreateTestChannels() (*LightningChannel, *LightningChannel, func(), error) 
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	bobPool.Start()
-
+	if err = bobPool.Start(); err != nil {
+		return nil, nil, nil, err
+	}
 	err = SetStateNumHint(
 		aliceCommitTx, 0, channelAlice.stateHintObfuscator,
 	)

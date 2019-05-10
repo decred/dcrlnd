@@ -958,18 +958,15 @@ func (b *breachArbiter) createJusticeTx(
 	// We will assemble the breached outputs into a slice of spendable
 	// outputs, while simultaneously computing the estimated size of the
 	// transaction.
-	var (
-		spendableOutputs []sweep.Input
-		sizeEstimate     lnwallet.TxSizeEstimator
-	)
-
+	//
 	// Allocate enough space to potentially hold each of the breached
 	// outputs in the retribution info.
-	spendableOutputs = make([]sweep.Input, 0, len(r.breachedOutputs))
+	spendableOutputs := make([]sweep.Input, 0, len(r.breachedOutputs))
 
 	// The justice transaction we construct will be a transaction
 	// that pays to a p2pkh output. Components such as the version,
 	// nLockTime, and output are already included in the TxSizeEstimator.
+	var sizeEstimate lnwallet.TxSizeEstimator
 	sizeEstimate.AddP2PKHOutput()
 
 	// Next, we iterate over the breached outputs contained in the

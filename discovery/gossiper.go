@@ -1440,7 +1440,7 @@ func (d *AuthenticatedGossiper) processChanPolicyUpdate(
 
 	// With the set of edges we need to update retrieved, we'll now re-sign
 	// them, and insert them into the database.
-	var chanUpdates []networkMsg
+	chanUpdates := make([]networkMsg, 0, len(edgesToUpdate))
 	for _, edgeInfo := range edgesToUpdate {
 		// Now that we've collected all the channels we need to update,
 		// we'll Re-sign and update the backing ChannelGraphSource, and

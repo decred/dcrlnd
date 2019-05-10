@@ -235,31 +235,27 @@ func newGossiperSyncer(cfg gossipSyncerCfg) *gossipSyncer {
 
 // Start starts the gossipSyncer and any goroutines that it needs to carry out
 // its duties.
-func (g *gossipSyncer) Start() error {
+func (g *gossipSyncer) Start() {
 	if !atomic.CompareAndSwapUint32(&g.started, 0, 1) {
-		return nil
+		return
 	}
 
 	log.Debugf("Starting gossipSyncer(%x)", g.peerPub[:])
 
 	g.wg.Add(1)
 	go g.channelGraphSyncer()
-
-	return nil
 }
 
 // Stop signals the gossipSyncer for a graceful exit, then waits until it has
 // exited.
-func (g *gossipSyncer) Stop() error {
+func (g *gossipSyncer) Stop() {
 	if !atomic.CompareAndSwapUint32(&g.stopped, 0, 1) {
-		return nil
+		log.Infof("Syncer is already in the process of shutting down")
+		return
 	}
 
 	close(g.quit)
-
 	g.wg.Wait()
-
-	return nil
 }
 
 // channelGraphSyncer is the main goroutine responsible for ensuring that we

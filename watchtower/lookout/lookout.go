@@ -200,7 +200,7 @@ func (l *Lookout) processEpoch(epoch *chainntnfs.BlockEpoch,
 	// which corresponds to the breaching commitment transaction. If the
 	// decryption succeeds, we will accumlate the assembled justice
 	// descriptors in a single slice
-	var successes []*JusticeDescriptor
+	successes := make([]*JusticeDescriptor, 0, len(matches))
 	for _, match := range matches {
 		commitTx := hintToTx[match.Hint]
 		log.Infof("Dispatching punisher for client %s, breach-txid=%s",

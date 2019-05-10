@@ -101,8 +101,6 @@ func (c *ChanSeries) HighestChanID(chain chainhash.Hash) (*lnwire.ShortChannelID
 func (c *ChanSeries) UpdatesInHorizon(chain chainhash.Hash,
 	startTime time.Time, endTime time.Time) ([]lnwire.Message, error) {
 
-	var updates []lnwire.Message
-
 	// First, we'll query for all the set of channels that have an update
 	// that falls within the specified horizon.
 	chansInHorizon, err := c.graph.ChanUpdatesInHorizon(
@@ -111,6 +109,8 @@ func (c *ChanSeries) UpdatesInHorizon(chain chainhash.Hash,
 	if err != nil {
 		return nil, err
 	}
+
+	var updates []lnwire.Message
 	for _, channel := range chansInHorizon {
 		// If the channel hasn't been fully advertised yet, or is a
 		// private channel, then we'll skip it as we can't construct a

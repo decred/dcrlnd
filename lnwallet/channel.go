@@ -4027,6 +4027,7 @@ func (lc *LightningChannel) ReceiveNewCommitment(commitSig lnwire.Sig,
 		// include the exact signature and commitment we failed to
 		// verify against in order to aide debugging.
 		var txBytes bytes.Buffer
+		txBytes.Grow(localCommitTx.SerializeSize())
 		localCommitTx.Serialize(&txBytes)
 		return &InvalidCommitSigError{
 			commitHeight: nextHeight,
@@ -4057,6 +4058,7 @@ func (lc *LightningChannel) ReceiveNewCommitment(commitSig lnwire.Sig,
 			}
 
 			var txBytes bytes.Buffer
+			txBytes.Grow(localCommitTx.SerializeSize())
 			localCommitTx.Serialize(&txBytes)
 			return &InvalidHtlcSigError{
 				commitHeight: nextHeight,
