@@ -3206,7 +3206,7 @@ func (r *rpcServer) AddInvoice(ctx context.Context,
 	// If the preimage meets the size specifications, then it can be used
 	// as is.
 	default:
-		copy(paymentPreimage[:], invoice.RPreimage[:])
+		copy(paymentPreimage[:], invoice.RPreimage)
 	}
 
 	// The size of the memo, receipt and description hash attached must not
@@ -3297,7 +3297,7 @@ func (r *rpcServer) AddInvoice(ctx context.Context,
 	// If not, use the memo field as the payment request description.
 	if len(invoice.DescriptionHash) > 0 {
 		var descHash [32]byte
-		copy(descHash[:], invoice.DescriptionHash[:])
+		copy(descHash[:], invoice.DescriptionHash)
 		options = append(options, zpay32.DescriptionHash(descHash))
 	} else {
 		// Use the memo field as the description. If this is not set
@@ -3544,8 +3544,8 @@ func createRPCInvoice(invoice *channeldb.Invoice) (*lnrpc.Invoice, error) {
 	}
 
 	return &lnrpc.Invoice{
-		Memo:            string(invoice.Memo[:]),
-		Receipt:         invoice.Receipt[:],
+		Memo:            string(invoice.Memo),
+		Receipt:         invoice.Receipt,
 		RHash:           decoded.PaymentHash[:],
 		RPreimage:       preimage[:],
 		Value:           int64(atomsAmt),
@@ -4639,7 +4639,7 @@ func (r *rpcServer) DecodePayReq(ctx context.Context,
 		NumAtoms:        amt,
 		Timestamp:       payReq.Timestamp.Unix(),
 		Description:     desc,
-		DescriptionHash: hex.EncodeToString(descHash[:]),
+		DescriptionHash: hex.EncodeToString(descHash),
 		FallbackAddr:    fallbackAddr,
 		Expiry:          expiry,
 		CltvExpiry:      int64(payReq.MinFinalCLTVExpiry()),

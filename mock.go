@@ -327,7 +327,7 @@ func (m *mockPreimageCache) AddPreimage(preimage []byte) error {
 	m.Lock()
 	defer m.Unlock()
 
-	m.preimageMap[chainhash.HashH(preimage[:])] = preimage
+	m.preimageMap[chainhash.HashH(preimage)] = preimage
 
 	return nil
 }

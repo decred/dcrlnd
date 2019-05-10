@@ -851,9 +851,8 @@ func TestGraphTraversal(t *testing.T) {
 		firstNode = nodes[0]
 		secondNode = nodes[1]
 	} else {
-		// XXX: matches above
-		firstNode = nodes[0]
-		secondNode = nodes[1]
+		firstNode = nodes[1]
+		secondNode = nodes[0]
 	}
 
 	// Create 5 channels between the first two nodes we generated above.

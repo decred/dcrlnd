@@ -107,7 +107,7 @@ func (p *preimageBeacon) AddPreimage(pre []byte) error {
 	p.Lock()
 	defer p.Unlock()
 
-	srvrLog.Infof("Adding preimage=%x to witness cache", pre[:])
+	srvrLog.Infof("Adding preimage=%x to witness cache", pre)
 
 	// First, we'll add the witness to the decaying witness cache.
 	err := p.wCache.AddWitness(channeldb.Sha256HashWitness, pre)

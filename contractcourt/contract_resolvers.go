@@ -1034,7 +1034,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 		copy(h.htlcResolution.Preimage[:], preimage)
 
 		log.Infof("%T(%v): extracted preimage=%x from beacon!", h,
-			h.htlcResolution.ClaimOutpoint, preimage[:])
+			h.htlcResolution.ClaimOutpoint, preimage)
 
 		// If this our commitment transaction, then we'll need to
 		// populate the witness for the second-level HTLC transaction.
@@ -1059,7 +1059,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 			}
 		}
 
-		copy(h.htlcResolution.Preimage[:], preimage[:])
+		copy(h.htlcResolution.Preimage[:], preimage)
 	}
 
 	// If the HTLC hasn't expired yet, then we may still be able to claim
@@ -1086,7 +1086,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 		// If we do, then this means we can claim the HTLC!  However,
 		// we don't know how to ourselves, so we'll return our inner
 		// resolver which has the knowledge to do so.
-		applyPreimage(preimage[:])
+		applyPreimage(preimage)
 		return &h.htlcSuccessResolver, nil
 	}
 
@@ -1097,7 +1097,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 			// If this isn't our preimage, then we'll continue
 			// onwards.
 			newHash := chainhash.HashB(preimage)
-			preimageMatches := bytes.Equal(newHash[:], h.payHash[:])
+			preimageMatches := bytes.Equal(newHash, h.payHash[:])
 			if !preimageMatches {
 				continue
 			}

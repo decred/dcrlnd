@@ -333,11 +333,11 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB, cc *chainControl,
 			select {
 			case peer.localCloseChanReqs <- request:
 				srvrLog.Infof("Local close channel request "+
-					"delivered to peer: %x", pubKey[:])
+					"delivered to peer: %x", pubKey)
 			case <-peer.quit:
 				srvrLog.Errorf("Unable to deliver local close "+
 					"channel request to peer %x, err: %v",
-					pubKey[:], err)
+					pubKey, err)
 			}
 		},
 		FwdingLog:              chanDB.ForwardingLog(),
@@ -3020,7 +3020,7 @@ func (s *server) fetchLastChanUpdate() func(lnwire.ShortChannelID) (
 		if err != nil {
 			return nil, err
 		}
-		return extractChannelUpdate(ourPubKey[:], info, edge1, edge2)
+		return extractChannelUpdate(ourPubKey, info, edge1, edge2)
 	}
 }
 

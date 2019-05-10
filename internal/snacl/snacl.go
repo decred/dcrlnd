@@ -224,12 +224,12 @@ func (sk *SecretKey) Decrypt(in []byte) ([]byte, error) {
 }
 
 // NewSecretKey returns a SecretKey structure based on the passed parameters.
-func NewSecretKey(password *[]byte, N, r, p int) (*SecretKey, error) {
+func NewSecretKey(password *[]byte, n, r, p int) (*SecretKey, error) {
 	sk := SecretKey{
 		Key: (*CryptoKey)(&[KeySize]byte{}),
 	}
 	// setup parameters
-	sk.Parameters.N = N
+	sk.Parameters.N = n
 	sk.Parameters.R = r
 	sk.Parameters.P = p
 	_, err := io.ReadFull(prng, sk.Parameters.Salt[:])

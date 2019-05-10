@@ -135,7 +135,7 @@ func (u *UnlockerService) GenSeed(ctx context.Context,
 	// If the user provided the correct number of bytes, then we'll copy it
 	// over into our buffer for usage.
 	case len(in.SeedEntropy) == aezeed.EntropySize:
-		copy(entropy[:], in.SeedEntropy[:])
+		copy(entropy[:], in.SeedEntropy)
 
 	// Otherwise, we'll generate a fresh new set of bytes to use as entropy
 	// to generate the seed.
@@ -233,7 +233,7 @@ func (u *UnlockerService) InitWallet(ctx context.Context,
 	// we'll map the user provided aezeed and passphrase into a decoded
 	// cipher seed instance.
 	var mnemonic aezeed.Mnemonic
-	copy(mnemonic[:], in.CipherSeedMnemonic[:])
+	copy(mnemonic[:], in.CipherSeedMnemonic)
 
 	// If we're unable to map it back into the ciphertext, then either the
 	// mnemonic is wrong, or the passphrase is wrong.

@@ -86,7 +86,7 @@ func TestGenSeed(t *testing.T) {
 	// We should then be able to take the generated mnemonic, and properly
 	// decipher both it.
 	var mnemonic aezeed.Mnemonic
-	copy(mnemonic[:], seedResp.CipherSeedMnemonic[:])
+	copy(mnemonic[:], seedResp.CipherSeedMnemonic)
 	_, err = mnemonic.ToCipherSeed(aezeedPass)
 	if err != nil {
 		t.Fatalf("unable to decipher cipher seed: %v", err)
@@ -126,7 +126,7 @@ func TestGenSeedGenerateEntropy(t *testing.T) {
 	// We should then be able to take the generated mnemonic, and properly
 	// decipher both it.
 	var mnemonic aezeed.Mnemonic
-	copy(mnemonic[:], seedResp.CipherSeedMnemonic[:])
+	copy(mnemonic[:], seedResp.CipherSeedMnemonic)
 	_, err = mnemonic.ToCipherSeed(aezeedPass)
 	if err != nil {
 		t.Fatalf("unable to decipher cipher seed: %v", err)
