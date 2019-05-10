@@ -130,10 +130,6 @@ const (
 	// channelDispute indicates that an un-cooperative closure has been
 	// detected within the channel.
 	channelDispute
-
-	// channelPendingPayment indicates that there a currently outstanding
-	// HTLCs within the channel.
-	channelPendingPayment
 )
 
 const (
@@ -141,10 +137,6 @@ const (
 	// including valid signatures have been provided by remote peers.
 	scriptFlags = mempool.BaseStandardVerifyFlags |
 		txscript.ScriptVerifySHA256
-
-	// scriptVersion defines the version of scripts used throughout the
-	// various HTLCs and transactions.
-	scriptVersion = uint16(0)
 )
 
 // PaymentHash represents the sha256 of a random value. This hash is used to
@@ -1030,10 +1022,6 @@ type commitmentChain struct {
 	// Once a commitment transaction is revoked, the tail is incremented,
 	// freeing up the revocation window for new commitments.
 	commitments *list.List
-
-	// startingHeight is the starting height of this commitment chain on a
-	// session basis.
-	startingHeight uint64
 }
 
 // newCommitmentChain creates a new commitment chain.
@@ -1281,8 +1269,6 @@ type LightningChannel struct {
 	// signDesc is the primary sign descriptor that is capable of signing
 	// the commitment transaction that spends the multi-sig output.
 	signDesc *SignDescriptor
-
-	channelEvents chainntnfs.ChainNotifier
 
 	status channelState
 

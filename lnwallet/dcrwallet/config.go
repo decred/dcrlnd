@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg"
-	"github.com/decred/dcrd/dcrutil"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnwallet"
 
@@ -17,30 +16,6 @@ import (
 	// to activate the side effects w/o actually binding the package name to
 	// a file-level variable.
 	_ "github.com/decred/dcrwallet/wallet/v2/drivers/bdb"
-)
-
-var (
-	lnwalletHomeDir = dcrutil.AppDataDir("lnwallet", false)
-	defaultDataDir  = lnwalletHomeDir
-
-	defaultLogFilename = "lnwallet.log"
-	defaultLogDirname  = "logs"
-	defaultLogDir      = filepath.Join(lnwalletHomeDir, defaultLogDirname)
-
-	dcrdHomeDir        = dcrutil.AppDataDir("dcrd", false)
-	dcrdHomedirCAFile  = filepath.Join(dcrdHomeDir, "rpc.cert")
-	defaultRPCKeyFile  = filepath.Join(lnwalletHomeDir, "rpc.key")
-	defaultRPCCertFile = filepath.Join(lnwalletHomeDir, "rpc.cert")
-
-	// defaultPubPassphrase is the default public wallet passphrase which is
-	// used when the user indicates they do not want additional protection
-	// provided by having all public data in the wallet encrypted by a
-	// passphrase only known to them.
-	defaultPubPassphrase = []byte("public")
-
-	defaultAllowHighFees = false
-
-	walletDbName = "lnwallet.db"
 )
 
 // WalletSyncer is an exported interface for the available wallet sync backends

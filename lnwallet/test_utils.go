@@ -549,15 +549,6 @@ func privkeyToHex(key *secp256k1.PrivateKey) string {
 	return hex.EncodeToString(key.Serialize())
 }
 
-// signatureFromHex parses a Decred signature from a hex encoded string.
-func signatureFromHex(sigHex string) (*secp256k1.Signature, error) {
-	bytes, err := hex.DecodeString(sigHex)
-	if err != nil {
-		return nil, err
-	}
-	return secp256k1.ParseSignature(bytes)
-}
-
 // blockFromHex parses a full Decred block from a hex encoded string.
 func blockFromHex(blockHex string) (*dcrutil.Block, error) {
 	bytes, err := hex.DecodeString(blockHex)

@@ -237,22 +237,6 @@ func assertTxInWallet(t *testing.T, w *lnwallet.LightningWallet,
 	t.Fatalf("transaction %v not found", txHash)
 }
 
-// calcStaticFee calculates appropriate fees for commitment transactions.  This
-// function provides a simple way to allow test balance assertions to take fee
-// calculations into account.
-// TODO(bvu): Refactor when dynamic fee estimation is added.
-func calcStaticFee(numHTLCs int) dcrutil.Amount {
-	const (
-		// TODO(decred) This was hardcoded here. Should I use static, hardcoded
-		// values instead of estimateCommitmentTxSize?
-		// commitWeight = dcrutil.Amount(724)
-		// htlcWeight   = 172
-		feePerKB = dcrutil.Amount(6000)
-	)
-	commitSize := lnwallet.EstimateCommitmentTxSize(numHTLCs)
-	return feePerKB * dcrutil.Amount(commitSize) / 1000
-}
-
 func loadTestCredits(miner *rpctest.Harness, w *lnwallet.LightningWallet,
 	numOutputs int, dcrPerOutput float64) error {
 
