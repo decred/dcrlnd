@@ -3144,7 +3144,7 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 		}
 
 		// If this link isn' eligible for htcl forwarding, it means we can't
-		// recieve from it.
+		// receive from it.
 		if !link.EligibleToForward() {
 			continue
 		}

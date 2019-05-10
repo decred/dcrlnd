@@ -452,7 +452,7 @@ func (hn *HarnessNode) initLightningClient(conn *grpc.ClientConn) error {
 	// Without this wait here, sometimes test functions will attempt to
 	// perform some operation right after the node process has started but
 	// before some service goroutine has had enough time to perform its
-	// duties and will then fail in mysterous ways.
+	// duties and will then fail in mysterious ways.
 	time.Sleep(time.Second * 3)
 	hn.AddToLog(fmt.Sprintf("+++++ HarnessNode %s considered started\n", hn.Name()))
 
