@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1"
+	"github.com/decred/dcrd/hdkeychain"
 	walletloader "github.com/decred/dcrwallet/loader"
 	"github.com/decred/dcrwallet/wallet/v2"
 	"github.com/decred/dcrwallet/wallet/v2/txrules"
@@ -70,6 +71,35 @@ func createTestWallet() (func(), *wallet.Wallet, error) {
 	return cleanUp, baseWallet, nil
 }
 
+// createTestHDKeyRing creates a test HDKeyRing implementation that works
+// purely in memory, using the default test HD seed as root master private key.
+func createTestHDKeyRing() *HDKeyRing {
+	// We can ignore errors here because they could only be for invalid
+	// keys/seeds and the default test seed does not produce errors.
+	master, _ := hdkeychain.NewMaster(testHDSeed[:], &chaincfg.RegNetParams)
+	masterPubs := make(map[KeyFamily]*hdkeychain.ExtendedKey,
+		len(versionZeroKeyFamilies))
+	indexes := make(map[KeyFamily]uint32, len(versionZeroKeyFamilies))
+	for _, keyFam := range versionZeroKeyFamilies {
+		masterPubs[keyFam], _ = master.Child(uint32(keyFam))
+		indexes[keyFam] = 0
+	}
+
+	fetchMasterPriv := func(keyFam KeyFamily) (*hdkeychain.ExtendedKey, error) {
+		// We never neutered the keys in masterPubs, so they also
+		// contain the private key.
+		return masterPubs[keyFam], nil
+	}
+
+	nextIndex := func(keyFam KeyFamily) (uint32, error) {
+		index := indexes[keyFam]
+		indexes[keyFam] += 1
+		return index, nil
+	}
+
+	return NewHDKeyRing(masterPubs, fetchMasterPriv, nextIndex)
+}
+
 func assertEqualKeyLocator(t *testing.T, a, b KeyLocator) {
 	t.Helper()
 	if a != b {
@@ -99,6 +129,9 @@ func TestKeyRingDerivation(t *testing.T) {
 			keyRing := NewWalletKeyRing(wallet)
 
 			return "dcrwallet", cleanUp, keyRing, nil
+		},
+		func() (string, func(), KeyRing, error) {
+			return "hdkeyring", func() {}, createTestHDKeyRing(), nil
 		},
 	}
 
@@ -239,6 +272,9 @@ func TestSecretKeyRingDerivation(t *testing.T) {
 			keyRing := NewWalletKeyRing(wallet)
 
 			return "dcrwallet", cleanUp, keyRing, nil
+		},
+		func() (string, func(), SecretKeyRing, error) {
+			return "hdkeyring", func() {}, createTestHDKeyRing(), nil
 		},
 	}
 
