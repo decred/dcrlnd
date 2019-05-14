@@ -2538,7 +2538,7 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 			t.Fatalf("unable to create alice wallet: %v", err)
 		}
 		aliceSigner = aliceWalletController.(*dcrwallet.DcrWallet)
-		aliceKeyRing = keychain.NewWalletKeyRing(
+		aliceKeyRing = dcrwallet.NewWalletKeyRing(
 			aliceWalletController.(*dcrwallet.DcrWallet).InternalWallet(),
 		)
 
@@ -2560,7 +2560,7 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 			t.Fatalf("unable to create bob wallet: %v", err)
 		}
 		bobSigner = bobWalletController.(*dcrwallet.DcrWallet)
-		bobKeyRing = keychain.NewWalletKeyRing(
+		bobKeyRing = dcrwallet.NewWalletKeyRing(
 			bobSigner.(*dcrwallet.DcrWallet).InternalWallet(),
 		)
 

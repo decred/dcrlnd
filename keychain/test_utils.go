@@ -1,21 +1,11 @@
 package keychain
 
 import (
-	"io/ioutil"
 	"math/rand"
-	"os"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/decred/dcrd/chaincfg"
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1"
-	"github.com/decred/dcrd/hdkeychain"
-	walletloader "github.com/decred/dcrwallet/loader"
-	"github.com/decred/dcrwallet/wallet/v2"
-	"github.com/decred/dcrwallet/wallet/v2/txrules"
-
-	_ "github.com/decred/dcrwallet/wallet/v2/drivers/bdb" // Required in order to create the default database.
 )
 
 // versionZeroKeyFamilies is a slice of all the known key families for first
@@ -28,75 +18,6 @@ var versionZeroKeyFamilies = []KeyFamily{
 	KeyFamilyDelayBase,
 	KeyFamilyRevocationRoot,
 	KeyFamilyNodeKey,
-}
-
-var (
-	testHDSeed = chainhash.Hash{
-		0xb7, 0x94, 0x38, 0x5f, 0x2d, 0x1e, 0xf7, 0xab,
-		0x4d, 0x92, 0x73, 0xd1, 0x90, 0x63, 0x81, 0xb4,
-		0x4f, 0x2f, 0x6f, 0x25, 0x98, 0xa3, 0xef, 0xb9,
-		0x69, 0x49, 0x18, 0x83, 0x31, 0x98, 0x47, 0x53,
-	}
-)
-
-func createTestWallet() (func(), *wallet.Wallet, error) {
-	tempDir, err := ioutil.TempDir("", "keyring-lnwallet")
-	if err != nil {
-		return nil, nil, err
-	}
-	loader := walletloader.NewLoader(&chaincfg.RegNetParams, tempDir,
-		&walletloader.StakeOptions{}, wallet.DefaultGapLimit, false,
-		txrules.DefaultRelayFeePerKb.ToCoin(), wallet.DefaultAccountGapLimit,
-		false)
-
-	pass := []byte("test")
-
-	baseWallet, err := loader.CreateNewWallet(
-		pass, pass, testHDSeed[:],
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if err := baseWallet.Unlock(pass, nil); err != nil {
-		return nil, nil, err
-	}
-
-	cleanUp := func() {
-		baseWallet.Lock()
-		os.RemoveAll(tempDir)
-	}
-
-	return cleanUp, baseWallet, nil
-}
-
-// createTestHDKeyRing creates a test HDKeyRing implementation that works
-// purely in memory, using the default test HD seed as root master private key.
-func createTestHDKeyRing() *HDKeyRing {
-	// We can ignore errors here because they could only be for invalid
-	// keys/seeds and the default test seed does not produce errors.
-	master, _ := hdkeychain.NewMaster(testHDSeed[:], &chaincfg.RegNetParams)
-	masterPubs := make(map[KeyFamily]*hdkeychain.ExtendedKey,
-		len(versionZeroKeyFamilies))
-	indexes := make(map[KeyFamily]uint32, len(versionZeroKeyFamilies))
-	for _, keyFam := range versionZeroKeyFamilies {
-		masterPubs[keyFam], _ = master.Child(uint32(keyFam))
-		indexes[keyFam] = 0
-	}
-
-	fetchMasterPriv := func(keyFam KeyFamily) (*hdkeychain.ExtendedKey, error) {
-		// We never neutered the keys in masterPubs, so they also
-		// contain the private key.
-		return masterPubs[keyFam], nil
-	}
-
-	nextIndex := func(keyFam KeyFamily) (uint32, error) {
-		index := indexes[keyFam]
-		indexes[keyFam] += 1
-		return index, nil
-	}
-
-	return NewHDKeyRing(masterPubs, fetchMasterPriv, nextIndex)
 }
 
 func assertEqualKeyLocator(t *testing.T, a, b KeyLocator) {
@@ -225,38 +146,6 @@ func CheckKeyRingImpl(t *testing.T, constructor KeyRingConstructor) {
 
 }
 
-// TestHDKeyRingImpl tests whether the HDKeyRing implementation conforms to the
-// required interface spec.
-func TestHDKeyRingImpl(t *testing.T) {
-	t.Parallel()
-
-	CheckKeyRingImpl(t,
-		func() (string, func(), KeyRing, error) {
-			return "hdkeyring", func() {}, createTestHDKeyRing(), nil
-		},
-	)
-}
-
-// TestDcrwalletKeyRingImpl tests whether the WalletKeyRing implementation
-// conforms to the required interface spec.
-func TestDcrwalletKeyRingImpl(t *testing.T) {
-	t.Parallel()
-
-	CheckKeyRingImpl(t,
-		func() (string, func(), KeyRing, error) {
-			cleanUp, wallet, err := createTestWallet()
-			if err != nil {
-				t.Fatalf("unable to create wallet: %v", err)
-			}
-
-			keyRing := NewWalletKeyRing(wallet)
-
-			return "dcrwallet", cleanUp, keyRing, nil
-		},
-	)
-
-}
-
 // SecretKeyRingConstructor is a function signature that's used as a generic
 // constructor for various implementations of the SecretKeyRing interface. A
 // string naming the returned interface, a function closure that cleans up any
@@ -354,7 +243,8 @@ func CheckSecretKeyRingImpl(t *testing.T, constructor SecretKeyRingConstructor) 
 
 		// We'll try again, but this time with an
 		// unknown public key.
-		_, pub := secp256k1.PrivKeyFromBytes(testHDSeed[:])
+		var empty [32]byte
+		_, pub := secp256k1.PrivKeyFromBytes(empty[:])
 		keyDesc.PubKey = pub
 
 		// If we attempt to query for this key, then we
@@ -369,42 +259,4 @@ func CheckSecretKeyRingImpl(t *testing.T, constructor SecretKeyRingConstructor) 
 
 		// TODO(roasbeef): scalar mult once integrated
 	}
-}
-
-// TestHDSecretKeyRingImpl tests whether the HDKeyRing implementation conforms
-// to the required interface spec.
-func TestHDSecretKeyRingImpl(t *testing.T) {
-	t.Parallel()
-
-	CheckSecretKeyRingImpl(t,
-		func() (string, func(), SecretKeyRing, error) {
-			return "hdkeyring", func() {}, createTestHDKeyRing(), nil
-		},
-	)
-}
-
-// TestDcrwalletSecretKeyRingImpl tests whether the WalletKeyRing
-// implementation conforms to the required interface spec.
-func TestDcrwalletSecretKeyRingImpl(t *testing.T) {
-	t.Parallel()
-
-	CheckSecretKeyRingImpl(t,
-		func() (string, func(), SecretKeyRing, error) {
-			cleanUp, wallet, err := createTestWallet()
-			if err != nil {
-				t.Fatalf("unable to create wallet: %v", err)
-			}
-
-			keyRing := NewWalletKeyRing(wallet)
-
-			return "dcrwallet", cleanUp, keyRing, nil
-		},
-	)
-
-}
-
-func init() {
-	// We'll clamp the max range scan to constrain the run time of the
-	// private key scan test.
-	MaxKeyRangeScan = 3
 }

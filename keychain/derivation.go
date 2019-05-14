@@ -24,6 +24,16 @@ const (
 	BIP0043Purpose = 1017
 )
 
+const (
+	// CoinTypeDecred specifies the BIP44 coin type for Decred key
+	// derivation.
+	CoinTypeDecred uint32 = 42
+
+	// CoinTypeTestnet specifies the BIP44 coin
+	// type for all testnet key derivation.
+	CoinTypeTestnet = 1
+)
+
 var (
 	// MaxKeyRangeScan is the maximum number of keys that we'll attempt to
 	// scan with if a caller knows the public key, but not the KeyLocator

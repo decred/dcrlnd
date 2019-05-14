@@ -319,7 +319,7 @@ func newChainControlFromConfig(cfg *config, chanDB *channeldb.DB,
 	// Select the default channel constraints for the primary chain.
 	channelConstraints := defaultDcrChannelConstraints
 
-	keyRing := keychain.NewWalletKeyRing(
+	keyRing := dcrwallet.NewWalletKeyRing(
 		wc.InternalWallet(),
 	)
 	cc.keyRing = keyRing

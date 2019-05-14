@@ -1,8 +1,10 @@
-package keychain
+package dcrwallet
 
 import (
 	"crypto/sha256"
 	"fmt"
+
+	"github.com/decred/dcrlnd/keychain"
 
 	"github.com/decred/dcrd/dcrec/secp256k1"
 	"github.com/decred/dcrd/dcrutil"
@@ -10,16 +12,6 @@ import (
 	"github.com/decred/dcrwallet/errors"
 	"github.com/decred/dcrwallet/wallet/v2"
 	"github.com/decred/dcrwallet/wallet/v2/udb"
-)
-
-const (
-	// CoinTypeDecred specifies the BIP44 coin type for Decred key
-	// derivation.
-	CoinTypeDecred uint32 = 42
-
-	// CoinTypeTestnet specifies the BIP44 coin type for all testnet key
-	// derivation.
-	CoinTypeTestnet = 1
 )
 
 // WalletKeyRing is an implementation of both the KeyRing and SecretKeyRing
@@ -40,7 +32,7 @@ type WalletKeyRing struct {
 //
 // NOTE: The passed udb.Manager MUST be unlocked in order for the keychain
 // to function.
-func NewWalletKeyRing(w *wallet.Wallet) SecretKeyRing {
+func NewWalletKeyRing(w *wallet.Wallet) keychain.SecretKeyRing {
 	return &WalletKeyRing{
 		wallet: w,
 	}
@@ -50,11 +42,11 @@ func NewWalletKeyRing(w *wallet.Wallet) SecretKeyRing {
 // including) the provided argument.
 // TODO(decred) extremely inefficient for large keyFam. Ideally dcrwallet
 // should support using arbitrary account numbers.
-func (b *WalletKeyRing) createAccountsUpTo(keyFam KeyFamily) error {
+func (b *WalletKeyRing) createAccountsUpTo(keyFam keychain.KeyFamily) error {
 
 	// If this is the multi-sig key family, then we can return early as
 	// this is the default account that's created.
-	if keyFam == KeyFamilyMultiSig {
+	if keyFam == keychain.KeyFamilyMultiSig {
 		return nil
 	}
 
@@ -65,7 +57,7 @@ func (b *WalletKeyRing) createAccountsUpTo(keyFam KeyFamily) error {
 		return nil
 	}
 
-	keychainLog.Infof("Creating wallet accounts up to %d", keyFam)
+	dcrwLog.Infof("Creating wallet accounts up to %d", keyFam)
 
 	// Figure out all uncreated accounts between 0..keyFam
 	accounts, err := b.wallet.Accounts()
@@ -80,7 +72,7 @@ func (b *WalletKeyRing) createAccountsUpTo(keyFam KeyFamily) error {
 	}
 
 	for i := maxExistAccount + 1; i <= uint32(keyFam); i++ {
-		keychainLog.Debugf("Creating account %d", i)
+		dcrwLog.Debugf("Creating account %d", i)
 		_, err = b.wallet.NextAccount(fmt.Sprintf("%d", i))
 		if err != nil {
 			return err
@@ -93,8 +85,8 @@ func (b *WalletKeyRing) createAccountsUpTo(keyFam KeyFamily) error {
 // keyDescriptorForAddress returns the key descriptor for the given wallet
 // address. It assumes the address exists and is a P2PKH address, otherwise this
 // will error.
-func (b *WalletKeyRing) keyDescriptorForAddress(addr dcrutil.Address) (KeyDescriptor, error) {
-	var emptyKeyDesc KeyDescriptor
+func (b *WalletKeyRing) keyDescriptorForAddress(addr dcrutil.Address) (keychain.KeyDescriptor, error) {
+	var emptyKeyDesc keychain.KeyDescriptor
 	addrInfo, err := b.wallet.AddressInfo(addr)
 	if err != nil {
 		return emptyKeyDesc, err
@@ -110,10 +102,10 @@ func (b *WalletKeyRing) keyDescriptorForAddress(addr dcrutil.Address) (KeyDescri
 		return emptyKeyDesc, fmt.Errorf("generated address is not a secp256k1 address")
 	}
 
-	return KeyDescriptor{
+	return keychain.KeyDescriptor{
 		PubKey: pubKey,
-		KeyLocator: KeyLocator{
-			Family: KeyFamily(pubAddrInfo.Account()),
+		KeyLocator: keychain.KeyLocator{
+			Family: keychain.KeyFamily(pubAddrInfo.Account()),
 			Index:  pubAddrInfo.Index(),
 		},
 	}, nil
@@ -124,11 +116,11 @@ func (b *WalletKeyRing) keyDescriptorForAddress(addr dcrutil.Address) (KeyDescri
 // child within this branch.
 //
 // NOTE: This is part of the keychain.KeyRing interface.
-func (b *WalletKeyRing) DeriveNextKey(keyFam KeyFamily) (KeyDescriptor, error) {
+func (b *WalletKeyRing) DeriveNextKey(keyFam keychain.KeyFamily) (keychain.KeyDescriptor, error) {
 	var (
 		addr         dcrutil.Address
 		err          error
-		emptyKeyDesc KeyDescriptor
+		emptyKeyDesc keychain.KeyDescriptor
 	)
 
 	err = b.createAccountsUpTo(keyFam)
@@ -160,8 +152,8 @@ func (b *WalletKeyRing) DeriveNextKey(keyFam KeyFamily) (KeyDescriptor, error) {
 // rotating something like our current default node key.
 //
 // NOTE: This is part of the keychain.KeyRing interface.
-func (b *WalletKeyRing) DeriveKey(keyLoc KeyLocator) (KeyDescriptor, error) {
-	var emptyKeyDesc KeyDescriptor
+func (b *WalletKeyRing) DeriveKey(keyLoc keychain.KeyLocator) (keychain.KeyDescriptor, error) {
+	var emptyKeyDesc keychain.KeyDescriptor
 
 	err := b.createAccountsUpTo(keyLoc.Family)
 	if err != nil {
@@ -185,7 +177,7 @@ func (b *WalletKeyRing) DeriveKey(keyLoc KeyLocator) (KeyDescriptor, error) {
 		return emptyKeyDesc, err
 	}
 
-	return KeyDescriptor{
+	return keychain.KeyDescriptor{
 		KeyLocator: keyLoc,
 		PubKey:     pubKey,
 	}, nil
@@ -195,7 +187,7 @@ func (b *WalletKeyRing) DeriveKey(keyLoc KeyLocator) (KeyDescriptor, error) {
 // passed key descriptor.
 //
 // NOTE: This is part of the keychain.SecretKeyRing interface.
-func (b *WalletKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.PrivateKey, error) {
+func (b *WalletKeyRing) DerivePrivKey(keyDesc keychain.KeyDescriptor) (*secp256k1.PrivateKey, error) {
 
 	err := b.createAccountsUpTo(keyDesc.Family)
 	if err != nil {
@@ -227,7 +219,7 @@ func (b *WalletKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.Private
 	// If the public key isn't nil, then this indicates that we
 	// need to scan for the private key, assuming that we know the
 	// valid key family.
-	for i := 0; i < MaxKeyRangeScan; i++ {
+	for i := 0; i < keychain.MaxKeyRangeScan; i++ {
 		// Derive the next key in the range and fetch its
 		// managed address.
 		privKey, err := famBranchPriv.Child(uint32(i))
@@ -250,7 +242,7 @@ func (b *WalletKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.Private
 		}
 	}
 
-	return nil, ErrCannotDerivePrivKey
+	return nil, keychain.ErrCannotDerivePrivKey
 }
 
 // ScalarMult performs a scalar multiplication (ECDH-like operation) between
@@ -262,7 +254,7 @@ func (b *WalletKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.Private
 //  sx := k*P s := sha256(sx.SerializeCompressed())
 //
 // NOTE: This is part of the keychain.SecretKeyRing interface.
-func (b *WalletKeyRing) ScalarMult(keyDesc KeyDescriptor,
+func (b *WalletKeyRing) ScalarMult(keyDesc keychain.KeyDescriptor,
 	pub *secp256k1.PublicKey) ([]byte, error) {
 
 	privKey, err := b.DerivePrivKey(keyDesc)
