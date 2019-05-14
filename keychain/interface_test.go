@@ -133,6 +133,18 @@ func TestKeyRingDerivation(t *testing.T) {
 					}, keyDesc.KeyLocator,
 				)
 
+				// We'll generate the next key and ensure it's
+				// different than the first one.
+				keyDescNext, err := keyRing.DeriveNextKey(keyFam)
+				if err != nil {
+					t.Fatalf("unable to derive next for"+
+						"keyFam=%v: %v", keyFam, err)
+				}
+				if keyDescNext.PubKey.IsEqual(keyDesc.PubKey) {
+					t.Fatal("keyring derived two " +
+						"identical consecutive keys")
+				}
+
 				// We'll now re-derive that key to ensure that
 				// we're able to properly access the key via
 				// the random access derivation methods.
