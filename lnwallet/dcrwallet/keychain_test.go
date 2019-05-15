@@ -5,9 +5,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/keychain"
+
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrlnd/keychain"
 	walletloader "github.com/decred/dcrwallet/loader"
 	wallet "github.com/decred/dcrwallet/wallet/v2"
 	"github.com/decred/dcrwallet/wallet/v2/txrules"
@@ -22,10 +24,10 @@ var (
 	}
 )
 
-func createTestWallet() (func(), *wallet.Wallet, error) {
+func createTestWallet() (func(), *wallet.Wallet, *channeldb.DB, error) {
 	tempDir, err := ioutil.TempDir("", "keyring-lnwallet")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	loader := walletloader.NewLoader(&chaincfg.RegNetParams, tempDir,
 		&walletloader.StakeOptions{}, wallet.DefaultGapLimit, false,
@@ -38,56 +40,70 @@ func createTestWallet() (func(), *wallet.Wallet, error) {
 		pass, pass, testHDSeed[:],
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	if err := baseWallet.Unlock(pass, nil); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
+	}
+
+	// Create the temp chandb dir.
+	cdbDir, err := ioutil.TempDir("", "channeldb")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Next, create channeldb for the first time.
+	cdb, err := channeldb.Open(cdbDir)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	cleanUp := func() {
 		baseWallet.Lock()
 		os.RemoveAll(tempDir)
+		cdb.Close()
+		os.RemoveAll(cdbDir)
 	}
 
-	return cleanUp, baseWallet, nil
+	return cleanUp, baseWallet, cdb, nil
 }
 
-// TestDcrwalletKeyRingImpl tests whether the WalletKeyRing implementation
+// TestDcrwalletKeyRingImpl tests whether the walletKeyRing implementation
 // conforms to the required interface spec.
 func TestDcrwalletKeyRingImpl(t *testing.T) {
 	t.Parallel()
 
 	keychain.CheckKeyRingImpl(t,
 		func() (string, func(), keychain.KeyRing, error) {
-			cleanUp, wallet, err := createTestWallet()
+			cleanUp, wallet, cdb, err := createTestWallet()
 			if err != nil {
 				t.Fatalf("unable to create wallet: %v", err)
 			}
 
-			keyRing := NewWalletKeyRing(wallet)
+			keyRing, err := newWalletKeyRing(wallet, cdb)
 
-			return "dcrwallet", cleanUp, keyRing, nil
+			return "dcrwallet", cleanUp, keyRing, err
 		},
 	)
 
 }
 
-// TestDcrwalletSecretKeyRingImpl tests whether the WalletKeyRing
+// TestDcrwalletSecretKeyRingImpl tests whether the walletKeyRing
 // implementation conforms to the required interface spec.
 func TestDcrwalletSecretKeyRingImpl(t *testing.T) {
 	t.Parallel()
 
 	keychain.CheckSecretKeyRingImpl(t,
 		func() (string, func(), keychain.SecretKeyRing, error) {
-			cleanUp, wallet, err := createTestWallet()
+			cleanUp, wallet, cdb, err := createTestWallet()
 			if err != nil {
 				t.Fatalf("unable to create wallet: %v", err)
 			}
 
-			keyRing := NewWalletKeyRing(wallet)
+			keyRing, err := newWalletKeyRing(wallet, cdb)
 
-			return "dcrwallet", cleanUp, keyRing, nil
+			return "dcrwallet", cleanUp, keyRing, err
 		},
 	)
 

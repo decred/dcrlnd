@@ -6,6 +6,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnwallet"
 
 	walletloader "github.com/decred/dcrwallet/loader"
@@ -94,6 +95,8 @@ type Config struct {
 	// Loader is the loader used to initialize the Wallet field. If Wallet
 	// is specified, then Loader MUST be specified as well.
 	Loader *walletloader.Loader
+
+	DB *channeldb.DB
 }
 
 // NetworkDir returns the directory name of a network directory to hold wallet

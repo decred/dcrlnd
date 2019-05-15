@@ -177,6 +177,7 @@ func newChainControlFromConfig(cfg *config, chanDB *channeldb.DB,
 		FeeEstimator:   cc.feeEstimator,
 		Wallet:         wallet,
 		Loader:         loader,
+		DB:             chanDB,
 	}
 
 	var (
@@ -315,14 +316,10 @@ func newChainControlFromConfig(cfg *config, chanDB *channeldb.DB,
 	cc.signer = wc
 	cc.chainIO = chainIO
 	cc.wc = wc
+	cc.keyRing = wc
 
 	// Select the default channel constraints for the primary chain.
 	channelConstraints := defaultDcrChannelConstraints
-
-	keyRing := dcrwallet.NewWalletKeyRing(
-		wc.InternalWallet(),
-	)
-	cc.keyRing = keyRing
 
 	// Create, and start the lnwallet, which handles the core payment
 	// channel logic, and exposes control via proxy state machines.
@@ -332,7 +329,7 @@ func newChainControlFromConfig(cfg *config, chanDB *channeldb.DB,
 		WalletController:   wc,
 		Signer:             cc.signer,
 		FeeEstimator:       cc.feeEstimator,
-		SecretKeyRing:      keyRing,
+		SecretKeyRing:      wc,
 		ChainIO:            cc.chainIO,
 		DefaultConstraints: channelConstraints,
 		NetParams:          *activeNetParams.Params,

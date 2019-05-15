@@ -122,7 +122,7 @@ func (b *DcrWallet) SignOutputRaw(tx *wire.MsgTx,
 
 	// First attempt to fetch the private key which corresponds to the
 	// specified public key.
-	privKey, err := b.keyring.DerivePrivKey(signDesc.KeyDesc)
+	privKey, err := b.DerivePrivKey(signDesc.KeyDesc)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (b *DcrWallet) SignMessage(pubKey *secp256k1.PublicKey,
 
 	// First attempt to fetch the private key which corresponds to the
 	// specified public key.
-	privKey, err := b.keyring.DerivePrivKey(keyDesc)
+	privKey, err := b.DerivePrivKey(keyDesc)
 	if err != nil {
 		return nil, err
 	}
