@@ -1,72 +1,41 @@
 version: '2'
 services:
 
-    # btc is an image of bitcoin node which used as base image for btcd and
-    # btccli. The environment variables default values determined on stage of
+    # dcr is an image of decred node which is used as base image for dcrd and
+    # dcrlncli. The environment variables default values determined on stage of
     # container start within starting script.
-    btc:
-      image: btcd
+    dcr:
+      image: dcrd
       build:
-        context: btcd/
+        context: dcrd/
       volumes:
             - shared:/rpc
-            - bitcoin:/data
+            - decred:/data
       environment:
         - RPCUSER
         - RPCPASS
         - NETWORK
 
-    btcd:
-        extends: btc
-        container_name: btcd
+    dcrd:
+        extends: dcr
+        container_name: dcrd
         environment:
           - DEBUG
           - MINING_ADDRESS
-        entrypoint: ["./start-btcd.sh"]
+        entrypoint: ["./start-dcrd.sh"]
 
-    btcctl:
-        extends: btc
-        container_name: btcctl
+    dcrctl:
+        extends: dcr
+        container_name: dcrctl
         links:
-            - "btcd:rpcserver"
-        entrypoint: ["./start-btcctl.sh"]
+            - "dcrd:rpcserver"
+        entrypoint: ["./start-dcrctl.sh"]
 
-
-    # ltc is an image of litecoin node which used as base image for ltcd and
-    # ltcctl. The environment variables default values determined on stage of
-    # container start within starting script.
-    ltc:
-      image: ltcd
-      build:
-        context: ltcd/
-      volumes:
-            - shared:/rpc
-            - litecoin:/data
-      environment:
-        - RPCUSER
-        - RPCPASS
-        - NETWORK
-
-    ltcd:
-        extends: ltc
-        container_name: ltcd
-        environment:
-          - DEBUG
-          - MINING_ADDRESS
-        entrypoint: ["./start-ltcd.sh"]
-
-    ltcctl:
-        extends: ltc
-        container_name: ltcctl
-        links:
-            - "ltcd:rpcserver"
-        entrypoint: ["./start-ltcctl.sh"]
-
-    lnd:
-        image: lnd
+    dcrlnd:
+        image: dcrlnd
         build:
           context: ../
-          dockerfile: docker/lnd/Dockerfile
+          dockerfile: docker/dcrlnd/Dockerfile
         environment:
           - RPCUSER
           - RPCPASS
@@ -75,32 +44,21 @@ services:
           - DEBUG
         volumes:
             - shared:/rpc
-        entrypoint: ["./start-lnd.sh"]
+        entrypoint: ["./start-dcrlnd.sh"]
 
-    lnd_ltc:
-      extends: lnd
-      container_name: lnd_ltc
+    lnd_dcr:
+      extends: dcrlnd
+      container_name: lnd_dcr
       links:
-          - "ltcd:blockchain"
-
-    lnd_btc:
-      extends: lnd
-      container_name: lnd_btc
-      links:
-          - "btcd:blockchain"
+          - "dcrd:blockchain"
 
 volumes:
-  # shared volume is need to store the btcd rpc certificates and use it within
-  # btcctl and lnd containers.
+  # shared volume is need to store the dcrd rpc certificates and use it within
+  # dcrctl and dcrlnd containers.
   shared:
     driver: local
 
-  # bitcoin volume is needed for maintaining blockchain persistence
-  # during btcd container recreation.
-  bitcoin:
-    driver: local
-
-  # litecoin volume is needed for maintaining blockchain persistence
-  # during ltcd container recreation.
-  litecoin:
+  # decred volume is needed for maintaining blockchain persistence
+  # during dcrd container recreation.
+  decred:
     driver: local

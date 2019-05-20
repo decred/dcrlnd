@@ -1,100 +1,111 @@
-This document is written for people who are eager to do something with 
-the Lightning Network Daemon (`lnd`). This folder uses `docker-compose` to
-package `lnd` and `btcd` together to make deploying the two daemons as easy as
-typing a few commands. All configuration between `lnd` and `btcd` are handled
+# dcrlnd Docker
+
+This document is written for people who are eager to do something with
+the Decred Lightning Network Daemon (`dcrlnd`). This folder uses `docker-compose` to
+package `dcrlnd` and `dcrd` together to make deploying the two daemons as easy as
+typing a few commands. All configuration between `dcrlnd` and `dcrd` is handled
 automatically by their `docker-compose` config file.
 
 ### Prerequisites
-Name  | Version 
---------|---------
-docker-compose | 1.9.0
-docker | 1.13.0
-  
-### Table of content
- * [Create lightning network cluster](#create-lightning-network-cluster)
- * [Connect to faucet lightning node](#connect-to-faucet-lightning-node)
- * [Questions](#questions)
 
-### Create lightning network cluster
+The code in this directory has been written and tested on Ubuntu 18.06 using the
+following tools:
+
+Name           | Version
+---------------|---------
+docker-compose | 1.24.0
+docker         | 18.09.6
+  
+### Table of Contents
+
+* [Create Lightning Network Cluster](#create-lightning-network-cluster)
+* [Connect to faucet lightning node](#connect-to-faucet-lightning-node)
+* [Questions](#questions)
+
+### Create Lightning Network Cluster
+
 This section describes a workflow on `simnet`, a development/test network
 that's similar to Bitcoin Core's `regtest` mode. In `simnet` mode blocks can be
 generated at will, as the difficulty is very low. This makes it an ideal
 environment for testing as one doesn't need to wait tens of minutes for blocks
 to arrive in order to test channel related functionality. Additionally, it's
-possible to spin up an arbitrary number of `lnd` instances within containers to
+possible to spin up an arbitrary number of `dcrlnd` instances within containers to
 create a mini development cluster. All state is saved between instances using a
 shared value.
 
 Current workflow is big because we recreate the whole network by ourselves,
-next versions will use the started `btcd` bitcoin node in `testnet` and
-`faucet` wallet from which you will get the bitcoins.
+next versions will use the started `dcrd` Decred node in `testnet` and
+`faucet` wallet from which you will get the Decred.
 
 In the workflow below, we describe the steps required to recreate the following
 topology, and send a payment from `Alice` to `Bob`.
+
 ```
 + ----- +                   + --- +
-| Alice | <--- channel ---> | Bob |  <---   Bob and Alice are the lightning network daemons which 
-+ ----- +                   + --- +         create channels and interact with each other using the   
-    |                          |            Bitcoin network as source of truth. 
-    |                          |            
-    + - - - -  - + - - - - - - +            
+| Alice | <--- channel ---> | Bob |  <---  Bob and Alice are the Lightning Network daemons which
++ ----- +                   + --- +        create channels and interact with each other using the
+    |                          |           Decred network as source of truth.
+    |                          |
+    + - - - -  - + - - - - - - +
                  |
-        + --------------- +
-        | Bitcoin network |  <---  In the current scenario for simplicity we create only one  
-        + --------------- +        "btcd" node which represents the Bitcoin network, in a 
-                                    real situation Alice and Bob will likely be 
-                                    connected to different Bitcoin nodes.
+        + -------------- +
+        | Decred network |  <---  In the current scenario for simplicity we create only one
+        + -------------- +        "dcrd" node which represents the Decred network, in a
+                                  real situation Alice and Bob will likely be
+                                  connected to different Decred nodes.
 ```
 
-**General workflow is the following:** 
+**General workflow is the following:**
 
- * Create a `btcd` node running on a private `simnet`.
- * Create `Alice`, one of the `lnd` nodes in our simulation network.
- * Create `Bob`, the other `lnd` node in our simulation network.
- * Mine some blocks to send `Alice` some bitcoins.
- * Open channel between `Alice` and `Bob`.
- * Send payment from `Alice` to `Bob`.
- * Close the channel between `Alice` and `Bob`.
- * Check that on-chain `Bob` balance was changed.
+* Create a `dcrd` node running on a private `simnet`.
+* Create `Alice`, one of the `dcrlnd` nodes in our simulation network.
+* Create `Bob`, the other `dcrlnd` node in our simulation network.
+* Mine some blocks to send `Alice` some decred.
+* Open channel between `Alice` and `Bob`.
+* Send payment from `Alice` to `Bob`.
+* Close the channel between `Alice` and `Bob`.
+* Check that on-chain `Bob` balance was changed.
 
-Start `btcd`, and then create an address for `Alice` that we'll directly mine
-bitcoin into.
+Start `dcrd`, and then create an address for `Alice` that we'll directly mine
+decred into.
+
 ```bash
-# Init bitcoin network env variable:
-$ export NETWORK="simnet" 
+# Init decred network env variable:
+$ export NETWORK="simnet"
 
 # Run the "Alice" container and log into it:
-$ docker-compose run -d --name alice lnd_btc
+$ docker-compose run -d --name alice lnd_dcr
 $ docker exec -i -t alice bash
 
-# Generate a new backward compatible nested p2sh address for Alice:
-alice$ lncli --simnet newaddress np2wkh
+# Generate a new backward compatible nested p2pkh address for Alice:
+alice$ dcrlncli --network=simnet newaddress p2pkh
 
-# Recreate "btcd" node and set Alice's address as mining address:
-$ MINING_ADDRESS=<alice_address> docker-compose up -d btcd
+# Recreate "dcrd" node and set Alice's address as mining address:
+$ MINING_ADDRESS=SsZckVrqHRBtvhJA5UqLZ3MDXpZHi5mK6uU docker-compose up -d dcrd
 
-# Generate 400 blocks (we need at least "100 >=" blocks because of coinbase 
+# Generate 400 blocks (we need at least "100 >=" blocks because of coinbase
 # block maturity and "300 ~=" in order to activate segwit):
-$ docker-compose run btcctl generate 400
+$ docker-compose run dcrctl generate 400
 
 # Check that segwit is active:
-$ docker-compose run btcctl getblockchaininfo | grep -A 1 segwit
+$ docker-compose run dcrctl getblockchaininfo | grep -A 1 segwit
 ```
 
 Check `Alice` balance:
+
 ```
-alice$ lncli --simnet walletbalance
+alice$ dcrlncli --network=simnet walletbalance
 ```
 
 Connect `Bob` node to `Alice` node.
 
 ```bash
 # Run "Bob" node and log into it:
-$ docker-compose run -d --name bob lnd_btc
+$ docker-compose run -d --name bob lnd_dcr
 $ docker exec -i -t bob bash
 
 # Get the identity pubkey of "Bob" node:
-bob$ lncli --simnet getinfo
+bob$ dcrlncli --network=simnet getinfo
 
 {
     ----->"identity_pubkey": "0343bc80b914aebf8e50eb0b8e445fc79b9e6e8e5e018fa8c5f85c7d429c117b38",
@@ -108,7 +119,7 @@ bob$ lncli --simnet getinfo
     "synced_to_chain": true,
     "testnet": false
     "chains": [
-        "bitcoin"
+        "decred"
     ]
 }
 
@@ -116,10 +127,10 @@ bob$ lncli --simnet getinfo
 $ docker inspect bob | grep IPAddress
 
 # Connect "Alice" to the "Bob" node:
-alice$ lncli --simnet connect <bob_pubkey>@<bob_host>
+alice$ dcrlncli --network=simnet connect <bob_pubkey>@<bob_host>
 
 # Check list of peers on "Alice" side:
-alice$ lncli --simnet listpeers
+alice$ dcrlncli --network=simnet listpeers
 {
     "peers": [
         {
@@ -136,7 +147,7 @@ alice$ lncli --simnet listpeers
 }
 
 # Check list of peers on "Bob" side:
-bob$ lncli --simnet listpeers
+bob$ dcrlncli --network=simnet listpeers
 {
     "peers": [
         {
@@ -154,15 +165,16 @@ bob$ lncli --simnet listpeers
 ```
 
 Create the `Alice<->Bob` channel.
+
 ```bash
 # Open the channel with "Bob":
-alice$ lncli --simnet openchannel --node_key=<bob_identity_pubkey> --local_amt=1000000
+alice$ dcrlncli --network=simnet openchannel --node_key=<bob_identity_pubkey> --local_amt=1000000
 
 # Include funding transaction in block thereby opening the channel:
-$ docker-compose run btcctl generate 3
+$ docker-compose run dcrctl generate 3
 
 # Check that channel with "Bob" was opened:
-alice$ lncli --simnet listchannels
+alice$ dcrlncli --network=simnet listchannels
 {
     "channels": [
         {
@@ -189,31 +201,33 @@ alice$ lncli --simnet listchannels
 ```
 
 Send the payment from `Alice` to `Bob`.
+
 ```bash
 # Add invoice on "Bob" side:
-bob$ lncli --simnet addinvoice --amt=10000
+bob$ dcrlncli --network=simnet addinvoice --amt=10000
 {
-        "r_hash": "<your_random_rhash_here>", 
-        "pay_req": "<encoded_invoice>", 
+        "r_hash": "<your_random_rhash_here>",
+        "pay_req": "<encoded_invoice>",
 }
 
 # Send payment from "Alice" to "Bob":
-alice$ lncli --simnet sendpayment --pay_req=<encoded_invoice>
+alice$ dcrlncli --network=simnet sendpayment --pay_req=<encoded_invoice>
 
 # Check "Alice"'s channel balance
-alice$ lncli --simnet channelbalance
+alice$ dcrlncli --network=simnet channelbalance
 
 # Check "Bob"'s channel balance
-bob$ lncli --simnet channelbalance
+bob$ dcrlncli --network=simnet channelbalance
 ```
 
 Now we have open channel in which we sent only one payment, let's imagine
 that we sent lots of them and we'd now like to close the channel. Let's do
 it!
+
 ```bash
 # List the "Alice" channel and retrieve "channel_point" which represents
 # the opened channel:
-alice$ lncli --simnet listchannels
+alice$ dcrlncli --network=simnet listchannels
 {
     "channels": [
         {
@@ -238,19 +252,19 @@ alice$ lncli --simnet listchannels
     ]
 }
 
-# Channel point consists of two numbers separated by a colon. The first one 
+# Channel point consists of two numbers separated by a colon. The first one
 # is "funding_txid" and the second one is "output_index":
-alice$ lncli --simnet closechannel --funding_txid=<funding_txid> --output_index=<output_index>
+alice$ dcrlncli --network=simnet closechannel --funding_txid=<funding_txid> --output_index=<output_index>
 
 # Include close transaction in a block thereby closing the channel:
-$ docker-compose run btcctl generate 3
+$ docker-compose run dcrctl generate 3
 
 # Check "Alice" on-chain balance was credited by her settled amount in the channel:
-alice$ lncli --simnet walletbalance
+alice$ dcrlncli --network=simnet walletbalance
 
 # Check "Bob" on-chain balance was credited with the funds he received in the
 # channel:
-bob$ lncli --simnet walletbalance
+bob$ dcrlncli --network=simnet walletbalance
 {
     "total_balance": "10000",
     "confirmed_balance": "10000",
@@ -259,72 +273,74 @@ bob$ lncli --simnet walletbalance
 ```
 
 ### Connect to faucet lightning node
-In order to be more confident with `lnd` commands I suggest you to try 
+
+In order to be more confident with `dcrlnd` commands I suggest you to try
 to create a mini lightning network cluster ([Create lightning network cluster](#create-lightning-network-cluster)).
 
-In this section we will try to connect our node to the faucet/hub node 
-which we will create a channel with and send some amount of 
-bitcoins. The schema will be following:
+In this section we will try to connect our node to the faucet/hub node
+which we will create a channel with and send some amount of
+decred. The schema will be following:
 
 ```
 + ----- +                   + ------ +         (1)        + --- +
-| Alice | <--- channel ---> | Faucet |  <--- channel ---> | Bob |    
-+ ----- +                   + ------ +                    + --- +        
-    |                            |                           |           
-    |                            |                           |      <---  (2)         
-    + - - - -  - - - - - - - - - + - - - - - - - - - - - - - +            
+| Alice | <--- channel ---> | Faucet |  <--- channel ---> | Bob |
++ ----- +                   + ------ +                    + --- +
+    |                            |                           |
+    |                            |                           |      <---  (2)
+    + - - - -  - - - - - - - - - + - - - - - - - - - - - - - +
                                  |
                        + --------------- +
-                       | Bitcoin network |  <---  (3)   
-                       + --------------- +        
-        
-        
+                       | Decred network  |  <---  (3)
+                       + --------------- +
+
  (1) You may connect an additional node "Bob" and make the multihop
  payment Alice->Faucet->Bob
   
- (2) "Faucet", "Alice" and "Bob" are the lightning network daemons which 
- create channels to interact with each other using the Bitcoin network 
+ (2) "Faucet", "Alice" and "Bob" are the lightning network daemons which
+ create channels to interact with each other using the Decred network
  as source of truth.
  
- (3) In current scenario "Alice" and "Faucet" lightning network nodes 
- connect to different Bitcoin nodes. If you decide to connect "Bob"
- to "Faucet" then the already created "btcd" node would be sufficient.
+ (3) In current scenario "Alice" and "Faucet" lightning network nodes
+ connect to different Decred nodes. If you decide to connect "Bob"
+ to "Faucet" then the already created "dcrd" node would be sufficient.
 ```
 
-First of all you need to run `btcd` node in `testnet` and wait for it to be 
+First of all you need to run `dcrd` node in `testnet` and wait for it to be
 synced with test network (`May the Force and Patience be with you`).
-```bash 
-# Init bitcoin network env variable:
+
+```bash
+# Init decred network env variable:
 $ export NETWORK="testnet"
 
-# Run "btcd" node:
-$ docker-compose up -d "btcd"
+# Run "dcrd" node:
+$ docker-compose up -d "dcrd"
 ```
 
-After `btcd` synced, connect `Alice` to the `Faucet` node.
+After `dcrd` synced, connect `Alice` to the `Faucet` node.
 
-The `Faucet` node address can be found at the [Faucet Lightning Community webpage](https://faucet.lightning.community).
+A list of `Faucet` node addresses can be found at the [lightning-faucet repository](https://github.com/matheusd/lightning-faucet).
 
-```bash 
+```bash
 # Run "Alice" container and log into it:
 $ docker-compose run -d --name alice lnd_btc; docker exec -i -t "alice" bash
 
 # Connect "Alice" to the "Faucet" node:
-alice$ lncli --simnet connect <faucet_identity_address>@<faucet_host>
+alice$ dcrlncli --network=testnet connect <faucet_identity_address>@<faucet_host>
 ```
 
 After a connection is achieved, the `Faucet` node should create the channel
-and send some amount of bitcoins to `Alice`.
+and send some amount of decred to `Alice`.
 
 **What you may do next?:**
-- Send some amount to `Faucet` node back.
+- Send some amount back to `Faucet` node.
 - Connect `Bob` node to the `Faucet` and make multihop payment (`Alice->Faucet->Bob`)
 - Close channel with `Faucet` and check the onchain balance.
 
 ### Questions
-[![Irc](https://img.shields.io/badge/chat-on%20freenode-brightgreen.svg)](https://webchat.freenode.net/?channels=lnd)
+[Decred Community](https://decred.org/community)
 
-* How to see `alice` | `bob` | `btcd` logs?
+* How to see `alice` | `bob` | `dcrd` logs?
+
 ```bash
-docker-compose logs <alice|bob|btcd>
+docker-compose logs <alice|bob|dcrd>
 ```
