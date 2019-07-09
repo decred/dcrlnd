@@ -977,6 +977,8 @@ func (t *txSubscriptionClient) Cancel() {
 // wallet's notification client to a higher-level TransactionSubscription
 // client.
 func (t *txSubscriptionClient) notificationProxier() {
+	defer t.wg.Done()
+
 	for {
 		msg, err := t.txClient.Recv()
 		if err == io.EOF {
@@ -1038,8 +1040,6 @@ func (t *txSubscriptionClient) notificationProxier() {
 			}
 		}()
 	}
-
-	t.wg.Done()
 }
 
 // SubscribeTransactions returns a TransactionSubscription client which

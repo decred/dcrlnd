@@ -307,6 +307,8 @@ func (n *DcrdNotifier) onBlockDisconnected(blockHeader []byte) {
 // notificationDispatcher is the primary goroutine which handles client
 // notification registrations, as well as notification dispatches.
 func (n *DcrdNotifier) notificationDispatcher() {
+	defer n.wg.Done()
+
 out:
 	for {
 		select {
@@ -495,7 +497,6 @@ out:
 			break out
 		}
 	}
-	n.wg.Done()
 }
 
 // historicalConfDetails looks up whether a confirmation request (txid/output
