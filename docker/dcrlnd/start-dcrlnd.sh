@@ -17,7 +17,7 @@ return() {
 
 # set_default function gives the ability to move the setting of default
 # env variable from docker file to the script thereby giving the ability to the
-# user override it durin container start.
+# user override it during container start.
 set_default() {
     # docker initialized env variables with blank string and we can't just
     # use -z flag as usually.
@@ -49,6 +49,11 @@ PARAMS=""
 if [ "$NETWORK" != "mainnet" ]; then
    PARAMS=$(echo --$NETWORK)
 fi
+
+# CAUTION: DO NOT use the --noseedback for production/mainnet setups, ever!
+# Also, setting --rpclisten to 0.0.0.0 will cause it to listen on an IP
+# address that is reachable on the internal network. If you do this outside of
+# docker, this might be a security concern!
 
 PARAMS=$(echo $PARAMS \
     --noseedbackup \
