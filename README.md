@@ -1,8 +1,11 @@
-## Lightning Network Daemon
+dcrlnd
+======
 
-[![Build Status](https://img.shields.io/travis/decred/dcrlnd.svg)](https://travis-ci.org/decred/dcrlnd)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/decred/dcrlnd/blob/master/LICENSE)
-[![Godoc](https://godoc.org/github.com/decred/dcrlnd?status.svg)](https://godoc.org/github.com/decred/dcrlnd)
+[![Build Status](https://github.com/decred/dcrlnd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrlnd/actions)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](http://copyfree.org)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/decred/dcrlnd)
+
+## Lightning Network Daemon
 
 <img src="logo.png">
 
