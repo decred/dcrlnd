@@ -187,11 +187,11 @@ goveralls: $(GOVERALLS_BIN)
 	@$(call print, "Sending coverage report.")
 	$(GOVERALLS_BIN) -coverprofile=coverage.txt -service=travis-ci
 
-travis-race: dcrd dcrwallet unit-race
+ci-race: dcrd dcrwallet unit-race
 
 travis-cover: dcrd dcrwallet unit-cover goveralls
 
-travis-itest: itest
+ci-itest: itest
 
 # =============
 # FLAKE HUNTING
@@ -267,9 +267,9 @@ clean:
 	unit-cover \
 	unit-race \
 	goveralls \
-	travis-race \
+	ci-race \
 	travis-cover \
-	travis-itest \
+	ci-itest \
 	flakehunter \
 	flake-unit \
 	fmt \
