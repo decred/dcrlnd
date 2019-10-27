@@ -117,5 +117,5 @@ To submit `dcrlnd` bugs eligible for inclusion in the program, please visit the
 there.
 
 ## Further reading
-* [Step-by-step send payment guide with docker](https://github.com/dcrlnd/lnd/tree/master/docker)
+* [Step-by-step send payment guide with docker](https://github.com/decred/dcrlnd/tree/master/docker)
 * [Contribution guide](https://github.com/dcrlnd/lnd/blob/master/docs/code_contribution_guidelines.md)
