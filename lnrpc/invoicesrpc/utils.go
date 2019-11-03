@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnwire"
@@ -203,4 +204,32 @@ func CreateRPCRouteHints(routeHints [][]zpay32.HopHint) []*lnrpc.RouteHint {
 	}
 
 	return res
+}
+
+// CreateZpay32HopHints takes in the lnrpc form of route hints and converts them
+// into an invoice decoded form.
+func CreateZpay32HopHints(routeHints []*lnrpc.RouteHint) ([][]zpay32.HopHint, error) {
+	var res [][]zpay32.HopHint
+	for _, route := range routeHints {
+		hopHints := make([]zpay32.HopHint, 0, len(route.HopHints))
+		for _, hop := range route.HopHints {
+			pubKeyBytes, err := hex.DecodeString(hop.NodeId)
+			if err != nil {
+				return nil, err
+			}
+			p, err := secp256k1.ParsePubKey(pubKeyBytes)
+			if err != nil {
+				return nil, err
+			}
+			hopHints = append(hopHints, zpay32.HopHint{
+				NodeID:                    p,
+				ChannelID:                 hop.ChanId,
+				FeeBaseMAtoms:             hop.FeeBaseMAtoms,
+				FeeProportionalMillionths: hop.FeeProportionalMillionths,
+				CLTVExpiryDelta:           uint16(hop.CltvExpiryDelta),
+			})
+		}
+		res = append(res, hopHints)
+	}
+	return res, nil
 }

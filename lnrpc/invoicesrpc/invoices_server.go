@@ -293,6 +293,11 @@ func (s *Server) AddHoldInvoice(ctx context.Context,
 		return nil, err
 	}
 
+	// Convert the passed routing hints to the required format.
+	routeHints, err := CreateZpay32HopHints(invoice.RouteHints)
+	if err != nil {
+		return nil, err
+	}
 	addInvoiceData := &AddInvoiceData{
 		Memo:            invoice.Memo,
 		Hash:            &hash,
@@ -304,6 +309,7 @@ func (s *Server) AddHoldInvoice(ctx context.Context,
 		Private:         invoice.Private,
 		HodlInvoice:     true,
 		Preimage:        nil,
+		RouteHints:      routeHints,
 	}
 
 	_, dbInvoice, err := AddInvoice(ctx, addInvoiceCfg, addInvoiceData)
