@@ -78,7 +78,7 @@ SYS=${LNDBUILDSYS:-"
 # (something that is totally allowed).
 PKG="github.com/decred/dcrlnd"
 COMMIT=$(git describe --abbrev=40 --dirty)
-COMMITFLAGS="-X $PKG/build.Commit=$COMMIT"
+COMMITFLAGS="-X $PKG/build.PreRelease= -X $PKG/build.BuildMetadata=release -X $PKG/build.Commit=$COMMIT"
 
 for i in $SYS; do
     OS=$(echo $i | cut -f1 -d-)

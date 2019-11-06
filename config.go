@@ -13,6 +13,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -406,7 +407,13 @@ func loadConfig() (*config, error) {
 	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
 	usageMessage := fmt.Sprintf("Use %s -h to show usage", appName)
 	if preCfg.ShowVersion {
-		fmt.Println(appName, "version", build.Version())
+		commit := build.SourceCommit()
+		if commit != "" {
+			commit = fmt.Sprintf("Commit %s; ", commit)
+		}
+		fmt.Printf("%s version %s (%sGo version %s %s/%s)\n",
+			appName, build.Version(), commit,
+			runtime.Version(), runtime.GOOS, runtime.GOARCH)
 		os.Exit(0)
 	}
 
