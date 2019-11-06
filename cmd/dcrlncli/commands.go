@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
@@ -27,7 +26,6 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh/terminal"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -1621,7 +1619,7 @@ func capturePassword(instruction string, optional bool,
 
 	for {
 		fmt.Printf(instruction)
-		password, err := terminal.ReadPassword(syscall.Stdin)
+		password, err := readPassword()
 		if err != nil {
 			return nil, err
 		}
@@ -1642,9 +1640,7 @@ func capturePassword(instruction string, optional bool,
 		}
 
 		fmt.Println("Confirm password:")
-		passwordConfirmed, err := terminal.ReadPassword(
-			syscall.Stdin,
-		)
+		passwordConfirmed, err := readPassword()
 		if err != nil {
 			return nil, err
 		}
