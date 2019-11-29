@@ -698,6 +698,18 @@ func loadConfig() (*config, error) {
 		defaultChainSubDirname,
 		decredChain.String())
 
+	// Update Dcrwallet.GRPCHost with correct port from
+	// activeNetParam selected.
+	if cfg.Dcrwallet.GRPCHost != "" {
+		_, _, err := net.SplitHostPort(cfg.Dcrwallet.GRPCHost)
+		if err != nil {
+			cfg.Dcrwallet.GRPCHost = net.JoinHostPort(
+				cfg.Dcrwallet.GRPCHost,
+				activeNetParams.dcrwPort,
+			)
+		}
+	}
+
 	// Finally we'll register the decred chain as our current
 	// primary chain.
 	registeredChains.RegisterPrimaryChain(decredChain)

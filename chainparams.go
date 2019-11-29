@@ -16,6 +16,7 @@ type decredNetParams struct {
 	*chaincfg.Params
 	rpcPort  string
 	CoinType uint32
+	dcrwPort string
 }
 
 // decredTestNetParams contains parameters specific to the 3rd version of the
@@ -24,6 +25,7 @@ var decredTestNetParams = decredNetParams{
 	Params:   chaincfg.TestNet3Params(),
 	rpcPort:  "19109",
 	CoinType: keychain.CoinTypeTestnet,
+	dcrwPort: "19111",
 }
 
 // decredMainNetParams contains parameters specific to the current Decred
@@ -32,6 +34,7 @@ var decredMainNetParams = decredNetParams{
 	Params:   chaincfg.MainNetParams(),
 	rpcPort:  "9109",
 	CoinType: keychain.CoinTypeDecred,
+	dcrwPort: "9111",
 }
 
 // decredSimNetParams contains parameters specific to the simulation test
@@ -40,6 +43,7 @@ var decredSimNetParams = decredNetParams{
 	Params:   chaincfg.SimNetParams(),
 	rpcPort:  "19556",
 	CoinType: keychain.CoinTypeTestnet,
+	dcrwPort: "19558",
 }
 
 // regTestNetParams contains parameters specific to a local regtest network.
