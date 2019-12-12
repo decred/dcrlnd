@@ -41,36 +41,20 @@ set_default() {
 # Set default variables if needed.
 RPCUSER=$(set_default "$RPCUSER" "devuser")
 RPCPASS=$(set_default "$RPCPASS" "devpass")
-DEBUG=$(set_default "$DEBUG" "info")
 NETWORK=$(set_default "$NETWORK" "simnet")
 
-PARAMS=""
-if [ "$NETWORK" != "mainnet" ]; then
-   PARAMS=$(echo --$NETWORK)
-fi
-
-PARAMS=$(echo $PARAMS \
-    "--configfile=/data/dcrd.conf" \
-    "--debuglevel=$DEBUG" \
-    "--rpcuser=$RPCUSER" \
-    "--rpcpass=$RPCPASS" \
-    "--datadir=/data" \
-    "--logdir=/data" \
-    "--rpccert=/rpc/rpc.cert" \
-    "--rpckey=/rpc/rpc.key" \
-    "--rpclisten=" \
-    "--txindex"
-)
-
-# Set the mining flag only if address is non empty.
-if [[ -n "$MINING_ADDRESS" ]]; then
-    PARAMS="$PARAMS --miningaddr=$MINING_ADDRESS"
-fi
-
-# Add user parameters to command.
-PARAMS="$PARAMS $@"
-
-# Print command and start decred node.
-echo "Command: dcrd $PARAMS"
-exec dcrd $PARAMS
-
+exec dcrwallet \
+    "--$NETWORK" \
+    --cafile="/rpc/rpc.cert" \
+    --rpccert="/rpc/rpc.cert" \
+    --rpckey="/rpc/rpc.key" \
+    --username="$RPCUSER" \
+    --password="$RPCPASS" \
+    --rpclisten= \
+    --rpcconnect="dcrd" \
+    --enablevoting \
+    --enableticketbuyer \
+    --ticketbuyer.limit=5 \
+    --appdata="/data" \
+    "--pass=$WALLET_PASS" \
+    "$@"

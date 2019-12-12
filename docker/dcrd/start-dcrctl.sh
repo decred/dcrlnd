@@ -48,5 +48,6 @@ exec dcrctl \
     --rpccert="/rpc/rpc.cert" \
     --rpcuser="$RPCUSER" \
     --rpcpass="$RPCPASS" \
-    --rpcserver="rpcserver" \
+    --rpcserver="dcrd" \
+    --walletrpcserver="dcrwallet" \
     "$@"

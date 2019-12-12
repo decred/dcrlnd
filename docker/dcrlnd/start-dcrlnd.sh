@@ -43,17 +43,24 @@ RPCUSER=$(set_default "$RPCUSER" "devuser")
 RPCPASS=$(set_default "$RPCPASS" "devpass")
 DEBUG=$(set_default "$DEBUG" "debug")
 NETWORK=$(set_default "$NETWORK" "simnet")
-CHAIN=$(set_default "$CHAIN" "decred")
 BACKEND="dcrd"
 
-exec dcrlnd \
+PARAMS=""
+if [ "$NETWORK" != "mainnet" ]; then
+   PARAMS=$(echo --$NETWORK)
+fi
+
+PARAMS=$(echo $PARAMS \
     --noseedbackup \
     --logdir="/data" \
-    "--$CHAIN.$NETWORK" \
-    "--$CHAIN.node"="dcrd" \
+    "--node"="dcrd" \
     "--$BACKEND.rpccert"="/rpc/rpc.cert" \
-    "--$BACKEND.rpchost"="blockchain" \
+    "--$BACKEND.rpchost"="dcrd" \
     "--$BACKEND.rpcuser"="$RPCUSER" \
     "--$BACKEND.rpcpass"="$RPCPASS" \
     --debuglevel="$DEBUG" \
     "$@"
+)
+
+echo "Run dcrlnd $PARAMS"
+exec dcrlnd $PARAMS

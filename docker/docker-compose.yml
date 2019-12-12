@@ -1,56 +1,73 @@
-version: '2'
-services:
+version: '3'
 
+services:
     # dcr is an image of decred node which is used as base image for dcrd and
     # dcrlncli. The environment variables default values determined on stage of
     # container start within starting script.
-    dcr:
-      image: dcrd
-      build:
-        context: dcrd/
-      volumes:
-            - shared:/rpc
-            - decred:/data
-      environment:
-        - RPCUSER
-        - RPCPASS
-        - NETWORK
 
-    dcrd:
-        extends: dcr
-        container_name: dcrd
-        environment:
-          - DEBUG
-          - MINING_ADDRESS
-        entrypoint: ["./start-dcrd.sh"]
+   dcrd:
+     container_name: dcrd
+     build:
+       context: dcrd/
+     volumes:
+       - shared:/config
+       - decred:/data
+     environment:
+       - RPCUSER
+       - RPCPASS
+       - NETWORK
+       - DEBUG
+       - MINING_ADDRESS
+     networks:
+       - dcr-network
+     entrypoint: ["./start-dcrd.sh"]
 
-    dcrctl:
-        extends: dcr
-        container_name: dcrctl
-        links:
-            - "dcrd:rpcserver"
-        entrypoint: ["./start-dcrctl.sh"]
+   dcrctl:
+     build:
+       context: dcrd/
+     volumes:
+       - shared:/rpc
+       - decred:/data
+     environment:
+       - RPCUSER
+       - RPCPASS
+       - NETWORK
+     networks:
+       - dcr-network
+     entrypoint: ["./start-dcrctl.sh"]
 
-    dcrlnd:
-        image: dcrlnd
-        build:
-          context: ../
-          dockerfile: docker/dcrlnd/Dockerfile
-        environment:
-          - RPCUSER
-          - RPCPASS
-          - NETWORK
-          - CHAIN
-          - DEBUG
-        volumes:
-            - shared:/rpc
-        entrypoint: ["./start-dcrlnd.sh"]
+   dcrwallet:
+     container_name: dcrwallet
+     build:
+       context: dcrwallet/
+       args:
+         WALLET_SEED: "0000000000000000000000000000000000000000000000000000000000000000"
+         WALLET_PASS: "123"
+     volumes:
+       - shared:/rpc
+       - decred:/data
+     environment:
+       - RPCUSER
+       - RPCPASS
+       - NETWORK
+     networks:
+       - dcr-network
+     entrypoint: ["./start-dcrwallet.sh"]
 
-    lnd_dcr:
-      extends: dcrlnd
-      container_name: lnd_dcr
-      links:
-          - "dcrd:blockchain"
+   dcrlnd:
+     build:
+       context: ../
+       dockerfile: docker/dcrlnd/Dockerfile
+     environment:
+       - RPCUSER
+       - RPCPASS
+       - NETWORK
+       - DEBUG
+     networks:
+       - dcr-network
+     volumes:
+       - shared:/rpc
+     entrypoint: ["./start-dcrlnd.sh"]
 
 volumes:
   # shared volume is need to store the dcrd rpc certificates and use it within
@@ -62,3 +79,7 @@ volumes:
   # during dcrd container recreation.
   decred:
     driver: local
+
+networks:
+  dcr-network:
+    driver: bridge

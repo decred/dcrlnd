@@ -3,9 +3,17 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: Dockerfile build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - name: Build the Docker image
         run: docker build -t decred/dcrlnd:$(date +%s) .
-  
+  compose:
+    name: Compose build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build docker compose file
+        working-directory: ./docker
+        run: docker-compose build
