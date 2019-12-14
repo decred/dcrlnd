@@ -147,24 +147,6 @@ var (
 	defaultTorControl = net.JoinHostPort("localhost", strconv.Itoa(defaultTorControlPort))
 )
 
-type chainConfig struct {
-	ChainDir string `long:"chaindir" description:"The directory to store the chain's data within."`
-
-	Node string `long:"node" description:"The blockchain interface to use." choice:"dcrd"`
-
-	MainNet  bool `long:"mainnet" description:"Use the main network"`
-	TestNet3 bool `long:"testnet" description:"Use the test network"`
-	SimNet   bool `long:"simnet" description:"Use the simulation test network"`
-	RegTest  bool `long:"regtest" description:"Use the regression test network"`
-
-	DefaultNumChanConfs int              `long:"defaultchanconfs" description:"The default number of confirmations a channel must have before it's considered open. If this is not set, we will scale the value according to the channel size."`
-	DefaultRemoteDelay  int              `long:"defaultremotedelay" description:"The default number of blocks we will require our channel counterparty to wait before accessing its funds in case of unilateral close. If this is not set, we will scale the value according to the channel size."`
-	MinHTLC             lnwire.MilliAtom `long:"minhtlc" description:"The smallest HTLC we are willing to forward on our channels, in MilliAtom"`
-	BaseFee             lnwire.MilliAtom `long:"basefee" description:"The base fee in MilliAtom we will charge for forwarding payments on our channels"`
-	FeeRate             lnwire.MilliAtom `long:"feerate" description:"The fee rate used when forwarding payments on our channels. The total fee charged is basefee + (amount * feerate / 1000000), where amount is the forwarded amount."`
-	TimeLockDelta       uint32           `long:"timelockdelta" description:"The CLTV delta we will subtract from a forwarded HTLC's timelock value"`
-}
-
 type dcrdConfig struct {
 	Dir        string `long:"dir" description:"The base directory that contains the node's data, logs, configuration file, etc."`
 	RPCHost    string `long:"rpchost" description:"The daemon's rpc listening address. If a port is omitted, then the default port for the selected chain parameters will be used."`
@@ -255,7 +237,19 @@ type config struct {
 	MaxPendingChannels int    `long:"maxpendingchannels" description:"The maximum number of incoming pending channels permitted per peer."`
 	BackupFilePath     string `long:"backupfilepath" description:"The target location of the channel backup file"`
 
-	Decred    *chainConfig     `group:"Decred" namespace:"decred"`
+	ChainDir            string           `long:"chaindir" description:"The directory to store the chain's data within."`
+	Node                string           `long:"node" description:"The blockchain interface to use." choice:"dcrd"`
+	MainNet             bool             `long:"mainnet" description:"Use the main network"`
+	TestNet3            bool             `long:"testnet" description:"Use the test network"`
+	SimNet              bool             `long:"simnet" description:"Use the simulation test network"`
+	RegTest             bool             `long:"regtest" description:"Use the regression test network"`
+	DefaultNumChanConfs int              `long:"defaultchanconfs" description:"The default number of confirmations a channel must have before it's considered open. If this is not set, we will scale the value according to the channel size."`
+	DefaultRemoteDelay  int              `long:"defaultremotedelay" description:"The default number of blocks we will require our channel counterparty to wait before accessing its funds in case of unilateral close. If this is not set, we will scale the value according to the channel size."`
+	MinHTLC             lnwire.MilliAtom `long:"minhtlc" description:"The smallest HTLC we are willing to forward on our channels, in MilliAtom"`
+	BaseFee             lnwire.MilliAtom `long:"basefee" description:"The base fee in MilliAtom we will charge for forwarding payments on our channels"`
+	FeeRate             lnwire.MilliAtom `long:"feerate" description:"The fee rate used when forwarding payments on our channels. The total fee charged is basefee + (amount * feerate / 1000000), where amount is the forwarded amount."`
+	TimeLockDelta       uint32           `long:"timelockdelta" description:"The CLTV delta we will subtract from a forwarded HTLC's timelock value"`
+
 	DcrdMode  *dcrdConfig      `group:"dcrd" namespace:"dcrd"`
 	Dcrwallet *dcrwalletConfig `group:"dcrwallet" namespace:"dcrwallet"`
 
@@ -331,13 +325,11 @@ func loadConfig() (*config, error) {
 		LogDir:         defaultLogDir,
 		MaxLogFiles:    defaultMaxLogFiles,
 		MaxLogFileSize: defaultMaxLogFileSize,
-		Decred: &chainConfig{
-			MinHTLC:       defaultDecredMinHTLCMAtoms,
-			BaseFee:       DefaultDecredBaseFeeMAtoms,
-			FeeRate:       DefaultDecredFeeRate,
-			TimeLockDelta: DefaultDecredTimeLockDelta,
-			Node:          "dcrd",
-		},
+		MinHTLC:        defaultDecredMinHTLCMAtoms,
+		BaseFee:        DefaultDecredBaseFeeMAtoms,
+		FeeRate:        DefaultDecredFeeRate,
+		TimeLockDelta:  DefaultDecredTimeLockDelta,
+		Node:           "dcrd",
 		DcrdMode: &dcrdConfig{
 			Dir:     defaultDcrdDir,
 			RPCHost: defaultRPCHost,
@@ -638,19 +630,19 @@ func loadConfig() (*config, error) {
 	// network flags passed; assign active network params while we're at
 	// it.
 	numNets := 0
-	if cfg.Decred.MainNet {
+	if cfg.MainNet {
 		numNets++
 		activeNetParams = decredMainNetParams
 	}
-	if cfg.Decred.TestNet3 {
+	if cfg.TestNet3 {
 		numNets++
 		activeNetParams = decredTestNetParams
 	}
-	if cfg.Decred.RegTest {
+	if cfg.RegTest {
 		numNets++
 		activeNetParams = regTestNetParams
 	}
-	if cfg.Decred.SimNet {
+	if cfg.SimNet {
 		numNets++
 		activeNetParams = decredSimNetParams
 	}
@@ -665,22 +657,23 @@ func loadConfig() (*config, error) {
 	// The target network must be provided, otherwise, we won't know how to
 	// initialize the daemon.
 	if numNets == 0 {
-		str := "%s: either --decred.mainnet, or " +
-			"decred.testnet, decred.simnet, or decred.regtest " +
+		str := "%s: either --mainnet, or " +
+			"testnet, simnet, or regtest " +
 			"must be specified"
 		err := fmt.Errorf(str, funcName)
 		return nil, err
 	}
 
-	if cfg.Decred.TimeLockDelta < minTimeLockDelta {
+	if cfg.TimeLockDelta < minTimeLockDelta {
 		return nil, fmt.Errorf("timelockdelta must be at least %v",
 			minTimeLockDelta)
 	}
 
-	switch cfg.Decred.Node {
+	switch cfg.Node {
 	case "dcrd":
 		err := parseRPCParams(
-			cfg.Decred, cfg.DcrdMode, decredChain, funcName,
+			cfg.DcrdMode, decredChain, cfg.SimNet,
+			cfg.Node, funcName,
 		)
 		if err != nil {
 			err := fmt.Errorf("unable to load RPC "+
@@ -694,7 +687,7 @@ func loadConfig() (*config, error) {
 		return nil, fmt.Errorf(str, funcName)
 	}
 
-	cfg.Decred.ChainDir = filepath.Join(cfg.DataDir,
+	cfg.ChainDir = filepath.Join(cfg.DataDir,
 		defaultChainSubDirname,
 		decredChain.String())
 
@@ -1077,8 +1070,8 @@ func supportedSubsystems() []string {
 	return subsystems
 }
 
-func parseRPCParams(cConfig *chainConfig, nodeConfig interface{}, net chainCode,
-	funcName string) error {
+func parseRPCParams(nodeConfig interface{}, net chainCode,
+	simnet bool, flagNode string, funcName string) error {
 
 	// First, we'll check our node config to make sure the RPC parameters
 	// were set correctly. We'll also determine the path to the conf file
@@ -1111,7 +1104,7 @@ func parseRPCParams(cConfig *chainConfig, nodeConfig interface{}, net chainCode,
 	// If we're in simnet mode, then the running dcrd instance won't read
 	// the RPC credentials from the configuration. So if lnd wasn't
 	// specified the parameters, then we won't be able to start.
-	if cConfig.SimNet {
+	if simnet {
 		str := "%v: rpcuser and rpcpass must be set to your dcrd " +
 			"node's RPC parameters for simnet mode"
 		return fmt.Errorf(str, funcName)
@@ -1120,7 +1113,7 @@ func parseRPCParams(cConfig *chainConfig, nodeConfig interface{}, net chainCode,
 	fmt.Println("Attempting automatic RPC configuration to " + daemonName)
 
 	confFile = filepath.Join(confDir, fmt.Sprintf("%v.conf", confFile))
-	switch cConfig.Node {
+	switch flagNode {
 	case "dcrd":
 		nConf := nodeConfig.(*dcrdConfig)
 		rpcUser, rpcPass, err := extractDcrdRPCParams(confFile)

@@ -3637,7 +3637,7 @@ func (r *rpcServer) AddInvoice(ctx context.Context,
 		return nil, err
 	}
 
-	defaultDelta := cfg.Decred.TimeLockDelta
+	defaultDelta := cfg.TimeLockDelta
 
 	addInvoiceCfg := &invoicesrpc.AddInvoiceConfig{
 		AddInvoice:        r.server.invoices.AddInvoice,

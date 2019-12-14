@@ -2554,7 +2554,7 @@ func testChannelFundingPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	// confirmation before it's open, with the current set of defaults,
 	// we'll need to create a new node instance.
 	const numConfs = 5
-	carolArgs := []string{fmt.Sprintf("--decred.defaultchanconfs=%v", numConfs)}
+	carolArgs := []string{fmt.Sprintf("--defaultchanconfs=%v", numConfs)}
 	carol, err := net.NewNode("Carol", carolArgs)
 	if err != nil {
 		t.Fatalf("unable to create new node: %v", err)
@@ -8335,8 +8335,8 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// Carol.
 	carol, err := net.NewNode("Carol", []string{
 		"--hodl.exit-settle",
-		fmt.Sprintf("--decred.timelockdelta=%d", cltvDelta),
-		fmt.Sprintf("--decred.defaultremotedelay=%d", csvDelay),
+		fmt.Sprintf("--timelockdelta=%d", cltvDelta),
+		fmt.Sprintf("--defaultremotedelay=%d", csvDelay),
 	})
 	if err != nil {
 		t.Fatalf("unable to create new nodes: %v", err)
@@ -8352,8 +8352,8 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 		"--hodl.exit-settle",
 		"--nolisten",
 		"--unsafe-disconnect",
-		fmt.Sprintf("--decred.timelockdelta=%d", cltvDelta),
-		fmt.Sprintf("--decred.defaultremotedelay=%d", csvDelay),
+		fmt.Sprintf("--timelockdelta=%d", cltvDelta),
+		fmt.Sprintf("--defaultremotedelay=%d", csvDelay),
 	})
 	if err != nil {
 		t.Fatalf("unable to create new dave node: %v", err)

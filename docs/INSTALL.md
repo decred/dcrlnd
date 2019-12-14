@@ -205,11 +205,11 @@ dcrctl --testnet --rpcuser=REPLACEME --rpcpass=REPLACEME getpeerinfo | more
 ### Running dcrlnd using the dcrd backend
 
 If you are on testnet, run this command after `dcrd` has finished syncing.
-Otherwise, replace `--decred.testnet` with `--decred.simnet`. If you are
+Otherwise, replace `--testnet` with `--simnet`. If you are
 installing `dcrlnd` in preparation for the
 [tutorial](http://dev.lightning.community/tutorial), you may skip this step.
 ```
-dcrlnd --decred.testnet --debuglevel=debug --dcrd.rpcuser=kek --dcrd.rpcpass=kek --externalip=X.X.X.X
+dcrlnd --testnet --debuglevel=debug --dcrd.rpcuser=kek --dcrd.rpcpass=kek --externalip=X.X.X.X
 ```
 
 # Macaroons
@@ -244,8 +244,8 @@ If you are doing local development, such as for the tutorial, you'll want to
 start both `dcrd` and `dcrlnd` in the `simnet` mode. Simnet is similar to
 regtest in that you'll be able to instantly mine blocks as needed to test
 `dcrlnd` locally. In order to start either daemon in the `simnet` mode use
-`simnet` instead of `testnet`, adding the `--decred.simnet` flag instead of the
-`--decred.testnet` flag.
+`simnet` instead of `testnet`, adding the `--simnet` flag instead of the
+`--testnet` flag.
 
 Another relevant command line flag for local testing of new `dcrlnd`
 developments is the `--debughtlc` flag. When starting `dcrlnd` with this flag,
@@ -258,7 +258,7 @@ command at the end of your `sendpayment` commands.
 # Creating a dcrlnd.conf (Optional)
 
 Optionally, if you'd like to have a persistent configuration between `dcrlnd`
-launches, allowing you to simply type `dcrlnd --decred.testnet`
+launches, allowing you to simply type `dcrlnd --testnet`
 at the command line, you can create an `dcrlnd.conf`.
 
 **On MacOS, located at:**
@@ -274,7 +274,7 @@ debuglevel=trace
 maxpendingchannels=10
 
 [Decred]
-decred.testnet=1
+testnet=1
 ```
 
 Notice the `[Decred]` section. This section houses the parameters for the

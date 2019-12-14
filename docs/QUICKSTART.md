@@ -22,9 +22,8 @@ debuglevel = debug
 # alias = "add a descriptive name and uncomment"
 
 [Decred]
-decred.active = 1
-decred.node = "dcrd"
-decred.testnet = 1
+node = "dcrd"
+testnet = 1
 
 [dcrd]
 dcrd.rpchost = localhost:19109

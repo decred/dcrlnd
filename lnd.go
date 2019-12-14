@@ -137,16 +137,16 @@ func Main(lisCfg ListenerCfg) error {
 
 	var network string
 	switch {
-	case cfg.Decred.TestNet3:
+	case cfg.TestNet3:
 		network = "testnet"
 
-	case cfg.Decred.MainNet:
+	case cfg.MainNet:
 		network = "mainnet"
 
-	case cfg.Decred.SimNet:
+	case cfg.SimNet:
 		network = "simnet"
 
-	case cfg.Decred.RegTest:
+	case cfg.RegTest:
 		network = "regtest"
 	}
 
@@ -960,8 +960,6 @@ func waitForWalletPassword(restEndpoints []net.Addr,
 	grpcServer := grpc.NewServer(serverOpts...)
 	defer grpcServer.GracefulStop()
 
-	chainConfig := cfg.Decred
-
 	// The macaroon files are passed to the wallet unlocker since they are
 	// also encrypted with the wallet's password. These files will be
 	// deleted within it and recreated when successfully changing the
@@ -971,7 +969,7 @@ func waitForWalletPassword(restEndpoints []net.Addr,
 		cfg.AdminMacPath, cfg.ReadMacPath, cfg.InvoiceMacPath,
 	}
 	pwService := walletunlocker.New(
-		chainConfig.ChainDir, activeNetParams.Params, !cfg.SyncFreelist,
+		cfg.ChainDir, activeNetParams.Params, !cfg.SyncFreelist,
 		macaroonFiles, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
 		cfg.Dcrwallet.AccountNumber,
 	)
@@ -1063,7 +1061,7 @@ func waitForWalletPassword(restEndpoints []net.Addr,
 		}
 
 		netDir := dcrwallet.NetworkDir(
-			chainConfig.ChainDir, activeNetParams.Params,
+			cfg.ChainDir, activeNetParams.Params,
 		)
 		loader := walletloader.NewLoader(activeNetParams.Params, netDir,
 			&walletloader.StakeOptions{}, wallet.DefaultGapLimit, false,

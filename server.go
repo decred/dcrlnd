@@ -905,7 +905,6 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB,
 	})
 
 	// Select the configuration and funding parameters for Decred
-	chainCfg := cfg.Decred
 	minRemoteDelay := minDcrRemoteDelay
 	maxRemoteDelay := maxDcrRemoteDelay
 
@@ -973,7 +972,7 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB,
 			// In case the user has explicitly specified
 			// a default value for the number of
 			// confirmations, we use it.
-			defaultConf := uint16(chainCfg.DefaultNumChanConfs)
+			defaultConf := uint16(cfg.DefaultNumChanConfs)
 			if defaultConf != 0 {
 				return defaultConf
 			}
@@ -1005,7 +1004,7 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB,
 			// In case the user has explicitly specified
 			// a default value for the remote delay, we
 			// use it.
-			defaultDelay := uint16(chainCfg.DefaultRemoteDelay)
+			defaultDelay := uint16(cfg.DefaultRemoteDelay)
 			if defaultDelay > 0 {
 				return defaultDelay
 			}
@@ -1328,7 +1327,7 @@ func (s *server) Start() error {
 		// configure the set of active bootstrappers, and launch a
 		// dedicated goroutine to maintain a set of persistent
 		// connections.
-		if !cfg.NoNetBootstrap && !cfg.Decred.SimNet && !cfg.Decred.RegTest {
+		if !cfg.NoNetBootstrap && !cfg.SimNet && !cfg.RegTest {
 			bootstrappers, err := initNetworkBootstrappers(s)
 			if err != nil {
 				startErr = err
@@ -1616,7 +1615,7 @@ func initNetworkBootstrappers(s *server) ([]discovery.NetworkPeerBootstrapper, e
 
 	// If this isn't simnet mode, then one of our additional bootstrapping
 	// sources will be the set of running DNS seeds.
-	if !cfg.Decred.SimNet {
+	if !cfg.SimNet {
 		dnsSeeds, ok := chainDNSSeeds[activeNetParams.GenesisHash]
 
 		// If we have a set of DNS seeds for this chain, then we'll add

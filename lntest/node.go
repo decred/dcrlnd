@@ -200,17 +200,17 @@ func (cfg nodeConfig) genArgs() []string {
 
 	switch cfg.NetParams.Net {
 	case wire.TestNet3:
-		args = append(args, "--decred.testnet")
+		args = append(args, "--testnet")
 	case wire.SimNet:
-		args = append(args, "--decred.simnet")
+		args = append(args, "--simnet")
 	}
 
 	backendArgs := cfg.BackendCfg.GenArgs()
 	args = append(args, backendArgs...)
 	args = append(args, "--nobootstrap")
 	args = append(args, "--debuglevel=debug")
-	args = append(args, "--decred.defaultchanconfs=1")
-	args = append(args, fmt.Sprintf("--decred.defaultremotedelay=%v", DefaultCSV))
+	args = append(args, "--defaultchanconfs=1")
+	args = append(args, fmt.Sprintf("--defaultremotedelay=%v", DefaultCSV))
 	args = append(args, fmt.Sprintf("--rpclisten=%v", cfg.RPCAddr()))
 	args = append(args, fmt.Sprintf("--restlisten=%v", cfg.RESTAddr()))
 	args = append(args, fmt.Sprintf("--listen=%v", cfg.P2PAddr()))
