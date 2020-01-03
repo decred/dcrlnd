@@ -135,13 +135,11 @@ func Main(lisCfg ListenerCfg) error {
 	ltndLog.Infof("Version: %s, build=%s, logging=%s",
 		build.Version(), build.Deployment, build.LoggingType)
 
-	var network string
+	// We default to mainnet if none are specified.
+	network := "mainnet"
 	switch {
 	case cfg.TestNet3:
 		network = "testnet"
-
-	case cfg.MainNet:
-		network = "mainnet"
 
 	case cfg.SimNet:
 		network = "simnet"

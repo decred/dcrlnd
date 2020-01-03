@@ -239,7 +239,6 @@ type config struct {
 
 	ChainDir            string           `long:"chaindir" description:"The directory to store the chain's data within."`
 	Node                string           `long:"node" description:"The blockchain interface to use." choice:"dcrd"`
-	MainNet             bool             `long:"mainnet" description:"Use the main network"`
 	TestNet3            bool             `long:"testnet" description:"Use the test network"`
 	SimNet              bool             `long:"simnet" description:"Use the simulation test network"`
 	RegTest             bool             `long:"regtest" description:"Use the regression test network"`
@@ -630,10 +629,6 @@ func loadConfig() (*config, error) {
 	// network flags passed; assign active network params while we're at
 	// it.
 	numNets := 0
-	if cfg.MainNet {
-		numNets++
-		activeNetParams = decredMainNetParams
-	}
 	if cfg.TestNet3 {
 		numNets++
 		activeNetParams = decredTestNetParams
@@ -647,21 +642,15 @@ func loadConfig() (*config, error) {
 		activeNetParams = decredSimNetParams
 	}
 	if numNets > 1 {
-		str := "%s: The mainnet, testnet, regtest, and " +
-			"simnet params can't be used together -- " +
-			"choose one of the four"
+		str := "%s: The testnet, regtest, and simnet params" +
+			"can't be used together -- choose one of the three"
 		err := fmt.Errorf(str, funcName)
 		return nil, err
 	}
 
-	// The target network must be provided, otherwise, we won't know how to
-	// initialize the daemon.
+	// We default to mainnet if none are specified.
 	if numNets == 0 {
-		str := "%s: either --mainnet, or " +
-			"testnet, simnet, or regtest " +
-			"must be specified"
-		err := fmt.Errorf(str, funcName)
-		return nil, err
+		activeNetParams = decredMainNetParams
 	}
 
 	if cfg.TimeLockDelta < minTimeLockDelta {

@@ -160,11 +160,25 @@ func extractPathArgs(ctx *cli.Context) (string, string, error) {
 		return "", "", fmt.Errorf("unknown chain: %v", chain)
 	}
 
-	network := strings.ToLower(ctx.GlobalString("network"))
-	switch network {
-	case "mainnet", "testnet", "regtest", "simnet":
-	default:
-		return "", "", fmt.Errorf("unknown network: %v", network)
+	// We default to mainnet if no other options are specified.
+	network := "mainnet"
+
+	networks := []string{"testnet", "regtest", "simnet"}
+	numNets := 0
+
+	for _, n := range networks {
+		if ctx.GlobalBool(n) {
+			network = n
+			numNets++
+		}
+	}
+
+	if numNets > 1 {
+		str := "extractPathArgs: The testnet, regtest, and simnet params" +
+			"can't be used together -- choose one of the three"
+		err := fmt.Errorf(str)
+
+		return "", "", err
 	}
 
 	// We'll now fetch the dcrlnddir so we can make a decision  on how to
@@ -228,11 +242,17 @@ func main() {
 			Usage: "the chain lnd is running on e.g. decred",
 			Value: "decred",
 		},
-		cli.StringFlag{
-			Name: "network, n",
-			Usage: "the network drlnd is running on e.g. mainnet, " +
-				"testnet, etc.",
-			Value: "mainnet",
+		cli.BoolFlag{
+			Name:  "testnet",
+			Usage: "Use the test network",
+		},
+		cli.BoolFlag{
+			Name:  "simnet",
+			Usage: "Use the simulation network",
+		},
+		cli.BoolFlag{
+			Name:  "regtest",
+			Usage: "Use the regression test network",
 		},
 		cli.BoolFlag{
 			Name:  "no-macaroons",

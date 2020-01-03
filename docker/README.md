@@ -68,7 +68,7 @@ $ docker-compose run -d --name alice lnd_btc
 $ docker exec -i -t alice bash
 
 # Generate a new backward compatible nested p2sh address for Alice:
-alice$ lncli --network=simnet newaddress np2wkh 
+alice$ lncli --simnet newaddress np2wkh
 
 # Recreate "btcd" node and set Alice's address as mining address:
 $ MINING_ADDRESS=<alice_address> docker-compose up -d btcd
@@ -83,7 +83,7 @@ $ docker-compose run btcctl getblockchaininfo | grep -A 1 segwit
 
 Check `Alice` balance:
 ```
-alice$ lncli --network=simnet walletbalance
+alice$ lncli --simnet walletbalance
 ```
 
 Connect `Bob` node to `Alice` node.
@@ -94,7 +94,7 @@ $ docker-compose run -d --name bob lnd_btc
 $ docker exec -i -t bob bash
 
 # Get the identity pubkey of "Bob" node:
-bob$ lncli --network=simnet getinfo
+bob$ lncli --simnet getinfo
 
 {
     ----->"identity_pubkey": "0343bc80b914aebf8e50eb0b8e445fc79b9e6e8e5e018fa8c5f85c7d429c117b38",
@@ -116,10 +116,10 @@ bob$ lncli --network=simnet getinfo
 $ docker inspect bob | grep IPAddress
 
 # Connect "Alice" to the "Bob" node:
-alice$ lncli --network=simnet connect <bob_pubkey>@<bob_host>
+alice$ lncli --simnet connect <bob_pubkey>@<bob_host>
 
 # Check list of peers on "Alice" side:
-alice$ lncli --network=simnet listpeers
+alice$ lncli --simnet listpeers
 {
     "peers": [
         {
@@ -136,7 +136,7 @@ alice$ lncli --network=simnet listpeers
 }
 
 # Check list of peers on "Bob" side:
-bob$ lncli --network=simnet listpeers
+bob$ lncli --simnet listpeers
 {
     "peers": [
         {
@@ -156,13 +156,13 @@ bob$ lncli --network=simnet listpeers
 Create the `Alice<->Bob` channel.
 ```bash
 # Open the channel with "Bob":
-alice$ lncli --network=simnet openchannel --node_key=<bob_identity_pubkey> --local_amt=1000000
+alice$ lncli --simnet openchannel --node_key=<bob_identity_pubkey> --local_amt=1000000
 
 # Include funding transaction in block thereby opening the channel:
 $ docker-compose run btcctl generate 3
 
 # Check that channel with "Bob" was opened:
-alice$ lncli --network=simnet listchannels
+alice$ lncli --simnet listchannels
 {
     "channels": [
         {
@@ -191,20 +191,20 @@ alice$ lncli --network=simnet listchannels
 Send the payment from `Alice` to `Bob`.
 ```bash
 # Add invoice on "Bob" side:
-bob$ lncli --network=simnet addinvoice --amt=10000
+bob$ lncli --simnet addinvoice --amt=10000
 {
         "r_hash": "<your_random_rhash_here>", 
         "pay_req": "<encoded_invoice>", 
 }
 
 # Send payment from "Alice" to "Bob":
-alice$ lncli --network=simnet sendpayment --pay_req=<encoded_invoice>
+alice$ lncli --simnet sendpayment --pay_req=<encoded_invoice>
 
 # Check "Alice"'s channel balance
-alice$ lncli --network=simnet channelbalance
+alice$ lncli --simnet channelbalance
 
 # Check "Bob"'s channel balance
-bob$ lncli --network=simnet channelbalance
+bob$ lncli --simnet channelbalance
 ```
 
 Now we have open channel in which we sent only one payment, let's imagine
@@ -213,7 +213,7 @@ it!
 ```bash
 # List the "Alice" channel and retrieve "channel_point" which represents
 # the opened channel:
-alice$ lncli --network=simnet listchannels
+alice$ lncli --simnet listchannels
 {
     "channels": [
         {
@@ -240,17 +240,17 @@ alice$ lncli --network=simnet listchannels
 
 # Channel point consists of two numbers separated by a colon. The first one 
 # is "funding_txid" and the second one is "output_index":
-alice$ lncli --network=simnet closechannel --funding_txid=<funding_txid> --output_index=<output_index>
+alice$ lncli --simnet closechannel --funding_txid=<funding_txid> --output_index=<output_index>
 
 # Include close transaction in a block thereby closing the channel:
 $ docker-compose run btcctl generate 3
 
 # Check "Alice" on-chain balance was credited by her settled amount in the channel:
-alice$ lncli --network=simnet walletbalance
+alice$ lncli --simnet walletbalance
 
 # Check "Bob" on-chain balance was credited with the funds he received in the
 # channel:
-bob$ lncli --network=simnet walletbalance
+bob$ lncli --simnet walletbalance
 {
     "total_balance": "10000",
     "confirmed_balance": "10000",
@@ -310,7 +310,7 @@ The `Faucet` node address can be found at the [Faucet Lightning Community webpag
 $ docker-compose run -d --name alice lnd_btc; docker exec -i -t "alice" bash
 
 # Connect "Alice" to the "Faucet" node:
-alice$ lncli --network=simnet connect <faucet_identity_address>@<faucet_host>
+alice$ lncli --simnet connect <faucet_identity_address>@<faucet_host>
 ```
 
 After a connection is achieved, the `Faucet` node should create the channel
