@@ -30,6 +30,20 @@ const (
 	scriptVersion  = uint16(0)
 )
 
+const (
+	// The following values are used by atomicWalletSync. Their
+	// interpretation is the following:
+	//
+	// - Unsynced: wallet just started and hasn't performed the first sync
+	// yet.
+	// - Synced: wallet is currently synced.
+	// - LostSync: wallet was synced in the past but lost the connection to
+	// the network and it's unknown whether it's synced or not.
+	syncStatusUnsynced uint32 = 0
+	syncStatusSynced          = 1
+	syncStatusLostSync        = 2
+)
+
 // DcrWallet is an implementation of the lnwallet.WalletController interface
 // backed by an active instance of dcrwallet. At the time of the writing of
 // this documentation, this implementation requires a full dcrd node to
@@ -42,9 +56,12 @@ const (
 // wallet has been fully synced.
 type DcrWallet struct {
 	// wallet is an active instance of dcrwallet.
-	wallet             *base.Wallet
-	loader             *walletloader.Loader
-	atomicWalletSynced uint32 // CAS (synced=1) when wallet syncing complete
+	wallet *base.Wallet
+	loader *walletloader.Loader
+
+	// atomicWalletSync controls the current sync status of the wallet. It
+	// MUST be used atomically.
+	atomicWalletSynced uint32
 
 	// syncedChan is a channel that is closed once the wallet has initially
 	// synced to the network. It is protected by atomicWalletSynced.
@@ -107,12 +124,13 @@ func New(cfg Config) (*DcrWallet, error) {
 	}
 
 	return &DcrWallet{
-		cfg:        &cfg,
-		wallet:     wallet,
-		loader:     loader,
-		syncer:     syncer,
-		syncedChan: make(chan struct{}),
-		netParams:  cfg.NetParams,
+		cfg:                &cfg,
+		wallet:             wallet,
+		loader:             loader,
+		syncer:             syncer,
+		syncedChan:         make(chan struct{}),
+		atomicWalletSynced: syncStatusUnsynced,
+		netParams:          cfg.NetParams,
 	}, nil
 }
 
@@ -807,6 +825,12 @@ func (b *DcrWallet) InitialSyncChannel() <-chan struct{} {
 func (b *DcrWallet) onRPCSyncerSynced(synced bool) {
 	dcrwLog.Debug("RPC syncer notified wallet is synced")
 
+	if atomic.CompareAndSwapUint32(&b.atomicWalletSynced, syncStatusLostSync, syncStatusSynced) {
+		// No need to recreate the keyring or close the initial sync
+		// channel, so just return.
+		return
+	}
+
 	// Now that the wallet is synced and address discovery has ended, we
 	// can create the keyring. We can only do this here (after sync)
 	// because address discovery might upgrade the underlying dcrwallet
@@ -821,7 +845,13 @@ func (b *DcrWallet) onRPCSyncerSynced(synced bool) {
 	}
 
 	// Signal that the wallet is synced by closing the channel.
-	if atomic.CompareAndSwapUint32(&b.atomicWalletSynced, 0, 1) {
+	if atomic.CompareAndSwapUint32(&b.atomicWalletSynced, syncStatusUnsynced, syncStatusSynced) {
 		close(b.syncedChan)
 	}
+}
+
+func (b *DcrWallet) rpcSyncerFinished() {
+	// The RPC syncer stopped, so if we were previously synced we need to
+	// signal that we aren't anymore.
+	atomic.CompareAndSwapUint32(&b.atomicWalletSynced, syncStatusSynced, syncStatusLostSync)
 }
