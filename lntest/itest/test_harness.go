@@ -1,14 +1,52 @@
 package itest
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"math"
 	"testing"
+	"time"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/dcrutil/v4"
+	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
+	"github.com/decred/dcrd/rpcclient/v8"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/go-errors/errors"
+)
+
+var (
+	harnessNetParams = chaincfg.SimNetParams()
+)
+
+const (
+	testFeeBase         = 1e+6
+	defaultCSV          = lntest.DefaultCSV
+	defaultTimeout      = lntest.DefaultTimeout
+	minerMempoolTimeout = lntest.MinerMempoolTimeout
+	channelOpenTimeout  = lntest.ChannelOpenTimeout * 4
+	channelCloseTimeout = lntest.ChannelCloseTimeout
+
+	// defaultChanAmt is the default channel capacity for channels opened
+	// for testing. This is an amount that should allow a large number of
+	// channels to be opened among the default test nodes (Alice and Bob)
+	// of the lntest harness, assuming the harness initializes those nodes
+	// with 10 outputs of 1 DCR each.
+	defaultChanAmt = dcrutil.Amount(1<<24) - 1 // 0.16 DCR
+
+	itestLndBinary = "../../dcrlnd-itest"
+
+	// anchorSize is the value of an anchor output. This MUST match what
+	// lnwallet uses.
+	anchorSize       = 12060
+	noFeeLimitMAtoms = math.MaxInt64
+
+	AddrTypePubkeyHash = lnrpc.AddressType_PUBKEY_HASH
 )
 
 // harnessTest wraps a regular testing.T providing enhanced error detection
@@ -75,7 +113,6 @@ func (h *harnessTest) RunTestCase(testCase *testCase) {
 	}()
 
 	testCase.test(h.lndHarness, h)
-	assertCleanState(h, h.lndHarness)
 
 	return
 }
@@ -93,44 +130,135 @@ type testCase struct {
 	test func(net *lntest.NetworkHarness, t *harnessTest)
 }
 
-// assertCleanState ensures the state of the main test nodes and the mempool
-// are in a clean state (no open channels, no txs in the mempool, etc).
-func assertCleanState(h *harnessTest, net *lntest.NetworkHarness) {
-	_, minerHeight, err := net.Miner.Node.GetBestBlock(context.TODO())
+// waitForTxInMempool polls until finding one transaction in the provided
+// miner's mempool. An error is returned if *one* transaction isn't found within
+// the given timeout.
+func waitForTxInMempool(miner *rpcclient.Client,
+	timeout time.Duration) (*chainhash.Hash, error) {
+
+	txs, err := waitForNTxsInMempool(miner, 1, timeout)
 	if err != nil {
-		h.Fatalf("unable to get best height: %v", err)
+		return nil, err
 	}
-	assertNodeBlockHeight(h, net.Alice, int32(minerHeight))
-	assertNodeBlockHeight(h, net.Bob, int32(minerHeight))
-	assertNodeNumChannels(h, net.Alice, 0)
-	assertNumPendingChannels(h, net.Alice, 0, 0, 0, 0)
-	assertNodeNumChannels(h, net.Bob, 0)
-	assertNumPendingChannels(h, net.Bob, 0, 0, 0, 0)
-	assertNumUnminedUnspent(h, net.Alice, 0)
-	assertNumUnminedUnspent(h, net.Bob, 0)
-	waitForNTxsInMempool(net.Miner.Node, 0, minerMempoolTimeout)
+
+	return txs[0], err
 }
 
-func assertNodeBlockHeight(t *harnessTest, node *lntest.HarnessNode, height int32) {
+// waitForNTxsInMempool polls until finding the desired number of transactions
+// in the provided miner's mempool. An error is returned if this number is not
+// met after the given timeout.
+func waitForNTxsInMempool(miner *rpcclient.Client, n int,
+	timeout time.Duration) ([]*chainhash.Hash, error) {
+
+	breakTimeout := time.After(timeout)
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+
+	var err error
+	var mempool []*chainhash.Hash
+	for {
+		select {
+		case <-breakTimeout:
+			return nil, fmt.Errorf("wanted %v, found %v txs "+
+				"in mempool: %v", n, len(mempool), mempool)
+		case <-ticker.C:
+			mempool, err = miner.GetRawMempool(context.Background(), jsonrpctypes.GRMRegular)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(mempool) == n {
+				return mempool, nil
+			}
+		}
+	}
+}
+
+// mineBlocks mine 'num' of blocks and check that blocks are present in
+// node blockchain. numTxs should be set to the number of transactions
+// (excluding the coinbase) we expect to be included in the first mined block.
+func mineBlocks(t *harnessTest, net *lntest.NetworkHarness,
+	num uint32, numTxs int) []*wire.MsgBlock {
+
+	// If we expect transactions to be included in the blocks we'll mine,
+	// we wait here until they are seen in the miner's mempool.
+	var txids []*chainhash.Hash
+	var err error
+	if numTxs > 0 {
+		txids, err = waitForNTxsInMempool(
+			net.Miner.Node, numTxs, minerMempoolTimeout,
+		)
+		if err != nil {
+			t.Fatalf("unable to find txns in mempool: %v", err)
+		}
+	}
+
+	blocks := make([]*wire.MsgBlock, num)
+
+	blockHashes, err := net.Generate(num)
+	if err != nil {
+		t.Fatalf("unable to generate blocks: %v", err)
+	}
+
+	for i, blockHash := range blockHashes {
+		block, err := net.Miner.Node.GetBlock(context.Background(), blockHash)
+		if err != nil {
+			t.Fatalf("unable to get block: %v", err)
+		}
+
+		blocks[i] = block
+	}
+
+	// Finally, assert that all the transactions were included in the first
+	// block.
+	for _, txid := range txids {
+		assertTxInBlock(t, blocks[0], txid)
+	}
+
+	return blocks
+}
+
+func assertTxInBlock(t *harnessTest, block *wire.MsgBlock, txid *chainhash.Hash) {
+	for _, tx := range block.Transactions {
+		sha := tx.TxHash()
+		if bytes.Equal(txid[:], sha[:]) {
+			return
+		}
+	}
+
+	t.Fatalf("tx %s was not included in block", txid)
+}
+
+func assertWalletUnspent(t *harnessTest, node *lntest.HarnessNode, out *lnrpc.OutPoint) {
 	t.t.Helper()
 
 	err := wait.NoError(func() error {
 		ctxt, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
-		getInfoReq := &lnrpc.GetInfoRequest{}
-		getInfoResp, err := node.GetInfo(ctxt, getInfoReq)
+		unspent, err := node.ListUnspent(ctxt, &lnrpc.ListUnspentRequest{})
 		if err != nil {
 			return err
 		}
-		if int32(getInfoResp.BlockHeight) != height {
-			return fmt.Errorf("unexpected block height for node %s: "+
-				"want=%d got=%d", node.Name(),
-				height, getInfoResp.BlockHeight)
+
+		err = errors.New("tx with wanted txhash never found")
+		for _, utxo := range unspent.Utxos {
+			if !bytes.Equal(utxo.Outpoint.TxidBytes, out.TxidBytes) {
+				continue
+			}
+
+			err = errors.New("wanted output is not a wallet utxo")
+			if utxo.Outpoint.OutputIndex != out.OutputIndex {
+				continue
+			}
+
+			return nil
 		}
 
-		return nil
+		t.Logf("nak %v", err)
+
+		return err
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf("failed to assert node block height: %v", err)
+		t.Fatalf("outpoint %s not unspent by %s's wallet", out, node.Name())
 	}
 }
