@@ -117,7 +117,7 @@ func testMultiHopReceiverChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 	if c == commitTypeAnchors {
 		expectedTxes = 2
 	}
-	txes, err := getNTxsFromMempool(
+	_, err = getNTxsFromMempool(
 		net.Miner.Node, expectedTxes, minerMempoolTimeout,
 	)
 	require.NoError(t.t, err)
@@ -157,7 +157,7 @@ func testMultiHopReceiverChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 		// commitment output and one the anchor output.
 		expectedTxes = 3
 	}
-	txes, err = getNTxsFromMempool(net.Miner.Node,
+	txes, err := getNTxsFromMempool(net.Miner.Node,
 		expectedTxes, minerMempoolTimeout)
 	require.NoError(t.t, err)
 

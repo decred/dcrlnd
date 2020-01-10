@@ -297,7 +297,7 @@ var testsCases = []*testCase{
 	},
 	{
 		name: "REST API",
-		test: testRestApi,
+		test: testRestAPI,
 	},
 	{
 		name: "intercept forwarded htlc packets",

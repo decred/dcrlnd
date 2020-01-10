@@ -1,20 +1,3 @@
-issues:
-        exclude-rules:
-                # Ignore govet.lostcancel in integration test files. The
-                # integration tests make substantial use of context.WithTimeout()
-                # without corresponding cancel() calls, which trigger this. So
-                # disable these warnings for now until this is fixed upstream
-                # (otherwise merging upstream itest changes will become 
-                # significantly harder)
-                - path: lntest/
-                  text: lostcancel
-
-                # Exclude gosec from running for tests so that tests with weak randomness
-                # (math/rand) will pass the linter.
-                - path: _test\.go
-                  linters:
-                    - gosec
-
 run:
   deadline: 10m
 
@@ -40,3 +23,31 @@ linters:
     - unconvert
     - unused
     - vetshadow
+
+issues:
+  # Only show newly introduced problems.
+  new-from-rev: 01f696afce2f9c0d4ed854edefa3846891d01d8a
+
+  exclude-rules:
+    # Exclude gosec from running for tests so that tests with weak randomness
+    # (math/rand) will pass the linter.
+    - path: _test\.go
+      linters:
+        - gosec
+
+    # Fix false positives because of build flags in itest directory.
+    - path: lntest/itest/.*
+      linters:
+        - unused
+        - deadcode
+        - unparam
+        - govet
+
+    # Ignore govet.lostcancel in integration test files. The
+    # integration tests make substantial use of context.WithTimeout()
+    # without corresponding cancel() calls, which trigger this. So
+    # disable these warnings for now until this is fixed upstream
+    # (otherwise merging upstream itest changes will become
+    # significantly harder)
+    - path: lntest/
+      text: lostcancel
