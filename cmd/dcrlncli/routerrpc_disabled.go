@@ -1,4 +1,4 @@
-// +build !routerrpc
+// +build no_routerrpc
 
 package main
 
