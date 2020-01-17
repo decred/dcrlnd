@@ -42,7 +42,7 @@ Create the wallet: `$ dcrlncli create`. Use a minimum of 8 char password. Save t
 
 # Interacting
 
-To make it easier: `$ alias ln=dcrlncli -n testnet` (the important bit is to always specify `-n testnet` when invoking `dcrlncli`).
+To make it easier: `$ alias ln=dcrlncli --testnet` (the important bit is to always specify `--testnet` when invoking `dcrlncli`).
 
 Get a new wallet address: `$ ln newaddress p2pkh`.
 
