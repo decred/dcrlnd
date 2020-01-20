@@ -76,7 +76,7 @@ docker-compose run -d --name alice dcrlnd
 docker exec -it alice bash
 
 # Generate a new p2pkh address for Alice:
-alice$ dcrlncli -n simnet newaddress p2pkh
+alice$ dcrlncli --simnet newaddress p2pkh
 ```
 We can keep logged in `Alice` container, just need to use another terminal tab to execute commands in docker-compose.
 
@@ -89,7 +89,7 @@ docker-compose run dcrctl --wallet sendfrom default <alice_address> 1
 docker-compose run dcrctl generate 1
 
 #Check Alice's wallet balance
-alice$ dcrlncli -n simnet walletbalance
+alice$ dcrlncli --simnet walletbalance
 ```
 
 Create `Bob`s container and connect to `Alice`:
@@ -104,7 +104,7 @@ docker exec -it bob bash
 Connect Bob node to Alice node
 ```bash
 # Get identity pubkey from Bob's node
-bob$ dcrlncli -n simnet getinfo
+bob$ dcrlncli --simnet getinfo
 {
 	"version": "0.2.0-pre+dev",
 	------>"identity_pubkey": "02fe9daea36c1b1bd9e8dc1f5dc9edfc887d223199f2bac99e1cf92eb8cdb654e7",
@@ -130,10 +130,10 @@ bob$ dcrlncli -n simnet getinfo
 }
 
 # Connect Alice to Bob's node
-alice$ dcrlncli -n simnet connect <bob_pubkey>@bob
+alice$ dcrlncli --simnet connect <bob_pubkey>@bob
 
 # Check list of peers on "Alice" side:
-alice$ dcrlncli -n simnet listpeers
+alice$ dcrlncli --simnet listpeers
 {
     "peers": [
         {
@@ -154,14 +154,14 @@ alice$ dcrlncli -n simnet listpeers
 Create the `Alice<->Bob` channel.
 ```bash
 # Open the channel with "Bob":
-alice$ dcrlncli -n simnet openchannel --node_key=<bob_pubkey> --local_amt=100000
+alice$ dcrlncli --simnet openchannel --node_key=<bob_pubkey> --local_amt=100000
 
 # Include funding transaction in block thereby opening the channel:
 # We need six confirmations to channel active
 $ docker-compose run dcrctl generate 6
 
 # Check that channel with "Bob" was opened:
-alice$ dcrlncli --n simnet listchannels
+alice$ dcrlncli --simnet listchannels
 {
     "channels": [
         {
@@ -197,7 +197,7 @@ alice$ dcrlncli --n simnet listchannels
 Send the payment from Alice to Bob.
 ```bash
 # Add invoice on "Bob" side:
-bob$ dcrlncli -n simnet addinvoice --amt=50000
+bob$ dcrlncli --simnet addinvoice --amt=50000
 {
         "r_hash": "<your_random_rhash_here>", 
         "pay_req": "<encoded_invoice>", 
@@ -205,10 +205,10 @@ bob$ dcrlncli -n simnet addinvoice --amt=50000
 }
 
 # Send payment from "Alice" to "Bob":
-alice$ dcrlncli -n simnet payinvoice <encoded_invoice>
+alice$ dcrlncli --simnet payinvoice <encoded_invoice>
 
 # Check "Alice"'s channel balance
-alice$ dcrlncli -n simnet channelbalance
+alice$ dcrlncli --simnet channelbalance
 
 ```
 
@@ -217,7 +217,7 @@ Now we have open channel in which we sent only one payment, let's imagine that w
 ```bash
 # List the "Alice" channel and retrieve "channel_point" which represents
 # the opened channel:
-alice$ dcrlncli -n simnet listchannels
+alice$ dcrlncli --simnet listchannels
 {
     "channels": [
         {
@@ -250,17 +250,17 @@ alice$ dcrlncli -n simnet listchannels
 
 # Channel point consists of two numbers separated by a colon. The first one 
 # is "funding_txid" and the second one is "output_index":
-alice$ dcrlncli -n simnet closechannel <funding_txid> <output_index>
+alice$ dcrlncli --simnet closechannel <funding_txid> <output_index>
 
 # Include close transaction in a block thereby closing the channel:
 $ docker-compose run dcrctl generate 6
 
 # Check "Alice" on-chain balance was credited by her settled amount in the channel:
-alice$ dcrlncli -n simnet walletbalance
+alice$ dcrlncli --simnet walletbalance
 
 # Check "Bob" on-chain balance was credited with the funds he received in the
 # channel:
-bob$ dcrlncli -n simnet walletbalance
+bob$ dcrlncli --simnet walletbalance
 {
     "total_balance": "50000",
     "confirmed_balance": "50000",
@@ -297,7 +297,7 @@ We don't need to connect with all nodes for make a payment, looks this case:
 Create the `Alice<->Bob` channel.
 ```bash
 # Open the channel with "Bob":
-alice$ dcrlncli -n simnet openchannel --node_key=<bob_pubkey> --local_amt=100000
+alice$ dcrlncli --simnet openchannel --node_key=<bob_pubkey> --local_amt=100000
 
 # Include funding transaction in block thereby opening the channel:
 # We need six confirmations to channel active
@@ -314,7 +314,7 @@ docker-compose run -d --name carol dcrlnd
 docker exec -it carol bash
 
 # Get identity pubkey from Carol's node
-carol$ dcrlncli -n simnet getinfo
+carol$ dcrlncli --simnet getinfo
 
 ```
 
@@ -322,16 +322,16 @@ Bob now can create a channel with Carol
 
 ```bash
 # Connect Bob to Carol's node
-bob$ dcrlncli -n simnet connect <carol_pubkey>@carol
+bob$ dcrlncli --simnet connect <carol_pubkey>@carol
 
 # Open the channel with "Carol":
-bob$ dcrlncli -n simnet openchannel --node_key=<carol_pubkey> --local_amt=40000
+bob$ dcrlncli --simnet openchannel --node_key=<carol_pubkey> --local_amt=40000
 
 # Include funding transaction in block thereby opening the channel:
 docker-compose run dcrctl generate 6
 
 # Check that channel with "Carol" was opened:
-bob$ dcrlncli --n simnet listchannels
+bob$ dcrlncli --simnet listchannels
 
 ```
 
@@ -350,10 +350,10 @@ this is a multihop payment, because Alice don't know Carol and the payment will 
 
 ```bash
 # Generate an invoice on carol's node
-carol$ dcrlncli -n simnet addinvoice --amt 1000
+carol$ dcrlncli --simnet addinvoice --amt 1000
 
 # Pay this invoice with Alice's LNWallet
-alice$ dcrlncli -n simnet payinvoice <carol_invoice>
+alice$ dcrlncli --simnet payinvoice <carol_invoice>
 ```
 
 Look to the final channels balance:
