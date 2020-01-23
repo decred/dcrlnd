@@ -1,4 +1,4 @@
-// +build !walletrpc
+// +build no_walletrpc
 
 package walletrpc
 
