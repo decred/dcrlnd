@@ -1,4 +1,4 @@
-// +build !autopilotrpc
+// +build no_autopilotrpc
 
 package main
 
