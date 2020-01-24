@@ -56,7 +56,7 @@ GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GOLIST := go list $(PKG)/... | grep -v '/vendor/'
 GOLISTCOVER := $(shell go list -f '{{.ImportPath}}' ./... | sed -e 's/^$(ESCPKG)/./')
 
-ALL_TAGS="invoicesrpc signrpc walletrpc watchtowerrpc wtclientrpc"
+ALL_TAGS="signrpc walletrpc watchtowerrpc wtclientrpc"
 
 TESTBINPKG := dcrlnd_testbins.tar.gz
 

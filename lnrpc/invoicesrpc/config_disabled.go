@@ -1,4 +1,4 @@
-// +build !invoicesrpc
+// +build no_invoicesrpc
 
 package invoicesrpc
 
