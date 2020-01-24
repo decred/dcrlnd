@@ -1,4 +1,4 @@
-// +build signrpc
+// +build !no_signrpc
 
 package signrpc
 
