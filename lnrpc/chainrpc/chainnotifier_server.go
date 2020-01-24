@@ -1,4 +1,4 @@
-// +build chainrpc
+// +build !no_chainrpc
 
 package chainrpc
 

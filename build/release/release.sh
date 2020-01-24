@@ -97,7 +97,7 @@ for i in $SYS; do
     cd $PACKAGE-$i-$TAG
 
     echo "Building:" $OS $ARCH $ARM
-    env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" -tags="autopilot signrpc chainrpc invoicesrpc watchtowerrpc" github.com/decred/dcrlnd/cmd/dcrlnd
+    env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" -tags="autopilot signrpc invoicesrpc watchtowerrpc" github.com/decred/dcrlnd/cmd/dcrlnd
     env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" -tags="invoicesrpc watchtowerrpc" github.com/decred/dcrlnd/cmd/dcrlncli
     cd ..
 
