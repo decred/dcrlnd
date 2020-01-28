@@ -3255,6 +3255,7 @@ func TestChanSyncOweCommitment(t *testing.T) {
 			Amount:      htlcAmt,
 			Expiry:      uint32(10),
 			OnionBlob:   fakeOnionBlob,
+			ExtraData:   make([]byte, 0),
 		}
 
 		htlcIndex, err := bobChannel.AddHTLC(h, nil)
@@ -3299,6 +3300,7 @@ func TestChanSyncOweCommitment(t *testing.T) {
 		Amount:      htlcAmt,
 		Expiry:      uint32(10),
 		OnionBlob:   fakeOnionBlob,
+		ExtraData:   make([]byte, 0),
 	}
 	aliceHtlcIndex, err := aliceChannel.AddHTLC(aliceHtlc, nil)
 	if err != nil {
