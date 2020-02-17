@@ -56,8 +56,6 @@ GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GOLIST := go list $(PKG)/... | grep -v '/vendor/'
 GOLISTCOVER := $(shell go list -f '{{.ImportPath}}' ./... | sed -e 's/^$(ESCPKG)/./')
 
-ALL_TAGS="wtclientrpc"
-
 TESTBINPKG := dcrlnd_testbins.tar.gz
 
 RM := rm -f
@@ -71,7 +69,6 @@ DEV_TAGS := $(if ${tags},$(DEV_TAGS) ${tags},$(DEV_TAGS))
 
 LINT = $(LINT_BIN) \
 	run \
-	--build-tags=$(ALL_TAGS) \
 	--skip-files="mobile\\/.*generated\\.go" \
 	--disable-all \
 	--enable=gofmt \
@@ -141,8 +138,8 @@ build-itest:
 
 build-all: 
 	@$(call print, "Building debug dcrlnd and dcrlncli with all submodules.")
-	$(GOBUILD) -tags=$(ALL_TAGS) -o dcrlnd-debug $(LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -tags=$(ALL_TAGS) -o dcrlncli-debug $(LDFLAGS) $(PKG)/cmd/dcrlncli
+	$(GOBUILD) -o dcrlnd-debug $(LDFLAGS) $(PKG)/cmd/dcrlnd
+	$(GOBUILD) -o dcrlncli-debug $(LDFLAGS) $(PKG)/cmd/dcrlncli
 
 install:
 	@$(call print, "Installing dcrlnd and dcrlncli.")
