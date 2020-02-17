@@ -97,8 +97,8 @@ for i in $SYS; do
     cd $PACKAGE-$i-$TAG
 
     echo "Building:" $OS $ARCH $ARM
-    env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" -tags="autopilot watchtowerrpc" github.com/decred/dcrlnd/cmd/dcrlnd
-    env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" -tags="watchtowerrpc" github.com/decred/dcrlnd/cmd/dcrlncli
+    env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" github.com/decred/dcrlnd/cmd/dcrlnd
+    env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" github.com/decred/dcrlnd/cmd/dcrlncli
     cd ..
 
     if [[ $OS = "windows" ]]; then

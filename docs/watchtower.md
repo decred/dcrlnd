@@ -34,10 +34,9 @@ data in the encrypted blobs.*
 
 ## Configuring a Watchtower
 
-To set up a watchtower, command line users should compile in the optional
+To set up a watchtower, command line users should compile in the
 `watchtowerrpc` subserver, which will offer the ability to interface with the
-tower via gRPC or `lncli`. The release binaries will include the `watchtowerrpc`
-subserver by default.
+tower via gRPC or `lncli`.
 
 The minimal configuration needed to activate the tower is `watchtower.active=1`.
 

@@ -1,4 +1,4 @@
-// +build !watchtowerrpc
+// +build no_watchtowerrpc
 
 package watchtowerrpc
 

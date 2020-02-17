@@ -63,7 +63,7 @@ endif
 
 
 # Construct the integration test command with the added build flags.
-ITEST_TAGS := $(DEV_TAGS) rpctest watchtowerrpc wtclientrpc
+ITEST_TAGS := $(DEV_TAGS) rpctest wtclientrpc
 
 # Default to btcd backend if not set.
 ifneq ($(backend),)
