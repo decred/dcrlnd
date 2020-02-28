@@ -111,8 +111,8 @@ var newAddressCommand = cli.Command{
 	Usage:     "Generates a new address.",
 	ArgsUsage: "address-type",
 	Description: `
-	Generate a wallet new address. Address-types has to be one of:
-	    - p2pkh: Pay to public key hash`,
+	Generate a wallet new address. Address-types has to be:
+	    - p2pkh: Pay to public key hash(default)`,
 	Action: actionDecorator(newAddress),
 }
 
@@ -127,6 +127,8 @@ func newAddress(ctx *cli.Context) error {
 	var addrType lnrpc.AddressType
 	switch stringAddrType { // TODO(roasbeef): make them ints on the cli?
 	case "p2pkh":
+		addrType = lnrpc.AddressType_PUBKEY_HASH
+	case "":
 		addrType = lnrpc.AddressType_PUBKEY_HASH
 	default:
 		return fmt.Errorf("invalid address type %v, support address type "+
