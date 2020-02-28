@@ -76,7 +76,7 @@ docker-compose run -d --name alice dcrlnd
 docker exec -it alice bash
 
 # Generate a new p2pkh address for Alice:
-alice$ dcrlncli --simnet newaddress p2pkh
+alice$ dcrlncli --simnet newaddress
 ```
 We can keep logged in `Alice` container, just need to use another terminal tab to execute commands in docker-compose.
 

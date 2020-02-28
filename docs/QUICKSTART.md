@@ -44,7 +44,7 @@ Create the wallet: `$ dcrlncli create`. Use a minimum of 8 char password. Save t
 
 To make it easier: `$ alias ln=dcrlncli --testnet` (the important bit is to always specify `--testnet` when invoking `dcrlncli`).
 
-Get a new wallet address: `$ ln newaddress p2pkh`.
+Get a new wallet address: `$ ln newaddress`.
 
 Send funds to it (hint: [faucet.decred.org](https://faucet.decred.org)).
 
