@@ -582,10 +582,10 @@ var openChannelCommand = cli.Command{
 	setting its host:port via the --connect argument. For this to work,
 	the node_key must be provided, rather than the peer_id. This is optional.
 
-	The channel will be initialized with local-amt atoms local and push-amt
+	The channel will be initialized with 'local-amt' atoms locally and 'push-amt'
 	atoms for the remote node. Note that specifying push-amt means you give that
 	amount to the remote node as part of the channel opening. Once the channel is open,
-	a channelPoint (txid:vout) of the funding output is returned.
+	a 'channelPoint' ('txid:vout') of the funding output is returned.
 
 	If the remote peer supports the option upfront shutdown feature bit (query 
 	listpeers to see their supported feature bits), an address to enforce
@@ -599,20 +599,20 @@ var openChannelCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "node_key",
-			Usage: "the identity public key of the target node/peer " +
+			Usage: "The identity public key of the target node/peer " +
 				"serialized in compressed format",
 		},
 		cli.StringFlag{
 			Name:  "connect",
-			Usage: "(optional) the host:port of the target node",
+			Usage: "The host:port of the target node (optional)",
 		},
 		cli.IntFlag{
 			Name:  "local_amt",
-			Usage: "the number of atoms the wallet should commit to the channel",
+			Usage: "The number of atoms the wallet should commit to the channel",
 		},
 		cli.IntFlag{
 			Name: "push_amt",
-			Usage: "the number of atoms to give the remote side " +
+			Usage: "The number of atoms to give the remote side " +
 				"as part of the initial commitment state, " +
 				"this is equivalent to first opening a " +
 				"channel and sending the remote party funds, " +
@@ -620,23 +620,23 @@ var openChannelCommand = cli.Command{
 		},
 		cli.BoolFlag{
 			Name:  "block",
-			Usage: "block and wait until the channel is fully open",
+			Usage: "Block and wait until the channel is fully open",
 		},
 		cli.Int64Flag{
 			Name: "conf_target",
-			Usage: "(optional) the number of blocks that the " +
+			Usage: "The number of blocks that the " +
 				"transaction *should* confirm in, will be " +
-				"used for fee estimation",
+				"used for fee estimation (optional)",
 		},
 		cli.Int64Flag{
 			Name: "atoms_per_byte",
-			Usage: "(optional) a manual fee expressed in " +
+			Usage: "A manual fee expressed in " +
 				"atom/byte that should be used when crafting " +
-				"the transaction",
+				"the transaction (optional)",
 		},
 		cli.BoolFlag{
 			Name: "private",
-			Usage: "make the channel private, such that it won't " +
+			Usage: "Make the channel private, such that it won't " +
 				"be announced to the greater network, and " +
 				"nodes other than the two channel endpoints " +
 				"must be explicitly told about it to be able " +
@@ -644,30 +644,30 @@ var openChannelCommand = cli.Command{
 		},
 		cli.Int64Flag{
 			Name: "min_htlc_m_atoms",
-			Usage: "(optional) the minimum value we will require " +
-				"for incoming HTLCs on the channel",
+			Usage: "The minimum value we will require " +
+				"for incoming HTLCs on the channel (optional)",
 		},
 		cli.Uint64Flag{
 			Name: "remote_csv_delay",
-			Usage: "(optional) the number of blocks we will require " +
+			Usage: "The number of blocks we will require " +
 				"our channel counterparty to wait before accessing " +
 				"its funds in case of unilateral close. If this is " +
 				"not set, we will scale the value according to the " +
-				"channel size",
+				"channel size (optional)",
 		},
 		cli.Uint64Flag{
 			Name: "min_confs",
-			Usage: "(optional) the minimum number of confirmations " +
+			Usage: "The minimum number of confirmations " +
 				"each one of your outputs used for the funding " +
-				"transaction must satisfy",
+				"transaction must satisfy (optional)",
 			Value: 1,
 		},
 		cli.StringFlag{
 			Name: "close_address",
-			Usage: "(optional) an address to enforce payout of our " +
+			Usage: "An address to enforce payout of our " +
 				"funds to on cooperative close. Note that if this " +
 				"value is set on channel open, you will *not* be " +
-				"able to cooperatively close to a different address.",
+				"able to cooperatively close to a different address (optional)",
 		},
 	},
 	Action: actionDecorator(openChannel),
@@ -694,7 +694,7 @@ func openChannel(ctx *cli.Context) error {
 		AtomsPerByte:     ctx.Int64("atoms_per_byte"),
 		MinHtlcMAtoms:    ctx.Int64("min_htlc_m_atoms"),
 		RemoteCsvDelay:   uint32(ctx.Uint64("remote_csv_delay")),
-		MinConfs:         int32(ctx.Uint64("min_confs")),
+		MinConfs:         minConfs,
 		SpendUnconfirmed: minConfs == 0,
 		CloseAddress:     ctx.String("close_address"),
 	}
