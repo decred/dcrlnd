@@ -1008,39 +1008,39 @@ var closeAllChannelsCommand = cli.Command{
 	settled funds within it will be time locked for a few blocks before they
 	can be spent.
 
-	One can request to close inactive channels only by using the
-	--inactive_only flag.
+	You can request to close inactive channels only by using the
+	'--inactive_only' flag.
 
-	By default, one is prompted for confirmation every time an inactive
+	By default, confirmation is prompted each time an inactive
 	channel is requested to be closed. To avoid this, one can set the
-	--force flag, which will only prompt for confirmation once for all
+	'--force' flag, which will only prompt for confirmation once for all
 	inactive channels and proceed to close them.
 
 	In the case of cooperative closures, one can manually set the fee to
-	be used for the closing transactions via either the --conf_target or
-	--atoms_per_byte arguments. This will be the starting value used during
+	be used for the closing transactions via either the '--conf_target' or
+	'--atoms_per_byte' arguments. This will be the starting value used during
 	fee negotiation. This is optional.`,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "inactive_only",
-			Usage: "close inactive channels only",
+			Usage: "Close inactive channels only",
 		},
 		cli.BoolFlag{
 			Name: "force",
-			Usage: "ask for confirmation once before attempting " +
+			Usage: "Ask for confirmation once before attempting " +
 				"to close existing channels",
 		},
 		cli.Int64Flag{
 			Name: "conf_target",
-			Usage: "(optional) the number of blocks that the " +
+			Usage: "The number of blocks that the " +
 				"closing transactions *should* confirm in, will be " +
-				"used for fee estimation",
+				"used for fee estimation (optional)",
 		},
 		cli.Int64Flag{
 			Name: "atoms_per_byte",
-			Usage: "(optional) a manual fee expressed in " +
-				"sat/byte that should be used when crafting " +
-				"the closing transactions",
+			Usage: "A manual fee expressed in " +
+				"atom/byte that should be used when crafting " +
+				"the closing transactions (optional)",
 		},
 	},
 	Action: actionDecorator(closeAllChannels),
