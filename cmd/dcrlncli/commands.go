@@ -840,15 +840,15 @@ var closeChannelCommand = cli.Command{
 	Usage:    "Close an existing channel.",
 	Description: `
 	Close an existing channel. The channel can be closed either cooperatively,
-	or unilaterally (--force).
+	or unilaterally with '--force'.
 
 	A unilateral channel closure means that the latest commitment
 	transaction will be broadcast to the network. As a result, any settled
 	funds will be time locked for a few blocks before they can be spent.
 
 	In the case of a cooperative closure, one can manually set the fee to
-	be used for the closing transaction via either the --conf_target or
-	--atoms_per_byte arguments. This will be the starting value used during
+	be used for the closing transaction via either the '--conf_target' or
+	'--atoms_per_byte' arguments. This will be the starting value used during
 	fee negotiation. This is optional.
 
 	In the case of a cooperative closure, one can manually set the address
@@ -856,46 +856,46 @@ var closeChannelCommand = cli.Command{
 	if an upfront shutdown address has not already been set. If neither are
 	set the funds will be delivered to a new wallet address.
 
-	To view which funding_txids/output_indexes can be used for a channel close,
-	see the channel_point values within the listchannels command output.
-	The format for a channel_point is 'funding_txid:output_index'.`,
+	To view which 'funding_txids' or 'output_indexes' can be used for a channel close,
+	see the 'channel_point' values within the 'listchannels' command output.
+	The format for a 'channel_point' is 'funding_txid:output_index'.`,
 	ArgsUsage: "funding_txid [output_index]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "funding_txid",
-			Usage: "the txid of the channel's funding transaction",
+			Usage: "The txid of the channel's funding transaction",
 		},
 		cli.IntFlag{
 			Name: "output_index",
-			Usage: "the output index for the funding output of the funding " +
+			Usage: "The output index for the funding output of the funding " +
 				"transaction",
 		},
 		cli.BoolFlag{
 			Name:  "force",
-			Usage: "attempt an uncooperative closure",
+			Usage: "Attempt an uncooperative closure",
 		},
 		cli.BoolFlag{
 			Name:  "block",
-			Usage: "block until the channel is closed",
+			Usage: "Block until the channel is closed",
 		},
 		cli.Int64Flag{
 			Name: "conf_target",
-			Usage: "(optional) the number of blocks that the " +
+			Usage: "The number of blocks that the " +
 				"transaction *should* confirm in, will be " +
-				"used for fee estimation",
+				"used for fee estimation (optional)",
 		},
 		cli.Int64Flag{
 			Name: "atoms_per_byte",
-			Usage: "(optional) a manual fee expressed in " +
+			Usage: "A manual fee expressed in " +
 				"atom/byte that should be used when crafting " +
-				"the transaction",
+				"the transaction (optional)",
 		},
 		cli.StringFlag{
 			Name: "delivery_addr",
-			Usage: "(optional) an address to deliver funds " +
+			Usage: "An address to deliver funds " +
 				"upon cooperative channel closing, may only " +
 				"be used if an upfront shutdown addresss is not" +
-				"already set",
+				"already set (optional)",
 		},
 	},
 	Action: actionDecorator(closeChannel),
@@ -927,7 +927,7 @@ func closeChannel(ctx *cli.Context) error {
 
 	// After parsing the request, we'll spin up a goroutine that will
 	// retrieve the closing transaction ID when attempting to close the
-	// channel. We do this to because `executeChannelClose` can block, so we
+	// channel. We do this because `executeChannelClose` can block, so we
 	// would like to present the closing transaction ID to the user as soon
 	// as it is broadcasted.
 	var wg sync.WaitGroup
