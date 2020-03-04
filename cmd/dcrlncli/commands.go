@@ -3964,8 +3964,8 @@ var restoreChanBackupCommand = cli.Command{
 	ArgsUsage: "[--single_backup] [--multi_backup] [--multi_file=",
 	Description: `
 	Allows a user to restore a Static Channel Backup (SCB) that was
-	obtained either via the exportchanbackup command, or from lnd's
-	automatically manged channels.backup file. This command should be used
+	obtained either via the 'exportchanbackup' command, or from lnd's
+	automatically manged 'channels.backup' file. This command should be used
 	if a user is attempting to restore a channel due to data loss on a
 	running node restored with the same seed as the node that created the
 	channel. If successful, this command will allows the user to recover
@@ -3974,29 +3974,29 @@ var restoreChanBackupCommand = cli.Command{
 	The command will accept backups in one of three forms:
 
 	   * A single channel packed SCB, which can be obtained from
-	     exportchanbackup. This should be passed in hex encoded format.
+	     'exportchanbackup'. This should be passed in hex encoded format.
 
 	   * A packed multi-channel SCB, which couples several individual
 	     static channel backups in single blob.
 
 	   * A file path which points to a packed multi-channel backup within a
-	     file, using the same format that lnd does in its channels.backup
+	     file, using the same format that dcrlnd does in its 'channels.backup'
 	     file.
 	`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "single_backup",
-			Usage: "a hex encoded single channel backup obtained " +
+			Usage: "A hex encoded single channel backup obtained " +
 				"from exportchanbackup",
 		},
 		cli.StringFlag{
 			Name: "multi_backup",
-			Usage: "a hex encoded multi-channel backup obtained " +
+			Usage: "A hex encoded multi-channel backup obtained " +
 				"from exportchanbackup",
 		},
 		cli.StringFlag{
 			Name:  "multi_file",
-			Usage: "the path to a multi-channel back up file",
+			Usage: "The path to a multi-channel back up file",
 		},
 	},
 	Action: actionDecorator(restoreChanBackup),
