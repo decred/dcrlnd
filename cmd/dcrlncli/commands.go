@@ -148,14 +148,14 @@ func newAddress(ctx *cli.Context) error {
 var estimateFeeCommand = cli.Command{
 	Name:      "estimatefee",
 	Category:  "On-chain",
-	Usage:     "Get fee estimates for sending bitcoin on-chain to multiple addresses.",
+	Usage:     "Get fee estimates for sending decred on-chain to multiple addresses.",
 	ArgsUsage: "send-json-string [--conf_target=N]",
 	Description: `
 	Get fee estimates for sending a transaction paying the specified amount(s) to the passed address(es).
 
-	The send-json-string' param decodes addresses and the amount to send respectively in the following format:
+	The 'send-json-string' param encodes addresses and the amount to send respectively in the following format:
 
-	    '{"ExampleAddr": NumCoinsInSatoshis, "SecondAddr": NumCoins}'
+	    {"ExampleAddr": NumCoinsInAtoms, "SecondAddr": NumCoins}
 	`,
 	Flags: []cli.Flag{
 		cli.Int64Flag{
