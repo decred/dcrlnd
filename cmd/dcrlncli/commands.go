@@ -3431,35 +3431,35 @@ var updateChannelPolicyCommand = cli.Command{
 	Updates the channel policy for all channels, or just a particular channel
 	identified by its channel point. The update will be committed, and
 	broadcast to the rest of the network within the next batch.
-	Channel points are encoded as: funding_txid:output_index`,
+	Channel points are encoded as 'funding_txid:output_index'`,
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name: "base_fee_m_atoms",
 			Usage: "the base fee in milli-atoms that will " +
-				"be charged for each forwarded HTLC, regardless " +
+				"Be charged for each forwarded HTLC, regardless " +
 				"of payment size",
 		},
 		cli.StringFlag{
 			Name: "fee_rate",
 			Usage: "the fee rate that will be charged " +
-				"proportionally based on the value of each " +
+				"Proportionally based on the value of each " +
 				"forwarded HTLC, the lowest possible rate is 0 " +
 				"with a granularity of 0.000001 (millionths)",
 		},
 		cli.Int64Flag{
 			Name: "time_lock_delta",
-			Usage: "the CLTV delta that will be applied to all " +
+			Usage: "The CLTV delta that will be applied to all " +
 				"forwarded HTLCs",
 		},
 		cli.Uint64Flag{
 			Name: "min_htlc_m_atoms",
-			Usage: "if set, the min HTLC size that will be applied " +
+			Usage: "If set, the min HTLC size that will be applied " +
 				"to all forwarded HTLCs. If unset, the min HTLC " +
 				"is left unchanged.",
 		},
 		cli.Uint64Flag{
 			Name: "max_htlc_m_atoms",
-			Usage: "if set, the max HTLC size that will be applied " +
+			Usage: "If set, the max HTLC size that will be applied " +
 				"to all forwarded HTLCs. If unset, the max HTLC " +
 				"is left unchanged.",
 		},
@@ -3467,7 +3467,7 @@ var updateChannelPolicyCommand = cli.Command{
 			Name: "chan_point",
 			Usage: "The channel whose fee policy should be " +
 				"updated, if nil the policies for all channels " +
-				"will be updated. Takes the form of: txid:output_index",
+				"will be updated. Takes the form of 'txid:output_index'",
 		},
 	},
 	Action: actionDecorator(updateChannelPolicy),
