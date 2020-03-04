@@ -3401,7 +3401,7 @@ var feeReportCommand = cli.Command{
 	Usage:    "Display the current fee policies of all active channels.",
 	Description: `
 	Returns the current fee policies of all active channels.
-	Fee policies can be updated using the updatechanpolicy command.`,
+	Fee policies can be updated using the 'updatechanpolicy' command.`,
 	Action: actionDecorator(feeReport),
 }
 
