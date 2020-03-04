@@ -1962,19 +1962,19 @@ var listChannelsCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "active_only",
-			Usage: "only list channels which are currently active",
+			Usage: "Only list channels which are currently active",
 		},
 		cli.BoolFlag{
 			Name:  "inactive_only",
-			Usage: "only list channels which are currently inactive",
+			Usage: "Only list channels which are currently inactive",
 		},
 		cli.BoolFlag{
 			Name:  "public_only",
-			Usage: "only list channels which are currently public",
+			Usage: "Only list channels which are currently public",
 		},
 		cli.BoolFlag{
 			Name:  "private_only",
-			Usage: "only list channels which are currently private",
+			Usage: "Only list channels which are currently private",
 		},
 	},
 	Action: actionDecorator(listChannels),
