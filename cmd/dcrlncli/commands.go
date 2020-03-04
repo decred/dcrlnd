@@ -2944,7 +2944,7 @@ var getChanInfoCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "chan_id",
-			Usage: "the 8-byte compact channel ID to query for",
+			Usage: "The 8-byte compact channel ID to query for",
 		},
 	},
 	Action: actionDecorator(getChanInfo),
