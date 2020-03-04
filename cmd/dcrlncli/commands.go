@@ -3898,23 +3898,23 @@ var verifyChanBackupCommand = cli.Command{
 	 static channel backups in single blob.
 
        * A file path which points to a packed multi-channel backup within a
-	 file, using the same format that lnd does in its channels.backup
+	 file, using the same format that dcrlnd does in its 'channels.backup'
 	 file.
     `,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "single_backup",
-			Usage: "a hex encoded single channel backup obtained " +
-				"from exportchanbackup",
+			Usage: "A hex encoded single channel backup obtained " +
+				"from 'exportchanbackup'",
 		},
 		cli.StringFlag{
 			Name: "multi_backup",
-			Usage: "a hex encoded multi-channel backup obtained " +
-				"from exportchanbackup",
+			Usage: "A hex encoded multi-channel backup obtained " +
+				"from 'exportchanbackup'",
 		},
 		cli.StringFlag{
 			Name:  "multi_file",
-			Usage: "the path to a multi-channel back up file",
+			Usage: "The path to a multi-channel back up file",
 		},
 	},
 	Action: actionDecorator(verifyChanBackup),
