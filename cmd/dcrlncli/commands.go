@@ -1230,7 +1230,7 @@ func promptForConfirmation(msg string) bool {
 var abandonChannelCommand = cli.Command{
 	Name:     "abandonchannel",
 	Category: "Channels",
-	Usage:    "Abandons an existing channel.",
+	Usage:    "Abandon an existing channel.",
 	Description: `
 	Removes all channel state from the database except for a close
 	summary. This method can be used to get rid of permanently unusable
@@ -1238,18 +1238,18 @@ var abandonChannelCommand = cli.Command{
 
 	Only available when dcrlnd is built in debug mode.
 
-	To view which funding_txids/output_indexes can be used for this command,
-	see the channel_point values within the listchannels command output.
-	The format for a channel_point is 'funding_txid:output_index'.`,
+	To view which 'funding_txids' or 'output_indexes' can be used for this command,
+	see the 'channel_point' values within the 'listchannels' command output.
+	The format for a 'channel_point' is 'funding_txid:output_index'.`,
 	ArgsUsage: "funding_txid [output_index]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "funding_txid",
-			Usage: "the txid of the channel's funding transaction",
+			Usage: "The txid of the channel's funding transaction",
 		},
 		cli.IntFlag{
 			Name: "output_index",
-			Usage: "the output index for the funding output of the funding " +
+			Usage: "The output index for the funding output of the funding " +
 				"transaction",
 		},
 	},
