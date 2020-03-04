@@ -3744,32 +3744,32 @@ var exportChanBackupCommand = cli.Command{
 	     backup containing only the information for that channel will be
 	     returned.
 
-	   * If the --all flag is passed, then a multi-channel backup will be
+	   * If the '--all' flag is passed, then a multi-channel backup will be
 	     returned. A multi backup is a single encrypted blob (displayed in
 	     hex encoding) that contains several channels in a single cipher
 	     text.
 
-	Both of the backup types can be restored using the restorechanbackup
+	Both of the backup types can be restored using the 'restorechanbackup'
 	command.
 	`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "chan_point",
-			Usage: "the target channel to obtain an SCB for",
+			Usage: "The target channel to obtain an SCB for",
 		},
 		cli.BoolFlag{
 			Name: "all",
-			Usage: "if specified, then a multi backup of all " +
+			Usage: "If specified, then a multi backup of all " +
 				"active channels will be returned",
 		},
 		cli.StringFlag{
 			Name: "output_file",
 			Usage: `
-			if specified, then rather than printing a JSON output
+			If specified, then rather than printing a JSON output
 			of the static channel backup, a serialized version of
 			the backup (either Single or Multi) will be written to
-			the target file, this is the same format used by lnd in
-			its channels.backup file `,
+			the target file, this is the same format used by dcrlnd in
+			its 'channels.backup' file `,
 		},
 	},
 	Action: actionDecorator(exportChanBackup),
@@ -3841,7 +3841,7 @@ func exportChanBackup(ctx *cli.Context) error {
 	}
 
 	if !ctx.IsSet("all") {
-		return fmt.Errorf("if a channel isn't specified, -all must be")
+		return fmt.Errorf("if a channel isn't specified, --all must be")
 	}
 
 	chanBackup, err := client.ExportAllChannelBackups(
