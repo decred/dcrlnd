@@ -2011,31 +2011,31 @@ var closedChannelsCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "cooperative",
-			Usage: "list channels that were closed cooperatively",
+			Usage: "List channels that were closed cooperatively",
 		},
 		cli.BoolFlag{
 			Name: "local_force",
-			Usage: "list channels that were force-closed " +
+			Usage: "List channels that were force-closed " +
 				"by the local node",
 		},
 		cli.BoolFlag{
 			Name: "remote_force",
-			Usage: "list channels that were force-closed " +
+			Usage: "List channels that were force-closed " +
 				"by the remote node",
 		},
 		cli.BoolFlag{
 			Name: "breach",
-			Usage: "list channels for which the remote node " +
+			Usage: "List channels for which the remote node " +
 				"attempted to broadcast a prior " +
 				"revoked channel state",
 		},
 		cli.BoolFlag{
 			Name:  "funding_canceled",
-			Usage: "list channels that were never fully opened",
+			Usage: "List channels that were never fully opened",
 		},
 		cli.BoolFlag{
 			Name: "abandoned",
-			Usage: "list channels that were abandoned by " +
+			Usage: "List channels that were abandoned by " +
 				"the local node",
 		},
 	},
