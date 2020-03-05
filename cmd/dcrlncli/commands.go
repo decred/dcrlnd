@@ -2810,39 +2810,39 @@ var listInvoicesCommand = cli.Command{
 	Description: `
 	This command enables the retrieval of all invoices currently stored
 	within the database. It has full support for paginationed responses,
-	allowing users to query for specific invoices through their add_index.
-	This can be done by using either the first_index_offset or
-	last_index_offset fields included in the response as the index_offset of
+	allowing users to query for specific invoices through their 'add_index'.
+	This can be done by using either the 'first_index_offset' or
+	'last_index_offset' fields included in the response as the 'index_offset' of
 	the next request. The reversed flag is set by default in order to
 	paginate backwards. If you wish to paginate forwards, you must
 	explicitly set the flag to false. If none of the parameters are
 	specified, then the last 100 invoices will be returned.
 
-	For example: if you have 200 invoices, "dcrlncli listinvoices" will return
+	For example: if you have 200 invoices, 'dcrlncli listinvoices' will return
 	the last 100 created. If you wish to retrieve the previous 100, the
-	first_offset_index of the response can be used as the index_offset of
+	'first_offset_index' of the response can be used as the 'index_offset' of
 	the next listinvoices request.`,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name: "pending_only",
-			Usage: "toggles if all invoices should be returned, " +
+			Usage: "Toggles if all invoices should be returned, " +
 				"or only those that are currently unsettled",
 		},
 		cli.Uint64Flag{
 			Name: "index_offset",
-			Usage: "the index of an invoice that will be used as " +
+			Usage: "The index of an invoice that will be used as " +
 				"either the start or end of a query to " +
 				"determine which invoices should be returned " +
 				"in the response",
 		},
 		cli.Uint64Flag{
 			Name:  "max_invoices",
-			Usage: "the max number of invoices to return",
+			Usage: "The max number of invoices to return",
 		},
 		cli.BoolTFlag{
 			Name: "reversed",
-			Usage: "if set, the invoices returned precede the " +
-				"given index_offset, allowing backwards " +
+			Usage: "If set, the invoices returned precede the " +
+				"given 'index_offset', allowing backwards " +
 				"pagination",
 		},
 	},
