@@ -430,21 +430,21 @@ var sendManyCommand = cli.Command{
 	Description: `
 	Create and broadcast a transaction paying the specified amount(s) to the passed address(es).
 
-	The send-json-string' param decodes addresses and the amount to send
+	The 'send-json-string' param decodes addresses and the amount to send
 	respectively in the following format:
 
-	    '{"ExampleAddr": NumCoinsInAtoms, "SecondAddr": NumCoins}'
+	    {"ExampleAddr": NumCoinsInAtoms, "SecondAddr": NumCoins}
 	`,
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name: "conf_target",
-			Usage: "(optional) the number of blocks that the transaction *should* " +
-				"confirm in, will be used for fee estimation",
+			Usage: "The number of blocks that the transaction *should* " +
+				"confirm in, will be used for fee estimation (optional)",
 		},
 		cli.Int64Flag{
 			Name: "atoms_per_byte",
-			Usage: "(optional) a manual fee expressed in atom/byte that should be " +
-				"used when crafting the transaction",
+			Usage: "Manual fee expressed in atom/byte that should be " +
+				"used when crafting the transaction (optional)",
 		},
 	},
 	Action: actionDecorator(sendMany),
