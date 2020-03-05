@@ -2093,16 +2093,16 @@ func paymentFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
 			Name:  "pay_req",
-			Usage: "a zpay32 encoded payment request to fulfill",
+			Usage: "A zpay32 encoded payment request to fulfill",
 		},
 		cli.Int64Flag{
 			Name: "fee_limit",
-			Usage: "maximum fee allowed in satoshis when " +
+			Usage: "Maximum fee allowed in atoms when " +
 				"sending the payment",
 		},
 		cli.Int64Flag{
 			Name: "fee_limit_percent",
-			Usage: "percentage of the payment's amount used as " +
+			Usage: "Percentage of the payment's amount used as " +
 				"the maximum fee allowed when sending the " +
 				"payment",
 		},
@@ -2110,17 +2110,17 @@ func paymentFlags() []cli.Flag {
 		lastHopFlag,
 		cli.Uint64Flag{
 			Name: "outgoing_chan_id",
-			Usage: "short channel id of the outgoing channel to " +
+			Usage: "Short channel id of the outgoing channel to " +
 				"use for the first hop of the payment",
 			Value: 0,
 		},
 		cli.BoolFlag{
 			Name:  "force, f",
-			Usage: "will skip payment request confirmation",
+			Usage: "Will skip payment request confirmation",
 		},
 		cli.BoolFlag{
 			Name:  "allow_self_payment",
-			Usage: "allow sending a circular payment to self",
+			Usage: "Allow sending a circular payment to self",
 		},
 		dataFlag,
 	}
@@ -2136,37 +2136,37 @@ var sendPaymentCommand = cli.Command{
 	all the payment details.
 
 	If payment isn't manually specified, then only a payment request needs
-	to be passed using the --pay_req argument.
+	to be passed using the '--pay_req' argument.
 
 	If the payment *is* manually specified, then all four alternative
 	arguments need to be specified in order to complete the payment:
-	    * --dest=N
-	    * --amt=A
-	    * --final_cltv_delta=T
-	    * --payment_hash=H
+	 * --dest=N
+	 * --amt=A
+	 * --final_cltv_delta=T
+	 * --payment_hash=H
 	`,
 	ArgsUsage: "dest amt payment_hash final_cltv_delta | --pay_req=[payment request]",
 	Flags: append(paymentFlags(),
 		cli.StringFlag{
 			Name: "dest, d",
-			Usage: "the compressed identity pubkey of the " +
+			Usage: "The compressed identity pubkey of the " +
 				"payment recipient",
 		},
 		cli.Int64Flag{
 			Name:  "amt, a",
-			Usage: "number of atoms to send",
+			Usage: "Number of atoms to send",
 		},
 		cli.StringFlag{
 			Name:  "payment_hash, r",
-			Usage: "the hash to use within the payment's HTLC",
+			Usage: "The hash to use within the payment's HTLC",
 		},
 		cli.Int64Flag{
 			Name:  "final_cltv_delta",
-			Usage: "the number of blocks the last hop has to reveal the preimage",
+			Usage: "The number of blocks the last hop has to reveal the preimage",
 		},
 		cli.BoolFlag{
 			Name:  "keysend",
-			Usage: "will generate a pre-image and encode it in the sphinx packet, a dest must be set [experimental]",
+			Usage: "Will generate a pre-image and encode it in the sphinx packet, a dest must be set [experimental]",
 		},
 	),
 	Action: sendPayment,
