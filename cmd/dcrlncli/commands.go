@@ -199,38 +199,38 @@ var sendCoinsCommand = cli.Command{
 	Description: `
 	Send amt coins in atoms to the BASE58 encoded decred address addr.
 
-	Fees used when sending the transaction can be specified via the --conf_target, or
-	--atoms_per_byte optional flags.
+	Fees used when sending the transaction can be specified via the '--conf_target', or
+	'--atoms_per_byte' optional flags.
 
 	Positional arguments and flags can be used interchangeably but not at the same time!
 	`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "addr",
-			Usage: "the BASE58 encoded decred address to send coins to on-chain",
+			Usage: "The BASE58 encoded decred address to send coins to on-chain",
 		},
 		cli.BoolFlag{
 			Name: "sweepall",
-			Usage: "if set, then the amount field will be ignored, " +
+			Usage: "If set, then the amount field will be ignored, " +
 				"and all the wallet will attempt to sweep all " +
 				"outputs within the wallet to the target " +
 				"address",
 		},
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "the number of decred denominated in atoms to send",
+			Usage: "The number of decred denominated in atoms to send",
 		},
 		cli.Int64Flag{
 			Name: "conf_target",
-			Usage: "(optional) the number of blocks that the " +
+			Usage: "The number of blocks that the " +
 				"transaction *should* confirm in, will be " +
-				"used for fee estimation",
+				"used for fee estimation (optional)",
 		},
 		cli.Int64Flag{
 			Name: "atoms_per_byte",
-			Usage: "(optional) a manual fee expressed in " +
+			Usage: "A manual fee expressed in " +
 				"atoms/byte that should be used when crafting " +
-				"the transaction",
+				"the transaction (optional)",
 		},
 	},
 	Action: actionDecorator(sendCoins),
@@ -250,7 +250,7 @@ func sendCoins(ctx *cli.Context) error {
 	}
 
 	if ctx.IsSet("conf_target") && ctx.IsSet("atoms_per_byte") {
-		return fmt.Errorf("either conf_target or atoms_per_byte should be " +
+		return fmt.Errorf("either --conf_target or --atoms_per_byte should be " +
 			"set, but not both")
 	}
 
