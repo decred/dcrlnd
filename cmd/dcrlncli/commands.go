@@ -2759,7 +2759,7 @@ var lookupInvoiceCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "rhash",
-			Usage: "the 32 byte payment hash of the invoice to query for, the hash " +
+			Usage: "The 32 byte payment hash of the invoice to query for, the hash " +
 				"should be a hex-encoded string",
 		},
 	},
