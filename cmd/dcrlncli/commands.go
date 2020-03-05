@@ -2641,19 +2641,19 @@ var addInvoiceCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "memo",
-			Usage: "a description of the payment to attach along " +
+			Usage: "A description of the payment to attach along " +
 				"with the invoice (default=\"\")",
 		},
 		cli.StringFlag{
 			Name: "preimage",
-			Usage: "the hex-encoded preimage (32 byte) which will " +
+			Usage: "The hex-encoded preimage (32 byte) which will " +
 				"allow settling an incoming HTLC payable to this " +
 				"preimage. If not set, a random preimage will be " +
 				"created.",
 		},
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "the amt of atoms in this invoice",
+			Usage: "The amt of atoms in this invoice",
 		},
 		cli.StringFlag{
 			Name: "description_hash",
@@ -2665,24 +2665,24 @@ var addInvoiceCommand = cli.Command{
 		},
 		cli.StringFlag{
 			Name: "fallback_addr",
-			Usage: "fallback on-chain address that can be used in " +
+			Usage: "Fallback on-chain address that can be used in " +
 				"case the lightning payment fails",
 		},
 		cli.Int64Flag{
 			Name: "expiry",
-			Usage: "the invoice's expiry time in seconds. If not " +
+			Usage: "The invoice's expiry time in seconds. If not " +
 				"specified an expiry of 3600 seconds (1 hour) " +
 				"is implied.",
 		},
 		cli.BoolTFlag{
 			Name: "private",
-			Usage: "encode routing hints in the invoice with " +
+			Usage: "Encode routing hints in the invoice with " +
 				"private channels in order to assist the " +
 				"payer in reaching you",
 		},
 		cli.BoolFlag{
 			Name: "ignore_max_inbound_amt",
-			Usage: "ignore check for available inbound capacity " +
+			Usage: "Ignore check for available inbound capacity " +
 				"in directly connected channels and create the " +
 				"invoice anyway.",
 		},
