@@ -2439,8 +2439,8 @@ var payInvoiceCommand = cli.Command{
 	Flags: append(paymentFlags(),
 		cli.Int64Flag{
 			Name: "amt",
-			Usage: "(optional) number of atoms to fulfill the " +
-				"invoice",
+			Usage: "Number of atoms to fulfill the " +
+				"invoice (optional)",
 		},
 	),
 	Action: actionDecorator(payInvoice),
