@@ -10730,7 +10730,7 @@ func assertDLPExecuted(net *lntest.NetworkHarness, t *harnessTest,
 	// The commit sweep resolver publishes the sweep tx at defaultCSV-1 and
 	// we already mined one block after the commitmment was published, so
 	// take that into account.
-	mineBlocks(t, net, defaultCSV-2, 0)
+	mineBlocks(t, net, defaultCSV-1-1, 0)
 	carolSweep, err := waitForTxInMempool(
 		net.Miner.Node, minerMempoolTimeout,
 	)

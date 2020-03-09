@@ -111,19 +111,16 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 	}
 
 	// Mine enough blocks for Alice to sweep her funds from the force
-	// closed channel.
+	// closed channel. closeCHannelAndAssertType() already mined a block
+	// containing the commitment tx and the commit sweep tx will be
+	// broadcast immediately before it can be included in a block, so mine
+	// one less than defaultCSV in order to perform mempool assertions.
 	_, err = net.Generate(defaultCSV - 1)
 	require.NoError(t.t, err)
 
-	// Alice should now sweep her funds. If there are anchors, Alice should
-	// also sweep hers.
-	expectedTxes := 1
-	if c == commitTypeAnchors {
-		// Anchors were already swept.
-		expectedTxes = 1
-	}
+	// Alice should now sweep her funds.
 	_, err = waitForNTxsInMempool(
-		net.Miner.Node, expectedTxes, minerMempoolTimeout,
+		net.Miner.Node, 1, minerMempoolTimeout,
 	)
 	require.NoError(t.t, err)
 
@@ -151,13 +148,13 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 	_, err = net.Generate(numBlocks)
 	require.NoError(t.t, err)
 
+	expectedTxes := 1
 	if c == commitTypeAnchors {
-		// We actually expect Carol to sweep anchors as well.
 		expectedTxes = 2
 	}
 
-	// Carol's commitment transaction should now be in the mempool. If there
-	// are anchors, Carol also sweeps her anchor.
+	// Carol's commitment transaction should now be in the mempool. If
+	// there are anchors, Carol also sweeps her anchor.
 	_, err = waitForNTxsInMempool(
 		net.Miner.Node, expectedTxes, minerMempoolTimeout,
 	)

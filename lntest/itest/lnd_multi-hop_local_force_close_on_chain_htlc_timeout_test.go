@@ -103,6 +103,10 @@ func testMultiHopLocalForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 		require.NoError(t.t, err)
 	}
 
+	// The sweep is broadcast on the block immediately before the CSV
+	// expires and the commitment was already mined inside
+	// closeChannelAndAssertType(), so mine one block less than defaultCSV
+	// in order to perform mempool assertions.
 	_, err = net.Generate(defaultCSV - 1)
 	require.NoError(t.t, err)
 

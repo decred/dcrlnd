@@ -126,7 +126,7 @@ func testMultiHopHtlcLocalChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 	// just before the deadline to check the transaction is in the mempool.
 	numBlocks := padCLTV(uint32(invoiceReq.CltvExpiry -
 		lncfg.DefaultIncomingBroadcastDelta - 1))
-	_, err = net.Miner.Node.Generate(context.Background(), numBlocks)
+	_, err = net.Generate(numBlocks)
 	require.NoError(t.t, err)
 
 	// Carol's commitment transaction should now be in the mempool. If there

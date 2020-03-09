@@ -163,7 +163,10 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest,
 	require.NotNil(t.t, htlcTimeout)
 
 	// We'll mine the remaining blocks in order to generate the sweep
-	// transaction of Bob's commitment output.
+	// transaction of Bob's commitment output. The commitment was just
+	// mined at the current tip and the sweep will be broadcast so it can
+	// be mined at the tip+defaultCSV'th block, so mine one less to be able
+	// to make mempool assertions.
 	mineBlocks(t, net, defaultCSV-1, expectedTxes)
 
 	// Check that the sweep spends from the mined commitment.
@@ -184,10 +187,15 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest,
 	require.NotZero(t.t, forceCloseChan.LimboBalance)
 	require.NotZero(t.t, len(forceCloseChan.PendingHtlcs))
 
-	// Now we'll mine two additional blocks, the first should confirm Bob's
-	// commit sweep. The following block should prompt Bob to broadcast
-	// their second layer sweep due to the CSV on the HTLC timeout output.
-	mineBlocks(t, net, 2, 1)
+	// Mine a block to confirm Bob's commit sweep tx and assert it was in
+	// fact mined.
+	block := mineBlocks(t, net, 1, 1)[0]
+	commitSweepTxid := txes[0].TxHash()
+	assertTxInBlock(t, block, &commitSweepTxid)
+
+	// Mine an additional block to prompt Bob to broadcast their second
+	// layer sweep due to the CSV on the HTLC timeout output.
+	mineBlocks(t, net, 1, 0)
 	assertSpendingTxInMempool(
 		t, net.Miner.Node, minerMempoolTimeout, wire.OutPoint{
 			Hash:  *htlcTimeout,
