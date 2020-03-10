@@ -489,8 +489,8 @@ var connectCommand = cli.Command{
 		cli.BoolFlag{
 			Name: "perm",
 			Usage: "If set, the daemon will attempt to persistently " +
-				"connect to the target peer.\n" +
-				"           If not, the call will be synchronous.",
+				"connect to the target peer. " +
+				"If not, the call will be synchronous.",
 		},
 	},
 	Action: actionDecorator(connectPeer),
