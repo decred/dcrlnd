@@ -2994,12 +2994,12 @@ var getNodeInfoCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "pub_key",
-			Usage: "the 33-byte hex-encoded compressed public of the target " +
+			Usage: "The 33-byte hex-encoded compressed public of the target " +
 				"node",
 		},
 		cli.BoolFlag{
 			Name: "include_channels",
-			Usage: "if true, will return all known channels " +
+			Usage: "If true, will return all known channels " +
 				"associated with the node",
 		},
 	},
