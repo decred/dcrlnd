@@ -1746,12 +1746,12 @@ var unlockCommand = cli.Command{
 	The unlock command is used to decrypt dcrlnd's wallet state in order to
 	start up. This command MUST be run after booting up dcrlnd before it's
 	able to carry out its duties. An exception is if a user is running with
-	--noseedbackup, then a default passphrase will be used.
+	'--noseedbackup', then a default passphrase will be used.
 	`,
 	Flags: []cli.Flag{
 		cli.IntFlag{
 			Name: "recovery_window",
-			Usage: "address lookahead to resume recovery rescan, " +
+			Usage: "Address lookahead to resume recovery rescan, " +
 				"value should be non-zero --  To recover all " +
 				"funds, this should be greater than the " +
 				"maximum number of consecutive, unused " +
