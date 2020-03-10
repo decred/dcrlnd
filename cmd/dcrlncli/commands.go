@@ -3344,11 +3344,11 @@ var verifyMessageCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "msg",
-			Usage: "the message to verify",
+			Usage: "The message to verify",
 		},
 		cli.StringFlag{
 			Name:  "sig",
-			Usage: "the zbase32 encoded signature of the message",
+			Usage: "The zbase32 encoded signature of the message",
 		},
 	},
 	Action: actionDecorator(verifyMessage),
