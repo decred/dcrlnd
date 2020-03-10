@@ -1816,8 +1816,8 @@ var changePasswordCommand = cli.Command{
 	is successful.
 
 	If one did not specify a password for their wallet (running dcrlnd with
-	--noseedbackup), one must restart their daemon without
-	--noseedbackup and use this command. The "current password" field
+	'--noseedbackup'), one must restart their daemon without
+	'--noseedbackup' and use this command. The "current password" field
 	should be left empty.
 	`,
 	Action: actionDecorator(changePassword),
