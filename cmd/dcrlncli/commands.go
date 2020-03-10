@@ -579,8 +579,8 @@ var openChannelCommand = cli.Command{
 	optionally blocking until the channel is 'open'.
 
 	One can also connect to a node before opening a new channel to it by
-	setting its host:port via the --connect argument. For this to work,
-	the node_key must be provided, rather than the peer_id. This is optional.
+	setting its host:port via the '--connect' argument. For this to work,
+	the 'node_key' must be provided, rather than the 'peer_id'. This is optional.
 
 	The channel will be initialized with 'local-amt' atoms locally and 'push-amt'
 	atoms for the remote node. Note that specifying push-amt means you give that
@@ -588,13 +588,13 @@ var openChannelCommand = cli.Command{
 	a 'channelPoint' ('txid:vout') of the funding output is returned.
 
 	If the remote peer supports the option upfront shutdown feature bit (query 
-	listpeers to see their supported feature bits), an address to enforce
+	'listpeers' to see their supported feature bits), an address to enforce
 	payout of funds on cooperative close can optionally be provided. Note that
 	if you set this value, you will not be able to cooperatively close out to
 	another address.
 
 	One can manually set the fee to be used for the funding transaction via either
-	the --conf_target or --atoms_per_byte arguments. This is optional.`,
+	the '--conf_target' or '--atoms_per_byte' arguments. This is optional.`,
 	ArgsUsage: "node-key local-amt push-amt",
 	Flags: []cli.Flag{
 		cli.StringFlag{
