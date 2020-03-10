@@ -42,7 +42,7 @@ var settleInvoiceCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "preimage",
-			Usage: "the hex-encoded preimage (32 byte) which will " +
+			Usage: "The hex-encoded preimage (32 byte) which will " +
 				"allow settling an incoming HTLC payable to this " +
 				"preimage.",
 		},
