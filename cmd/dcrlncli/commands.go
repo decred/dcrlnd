@@ -1371,23 +1371,23 @@ var createCommand = cli.Command{
 	Finally, it's also possible to use this command and a set of static
 	channel backups to trigger a recover attempt for the provided Static
 	Channel Backups. Only one of the three parameters will be accepted. See
-	the restorechanbackup command for further details w.r.t the format
+	the 'restorechanbackup' command for further details w.r.t the format
 	accepted.
 	`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "single_backup",
-			Usage: "a hex encoded single channel backup obtained " +
+			Usage: "A hex encoded single channel backup obtained " +
 				"from exportchanbackup",
 		},
 		cli.StringFlag{
 			Name: "multi_backup",
-			Usage: "a hex encoded multi-channel backup obtained " +
+			Usage: "A hex encoded multi-channel backup obtained " +
 				"from exportchanbackup",
 		},
 		cli.StringFlag{
 			Name:  "multi_file",
-			Usage: "the path to a multi-channel back up file",
+			Usage: "The path to a multi-channel back up file",
 		},
 	},
 	Action: actionDecorator(create),
