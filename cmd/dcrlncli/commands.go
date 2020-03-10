@@ -3208,7 +3208,7 @@ var decodePayReqCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "pay_req",
-			Usage: "the bech32 encoded payment request",
+			Usage: "The bech32 encoded payment request",
 		},
 	},
 	Action: actionDecorator(decodePayReq),
