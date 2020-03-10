@@ -3046,31 +3046,31 @@ var queryRoutesCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "dest",
-			Usage: "the 33-byte hex-encoded public key for the payment " +
+			Usage: "The 33-byte hex-encoded public key for the payment " +
 				"destination",
 		},
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "the amount to send expressed in atoms",
+			Usage: "The amount to send expressed in atoms",
 		},
 		cli.Int64Flag{
 			Name: "fee_limit",
-			Usage: "maximum fee allowed in atoms when sending " +
+			Usage: "Maximum fee allowed in atoms when sending " +
 				"the payment",
 		},
 		cli.Int64Flag{
 			Name: "fee_limit_percent",
-			Usage: "percentage of the payment's amount used as the " +
+			Usage: "Percentage of the payment's amount used as the " +
 				"maximum fee allowed when sending the payment",
 		},
 		cli.Int64Flag{
 			Name: "final_cltv_delta",
-			Usage: "(optional) number of blocks the last hop has to reveal " +
-				"the preimage",
+			Usage: "Number of blocks the last hop has to reveal " +
+				"the preimage (optional)",
 		},
 		cli.BoolFlag{
 			Name:  "use_mc",
-			Usage: "use mission control probabilities",
+			Usage: "Use mission control probabilities",
 		},
 		cltvLimitFlag,
 	},
