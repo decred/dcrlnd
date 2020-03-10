@@ -3299,7 +3299,7 @@ var signMessageCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "msg",
-			Usage: "the message to sign",
+			Usage: "The message to sign",
 		},
 	},
 	Action: actionDecorator(signMessage),
