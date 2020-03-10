@@ -96,7 +96,7 @@ var cancelInvoiceCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "paymenthash",
-			Usage: "the hex-encoded payment hash (32 byte) for which the " +
+			Usage: "The hex-encoded payment hash (32 byte) for which the " +
 				"corresponding invoice will be canceled.",
 		},
 	},
