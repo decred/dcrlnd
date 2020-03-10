@@ -2911,7 +2911,7 @@ var listPaymentsCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "include_incomplete",
-			Usage: "if set to true, payments still in flight (or failed) will be returned as well",
+			Usage: "If set to true, payments still in flight (or failed) will be returned as well",
 		},
 	},
 	Action: actionDecorator(listPayments),
