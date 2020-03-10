@@ -148,21 +148,21 @@ var addHoldInvoiceCommand = cli.Command{
 
 	Invoices without an amount can be created by not supplying any
 	parameters or providing an amount of 0. These invoices allow the payee
-	to specify the amount of satoshis they wish to send.`,
+	to specify the amount of atoms they wish to send.`,
 	ArgsUsage: "hash [amt]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name: "memo",
-			Usage: "a description of the payment to attach along " +
+			Usage: "A description of the payment to attach along " +
 				"with the invoice (default=\"\")",
 		},
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "the amt of atoms in this invoice",
+			Usage: "The amt of atoms in this invoice",
 		},
 		cli.Int64Flag{
 			Name:  "amt_m_atoms",
-			Usage: "the amt of milliatoms in this invoice",
+			Usage: "The amt of milliatoms in this invoice",
 		},
 		cli.StringFlag{
 			Name: "description_hash",
@@ -174,18 +174,18 @@ var addHoldInvoiceCommand = cli.Command{
 		},
 		cli.StringFlag{
 			Name: "fallback_addr",
-			Usage: "fallback on-chain address that can be used in " +
+			Usage: "Fallback on-chain address that can be used in " +
 				"case the lightning payment fails",
 		},
 		cli.Int64Flag{
 			Name: "expiry",
-			Usage: "the invoice's expiry time in seconds. If not " +
+			Usage: "The invoice's expiry time in seconds. If not " +
 				"specified, an expiry of 3600 seconds (1 hour) " +
 				"is implied.",
 		},
 		cli.BoolTFlag{
 			Name: "private",
-			Usage: "encode routing hints in the invoice with " +
+			Usage: "Encode routing hints in the invoice with " +
 				"private channels in order to assist the " +
 				"payer in reaching you",
 		},
