@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine as builder
+FROM golang:1.14-alpine as builder
 
 # Install dependencies.
 RUN apk add --no-cache --update git make
@@ -11,8 +11,8 @@ COPY . /go/src/github.com/decred/dcrlnd
 ENV GODEBUG netdns=cgo
 
 RUN  cd /go/src/github.com/decred/dcrlnd \
-        &&  make \
-        &&  make install
+        &&  go install ./cmd/dcrlnd \
+        &&  go install ./cmd/dcrlncli
 
 # Start a new, final image to reduce size.
 FROM alpine as final

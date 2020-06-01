@@ -56,8 +56,8 @@ PARAMS=$(echo $PARAMS \
     "--rpcpass=$RPCPASS" \
     "--datadir=/data" \
     "--logdir=/data" \
-    "--rpccert=/rpc/rpc.cert" \
-    "--rpckey=/rpc/rpc.key" \
+    "--rpccert=/config/rpc.cert" \
+    "--rpckey=/config/rpc.key" \
     "--rpclisten=0.0.0.0" \
     "--txindex"
 )
@@ -67,10 +67,21 @@ if [[ -n "$MINING_ADDRESS" ]]; then
     PARAMS="$PARAMS --miningaddr=$MINING_ADDRESS"
 fi
 
+# Create the dcrctl.conf based in the updated variables.
+if [ ! -f "/root/.dcrctl/dcrctl.conf" ]; then
+mkdir /root/.dcrctl
+cat > "/root/.dcrctl/dcrctl.conf" <<EOF
+rpcuser=${RPCUSER}
+rpcpass=${RPCPASS}
+rpccert="/config/rpc.cert"
+walletrpcserver=dcrwallet
+EOF
+
+fi
+
 # Add user parameters to command.
 PARAMS="$PARAMS $@"
 
 # Print command and start decred node.
 echo "Command: dcrd $PARAMS"
 exec dcrd $PARAMS
-

@@ -1,10 +1,6 @@
-version: '3'
+version: "3.3"
 
 services:
-    # dcr is an image of decred node which is used as base image for dcrd and
-    # dcrlncli. The environment variables default values determined on stage of
-    # container start within starting script.
-
    dcrd:
      container_name: dcrd
      build:
@@ -21,20 +17,6 @@ services:
      networks:
        - dcr-network
      entrypoint: ["./start-dcrd.sh"]
-
-   dcrctl:
-     build:
-       context: dcrd/
-     volumes:
-       - shared:/rpc
-       - decred:/data
-     environment:
-       - RPCUSER
-       - RPCPASS
-       - NETWORK
-     networks:
-       - dcr-network
-     entrypoint: ["./start-dcrctl.sh"]
 
    dcrwallet:
      container_name: dcrwallet
