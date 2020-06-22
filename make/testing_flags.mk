@@ -3,6 +3,7 @@ LOG_TAGS =
 UTEST_TAGS = unittest
 TEST_FLAGS =
 RACE_ENV = CGO_ENABLED=1 GORACE="history_size=7 halt_on_errors=1"
+ITEST_FLAGS =
 COVER_PKG = $$(go list -deps ./... | grep '$(PKG)' | grep -v lnrpc)
 NUM_ITEST_TRANCHES = 6
 ITEST_PARALLELISM = $(NUM_ITEST_TRANCHES)
@@ -47,6 +48,12 @@ ifneq ($(walletimpl),)
 DEV_TAGS += ${walletimpl}
 else
 DEV_TAGS += embeddedwallet
+endif
+
+# Run itests with etcd backend.
+ifeq ($(etcd),1)
+ITEST_FLAGS += -etcd
+DEV_TAGS += kvdb_etcd
 endif
 
 ifneq ($(tags),)
