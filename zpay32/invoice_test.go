@@ -98,8 +98,8 @@ var (
 	}
 
 	testMessageSigner = MessageSigner{
-		SignCompact: func(hash []byte) ([]byte, error) {
-			return ecdsa.SignCompact(testPrivKey, hash, true), nil
+		SignCompact: func(msg []byte) ([]byte, error) {
+			return ecdsa.SignCompact(testPrivKey, chainhash.HashB(msg), true), nil
 		},
 	}
 
@@ -790,7 +790,8 @@ func TestInvoiceChecksumMalleability(t *testing.T) {
 	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
 	pubKey := privKey.PubKey()
 	msgSigner := MessageSigner{
-		SignCompact: func(hash []byte) ([]byte, error) {
+		SignCompact: func(msg []byte) ([]byte, error) {
+			hash := chainhash.HashB(msg)
 			return ecdsa.SignCompact(privKey, hash, true), nil
 		},
 	}
