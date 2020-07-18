@@ -89,12 +89,12 @@ var pendingSweepsCommand = cli.Command{
 }
 
 func pendingSweeps(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
 	req := &walletrpc.PendingSweepsRequest{}
-	resp, err := client.PendingSweeps(ctxb, req)
+	resp, err := client.PendingSweeps(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -179,6 +179,8 @@ var bumpFeeCommand = cli.Command{
 }
 
 func bumpFee(ctx *cli.Context) error {
+	ctxc := getContext()
+
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
 	if ctx.NArg() != 1 {
@@ -194,7 +196,7 @@ func bumpFee(ctx *cli.Context) error {
 	client, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
-	resp, err := client.BumpFee(context.Background(), &walletrpc.BumpFeeRequest{
+	resp, err := client.BumpFee(ctxc, &walletrpc.BumpFeeRequest{
 		Outpoint:     protoOutPoint,
 		TargetConf:   uint32(ctx.Uint64("conf_target")),
 		AtomsPerByte: uint32(ctx.Uint64("atoms_per_byte")),
@@ -236,6 +238,8 @@ var bumpCloseFeeCommand = cli.Command{
 }
 
 func bumpCloseFee(ctx *cli.Context) error {
+	ctxc := getContext()
+
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
 	if ctx.NArg() != 1 {
@@ -263,9 +267,8 @@ func bumpCloseFee(ctx *cli.Context) error {
 	walletClient, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
-	ctxb := context.Background()
 	sweeps, err := walletClient.PendingSweeps(
-		ctxb, &walletrpc.PendingSweepsRequest{},
+		ctxc, &walletrpc.PendingSweepsRequest{},
 	)
 	if err != nil {
 		return err
@@ -300,7 +303,7 @@ func bumpCloseFee(ctx *cli.Context) error {
 		fmt.Printf("Bumping fee of %v:%v\n",
 			sweepTxID, sweep.Outpoint.OutputIndex)
 
-		_, err = walletClient.BumpFee(ctxb, &walletrpc.BumpFeeRequest{
+		_, err = walletClient.BumpFee(ctxc, &walletrpc.BumpFeeRequest{
 			Outpoint:     sweep.Outpoint,
 			TargetConf:   uint32(ctx.Uint64("conf_target")),
 			AtomsPerByte: uint32(ctx.Uint64("atoms_per_byte")),
@@ -318,10 +321,10 @@ func getWaitingCloseCommitments(client lnrpc.LightningClient,
 	channelPoint string) (*lnrpc.PendingChannelsResponse_Commitments,
 	error) {
 
-	ctxb := context.Background()
+	ctxc := getContext()
 
 	req := &lnrpc.PendingChannelsRequest{}
-	resp, err := client.PendingChannels(ctxb, req)
+	resp, err := client.PendingChannels(ctxc, req)
 	if err != nil {
 		return nil, err
 	}
@@ -357,11 +360,12 @@ var listSweepsCommand = cli.Command{
 }
 
 func listSweeps(ctx *cli.Context) error {
+	ctxc := getContext()
 	client, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
 	resp, err := client.ListSweeps(
-		context.Background(), &walletrpc.ListSweepsRequest{
+		ctxc, &walletrpc.ListSweepsRequest{
 			Verbose: ctx.IsSet("verbose"),
 		},
 	)
@@ -394,6 +398,8 @@ var labelTxCommand = cli.Command{
 }
 
 func labelTransaction(ctx *cli.Context) error {
+	ctxc := getContext()
+
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
 	if ctx.NArg() != 2 {
@@ -412,9 +418,8 @@ func labelTransaction(ctx *cli.Context) error {
 	walletClient, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
-	ctxb := context.Background()
 	_, err = walletClient.LabelTransaction(
-		ctxb, &walletrpc.LabelTransactionRequest{
+		ctxc, &walletrpc.LabelTransactionRequest{
 			Txid:      hash[:],
 			Label:     label,
 			Overwrite: ctx.Bool("overwrite"),
@@ -508,6 +513,8 @@ var fundPsbtCommand = cli.Command{
 }
 
 func fundPsbt(ctx *cli.Context) error {
+	ctxc := getContext()
+
 	// Display the command's help message if there aren't any flags
 	// specified.
 	if ctx.NumFlags() == 0 {
@@ -608,7 +615,7 @@ func fundPsbt(ctx *cli.Context) error {
 	walletClient, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
-	response, err := walletClient.FundPsbt(context.Background(), req)
+	response, err := walletClient.FundPsbt(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -666,6 +673,8 @@ var finalizePsbtCommand = cli.Command{
 }
 
 func finalizePsbt(ctx *cli.Context) error {
+	ctxc := getContext()
+
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
 	if ctx.NArg() != 1 && ctx.NumFlags() != 1 {
@@ -696,7 +705,7 @@ func finalizePsbt(ctx *cli.Context) error {
 	walletClient, cleanup := getWalletClient(ctx)
 	defer cleanup()
 
-	response, err := walletClient.FinalizePsbt(context.Background(), req)
+	response, err := walletClient.FinalizePsbt(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -731,6 +740,8 @@ var releaseOutputCommand = cli.Command{
 }
 
 func releaseOutput(ctx *cli.Context) error {
+	ctxc := getContext()
+
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
 	if ctx.NArg() != 1 && ctx.NumFlags() != 1 {
@@ -762,7 +773,7 @@ func releaseOutput(ctx *cli.Context) error {
 	walletClient, cleanUp := getWalletClient(ctx)
 	defer cleanUp()
 
-	response, err := walletClient.ReleaseOutput(context.Background(), req)
+	response, err := walletClient.ReleaseOutput(ctxc, req)
 	if err != nil {
 		return err
 	}

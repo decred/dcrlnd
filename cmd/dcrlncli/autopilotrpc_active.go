@@ -4,8 +4,6 @@
 package main
 
 import (
-	"context"
-
 	"github.com/decred/dcrlnd/lnrpc/autopilotrpc"
 	"github.com/urfave/cli"
 )
@@ -28,13 +26,13 @@ var getStatusCommand = cli.Command{
 }
 
 func getStatus(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getAutopilotClient(ctx)
 	defer cleanUp()
 
 	req := &autopilotrpc.StatusRequest{}
 
-	resp, err := client.Status(ctxb, req)
+	resp, err := client.Status(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -58,7 +56,7 @@ var disableCommand = cli.Command{
 }
 
 func enable(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getAutopilotClient(ctx)
 	defer cleanUp()
 
@@ -67,7 +65,7 @@ func enable(ctx *cli.Context) error {
 		Enable: true,
 	}
 
-	resp, err := client.ModifyStatus(ctxb, req)
+	resp, err := client.ModifyStatus(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -77,7 +75,7 @@ func enable(ctx *cli.Context) error {
 }
 
 func disable(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getAutopilotClient(ctx)
 	defer cleanUp()
 
@@ -86,7 +84,7 @@ func disable(ctx *cli.Context) error {
 		Enable: false,
 	}
 
-	resp, err := client.ModifyStatus(ctxb, req)
+	resp, err := client.ModifyStatus(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -111,7 +109,7 @@ var queryScoresCommand = cli.Command{
 }
 
 func queryScores(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getAutopilotClient(ctx)
 	defer cleanUp()
 
@@ -135,7 +133,7 @@ loop:
 		IgnoreLocalState: ctx.Bool("ignorelocalstate"),
 	}
 
-	resp, err := client.QueryScores(ctxb, req)
+	resp, err := client.QueryScores(ctxc, req)
 	if err != nil {
 		return err
 	}
