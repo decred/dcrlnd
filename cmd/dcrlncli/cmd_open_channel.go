@@ -203,7 +203,7 @@ var openChannelCommand = cli.Command{
 
 func openChannel(ctx *cli.Context) error {
 	// TODO(roasbeef): add deadline to context
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
@@ -264,7 +264,7 @@ func openChannel(ctx *cli.Context) error {
 
 		// Check if connecting to the node was successful.
 		// We discard the peer id returned as it is not needed.
-		_, err := client.ConnectPeer(ctxb, req)
+		_, err := client.ConnectPeer(ctxc, req)
 		if err != nil &&
 			!strings.Contains(err.Error(), "already connected") {
 			return err
@@ -298,14 +298,14 @@ func openChannel(ctx *cli.Context) error {
 	// PSBT funding is a more involved, interactive process that is too
 	// large to also fit into this already long function.
 	if ctx.Bool("psbt") {
-		return openChannelPsbt(ctx, client, req)
+		return openChannelPsbt(ctxc, ctx, client, req)
 	}
 	if !ctx.Bool("psbt") && ctx.Bool("no_publish") {
 		return fmt.Errorf("the --no_publish flag can only be used in " +
 			"combination with the --psbt flag")
 	}
 
-	stream, err := client.OpenChannel(ctxb, req)
+	stream, err := client.OpenChannel(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -350,9 +350,8 @@ func openChannel(ctx *cli.Context) error {
 //	|  |-------channel pending------->|  |
 //	|  |-------channel open------------->|
 //	|                                    |
-//
-// nolint: govet
-func openChannelPsbt(ctx *cli.Context, client lnrpc.LightningClient,
+func openChannelPsbt(rpcCtx context.Context, ctx *cli.Context,
+	client lnrpc.LightningClient,
 	req *lnrpc.OpenChannelRequest) error {
 
 	return fmt.Errorf("psbt channel opening is not supported in dcrlnd yet")
@@ -364,7 +363,7 @@ func openChannelPsbt(ctx *cli.Context, client lnrpc.LightningClient,
 		quit          = make(chan struct{})
 		srvMsg        = make(chan *lnrpc.OpenStatusUpdate, 1)
 		srvErr        = make(chan error, 1)
-		ctxc, cancel  = context.WithCancel(context.Background())
+		ctxc, cancel  = context.WithCancel(rpcCtx)
 	)
 	defer cancel()
 

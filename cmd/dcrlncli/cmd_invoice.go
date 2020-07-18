@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -80,7 +79,7 @@ func addInvoice(ctx *cli.Context) error {
 		amt      int64
 		err      error
 	)
-
+	ctxc := getContext()
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
@@ -124,7 +123,7 @@ func addInvoice(ctx *cli.Context) error {
 		IgnoreMaxInboundAmt: ctx.Bool("ignore_max_inbound_amt"),
 	}
 
-	resp, err := client.AddInvoice(context.Background(), invoice)
+	resp, err := client.AddInvoice(ctxc, invoice)
 	if err != nil {
 		return err
 	}
@@ -150,6 +149,7 @@ var lookupInvoiceCommand = cli.Command{
 }
 
 func lookupInvoice(ctx *cli.Context) error {
+	ctxc := getContext()
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
@@ -175,7 +175,7 @@ func lookupInvoice(ctx *cli.Context) error {
 		RHash: rHash,
 	}
 
-	invoice, err := client.LookupInvoice(context.Background(), req)
+	invoice, err := client.LookupInvoice(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -232,6 +232,7 @@ var listInvoicesCommand = cli.Command{
 }
 
 func listInvoices(ctx *cli.Context) error {
+	ctxc := getContext()
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
@@ -242,7 +243,7 @@ func listInvoices(ctx *cli.Context) error {
 		Reversed:       !ctx.Bool("paginate-forwards"),
 	}
 
-	invoices, err := client.ListInvoices(context.Background(), req)
+	invoices, err := client.ListInvoices(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -268,7 +269,7 @@ var decodePayReqCommand = cli.Command{
 }
 
 func decodePayReq(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
@@ -283,7 +284,7 @@ func decodePayReq(ctx *cli.Context) error {
 		return fmt.Errorf("pay_req argument missing")
 	}
 
-	resp, err := client.DecodePayReq(ctxb, &lnrpc.PayReqString{
+	resp, err := client.DecodePayReq(ctxc, &lnrpc.PayReqString{
 		PayReq: payreq,
 	})
 	if err != nil {

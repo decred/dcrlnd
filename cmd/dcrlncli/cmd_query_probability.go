@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -21,6 +20,7 @@ var queryProbCommand = cli.Command{
 }
 
 func queryProb(ctx *cli.Context) error {
+	ctxc := getContext()
 	args := ctx.Args()
 
 	if len(args) != 3 {
@@ -37,13 +37,13 @@ func queryProb(ctx *cli.Context) error {
 		return fmt.Errorf("invalid to node key: %v", err)
 	}
 
-	amtSat, err := strconv.ParseUint(args.Get(2), 10, 64)
+	amtAtoms, err := strconv.ParseUint(args.Get(2), 10, 64)
 	if err != nil {
 		return fmt.Errorf("invalid amt: %v", err)
 	}
 
 	amtMAtoms := lnwire.NewMAtomsFromAtoms(
-		dcrutil.Amount(amtSat),
+		dcrutil.Amount(amtAtoms),
 	)
 
 	conn := getClientConn(ctx, false)
@@ -56,8 +56,8 @@ func queryProb(ctx *cli.Context) error {
 		ToNode:    toNode[:],
 		AmtMAtoms: int64(amtMAtoms),
 	}
-	rpcCtx := context.Background()
-	response, err := client.QueryProbability(rpcCtx, req)
+
+	response, err := client.QueryProbability(ctxc, req)
 	if err != nil {
 		return err
 	}
