@@ -30,6 +30,7 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/invoicesrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
+	"github.com/decred/dcrlnd/lnrpc/signrpc"
 	"github.com/decred/dcrlnd/lnrpc/walletrpc"
 	"github.com/decred/dcrlnd/lnrpc/watchtowerrpc"
 	"github.com/decred/dcrlnd/lnrpc/wtclientrpc"
@@ -337,6 +338,10 @@ type HarnessNode struct {
 	lnrpc.WalletUnlockerClient
 
 	invoicesrpc.InvoicesClient
+
+	// SignerClient cannot be embedded because the name collisions of the
+	// methods SignMessage and VerifyMessage.
+	SignerClient signrpc.SignerClient
 
 	// conn is the underlying connection to the grpc endpoint of the node.
 	conn *grpc.ClientConn
@@ -916,6 +921,7 @@ func (hn *HarnessNode) initLightningClient(conn *grpc.ClientConn) error {
 	hn.WalletKitClient = walletrpc.NewWalletKitClient(conn)
 	hn.Watchtower = watchtowerrpc.NewWatchtowerClient(conn)
 	hn.WatchtowerClient = wtclientrpc.NewWatchtowerClientClient(conn)
+	hn.SignerClient = signrpc.NewSignerClient(conn)
 
 	// Set the harness node's pubkey to what the node claims in GetInfo.
 	//
