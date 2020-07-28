@@ -1100,8 +1100,9 @@ func TestOldInvoiceRemovalOnStart(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := RegistryConfig{
-		FinalCltvRejectDelta: testFinalCltvRejectDelta,
-		Clock:                testClock,
+		FinalCltvRejectDelta:        testFinalCltvRejectDelta,
+		Clock:                       testClock,
+		GcCanceledInvoicesOnStartup: true,
 	}
 
 	expiryWatcher := NewInvoiceExpiryWatcher(cfg.Clock)
