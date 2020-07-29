@@ -20,6 +20,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
@@ -570,7 +571,8 @@ justiceTxBroadcast:
 
 	// We'll now attempt to broadcast the transaction which finalized the
 	// channel's retribution against the cheating counter party.
-	err = b.cfg.PublishTransaction(finalTx, "")
+	label := labels.MakeLabel(labels.LabelTypeJusticeTransaction, nil)
+	err = b.cfg.PublishTransaction(finalTx, label)
 	if err != nil {
 		brarLog.Errorf("Unable to broadcast justice tx: %v", err)
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/sweep"
 )
@@ -159,7 +160,10 @@ func (h *htlcSuccessResolver) Resolve() (ContractResolver, error) {
 		// Regardless of whether an existing transaction was found or newly
 		// constructed, we'll broadcast the sweep transaction to the
 		// network.
-		err := h.PublishTx(h.sweepTx, "")
+		label := labels.MakeLabel(
+			labels.LabelTypeChannelClose, &h.ShortChanID,
+		)
+		err := h.PublishTx(h.sweepTx, label)
 		if err != nil {
 			log.Infof("%T(%x): unable to publish tx: %v",
 				h, h.htlc.RHash[:], err)
@@ -208,7 +212,10 @@ func (h *htlcSuccessResolver) Resolve() (ContractResolver, error) {
 	// the claiming process.
 	//
 	// TODO(roasbeef): after changing sighashes send to tx bundler
-	err := h.PublishTx(h.htlcResolution.SignedSuccessTx, "")
+	label := labels.MakeLabel(
+		labels.LabelTypeChannelClose, &h.ShortChanID,
+	)
+	err := h.PublishTx(h.htlcResolution.SignedSuccessTx, label)
 	if err != nil {
 		return nil, err
 	}

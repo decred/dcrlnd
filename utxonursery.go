@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/sweep"
 )
 
@@ -865,7 +866,8 @@ func (u *utxoNursery) sweepCribOutput(classHeight uint32, baby *babyOutput) erro
 
 	// We'll now broadcast the HTLC transaction, then wait for it to be
 	// confirmed before transitioning it to kindergarten.
-	err := u.cfg.PublishTransaction(baby.timeoutTx, "")
+	label := labels.MakeLabel(labels.LabelTypeSweepTransaction, nil)
+	err := u.cfg.PublishTransaction(baby.timeoutTx, label)
 	if err != nil && err != lnwallet.ErrDoubleSpend {
 		utxnLog.Errorf("Unable to broadcast baby tx: "+
 			"%v, %v", err, spew.Sdump(baby.timeoutTx))

@@ -8,6 +8,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/htlcswitch"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
@@ -551,7 +552,14 @@ func (c *ChanCloser) ProcessCloseMsg(msg lnwire.Message) ([]lnwire.Message,
 				return spew.Sdump(closeTx)
 			}),
 		)
-		if err := c.cfg.BroadcastTx(closeTx, ""); err != nil {
+
+		// Create a close channel label.
+		chanID := c.cfg.Channel.ShortChanID()
+		closeLabel := labels.MakeLabel(
+			labels.LabelTypeChannelClose, &chanID,
+		)
+
+		if err := c.cfg.BroadcastTx(closeTx, closeLabel); err != nil {
 			return nil, false, err
 		}
 

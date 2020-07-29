@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
@@ -720,7 +721,10 @@ func (c *ChainArbitrator) rebroadcast(channel *channeldb.OpenChannel,
 	log.Infof("Re-publishing %s close tx(%v) for channel %v",
 		kind, closeTx.TxHash(), chanPoint)
 
-	err = c.cfg.PublishTx(closeTx, "")
+	label := labels.MakeLabel(
+		labels.LabelTypeChannelClose, &channel.ShortChannelID,
+	)
+	err = c.cfg.PublishTx(closeTx, label)
 	if err != nil && err != lnwallet.ErrDoubleSpend {
 		log.Warnf("Unable to broadcast %s close tx(%v): %v",
 			kind, closeTx.TxHash(), err)

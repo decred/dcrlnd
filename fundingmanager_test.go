@@ -457,6 +457,9 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 			publTxChan <- txn
 			return nil
 		},
+		UpdateLabel: func(chainhash.Hash, string) error {
+			return nil
+		},
 		ZombieSweeperInterval:         1 * time.Hour,
 		ReservationTimeout:            1 * time.Nanosecond,
 		MaxChanSize:                   MaxFundingAmount,
@@ -559,6 +562,9 @@ func recreateAliceFundingManager(t *testing.T, alice *testNode) {
 		RequiredRemoteMaxValue: oldCfg.RequiredRemoteMaxValue,
 		PublishTransaction: func(txn *wire.MsgTx, _ string) error {
 			publishChan <- txn
+			return nil
+		},
+		UpdateLabel: func(chainhash.Hash, string) error {
 			return nil
 		},
 		ZombieSweeperInterval: oldCfg.ZombieSweeperInterval,

@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -874,7 +875,11 @@ func (c *ChannelArbitrator) stateStep(
 
 		// At this point, we'll now broadcast the commitment
 		// transaction itself.
-		if err := c.cfg.PublishTx(closeTx, ""); err != nil {
+		label := labels.MakeLabel(
+			labels.LabelTypeChannelClose, &c.cfg.ShortChanID,
+		)
+
+		if err := c.cfg.PublishTx(closeTx, label); err != nil {
 			log.Errorf("ChannelArbitrator(%v): unable to broadcast "+
 				"close tx: %v", c.cfg.ChanPoint, err)
 			if err != lnwallet.ErrDoubleSpend {
