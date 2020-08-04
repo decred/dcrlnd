@@ -607,7 +607,7 @@ func newRPCServer(cfg *Config, s *server, macService *macaroons.Service,
 		},
 		FindRoute:              s.chanRouter.FindRoute,
 		MissionControl:         s.missionControl,
-		ActiveNetParams:        activeNetParams.Params,
+		ActiveNetParams:        cfg.ActiveNetParams.Params,
 		Tower:                  s.controlTower,
 		MaxTotalTimelock:       cfg.MaxOutgoingCltvExpiry,
 		DefaultFinalCltvDelta:  uint16(cfg.TimeLockDelta),
@@ -631,7 +631,7 @@ func newRPCServer(cfg *Config, s *server, macService *macaroons.Service,
 	// TODO(roasbeef): extend sub-sever config to have both (local vs remote) DB
 	err = subServerCgs.PopulateDependencies(
 		cfg, s.cc, cfg.networkDir, macService, atpl, invoiceRegistry,
-		s.htlcSwitch, activeNetParams.Params, s.chanRouter,
+		s.htlcSwitch, cfg.ActiveNetParams.Params, s.chanRouter,
 		routerBackend, s.nodeSigner, s.remoteChanDB, s.sweeper, tower,
 		s.towerClient, cfg.net.ResolveTCPAddr, genInvoiceFeatures,
 		rpcsLog,
@@ -993,7 +993,9 @@ func (r *rpcServer) Stop() error {
 // the outputs themselves. The passed map pairs up an address, to a desired
 // output value amount. Each address is converted to its corresponding pkScript
 // to be used within the constructed output(s).
-func addrPairsToOutputs(addrPairs map[string]int64, netParams *chaincfg.Params) ([]*wire.TxOut, error) {
+func addrPairsToOutputs(addrPairs map[string]int64,
+	netParams *chaincfg.Params) ([]*wire.TxOut, error) {
+
 	outputs := make([]*wire.TxOut, 0, len(addrPairs))
 	for addr, amt := range addrPairs {
 		addr, err := stdaddr.DecodeAddress(addr, netParams)
@@ -1070,7 +1072,7 @@ func allowCORS(handler http.Handler, origins []string) http.Handler {
 func (r *rpcServer) sendCoinsOnChain(paymentMap map[string]int64,
 	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*chainhash.Hash, error) {
 
-	outputs, err := addrPairsToOutputs(paymentMap, activeNetParams.Params)
+	outputs, err := addrPairsToOutputs(paymentMap, r.cfg.ActiveNetParams.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -1117,7 +1119,7 @@ func (r *rpcServer) ListUnspent(ctx context.Context,
 		return nil, err
 	}
 
-	rpcUtxos, err := lnrpc.MarshalUtxos(utxos, activeNetParams.Params)
+	rpcUtxos, err := lnrpc.MarshalUtxos(utxos, r.cfg.ActiveNetParams.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -1141,7 +1143,7 @@ func (r *rpcServer) EstimateFee(ctx context.Context,
 	in *lnrpc.EstimateFeeRequest) (*lnrpc.EstimateFeeResponse, error) {
 
 	// Create the list of outputs we are spending to.
-	outputs, err := addrPairsToOutputs(in.AddrToAmount, activeNetParams.Params)
+	outputs, err := addrPairsToOutputs(in.AddrToAmount, r.cfg.ActiveNetParams.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -1212,7 +1214,9 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 
 	// Decode the address receiving the coins, we need to check whether the
 	// address is valid for this network.
-	targetAddr, err := stdaddr.DecodeAddress(in.Addr, activeNetParams.Params)
+	targetAddr, err := stdaddr.DecodeAddress(
+		in.Addr, r.cfg.ActiveNetParams.Params,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1260,7 +1264,7 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 			feePerKB, uint32(bestHeight), targetAddr, wallet,
 			wallet, wallet.WalletController,
 			r.server.cc.feeEstimator, r.server.cc.signer,
-			activeNetParams.Params,
+			r.cfg.ActiveNetParams.Params,
 		)
 		if err != nil {
 			return nil, err
@@ -1518,7 +1522,7 @@ func (r *rpcServer) ConnectPeer(ctx context.Context,
 	peerAddr := &lnwire.NetAddress{
 		IdentityKey: pubKey,
 		Address:     addr,
-		ChainNet:    activeNetParams.Net,
+		ChainNet:    r.cfg.ActiveNetParams.Net,
 	}
 
 	rpcsLog.Debugf("[connectpeer] requested connection to %x@%s",
@@ -1889,7 +1893,9 @@ func (r *rpcServer) parseOpenChannelReq(in *lnrpc.OpenChannelRequest,
 	rpcsLog.Debugf("[openchannel]: using fee of %v atom/kB for funding tx",
 		int64(feeRate))
 
-	script, err := parseUpfrontShutdownAddress(in.CloseAddress)
+	script, err := parseUpfrontShutdownAddress(
+		in.CloseAddress, r.cfg.ActiveNetParams.Params,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing upfront shutdown: %v",
 			err)
@@ -1900,7 +1906,7 @@ func (r *rpcServer) parseOpenChannelReq(in *lnrpc.OpenChannelRequest,
 	// be used to consume updates of the state of the pending channel.
 	return &openChanReq{
 		targetPubkey:     nodePubKey,
-		chainHash:        activeNetParams.GenesisHash,
+		chainHash:        r.cfg.ActiveNetParams.GenesisHash,
 		localFundingAmt:  localFundingAmt,
 		pushAmt:          lnwire.NewMAtomsFromAtoms(remoteInitialBalance),
 		minHtlcIn:        minHtlcIn,
@@ -2064,13 +2070,15 @@ func (r *rpcServer) OpenChannelSync(ctx context.Context,
 // parseUpfrontShutdownScript attempts to parse an upfront shutdown address.
 // If the address is empty, it returns nil. If it successfully decoded the
 // address, it returns a script that pays out to the address.
-func parseUpfrontShutdownAddress(address string) (lnwire.DeliveryAddress, error) {
+func parseUpfrontShutdownAddress(address string,
+	params *chaincfg.Params) (lnwire.DeliveryAddress, error) {
+
 	if len(address) == 0 {
 		return nil, nil
 	}
 
 	addr, err := stdaddr.DecodeAddress(
-		address, activeNetParams.Params,
+		address, params,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("invalid address: %v", err)
@@ -2285,7 +2293,7 @@ func (r *rpcServer) CloseChannel(in *lnrpc.CloseChannelRequest,
 		if len(in.DeliveryAddress) > 0 {
 			// Decode the address provided.
 			addr, err := stdaddr.DecodeAddress(
-				in.DeliveryAddress, activeNetParams.Params,
+				in.DeliveryAddress, r.cfg.ActiveNetParams.Params,
 			)
 			if err != nil {
 				return fmt.Errorf("invalid delivery address: %v", err)
@@ -2541,7 +2549,7 @@ func (r *rpcServer) GetInfo(ctx context.Context,
 			"with current best block in the main chain: %v", err)
 	}
 
-	network := normalizeNetwork(activeNetParams.Name)
+	network := normalizeNetwork(r.cfg.ActiveNetParams.Name)
 	activeChains := make([]*lnrpc.Chain, r.cfg.registeredChains.NumActiveChains())
 	for i, chain := range r.cfg.registeredChains.ActiveChains() {
 		activeChains[i] = &lnrpc.Chain{
@@ -2594,7 +2602,7 @@ func (r *rpcServer) GetInfo(ctx context.Context,
 		BlockHeight:         uint32(bestHeight),
 		BlockHash:           bestHash.String(),
 		SyncedToChain:       isSynced,
-		Testnet:             isTestnet(&activeNetParams),
+		Testnet:             isTestnet(&r.cfg.ActiveNetParams),
 		Chains:              activeChains,
 		Uris:                uris,
 		Alias:               nodeAnn.Alias.String(),
@@ -3610,7 +3618,7 @@ func createRPCOpenChannel(r *rpcServer, graph *channeldb.ChannelGraph,
 		scriptVersion := uint16(0)
 		_, addresses := stdscript.ExtractAddrs(
 			scriptVersion, dbChannel.LocalShutdownScript,
-			activeNetParams.Params,
+			r.cfg.ActiveNetParams.Params,
 		)
 
 		// We only expect one upfront shutdown address for a channel. If
@@ -3727,7 +3735,7 @@ func (r *rpcServer) createRPCClosedChannel(
 	}
 
 	reports, err := r.server.remoteChanDB.FetchChannelReports(
-		activeNetParams.GenesisHash, &dbChannel.ChanPoint,
+		r.cfg.ActiveNetParams.GenesisHash, &dbChannel.ChanPoint,
 	)
 	switch err {
 	// If the channel does not have its resolver outcomes stored,
@@ -4186,7 +4194,7 @@ func (r *rpcServer) extractPaymentIntent(rpcPayReq *rpcPaymentRequest) (rpcPayme
 	// attempt to decode it, populating the payment accordingly.
 	if rpcPayReq.PaymentRequest != "" {
 		payReq, err := zpay32.Decode(
-			rpcPayReq.PaymentRequest, activeNetParams.Params,
+			rpcPayReq.PaymentRequest, r.cfg.ActiveNetParams.Params,
 		)
 		if err != nil {
 			return payIntent, err
@@ -4897,7 +4905,7 @@ func (r *rpcServer) AddInvoice(ctx context.Context,
 	addInvoiceCfg := &invoicesrpc.AddInvoiceConfig{
 		AddInvoice:        r.server.invoices.AddInvoice,
 		IsChannelActive:   r.server.htlcSwitch.HasActiveLink,
-		ChainParams:       activeNetParams.Params,
+		ChainParams:       r.cfg.ActiveNetParams.Params,
 		NodeSigner:        r.server.nodeSigner,
 		DefaultCLTVExpiry: defaultDelta,
 		ChanDB:            r.server.remoteChanDB,
@@ -4986,7 +4994,7 @@ func (r *rpcServer) LookupInvoice(ctx context.Context,
 		}))
 
 	rpcInvoice, err := invoicesrpc.CreateRPCInvoice(
-		&invoice, activeNetParams.Params,
+		&invoice, r.cfg.ActiveNetParams.Params,
 	)
 	if err != nil {
 		return nil, err
@@ -5027,8 +5035,9 @@ func (r *rpcServer) ListInvoices(ctx context.Context,
 		LastIndexOffset:  invoiceSlice.LastIndexOffset,
 	}
 	for i, invoice := range invoiceSlice.Invoices {
+		invoice := invoice
 		resp.Invoices[i], err = invoicesrpc.CreateRPCInvoice(
-			&invoice, activeNetParams.Params,
+			&invoice, r.cfg.ActiveNetParams.Params,
 		)
 		if err != nil {
 			// Instead of failing and returning an error, encode
@@ -5064,7 +5073,7 @@ func (r *rpcServer) SubscribeInvoices(req *lnrpc.InvoiceSubscription,
 		select {
 		case newInvoice := <-invoiceClient.NewInvoices:
 			rpcInvoice, err := invoicesrpc.CreateRPCInvoice(
-				newInvoice, activeNetParams.Params,
+				newInvoice, r.cfg.ActiveNetParams.Params,
 			)
 			if err != nil {
 				return err
@@ -5076,7 +5085,7 @@ func (r *rpcServer) SubscribeInvoices(req *lnrpc.InvoiceSubscription,
 
 		case settledInvoice := <-invoiceClient.SettledInvoices:
 			rpcInvoice, err := invoicesrpc.CreateRPCInvoice(
-				settledInvoice, activeNetParams.Params,
+				settledInvoice, r.cfg.ActiveNetParams.Params,
 			)
 			if err != nil {
 				return err
@@ -5868,7 +5877,7 @@ func (r *rpcServer) DecodePayReq(ctx context.Context,
 	// Fist we'll attempt to decode the payment request string, if the
 	// request is invalid or the checksum doesn't match, then we'll exit
 	// here with an error.
-	payReq, err := zpay32.Decode(req.PayReq, activeNetParams.Params)
+	payReq, err := zpay32.Decode(req.PayReq, r.cfg.ActiveNetParams.Params)
 	if err != nil {
 		return nil, err
 	}

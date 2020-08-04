@@ -6,10 +6,6 @@ import (
 	"github.com/decred/dcrlnd/keychain"
 )
 
-// activeNetParams is a pointer to the parameters specific to the currently
-// active decred network.
-var activeNetParams = decredTestNetParams
-
 // decredNetParams couples the p2p parameters of a network with the
 // corresponding RPC port of a daemon running on the particular network.
 type decredNetParams struct {

@@ -373,7 +373,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	)
 	replayLog := htlcswitch.NewDecayedLog(sharedSecretPath, cc.chainNotifier)
 	sphinxRouter := sphinx.NewRouter(
-		nodeKeyECDH, activeNetParams.Params, replayLog,
+		nodeKeyECDH, cfg.ActiveNetParams.Params, replayLog,
 	)
 
 	writeBufferPool := pool.NewWriteBuffer(
@@ -775,7 +775,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	s.authGossiper = discovery.New(discovery.Config{
 		Router:            s.chanRouter,
 		Notifier:          s.cc.chainNotifier,
-		ChainHash:         activeNetParams.GenesisHash,
+		ChainHash:         s.cfg.ActiveNetParams.GenesisHash,
 		Broadcast:         s.BroadcastMessage,
 		ChanSeries:        chanSeries,
 		GossiperState:     discovery.NewGossiperState(s.remoteChanDB),
@@ -808,9 +808,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		FetchChannel:              s.remoteChanDB.FetchChannel,
 	}
 
-	utxnStore, err := newNurseryStore(
-		&activeNetParams.GenesisHash, remoteChanDB,
-	)
+	utxnStore, err := newNurseryStore(&s.cfg.ActiveNetParams.GenesisHash, remoteChanDB)
 	if err != nil {
 		srvrLog.Errorf("unable to create nursery store: %v", err)
 		return nil, err
@@ -820,7 +818,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		sweep.DefaultBatchWindowDuration)
 
 	sweeperStore, err := sweep.NewSweeperStore(
-		remoteChanDB, &activeNetParams.GenesisHash,
+		remoteChanDB, &s.cfg.ActiveNetParams.GenesisHash,
 	)
 	if err != nil {
 		srvrLog.Errorf("unable to create sweeper store: %v", err)
@@ -840,7 +838,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		MaxInputsPerTx:       sweep.DefaultMaxInputsPerTx,
 		MaxSweepAttempts:     sweep.DefaultMaxSweepAttempts,
 		NextAttemptDeltaFunc: sweep.DefaultNextAttemptDeltaFunc,
-		NetParams:            activeNetParams.Params,
+		NetParams:            s.cfg.ActiveNetParams.Params,
 		MaxFeeRate:           sweep.DefaultMaxFeeRate,
 		FeeRateBucketSize:    sweep.DefaultFeeRateBucketSize,
 	})
@@ -873,8 +871,8 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	contractBreaches := make(chan *ContractBreachEvent, 1)
 
 	s.chainArb = contractcourt.NewChainArbitrator(contractcourt.ChainArbitratorConfig{
-		ChainHash:              activeNetParams.GenesisHash,
-		NetParams:              activeNetParams.Params,
+		ChainHash:              s.cfg.ActiveNetParams.GenesisHash,
+		NetParams:              s.cfg.ActiveNetParams.Params,
 		IncomingBroadcastDelta: lncfg.DefaultIncomingBroadcastDelta,
 		OutgoingBroadcastDelta: lncfg.DefaultOutgoingBroadcastDelta,
 		NewSweepAddr:           newSweepPkScriptGen(cc.wallet),
@@ -963,7 +961,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		ContractBreaches:   contractBreaches,
 		Signer:             cc.wallet.Cfg.Signer,
 		Store:              newRetributionStore(remoteChanDB),
-		NetParams:          activeNetParams.Params,
+		NetParams:          s.cfg.ActiveNetParams.Params,
 	})
 
 	// Select the configuration and funding parameters for Decred
@@ -1215,7 +1213,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		}
 
 		s.towerClient, err = wtclient.New(&wtclient.Config{
-			ChainParams:    activeNetParams.Params,
+			ChainParams:    s.cfg.ActiveNetParams.Params,
 			Signer:         cc.wallet.Cfg.Signer,
 			NewAddress:     newSweepPkScriptGen(cc.wallet),
 			SecretKeyRing:  s.cc.keyRing,
@@ -1223,7 +1221,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 			AuthDial:       wtclient.AuthDial,
 			DB:             towerClientDB,
 			Policy:         policy,
-			ChainHash:      activeNetParams.GenesisHash,
+			ChainHash:      s.cfg.ActiveNetParams.GenesisHash,
 			MinBackoff:     10 * time.Second,
 			MaxBackoff:     5 * time.Minute,
 			ForceQuitDelay: wtclient.DefaultForceQuitDelay,
@@ -1820,7 +1818,7 @@ func initNetworkBootstrappers(s *server) ([]discovery.NetworkPeerBootstrapper, e
 	// If this isn't simnet mode, then one of our additional bootstrapping
 	// sources will be the set of running DNS seeds.
 	if !s.cfg.SimNet {
-		dnsSeeds, ok := chainDNSSeeds[activeNetParams.GenesisHash]
+		dnsSeeds, ok := chainDNSSeeds[s.cfg.ActiveNetParams.GenesisHash]
 
 		// If we have a set of DNS seeds for this chain, then we'll add
 		// it as an additional bootstrapping source.
@@ -2916,7 +2914,7 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 	peerAddr := &lnwire.NetAddress{
 		IdentityKey: pubKey,
 		Address:     addr,
-		ChainNet:    activeNetParams.Net,
+		ChainNet:    s.cfg.ActiveNetParams.Net,
 	}
 
 	// With the brontide connection established, we'll now craft the feature
@@ -2995,7 +2993,7 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 		MaxChannelFeeAllocation: s.cfg.MaxChannelFeeAllocation,
 		Quit:                    s.quit,
 
-		ChainParams: activeNetParams.Params,
+		ChainParams: s.cfg.ActiveNetParams.Params,
 	}
 
 	copy(pCfg.PubKeyBytes[:], peerAddr.IdentityKey.SerializeCompressed())

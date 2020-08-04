@@ -562,7 +562,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		towerDBDir := filepath.Join(
 			cfg.Watchtower.TowerDir,
 			cfg.registeredChains.PrimaryChain().String(),
-			normalizeNetwork(activeNetParams.Name),
+			normalizeNetwork(cfg.ActiveNetParams.Name),
 		)
 
 		towerDB, err := wtdb.OpenTowerDB(towerDBDir)
@@ -587,7 +587,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		}
 
 		wtCfg := &watchtower.Config{
-			NetParams:      activeNetParams.Params,
+			NetParams:      cfg.ActiveNetParams.Params,
 			BlockFetcher:   activeChainControl.chainIO,
 			DB:             towerDB,
 			EpochRegistrar: activeChainControl.chainNotifier,
@@ -602,7 +602,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 				towerKeyDesc, activeChainControl.keyRing,
 			),
 			PublishTx: activeChainControl.wallet.PublishTransaction,
-			ChainHash: activeNetParams.GenesisHash,
+			ChainHash: cfg.ActiveNetParams.GenesisHash,
 		}
 
 		// If there is a tor controller (user wants auto hidden services), then
@@ -654,7 +654,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// Set up an autopilot manager from the current config. This will be
 	// used to manage the underlying autopilot agent, starting and stopping
 	// it at will.
-	atplCfg, err := initAutoPilot(server, cfg.Autopilot, cfg)
+	atplCfg, err := initAutoPilot(server, cfg.Autopilot, cfg, cfg.ActiveNetParams)
 	if err != nil {
 		err := fmt.Errorf("unable to initialize autopilot: %v", err)
 		ltndLog.Error(err)
@@ -990,7 +990,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		cfg.AdminMacPath, cfg.ReadMacPath, cfg.InvoiceMacPath,
 	}
 	pwService := walletunlocker.New(
-		cfg.ChainDir, activeNetParams.Params, !cfg.SyncFreelist,
+		cfg.ChainDir, cfg.ActiveNetParams.Params, !cfg.SyncFreelist,
 		macaroonFiles, chanDB, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
 		cfg.Dcrwallet.ClientKeyPath, cfg.Dcrwallet.ClientCertPath,
 		cfg.Dcrwallet.AccountNumber,
@@ -1087,9 +1087,9 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		}
 
 		netDir := dcrwallet.NetworkDir(
-			cfg.ChainDir, activeNetParams.Params,
+			cfg.ChainDir, cfg.ActiveNetParams.Params,
 		)
-		loader := walletloader.NewLoader(activeNetParams.Params, netDir,
+		loader := walletloader.NewLoader(cfg.ActiveNetParams.Params, netDir,
 			wallet.DefaultGapLimit)
 
 		// With the seed, we can now use the wallet loader to create

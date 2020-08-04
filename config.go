@@ -305,6 +305,9 @@ type Config struct {
 	// network. This path will hold the files related to each different
 	// network.
 	networkDir string
+
+	// ActiveNetParams contains parameters of the target chain.
+	ActiveNetParams decredNetParams
 }
 
 // DefaultConfig returns all default values for the Config struct.
@@ -406,6 +409,7 @@ func DefaultConfig() Config {
 		LogWriter:               build.NewRotatingLogWriter(),
 		DB:                      lncfg.DefaultDB(),
 		registeredChains:        newChainRegistry(),
+		ActiveNetParams:         decredTestNetParams,
 	}
 }
 
@@ -743,15 +747,15 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	numNets := 0
 	if cfg.TestNet3 {
 		numNets++
-		activeNetParams = decredTestNetParams
+		cfg.ActiveNetParams = decredTestNetParams
 	}
 	if cfg.RegTest {
 		numNets++
-		activeNetParams = regTestNetParams
+		cfg.ActiveNetParams = regTestNetParams
 	}
 	if cfg.SimNet {
 		numNets++
-		activeNetParams = decredSimNetParams
+		cfg.ActiveNetParams = decredSimNetParams
 	}
 	if numNets > 1 {
 		str := "%s: The testnet, regtest, and simnet params" +
@@ -762,7 +766,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 
 	// We default to mainnet if none are specified.
 	if numNets == 0 {
-		activeNetParams = decredMainNetParams
+		cfg.ActiveNetParams = decredMainNetParams
 	}
 
 	if cfg.TimeLockDelta < minTimeLockDelta {
@@ -802,7 +806,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		if err != nil {
 			cfg.Dcrwallet.GRPCHost = net.JoinHostPort(
 				cfg.Dcrwallet.GRPCHost,
-				activeNetParams.dcrwPort,
+				cfg.ActiveNetParams.dcrwPort,
 			)
 		}
 
@@ -878,7 +882,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	cfg.networkDir = filepath.Join(
 		cfg.DataDir, defaultChainSubDirname,
 		cfg.registeredChains.PrimaryChain().String(),
-		normalizeNetwork(activeNetParams.Name),
+		normalizeNetwork(cfg.ActiveNetParams.Name),
 	)
 
 	// If a custom macaroon directory wasn't specified and the data
@@ -912,7 +916,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	// per network in the same fashion as the data directory.
 	cfg.LogDir = filepath.Join(cfg.LogDir,
 		cfg.registeredChains.PrimaryChain().String(),
-		normalizeNetwork(activeNetParams.Name))
+		normalizeNetwork(cfg.ActiveNetParams.Name))
 
 	// A log writer must be passed in, otherwise we can't function and would
 	// run into a panic later on.
@@ -1109,11 +1113,11 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 func (c *Config) localDatabaseDir() string {
 	return filepath.Join(c.DataDir,
 		defaultGraphSubDirname,
-		normalizeNetwork(activeNetParams.Name))
+		normalizeNetwork(c.ActiveNetParams.Name))
 }
 
 func (c *Config) networkName() string {
-	return normalizeNetwork(activeNetParams.Name)
+	return normalizeNetwork(c.ActiveNetParams.Name)
 }
 
 // CleanAndExpandPath expands environment variables and leading ~ in the

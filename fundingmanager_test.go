@@ -101,6 +101,8 @@ var (
 		modNScalar(rBytes),
 		modNScalar(sBytes),
 	)
+
+	fundingNetParams = decredTestNetParams
 )
 
 type mockNotifier struct {
@@ -317,7 +319,7 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 	addr *lnwire.NetAddress, tempTestDir string,
 	options ...cfgOption) (*testNode, error) {
 
-	netParams := activeNetParams.Params
+	netParams := fundingNetParams.Params
 	estimator := chainfee.NewStaticEstimator(62500, 0)
 
 	chainNotifier := &mockNotifier{
@@ -686,7 +688,7 @@ func fundChannel(t *testing.T, alice, bob *testNode, localFundingAmt,
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		subtractFees:    subtractFees,
 		localFundingAmt: localFundingAmt,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(pushAmt),
@@ -1610,7 +1612,7 @@ func TestFundingManagerPeerTimeoutAfterInitFunding(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		localFundingAmt: 500000,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(0),
 		private:         false,
@@ -1672,7 +1674,7 @@ func TestFundingManagerPeerTimeoutAfterFundingOpen(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		localFundingAmt: 500000,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(0),
 		private:         false,
@@ -1743,7 +1745,7 @@ func TestFundingManagerPeerTimeoutAfterFundingAccept(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		localFundingAmt: 500000,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(0),
 		private:         false,
@@ -2467,7 +2469,7 @@ func TestFundingManagerCustomChannelParameters(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:     bob.privKey.PubKey(),
-		chainHash:        activeNetParams.GenesisHash,
+		chainHash:        fundingNetParams.GenesisHash,
 		localFundingAmt:  localAmt,
 		pushAmt:          lnwire.NewMAtomsFromAtoms(pushAmt),
 		private:          false,
@@ -2757,7 +2759,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 		errChan := make(chan error, 1)
 		initReq := &openChanReq{
 			targetPubkey:    bob.privKey.PubKey(),
-			chainHash:       activeNetParams.GenesisHash,
+			chainHash:       fundingNetParams.GenesisHash,
 			localFundingAmt: 5000000,
 			pushAmt:         lnwire.NewMAtomsFromAtoms(0),
 			private:         false,
@@ -2922,7 +2924,7 @@ func TestFundingManagerRejectPush(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		localFundingAmt: 500000,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(10),
 		private:         true,
@@ -2979,7 +2981,7 @@ func TestFundingManagerMaxConfs(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		localFundingAmt: 500000,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(10),
 		private:         false,
@@ -3248,8 +3250,6 @@ func expectOpenChannelMsg(t *testing.T, msgChan chan lnwire.Message) *lnwire.Ope
 func TestMaxChannelSizeConfig(t *testing.T) {
 	t.Parallel()
 
-	fundingNetParams := activeNetParams.Params
-
 	// Create a set of funding managers that will reject wumbo
 	// channels but set --maxchansize explicitly lower than soft-limit.
 	// Verify that wumbo rejecting funding managers will respect
@@ -3334,7 +3334,7 @@ func TestWumboChannelConfig(t *testing.T) {
 	errChan := make(chan error, 1)
 	initReq := &openChanReq{
 		targetPubkey:    bob.privKey.PubKey(),
-		chainHash:       activeNetParams.GenesisHash,
+		chainHash:       fundingNetParams.GenesisHash,
 		localFundingAmt: MaxFundingAmount,
 		pushAmt:         lnwire.NewMAtomsFromAtoms(0),
 		private:         false,

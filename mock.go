@@ -231,7 +231,7 @@ type mockChainIO struct {
 var _ lnwallet.BlockChainIO = (*mockChainIO)(nil)
 
 func (m *mockChainIO) GetBestBlock() (*chainhash.Hash, int32, error) {
-	return &activeNetParams.GenesisHash, m.bestHeight, nil
+	return &chainhash.Hash{}, m.bestHeight, nil
 }
 
 func (*mockChainIO) GetUtxo(op *wire.OutPoint, _ []byte,

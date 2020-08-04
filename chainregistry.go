@@ -99,7 +99,7 @@ func (c chainCode) String() string {
 // checkDcrdNode checks whether the dcrd node reachable using the provided
 // config is usable as source of chain information, given the requirements of a
 // dcrlnd node.
-func checkDcrdNode(rpcConfig rpcclient.ConnConfig) error {
+func checkDcrdNode(cfg *Config, rpcConfig rpcclient.ConnConfig) error {
 	connectTimeout := 30 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
 	defer cancel()
@@ -122,7 +122,7 @@ func checkDcrdNode(rpcConfig rpcclient.ConnConfig) error {
 	if err != nil {
 		return err
 	}
-	if net != activeNetParams.Params.Net {
+	if net != cfg.ActiveNetParams.Params.Net {
 		return fmt.Errorf("dcrd node network mismatch")
 	}
 
@@ -261,7 +261,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			dcrdHost = dcrdMode.RPCHost
 		} else {
 			dcrdHost = fmt.Sprintf("%v:%v", dcrdMode.RPCHost,
-				activeNetParams.rpcPort)
+				cfg.ActiveNetParams.rpcPort)
 		}
 
 		dcrdUser := dcrdMode.RPCUser
@@ -280,7 +280,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		// Verify that the provided dcrd instance exists, is reachable,
 		// it's on the correct network and has the features required
 		// for dcrlnd to perform its work.
-		if err = checkDcrdNode(*rpcConfig); err != nil {
+		if err = checkDcrdNode(cfg, *rpcConfig); err != nil {
 			srvrLog.Errorf("unable to use specified dcrd node: %v",
 				err)
 			return nil, err
@@ -299,7 +299,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		// blockchain IO source.
 		dcrwConfig := &remotedcrwallet.Config{
 			PrivatePass:   privateWalletPw,
-			NetParams:     activeNetParams.Params,
+			NetParams:     cfg.ActiveNetParams.Params,
 			DB:            remoteDB,
 			Conn:          conn,
 			AccountNumber: accountNumber,
@@ -315,7 +315,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		// Remote wallet mode currently always use the wallet for chain
 		// notifications and chain IO.
 		cc.chainNotifier, err = remotedcrwnotify.New(
-			conn, activeNetParams.Params, hintCache, hintCache,
+			conn, cfg.ActiveNetParams.Params, hintCache, hintCache,
 		)
 		if err != nil {
 			return nil, err
@@ -340,11 +340,11 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		switch cfg.Dcrwallet.SPV {
 		case false:
 			syncer, err = dcrwallet.NewRPCSyncer(*rpcConfig,
-				activeNetParams.Params)
+				cfg.ActiveNetParams.Params)
 		case true:
 			spvCfg := &dcrwallet.SPVSyncerConfig{
 				Peers:      cfg.Dcrwallet.SPVConnect,
-				Net:        activeNetParams.Params,
+				Net:        cfg.ActiveNetParams.Params,
 				AppDataDir: filepath.Join(cfg.ChainDir),
 				DialFunc:   cfg.Dcrwallet.DialFunc,
 			}
@@ -363,7 +363,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			Birthday:       birthday,
 			RecoveryWindow: recoveryWindow,
 			DataDir:        cfg.ChainDir,
-			NetParams:      activeNetParams.Params,
+			NetParams:      cfg.ActiveNetParams.Params,
 			Wallet:         wallet,
 			Loader:         loader,
 			DB:             remoteDB,
@@ -383,7 +383,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			srvrLog.Info("Using the wallet for chain operations")
 
 			cc.chainNotifier, err = dcrwnotify.New(
-				wc.InternalWallet(), activeNetParams.Params, hintCache, hintCache,
+				wc.InternalWallet(), cfg.ActiveNetParams.Params, hintCache, hintCache,
 			)
 			if err != nil {
 				return nil, err
@@ -402,7 +402,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			srvrLog.Info("Using dcrd for chain operations")
 
 			cc.chainNotifier, err = dcrdnotify.New(
-				rpcConfig, activeNetParams.Params, hintCache, hintCache,
+				rpcConfig, cfg.ActiveNetParams.Params, hintCache, hintCache,
 			)
 			if err != nil {
 				return nil, err
@@ -416,7 +416,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 				return nil, err
 			}
 
-			cc.chainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig, activeNetParams.Params)
+			cc.chainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig, cfg.ActiveNetParams.Params)
 			if err != nil {
 				return nil, err
 			}
@@ -467,7 +467,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		SecretKeyRing:      secretKeyRing,
 		ChainIO:            cc.chainIO,
 		DefaultConstraints: channelConstraints,
-		NetParams:          *activeNetParams.Params,
+		NetParams:          *cfg.ActiveNetParams.Params,
 	}
 	lnWallet, err := lnwallet.NewLightningWallet(walletCfg)
 	if err != nil {
