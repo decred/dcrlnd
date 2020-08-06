@@ -2916,23 +2916,43 @@ func (r *rpcServer) WalletBalance(ctx context.Context,
 // ChannelBalance returns the total available channel flow across all open
 // channels in atoms.
 func (r *rpcServer) ChannelBalance(ctx context.Context,
-	in *lnrpc.ChannelBalanceRequest) (*lnrpc.ChannelBalanceResponse, error) {
+	in *lnrpc.ChannelBalanceRequest) (
+	*lnrpc.ChannelBalanceResponse, error) {
+
+	var (
+		localBalance             lnwire.MilliAtom
+		remoteBalance            lnwire.MilliAtom
+		unsettledLocalBalance    lnwire.MilliAtom
+		unsettledRemoteBalance   lnwire.MilliAtom
+		pendingOpenLocalBalance  lnwire.MilliAtom
+		pendingOpenRemoteBalance lnwire.MilliAtom
+		maxInbound               dcrutil.Amount
+		maxOutbound              dcrutil.Amount
+	)
 
 	openChannels, err := r.server.remoteChanDB.FetchAllOpenChannels()
 	if err != nil {
 		return nil, err
 	}
 
-	var balance dcrutil.Amount
-	var maxInbound dcrutil.Amount
-	var maxOutbound dcrutil.Amount
 	for _, channel := range openChannels {
+		c := channel.LocalCommitment
+		localBalance += c.LocalBalance
+		remoteBalance += c.RemoteBalance
+
+		// Add pending htlc amount.
+		for _, htlc := range c.Htlcs {
+			if htlc.Incoming {
+				unsettledLocalBalance += htlc.Amt
+			} else {
+				unsettledRemoteBalance += htlc.Amt
+			}
+		}
+
 		local := channel.LocalCommitment.LocalBalance.ToAtoms()
 		localReserve := channel.LocalChanCfg.ChannelConstraints.ChanReserve
 		remote := channel.RemoteCommitment.RemoteBalance.ToAtoms()
 		remoteReserve := channel.RemoteChanCfg.ChannelConstraints.ChanReserve
-
-		balance += local
 
 		// The maximum amount we can receive from this channel is however much
 		// the remote node has, minus its required channel reserve.
@@ -2946,7 +2966,6 @@ func (r *rpcServer) ChannelBalance(ctx context.Context,
 		if local > localReserve {
 			maxOutbound += local - localReserve
 		}
-
 	}
 
 	pendingChannels, err := r.server.remoteChanDB.FetchPendingChannels()
@@ -2954,19 +2973,52 @@ func (r *rpcServer) ChannelBalance(ctx context.Context,
 		return nil, err
 	}
 
-	var pendingOpenBalance dcrutil.Amount
 	for _, channel := range pendingChannels {
-		pendingOpenBalance += channel.LocalCommitment.LocalBalance.ToAtoms()
+		c := channel.LocalCommitment
+		pendingOpenLocalBalance += c.LocalBalance
+		pendingOpenRemoteBalance += c.RemoteBalance
 	}
 
-	rpcsLog.Debugf("[channelbalance] balance=%v pending-open=%v",
-		balance, pendingOpenBalance)
+	rpcsLog.Debugf("[channelbalance] local_balance=%v remote_balance=%v "+
+		"unsettled_local_balance=%v unsettled_remote_balance=%v "+
+		"pending_open_local_balance=%v pending_open_remove_balance",
+		localBalance, remoteBalance, unsettledLocalBalance,
+		unsettledRemoteBalance, pendingOpenLocalBalance,
+		pendingOpenRemoteBalance)
 
 	return &lnrpc.ChannelBalanceResponse{
-		Balance:            int64(balance),
-		PendingOpenBalance: int64(pendingOpenBalance),
-		MaxInboundAmount:   int64(maxInbound),
-		MaxOutboundAmount:  int64(maxOutbound),
+		LocalBalance: &lnrpc.Amount{
+			Atoms:  uint64(localBalance.ToAtoms()),
+			Matoms: uint64(localBalance),
+		},
+		RemoteBalance: &lnrpc.Amount{
+			Atoms:  uint64(remoteBalance.ToAtoms()),
+			Matoms: uint64(remoteBalance),
+		},
+		UnsettledLocalBalance: &lnrpc.Amount{
+			Atoms:  uint64(unsettledLocalBalance.ToAtoms()),
+			Matoms: uint64(unsettledLocalBalance),
+		},
+		UnsettledRemoteBalance: &lnrpc.Amount{
+			Atoms:  uint64(unsettledRemoteBalance.ToAtoms()),
+			Matoms: uint64(unsettledRemoteBalance),
+		},
+		PendingOpenLocalBalance: &lnrpc.Amount{
+			Atoms:  uint64(pendingOpenLocalBalance.ToAtoms()),
+			Matoms: uint64(pendingOpenLocalBalance),
+		},
+		PendingOpenRemoteBalance: &lnrpc.Amount{
+			Atoms:  uint64(pendingOpenRemoteBalance.ToAtoms()),
+			Matoms: uint64(pendingOpenRemoteBalance),
+		},
+
+		// dcrlnd fields.
+		MaxInboundAmount:  int64(maxInbound),
+		MaxOutboundAmount: int64(maxOutbound),
+
+		// Deprecated fields.
+		Balance:            int64(localBalance.ToAtoms()),
+		PendingOpenBalance: int64(pendingOpenLocalBalance.ToAtoms()),
 	}, nil
 }
 
