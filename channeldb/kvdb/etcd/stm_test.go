@@ -22,7 +22,11 @@ func TestPutToEmpty(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	defer f.Cleanup()
+	txQueue := NewCommitQueue(f.config.Ctx)
+	defer func() {
+		f.Cleanup()
+		txQueue.Wait()
+	}()
 
 	db, err := newEtcdBackend(f.BackendConfig())
 	require.NoError(t, err)
@@ -32,7 +36,7 @@ func TestPutToEmpty(t *testing.T) {
 		return nil
 	}
 
-	err = RunSTM(db.cli, apply)
+	err = RunSTM(db.cli, apply, txQueue)
 	require.NoError(t, err)
 
 	require.Equal(t, "abc", f.Get("123"))
@@ -42,7 +46,11 @@ func TestGetPutDel(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	defer f.cleanup()
+	txQueue := NewCommitQueue(f.config.Ctx)
+	defer func() {
+		f.Cleanup()
+		txQueue.Wait()
+	}()
 
 	testKeyValues := []KV{
 		{"a", "1"},
@@ -106,7 +114,7 @@ func TestGetPutDel(t *testing.T) {
 		return nil
 	}
 
-	err = RunSTM(db.cli, apply)
+	err = RunSTM(db.cli, apply, txQueue)
 	require.NoError(t, err)
 
 	require.Equal(t, "1", f.Get("a"))
@@ -121,7 +129,11 @@ func TestFirstLastNextPrev(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	defer f.Cleanup()
+	txQueue := NewCommitQueue(f.config.Ctx)
+	defer func() {
+		f.Cleanup()
+		txQueue.Wait()
+	}()
 
 	testKeyValues := []KV{
 		{"kb", "1"},
@@ -256,7 +268,7 @@ func TestFirstLastNextPrev(t *testing.T) {
 		return nil
 	}
 
-	err = RunSTM(db.cli, apply)
+	err = RunSTM(db.cli, apply, txQueue)
 	require.NoError(t, err)
 
 	require.Equal(t, "0", f.Get("ka"))
@@ -272,7 +284,11 @@ func TestCommitError(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	defer f.Cleanup()
+	txQueue := NewCommitQueue(f.config.Ctx)
+	defer func() {
+		f.Cleanup()
+		txQueue.Wait()
+	}()
 
 	db, err := newEtcdBackend(f.BackendConfig())
 	require.NoError(t, err)
@@ -302,7 +318,7 @@ func TestCommitError(t *testing.T) {
 		return nil
 	}
 
-	err = RunSTM(db.cli, apply)
+	err = RunSTM(db.cli, apply, txQueue)
 	require.NoError(t, err)
 	require.Equal(t, 2, cnt)
 
@@ -313,7 +329,11 @@ func TestManualTxError(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	defer f.Cleanup()
+	txQueue := NewCommitQueue(f.config.Ctx)
+	defer func() {
+		f.Cleanup()
+		txQueue.Wait()
+	}()
 
 	db, err := newEtcdBackend(f.BackendConfig())
 	require.NoError(t, err)
@@ -321,7 +341,7 @@ func TestManualTxError(t *testing.T) {
 	// Preset DB state.
 	f.Put("123", "xyz")
 
-	stm := NewSTM(db.cli)
+	stm := NewSTM(db.cli, txQueue)
 
 	val, err := stm.Get("123")
 	require.NoError(t, err)
