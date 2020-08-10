@@ -65,8 +65,10 @@ func NewEmbeddedEtcdInstance(path string) (*BackendConfig, func(), error) {
 			fmt.Errorf("etcd failed to start after: %v", readyTimeout)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	connConfig := &BackendConfig{
-		Ctx:                context.Background(),
+		Ctx:                ctx,
 		Host:               "http://" + peerURL,
 		User:               "user",
 		Pass:               "pass",
@@ -74,6 +76,7 @@ func NewEmbeddedEtcdInstance(path string) (*BackendConfig, func(), error) {
 	}
 
 	return connConfig, func() {
+		cancel()
 		etcd.Close()
 	}, nil
 }
