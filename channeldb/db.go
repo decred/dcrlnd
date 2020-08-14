@@ -17,6 +17,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/migration20"
 	"github.com/decred/dcrlnd/channeldb/migration21"
 	"github.com/decred/dcrlnd/channeldb/migration23"
+	"github.com/decred/dcrlnd/channeldb/migration24"
 	"github.com/decred/dcrlnd/channeldb/migration_01_to_11"
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/kvdb"
@@ -197,6 +198,11 @@ var (
 		{
 			number:    23,
 			migration: migration23.MigrateHtlcAttempts,
+		},
+		{
+			// Remove old forwarding packages of closed channels.
+			number:    24,
+			migration: migration24.MigrateFwdPkgCleanup,
 		},
 		// Note: There are decred-only changes in the codec which may
 		// require porting when bringing upstream migrations from lnd.

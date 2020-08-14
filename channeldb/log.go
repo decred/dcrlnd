@@ -8,6 +8,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/migration13"
 	"github.com/decred/dcrlnd/channeldb/migration16"
 	"github.com/decred/dcrlnd/channeldb/migration20"
+	"github.com/decred/dcrlnd/channeldb/migration24"
 	"github.com/decred/dcrlnd/channeldb/migration_01_to_11"
 	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/slog"
@@ -39,6 +40,7 @@ func UseLogger(logger slog.Logger) {
 	migration13.UseLogger(logger)
 	migration16.UseLogger(logger)
 	migration20.UseLogger(logger)
+	migration24.UseLogger(logger)
 	kvdb.UseLogger(logger)
 
 	dcrmigration01.UseLogger(logger)
