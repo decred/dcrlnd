@@ -22,18 +22,18 @@
   * **Go:** `dcrlnd` is written in Go. To install, run one of the following commands:
 
 
-    **Note**: The minimum version of Go supported is Go 1.13. We recommend that
+    **Note**: The minimum version of Go supported is Go 1.19. We recommend that
     users use the latest version of Go, which at the time of writing is
-    [`1.13`](https://blog.golang.org/go1.13).
+    [`1.20`](https://blog.golang.org/go1.20).
 
 
     On Linux:
     ```
-    sudo apt-get install golang-1.13-go
+    sudo apt-get install golang-1.19-go
     ```
-    > Note that golang-1.13-go puts binaries in /usr/lib/go-1.13/bin. If you want them on your PATH, you need to make that change yourself. Alternatively, you can run:
+    > Note that golang-1.19-go puts binaries in /usr/lib/go-1.19/bin. If you want them on your PATH, you need to make that change yourself. Alternatively, you can run:
     ```
-    sudo ln -s /usr/lib/go-1.13/bin/go /usr/local/bin/go
+    sudo ln -s /usr/lib/go-1.19/bin/go /usr/local/bin/go
     ```
 
     On Mac OS X:
@@ -67,7 +67,7 @@
   * **go modules:** This project uses [go modules](https://github.com/golang/go/wiki/Modules) 
     to manage dependencies as well as to provide *reproducible builds*.
 
-    Usage of go modules (with go 1.13) means that you no longer need to clone
+    Usage of go modules (with go 1.19) means that you no longer need to clone
     `dcrlnd` into your `$GOPATH` for development purposes. Instead, your
     `dcrlnd` repo can now live anywhere!
 
