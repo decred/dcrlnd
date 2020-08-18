@@ -1434,7 +1434,7 @@ func testBreachSpends(t *testing.T, test breachTest) {
 
 	// Notify that the breaching transaction is confirmed, to trigger the
 	// retribution logic.
-	notifier := brar.cfg.Notifier.(*mockSpendNotifier)
+	notifier := brar.cfg.Notifier.(*mock.SpendNotifier)
 	notifier.ConfChan <- &chainntnfs.TxConfirmation{}
 
 	// The breach arbiter should attempt to sweep all outputs on the
@@ -1460,7 +1460,7 @@ func testBreachSpends(t *testing.T, test breachTest) {
 	htlcOutpoint := retribution.HtlcRetributions[0].OutPoint
 
 	timeout := time.After(5 * time.Second)
-	for !notifier.hasSpenderNotification(&htlcOutpoint) {
+	for !notifier.HasSpenderNotification(&htlcOutpoint) {
 		select {
 		case <-timeout:
 			t.Fatalf("breach arbiter did not register for spend notification")
@@ -1682,7 +1682,7 @@ func createTestArbiter(t *testing.T, contractBreaches chan *ContractBreachEvent,
 	signer := &mock.SingleSigner{Privkey: aliceKeyPriv}
 
 	// Assemble our test arbiter.
-	notifier := makeMockSpendNotifier()
+	notifier := mock.MakeMockSpendNotifier()
 	ba := newBreachArbiter(&BreachConfig{
 		CloseLink:          func(_ *wire.OutPoint, _ htlcswitch.ChannelCloseType) {},
 		DB:                 db,
