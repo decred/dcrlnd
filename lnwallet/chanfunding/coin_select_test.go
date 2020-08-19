@@ -245,6 +245,27 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 			expectedChange:     0,
 		},
 		{
+			// We have 1.0 DCR available and spend half of it. This
+			// should lead to a funding TX with a change output.
+			name: "spend with change",
+			coins: []Coin{
+				{
+					TxOut: wire.TxOut{
+						PkScript: p2pkhScript,
+						Value:    1 * dcrutil.AtomsPerCoin,
+					},
+				},
+			},
+			spendValue: 0.5 * dcrutil.AtomsPerCoin,
+
+			// The one and only input will be selected.
+			expectedInput: []dcrutil.Amount{
+				1 * dcrutil.AtomsPerCoin,
+			},
+			expectedFundingAmt: 0.5*dcrutil.AtomsPerCoin - fundingFee(feeRate, 1, true),
+			expectedChange:     0.5 * dcrutil.AtomsPerCoin,
+		},
+		{
 			// The total funds available is below the dust limit
 			// after paying fees.
 			name: "dust output",
