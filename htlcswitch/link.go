@@ -777,7 +777,7 @@ func (l *channelLink) resolveFwdPkg(fwdPkg *channeldb.FwdPkg) error {
 		l.log.Debugf("removing completed fwd pkg for height=%d",
 			fwdPkg.Height)
 
-		err := l.channel.RemoveFwdPkg(fwdPkg.Height)
+		err := l.channel.RemoveFwdPkgs(fwdPkg.Height)
 		if err != nil {
 			l.log.Errorf("unable to remove fwd pkg for height=%d: "+
 				"%v", fwdPkg.Height, err)
@@ -860,7 +860,7 @@ func (l *channelLink) fwdPkgGarbager() {
 					continue
 				}
 
-				err = l.channel.RemoveFwdPkg(fwdPkg.Height)
+				err = l.channel.RemoveFwdPkgs(fwdPkg.Height)
 				if err != nil {
 					l.log.Warnf("unable to remove fwd pkg "+
 						"for height=%d: %v",
