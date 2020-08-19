@@ -205,7 +205,7 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 	t.Parallel()
 
 	const feeRate = chainfee.AtomPerKByte(100)
-	const dustLimit = dcrutil.Amount(1000)
+	const dustLimit = dcrutil.Amount(6030)
 	const dust = dcrutil.Amount(100)
 
 	type testCase struct {
@@ -250,7 +250,7 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 				{
 					TxOut: wire.TxOut{
 						PkScript: p2pkhScript,
-						Value:    int64(fundingFee(feeRate, 1, false) + dust),
+						Value:    int64(fundingFee(feeRate, 1, false) + dustLimit),
 					},
 				},
 			},
