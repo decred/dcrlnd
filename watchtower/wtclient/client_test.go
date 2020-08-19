@@ -1,6 +1,3 @@
-//go:build dev
-// +build dev
-
 package wtclient_test
 
 import (
@@ -1462,7 +1459,8 @@ var clientTests = []clientTest{
 			// Re-add the tower. We prevent the tower from acking
 			// session creation to ensure the inactive sessions are
 			// not used.
-			h.server.Stop()
+			err := h.server.Stop()
+			require.Nil(h.t, err)
 			h.serverCfg.NoAckCreateSession = true
 			h.startServer()
 			h.addTower(h.serverAddr)
@@ -1471,7 +1469,8 @@ var clientTests = []clientTest{
 			// Finally, allow the tower to ack session creation,
 			// allowing the state updates to be sent through the new
 			// session.
-			h.server.Stop()
+			err = h.server.Stop()
+			require.Nil(h.t, err)
 			h.serverCfg.NoAckCreateSession = false
 			h.startServer()
 			h.waitServerUpdates(hints[numUpdates/2:], 5*time.Second)
