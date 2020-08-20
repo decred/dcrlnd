@@ -229,7 +229,7 @@ var sendCoinsCommand = cli.Command{
 		cli.BoolFlag{
 			Name: "sweepall",
 			Usage: "If set, then the amount field will be ignored, " +
-				"and all the wallet will attempt to sweep all " +
+				"and the wallet will attempt to sweep all " +
 				"outputs within the wallet to the target " +
 				"address",
 		},
