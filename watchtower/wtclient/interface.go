@@ -4,9 +4,9 @@ import (
 	"net"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrlnd/brontide"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwire"
+	"github.com/decred/dcrlnd/tor"
 	"github.com/decred/dcrlnd/watchtower/wtdb"
 	"github.com/decred/dcrlnd/watchtower/wtserver"
 )
@@ -95,22 +95,12 @@ type DB interface {
 	AckUpdate(id *wtdb.SessionID, seqNum, lastApplied uint16) error
 }
 
-// Dial connects to an addr using the specified net and returns the connection
-// object.
-type Dial func(net, addr string) (net.Conn, error)
-
 // AuthDialer connects to a remote node using an authenticated transport, such as
 // brontide. The dialer argument is used to specify a resolver, which allows
 // this method to be used over Tor or clear net connections.
-type AuthDialer func(localKey keychain.SingleKeyECDH, netAddr *lnwire.NetAddress,
-	dialer func(string, string) (net.Conn, error)) (wtserver.Peer, error)
-
-// AuthDial is the watchtower client's default method of dialing.
-func AuthDial(localKey keychain.SingleKeyECDH, netAddr *lnwire.NetAddress,
-	dialer func(string, string) (net.Conn, error)) (wtserver.Peer, error) {
-
-	return brontide.Dial(localKey, netAddr, dialer)
-}
+type AuthDialer func(localKey keychain.SingleKeyECDH,
+	netAddr *lnwire.NetAddress,
+	dialer tor.DialFunc) (wtserver.Peer, error)
 
 // ECDHKeyRing abstracts the ability to derive shared ECDH keys given a
 // description of the derivation path of a private key.

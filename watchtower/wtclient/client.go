@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
+	"github.com/decred/dcrlnd/tor"
 	"github.com/decred/dcrlnd/watchtower/wtdb"
 	"github.com/decred/dcrlnd/watchtower/wtpolicy"
 	"github.com/decred/dcrlnd/watchtower/wtserver"
@@ -138,7 +139,7 @@ type Config struct {
 
 	// Dial connects to an addr using the specified net and returns the
 	// connection object.
-	Dial Dial
+	Dial tor.DialFunc
 
 	// AuthDialer establishes a brontide connection over an onion or clear
 	// network.

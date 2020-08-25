@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
+	"github.com/decred/dcrlnd/tor"
 	"github.com/decred/dcrlnd/watchtower/blob"
 	"github.com/decred/dcrlnd/watchtower/wtclient"
 	"github.com/decred/dcrlnd/watchtower/wtdb"
@@ -85,7 +86,9 @@ func newMockNet(cb func(wtserver.Peer)) *mockNet {
 	}
 }
 
-func (m *mockNet) Dial(network string, address string) (net.Conn, error) {
+func (m *mockNet) Dial(network string, address string,
+	timeout time.Duration) (net.Conn, error) {
+
 	return nil, nil
 }
 
@@ -101,8 +104,9 @@ func (m *mockNet) ResolveTCPAddr(network string, address string) (*net.TCPAddr, 
 	panic("not implemented")
 }
 
-func (m *mockNet) AuthDial(local keychain.SingleKeyECDH, netAddr *lnwire.NetAddress,
-	dialer func(string, string) (net.Conn, error)) (wtserver.Peer, error) {
+func (m *mockNet) AuthDial(local keychain.SingleKeyECDH,
+	netAddr *lnwire.NetAddress,
+	dialer tor.DialFunc) (wtserver.Peer, error) {
 
 	localPk := local.PubKey()
 	localAddr := &net.TCPAddr{
@@ -434,10 +438,8 @@ func newHarness(t *testing.T, cfg harnessCfg) *testHarness {
 	clientDB := wtmock.NewClientDB()
 
 	clientCfg := &wtclient.Config{
-		Signer: signer,
-		Dial: func(string, string) (net.Conn, error) {
-			return nil, nil
-		},
+		Signer:        signer,
+		Dial:          mockNet.Dial,
 		DB:            clientDB,
 		AuthDial:      mockNet.AuthDial,
 		SecretKeyRing: wtmock.NewSecretKeyRing(),
