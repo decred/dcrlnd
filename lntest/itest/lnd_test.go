@@ -15474,8 +15474,8 @@ var testsCases = []*testCase{
 		test: testWalletImportAccount,
 	},
 	{
-		name: "wallet import pubkey",
-		test: testWalletImportPubKey,
+		name: "connection timeout",
+		test: testNetworkConnectionTimeout,
 	},
 }
 
