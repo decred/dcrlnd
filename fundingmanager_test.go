@@ -37,6 +37,7 @@ import (
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnpeer"
 	"github.com/decred/dcrlnd/lnrpc"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
@@ -337,8 +338,8 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 	wc := &mockWalletController{
 		rootKey: alicePrivKey,
 	}
-	signer := &mockSigner{
-		key: alicePrivKey,
+	signer := &mock.SingleSigner{
+		Privkey: alicePrivKey,
 	}
 	bio := &mockChainIO{
 		bestHeight: fundingBroadcastHeight,

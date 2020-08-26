@@ -30,6 +30,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -1678,7 +1679,7 @@ func createTestArbiter(t *testing.T, contractBreaches chan *ContractBreachEvent,
 	})
 
 	aliceKeyPriv := secp256k1.PrivKeyFromBytes(alicesPrivKey)
-	signer := &mockSigner{key: aliceKeyPriv}
+	signer := &mock.SingleSigner{Privkey: aliceKeyPriv}
 
 	// Assemble our test arbiter.
 	notifier := makeMockSpendNotifier()
@@ -1906,8 +1907,8 @@ func createInitChannels(revocationWindow int) (*lnwallet.LightningChannel, *lnwa
 		Packager:                channeldb.NewChannelPackager(shortChanID),
 	}
 
-	aliceSigner := &mockSigner{aliceKeyPriv}
-	bobSigner := &mockSigner{bobKeyPriv}
+	aliceSigner := &mock.SingleSigner{Privkey: aliceKeyPriv}
+	bobSigner := &mock.SingleSigner{Privkey: bobKeyPriv}
 
 	alicePool := lnwallet.NewSigPool(1, aliceSigner)
 	channelAlice, err := lnwallet.NewLightningChannel(

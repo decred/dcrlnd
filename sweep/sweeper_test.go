@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
@@ -129,7 +130,7 @@ func createSweeperTestContext(t *testing.T) *sweeperTestContext {
 			return c
 		},
 		Store:  store,
-		Signer: &mockSigner{},
+		Signer: &mock.DummySigner{},
 		GenSweepScript: func() ([]byte, error) {
 			// This needs to be a valid script, otherwise it fails
 			// checkTransactionSanity(). We use a simple OP_RETURN, given the

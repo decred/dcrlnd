@@ -17,13 +17,12 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnpeer"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/netann"
@@ -84,23 +83,6 @@ func makeTestDB() (*channeldb.DB, func(), error) {
 	}
 
 	return cdb, cleanUp, nil
-}
-
-type mockSigner struct {
-	privKey *secp256k1.PrivateKey
-}
-
-func (n *mockSigner) SignMessage(pubKey *secp256k1.PublicKey,
-	msg []byte) (input.Signature, error) {
-
-	if !pubKey.IsEqual(n.privKey.PubKey()) {
-		return nil, fmt.Errorf("unknown public key")
-	}
-
-	digest := chainhash.HashB(msg)
-	sign := ecdsa.Sign(n.privKey, digest)
-
-	return sign, nil
 }
 
 type mockGraphSource struct {
@@ -546,7 +528,7 @@ func createNodeAnnouncement(priv *secp256k1.PrivateKey,
 		a.ExtraOpaqueData = extraBytes[0]
 	}
 
-	signer := mockSigner{priv}
+	signer := mock.SingleSigner{Privkey: priv}
 	sig, err := netann.SignAnnouncement(&signer, priv.PubKey(), a)
 	if err != nil {
 		return nil, err
@@ -598,7 +580,7 @@ func createUpdateAnnouncement(blockHeight uint32,
 
 func signUpdate(nodeKey *secp256k1.PrivateKey, a *lnwire.ChannelUpdate) error {
 	pub := nodeKey.PubKey()
-	signer := mockSigner{nodeKey}
+	signer := mock.SingleSigner{Privkey: nodeKey}
 	sig, err := netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return err
@@ -640,7 +622,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	a := createAnnouncementWithoutProof(blockHeight, extraBytes...)
 
 	pub := nodeKeyPriv1.PubKey()
-	signer := mockSigner{nodeKeyPriv1}
+	signer := mock.SingleSigner{Privkey: nodeKeyPriv1}
 	sig, err := netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -651,7 +633,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	}
 
 	pub = nodeKeyPriv2.PubKey()
-	signer = mockSigner{nodeKeyPriv2}
+	signer = mock.SingleSigner{Privkey: nodeKeyPriv2}
 	sig, err = netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -662,7 +644,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	}
 
 	pub = decredKeyPriv1.PubKey()
-	signer = mockSigner{decredKeyPriv1}
+	signer = mock.SingleSigner{Privkey: decredKeyPriv1}
 	sig, err = netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -673,7 +655,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	}
 
 	pub = decredKeyPriv2.PubKey()
-	signer = mockSigner{decredKeyPriv2}
+	signer = mock.SingleSigner{Privkey: decredKeyPriv2}
 	sig, err = netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -753,7 +735,7 @@ func createTestCtx(startHeight uint32) (*testCtx, func(), error) {
 		RotateTicker:         ticker.NewForce(DefaultSyncerRotationInterval),
 		HistoricalSyncTicker: ticker.NewForce(DefaultHistoricalSyncInterval),
 		NumActiveSyncers:     3,
-		AnnSigner:            &mockSigner{nodeKeyPriv1},
+		AnnSigner:            &mock.SingleSigner{Privkey: nodeKeyPriv1},
 		SubBatchDelay:        time.Second * 5,
 		MinimumBatchSize:     10,
 	}, nodeKeyPub1)

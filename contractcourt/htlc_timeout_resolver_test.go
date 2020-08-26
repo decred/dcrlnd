@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/wire"
@@ -16,32 +15,10 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwallet"
 )
-
-type dummySignature struct{}
-
-func (s *dummySignature) Serialize() []byte {
-	return []byte{}
-}
-
-func (s *dummySignature) Verify(_ []byte, _ *secp256k1.PublicKey) bool {
-	return true
-}
-
-type mockSigner struct {
-}
-
-func (m *mockSigner) SignOutputRaw(tx *wire.MsgTx,
-	signDesc *input.SignDescriptor) (input.Signature, error) {
-	return &dummySignature{}, nil
-}
-
-func (m *mockSigner) ComputeInputScript(tx *wire.MsgTx,
-	signDesc *input.SignDescriptor) (*input.Script, error) {
-	return nil, nil
-}
 
 type mockWitnessBeacon struct {
 	preImageUpdates chan lntypes.Preimage
@@ -96,7 +73,7 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 
 	copy(fakePreimage[:], fakePreimageBytes)
 
-	signer := &mockSigner{}
+	signer := &mock.DummySigner{}
 	sweepTx := &wire.MsgTx{
 		TxIn: []*wire.TxIn{
 			{
@@ -172,7 +149,7 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 			timeout:      true,
 			txToBroadcast: func() (*wire.MsgTx, error) {
 				witness, err := input.SenderHtlcSpendTimeout(
-					&dummySignature{}, txscript.SigHashAll,
+					&mock.DummySignature{}, txscript.SigHashAll,
 					signer, fakeSignDesc, sweepTx,
 				)
 				if err != nil {
@@ -202,7 +179,7 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 			timeout:      false,
 			txToBroadcast: func() (*wire.MsgTx, error) {
 				witness, err := input.ReceiverHtlcSpendRedeem(
-					&dummySignature{}, txscript.SigHashAll,
+					&mock.DummySignature{}, txscript.SigHashAll,
 					fakePreimageBytes, signer, fakeSignDesc,
 					sweepTx,
 				)

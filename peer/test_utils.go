@@ -4,7 +4,6 @@ import (
 	"bytes"
 	crand "crypto/rand"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -16,12 +15,9 @@ import (
 	"decred.org/dcrwallet/v3/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
-	"github.com/decred/dcrd/txscript/v4/sign"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -29,6 +25,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
@@ -115,70 +112,6 @@ func privKeyFromBytes(b []byte) (*secp256k1.PrivateKey, *secp256k1.PublicKey) {
 	k := secp256k1.PrivKeyFromBytes(b)
 	return k, k.PubKey()
 }
-
-type mockSigner struct {
-	key *secp256k1.PrivateKey
-}
-
-func (m *mockSigner) SignOutputRaw(tx *wire.MsgTx,
-	signDesc *input.SignDescriptor) (input.Signature, error) {
-	witnessScript := signDesc.WitnessScript
-	privKey := m.key
-
-	if !privKey.PubKey().IsEqual(signDesc.KeyDesc.PubKey) {
-		return nil, fmt.Errorf("incorrect key passed")
-	}
-
-	switch {
-	case signDesc.SingleTweak != nil:
-		privKey = input.TweakPrivKey(privKey,
-			signDesc.SingleTweak)
-	case signDesc.DoubleTweak != nil:
-		privKey = input.DeriveRevocationPrivKey(privKey,
-			signDesc.DoubleTweak)
-	}
-
-	sig, err := sign.RawTxInSignature(tx,
-		signDesc.InputIndex, witnessScript, signDesc.HashType,
-		privKey.Serialize(), dcrec.STEcdsaSecp256k1)
-	if err != nil {
-		return nil, err
-	}
-
-	return ecdsa.ParseDERSignature(sig[:len(sig)-1])
-}
-
-func (m *mockSigner) ComputeInputScript(tx *wire.MsgTx,
-	signDesc *input.SignDescriptor) (*input.Script, error) {
-
-	// TODO(roasbeef): expose tweaked signer from lnwallet so don't need to
-	// duplicate this code?
-
-	privKey := m.key
-
-	switch {
-	case signDesc.SingleTweak != nil:
-		privKey = input.TweakPrivKey(privKey,
-			signDesc.SingleTweak)
-	case signDesc.DoubleTweak != nil:
-		privKey = input.DeriveRevocationPrivKey(privKey,
-			signDesc.DoubleTweak)
-	}
-
-	sigScript, err := sign.SignatureScript(tx,
-		signDesc.InputIndex, signDesc.Output.PkScript,
-		signDesc.HashType, privKey.Serialize(), dcrec.STEcdsaSecp256k1, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return &input.Script{
-		SigScript: sigScript,
-	}, nil
-
-}
-
-var _ input.Signer = (*mockSigner)(nil)
 
 type mockChainIO struct {
 	bestHeight int32
@@ -609,8 +542,8 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 		os.RemoveAll(alicePath)
 	}
 
-	aliceSigner := &mockSigner{aliceKeyPriv}
-	bobSigner := &mockSigner{bobKeyPriv}
+	aliceSigner := &mock.SingleSigner{Privkey: aliceKeyPriv}
+	bobSigner := &mock.SingleSigner{Privkey: bobKeyPriv}
 
 	alicePool := lnwallet.NewSigPool(1, aliceSigner)
 	channelAlice, err := lnwallet.NewLightningChannel(

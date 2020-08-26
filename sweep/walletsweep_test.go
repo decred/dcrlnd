@@ -9,6 +9,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
@@ -333,7 +334,7 @@ func TestCraftSweepAllTx(t *testing.T) {
 
 	// First, we'll make a mock signer along with a fee estimator, We'll
 	// use zero fees to we can assert a precise output value.
-	signer := &mockSigner{}
+	signer := &mock.DummySigner{}
 	feeEstimator := newMockFeeEstimator(0, 0)
 
 	// For our UTXO source, we'll pass in all the UTXOs that we know of,
