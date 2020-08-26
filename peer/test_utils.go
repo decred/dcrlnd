@@ -11,14 +11,10 @@ import (
 	"os"
 	"time"
 
-	"decred.org/dcrwallet/v3/wallet"
-	"decred.org/dcrwallet/v3/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/hdkeychain/v3"
-	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
@@ -135,142 +131,6 @@ func (*mockChainIO) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) 
 }
 
 var _ lnwallet.BlockChainIO = (*mockChainIO)(nil)
-
-type mockWalletController struct {
-	rootKey       *secp256k1.PrivateKey
-	publishedTxns chan *wire.MsgTx
-}
-
-func (*mockWalletController) FetchInputInfo(prevOut *wire.OutPoint) (
-	*lnwallet.Utxo, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) ConfirmedBalance(confs int32, accountName string) (dcrutil.Amount,
-	error) {
-
-	return 0, nil
-}
-
-func (m *mockWalletController) NewAddress(addrType lnwallet.AddressType,
-	change bool, accountName string) (stdaddr.Address, error) {
-
-	return stdaddr.NewAddressPubKeyEcdsaSecp256k1V0(
-		m.rootKey.PubKey(), chaincfg.RegNetParams())
-}
-
-func (*mockWalletController) LastUnusedAddress(addrType lnwallet.AddressType,
-	accountName string) (
-	stdaddr.Address, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) IsOurAddress(a stdaddr.Address) bool {
-	return false
-}
-
-func (*mockWalletController) SendOutputs(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*wire.MsgTx, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) CreateSimpleTx(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, dryRun bool) (*txauthor.AuthoredTx, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) ListUnspentWitness(minconfirms,
-	maxconfirms int32, accountName string) ([]*lnwallet.Utxo, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) ListTransactionDetails(startHeight,
-	endHeight int32, accountName string) ([]*lnwallet.TransactionDetail, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) LockOutpoint(o wire.OutPoint) {}
-
-func (*mockWalletController) UnlockOutpoint(o wire.OutPoint) {}
-
-func (m *mockWalletController) PublishTransaction(tx *wire.MsgTx,
-	label string) error {
-	m.publishedTxns <- tx
-	return nil
-}
-
-func (*mockWalletController) LabelTransaction(hash chainhash.Hash,
-	label string, overwrite bool) error {
-
-	return nil
-}
-
-func (*mockWalletController) SubscribeTransactions() (
-	lnwallet.TransactionSubscription, error) {
-
-	return nil, nil
-}
-
-func (*mockWalletController) IsSynced() (bool, int64, error) {
-	return false, 0, nil
-}
-
-func (*mockWalletController) Start() error {
-	return nil
-}
-
-func (*mockWalletController) Stop() error {
-	return nil
-}
-
-func (*mockWalletController) BackEnd() string {
-	return ""
-}
-
-func (*mockWalletController) AbandonDoubleSpends(spentOutpoints ...*wire.OutPoint) error {
-	return nil
-}
-
-func (*mockWalletController) BestBlock() (int64, chainhash.Hash, int64, error) {
-	return 0, chainhash.Hash{}, 0, nil
-}
-
-func (*mockWalletController) InitialSyncChannel() <-chan struct{} {
-	return nil
-}
-
-func (*mockWalletController) LeaseOutput(lnwallet.LockID,
-	wire.OutPoint) (time.Time, error) {
-
-	return time.Now(), nil
-}
-
-func (*mockWalletController) ReleaseOutput(lnwallet.LockID, wire.OutPoint) error {
-	return nil
-}
-
-func (*mockWalletController) GetRecoveryInfo() (bool, float64, error) {
-	return false, 0, nil
-}
-
-func (*mockWalletController) ListAccounts(accountName string) ([]wallet.AccountProperties, error) {
-	return nil, nil
-}
-func (*mockWalletController) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error {
-	return nil
-}
-
-func (*mockWalletController) ImportPublicKey(pubKey *secp256k1.PublicKey) error {
-	return nil
-}
-
-var _ lnwallet.WalletController = (*mockWalletController)(nil)
 
 type mockNotifier struct {
 	confChannel chan *chainntnfs.TxConfirmation
@@ -567,9 +427,9 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 		bestHeight: broadcastHeight,
 	}
 	wallet := &lnwallet.LightningWallet{
-		WalletController: &mockWalletController{
-			rootKey:       aliceKeyPriv,
-			publishedTxns: publTx,
+		WalletController: &mock.WalletController{
+			RootKey:               aliceKeyPriv,
+			PublishedTransactions: publTx,
 		},
 	}
 
