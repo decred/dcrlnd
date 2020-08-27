@@ -9,8 +9,10 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/clock"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 )
 
@@ -82,8 +84,12 @@ func TestChainArbitratorRepublishCloses(t *testing.T) {
 
 	chainArbCfg := ChainArbitratorConfig{
 		NetParams: chaincfg.RegNetParams(),
-		ChainIO:   &mockChainIO{},
-		Notifier:  &mockNotifier{},
+		ChainIO:   &mock.ChainIO{},
+		Notifier: &mock.ChainNotifier{
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
+		},
 		PublishTx: func(tx *wire.MsgTx, _ string) error {
 			published[tx.TxHash()]++
 			return nil
@@ -174,8 +180,12 @@ func TestResolveContract(t *testing.T) {
 	// chain arbitrator that should pick up these new channels and launch
 	// resolver for them.
 	chainArbCfg := ChainArbitratorConfig{
-		ChainIO:  &mockChainIO{},
-		Notifier: &mockNotifier{},
+		ChainIO: &mock.ChainIO{},
+		Notifier: &mock.ChainNotifier{
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
+		},
 		PublishTx: func(tx *wire.MsgTx, _ string) error {
 			return nil
 		},

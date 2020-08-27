@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -24,6 +23,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch/hop"
 	"github.com/decred/dcrlnd/invoices"
 	"github.com/decred/dcrlnd/lnpeer"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
@@ -170,7 +170,11 @@ func initSwitchWithDB(startingHeight uint32, db *channeldb.DB) (*Switch, error) 
 		FetchLastChannelUpdate: func(lnwire.ShortChannelID) (*lnwire.ChannelUpdate, error) {
 			return nil, nil
 		},
-		Notifier:       &mockNotifier{},
+		Notifier: &mock.ChainNotifier{
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
+		},
 		FwdEventTicker: ticker.NewForce(DefaultFwdEventInterval),
 		LogEventTicker: ticker.NewForce(DefaultLogInterval),
 		AckEventTicker: ticker.NewForce(DefaultAckInterval),
@@ -856,42 +860,6 @@ func (i *mockInvoiceRegistry) HodlUnsubscribeAll(subscriber chan<- interface{}) 
 }
 
 var _ InvoiceDatabase = (*mockInvoiceRegistry)(nil)
-
-type mockNotifier struct {
-	epochChan chan *chainntnfs.BlockEpoch
-}
-
-func (m *mockNotifier) RegisterConfirmationsNtfn(txid *chainhash.Hash, _ []byte,
-	numConfs uint32, heightHint uint32) (*chainntnfs.ConfirmationEvent, error) {
-	return nil, nil
-}
-func (m *mockNotifier) RegisterBlockEpochNtfn(
-	bestBlock *chainntnfs.BlockEpoch) (*chainntnfs.BlockEpochEvent, error) {
-	return &chainntnfs.BlockEpochEvent{
-		Epochs: m.epochChan,
-		Cancel: func() {},
-	}, nil
-}
-
-func (m *mockNotifier) Start() error {
-	return nil
-}
-
-func (m *mockNotifier) Started() bool {
-	return true
-}
-
-func (m *mockNotifier) Stop() error {
-	return nil
-}
-
-func (m *mockNotifier) RegisterSpendNtfn(outpoint *wire.OutPoint, _ []byte,
-	heightHint uint32) (*chainntnfs.SpendEvent, error) {
-
-	return &chainntnfs.SpendEvent{
-		Spend: make(chan *chainntnfs.SpendDetail),
-	}, nil
-}
 
 type mockCircuitMap struct {
 	lookup chan *PaymentCircuit

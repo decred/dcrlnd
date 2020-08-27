@@ -21,6 +21,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/sweep"
 )
@@ -403,7 +404,7 @@ func TestBabyOutputSerialization(t *testing.T) {
 type nurseryTestContext struct {
 	nursery     *utxoNursery
 	notifier    *sweep.MockNotifier
-	chainIO     *mockChainIO
+	chainIO     *mock.ChainIO
 	publishChan chan wire.MsgTx
 	store       *nurseryStoreInterceptor
 	restart     func() bool
@@ -446,8 +447,8 @@ func createNurseryTestContext(t *testing.T,
 
 	timeoutChan := make(chan chan time.Time)
 
-	chainIO := &mockChainIO{
-		bestHeight: 0,
+	chainIO := &mock.ChainIO{
+		BestHeight: 0,
 	}
 
 	sweeper := newMockSweeper(t)
@@ -527,7 +528,7 @@ func createNurseryTestContext(t *testing.T,
 func (ctx *nurseryTestContext) notifyEpoch(height int32) {
 	ctx.t.Helper()
 
-	ctx.chainIO.bestHeight = height
+	ctx.chainIO.BestHeight = height
 	ctx.notifier.NotifyEpoch(height)
 }
 

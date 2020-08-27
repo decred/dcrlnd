@@ -4,77 +4,18 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
-
-type spendNtnfRequest struct {
-	outpoint wire.OutPoint
-	pkScript []byte
-}
-
-type mockNotifier struct {
-	mtx       sync.Mutex
-	spendChan chan *chainntnfs.SpendDetail
-	epochChan chan *chainntnfs.BlockEpoch
-	confChan  chan *chainntnfs.TxConfirmation
-
-	spendNtnfs []spendNtnfRequest
-}
-
-func (m *mockNotifier) RegisterConfirmationsNtfn(txid *chainhash.Hash, _ []byte, numConfs,
-	heightHint uint32) (*chainntnfs.ConfirmationEvent, error) {
-	return &chainntnfs.ConfirmationEvent{
-		Confirmed: m.confChan,
-		Cancel:    func() {},
-	}, nil
-}
-
-func (m *mockNotifier) RegisterBlockEpochNtfn(
-	bestBlock *chainntnfs.BlockEpoch) (*chainntnfs.BlockEpochEvent, error) {
-
-	return &chainntnfs.BlockEpochEvent{
-		Epochs: m.epochChan,
-		Cancel: func() {},
-	}, nil
-}
-
-func (m *mockNotifier) Start() error {
-	return nil
-}
-
-func (m *mockNotifier) Started() bool {
-	return true
-}
-
-func (m *mockNotifier) Stop() error {
-	return nil
-}
-func (m *mockNotifier) RegisterSpendNtfn(outpoint *wire.OutPoint, pkScript []byte,
-	heightHint uint32) (*chainntnfs.SpendEvent, error) {
-
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	m.spendNtnfs = append(m.spendNtnfs, spendNtnfRequest{
-		outpoint: *outpoint,
-		pkScript: pkScript,
-	})
-
-	return &chainntnfs.SpendEvent{
-		Spend:  m.spendChan,
-		Cancel: func() {},
-	}, nil
-}
 
 // TestChainWatcherRemoteUnilateralClose tests that the chain watcher is able
 // to properly detect a normal unilateral close by the remote node using their
@@ -94,8 +35,10 @@ func TestChainWatcherRemoteUnilateralClose(t *testing.T) {
 
 	// With the channels created, we'll now create a chain watcher instance
 	// which will be watching for any closes of Alice's channel.
-	aliceNotifier := &mockNotifier{
-		spendChan: make(chan *chainntnfs.SpendDetail),
+	aliceNotifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	aliceChainWatcher, err := newChainWatcher(chainWatcherConfig{
 		chanState:           aliceChannel.State(),
@@ -124,7 +67,7 @@ func TestChainWatcherRemoteUnilateralClose(t *testing.T) {
 		SpenderTxHash: &bobTxHash,
 		SpendingTx:    bobCommit,
 	}
-	aliceNotifier.spendChan <- bobSpend
+	aliceNotifier.SpendChan <- bobSpend
 
 	// We should get a new spend event over the remote unilateral close
 	// event channel.
@@ -183,8 +126,10 @@ func TestChainWatcherRemoteUnilateralClosePendingCommit(t *testing.T) {
 
 	// With the channels created, we'll now create a chain watcher instance
 	// which will be watching for any closes of Alice's channel.
-	aliceNotifier := &mockNotifier{
-		spendChan: make(chan *chainntnfs.SpendDetail),
+	aliceNotifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	aliceChainWatcher, err := newChainWatcher(chainWatcherConfig{
 		chanState:           aliceChannel.State(),
@@ -233,7 +178,7 @@ func TestChainWatcherRemoteUnilateralClosePendingCommit(t *testing.T) {
 		SpenderTxHash: &bobTxHash,
 		SpendingTx:    bobCommit,
 	}
-	aliceNotifier.spendChan <- bobSpend
+	aliceNotifier.SpendChan <- bobSpend
 
 	// We should get a new spend event over the remote unilateral close
 	// event channel.
@@ -268,8 +213,8 @@ func TestChainWatcherCorrectSpendNtnf(t *testing.T) {
 
 	// With the channels created, we'll now create a chain watcher instance
 	// which will be watching for any closes of Alice's channel.
-	aliceNotifier := &mockNotifier{
-		spendChan: make(chan *chainntnfs.SpendDetail),
+	aliceNotifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
 	}
 	aliceChainWatcher, err := newChainWatcher(chainWatcherConfig{
 		chanState: aliceChannel.State(),
@@ -286,20 +231,21 @@ func TestChainWatcherCorrectSpendNtnf(t *testing.T) {
 
 	// The mock chain notifier should have registered a watch for the given
 	// channel.
-	if len(aliceNotifier.spendNtnfs) != 1 {
+	registeredSpends := aliceNotifier.RegisteredSpendNtfns()
+	if len(registeredSpends) != 1 {
 		t.Fatalf("expected 1 spend notification watchers by found %d",
-			len(aliceNotifier.spendNtnfs))
+			len(registeredSpends))
 	}
 
 	aliceChanPoint := aliceChannel.ChanPoint
-	ntnfReq := aliceNotifier.spendNtnfs[0]
-	if ntnfReq.outpoint != *aliceChanPoint {
+	ntnfReq := registeredSpends[0]
+	if ntnfReq.Outpoint != *aliceChanPoint {
 		t.Fatalf("expected spend ntnf to be watching channel outpoint "+
 			"%s, instead watching %s", aliceChanPoint,
-			ntnfReq.outpoint)
+			ntnfReq.Outpoint)
 	}
 
-	_, err = chainscan.ParsePkScript(0, ntnfReq.pkScript)
+	_, err = chainscan.ParsePkScript(0, ntnfReq.PkScript)
 	if err != nil {
 		t.Fatalf("unable to parse watched pkscript: %v", err)
 	}
@@ -363,8 +309,10 @@ func TestChainWatcherDataLossProtect(t *testing.T) {
 		// With the channels created, we'll now create a chain watcher
 		// instance which will be watching for any closes of Alice's
 		// channel.
-		aliceNotifier := &mockNotifier{
-			spendChan: make(chan *chainntnfs.SpendDetail),
+		aliceNotifier := &mock.ChainNotifier{
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
 		}
 		aliceChainWatcher, err := newChainWatcher(chainWatcherConfig{
 			chanState: aliceChannel.State(),
@@ -421,7 +369,7 @@ func TestChainWatcherDataLossProtect(t *testing.T) {
 			SpenderTxHash: &bobTxHash,
 			SpendingTx:    bobCommit,
 		}
-		aliceNotifier.spendChan <- bobSpend
+		aliceNotifier.SpendChan <- bobSpend
 
 		// We should get a new uni close resolution that indicates we
 		// processed the DLP scenario.
@@ -532,8 +480,10 @@ func TestChainWatcherLocalForceCloseDetect(t *testing.T) {
 		// With the channels created, we'll now create a chain watcher
 		// instance which will be watching for any closes of Alice's
 		// channel.
-		aliceNotifier := &mockNotifier{
-			spendChan: make(chan *chainntnfs.SpendDetail),
+		aliceNotifier := &mock.ChainNotifier{
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
 		}
 		aliceChainWatcher, err := newChainWatcher(chainWatcherConfig{
 			chanState:           aliceChannel.State(),
@@ -588,7 +538,7 @@ func TestChainWatcherLocalForceCloseDetect(t *testing.T) {
 			SpenderTxHash: &aliceTxHash,
 			SpendingTx:    aliceCommit,
 		}
-		aliceNotifier.spendChan <- aliceSpend
+		aliceNotifier.SpendChan <- aliceSpend
 
 		// We should get a local force close event from Alice as she
 		// should be able to detect the close based on the commitment

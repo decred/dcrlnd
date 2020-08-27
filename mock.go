@@ -1,64 +1,21 @@
 package dcrlnd
 
 import (
-	"encoding/hex"
 	"sync"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/wire"
 
 	"github.com/decred/dcrlnd/chainntnfs"
-	"github.com/decred/dcrlnd/lnwallet"
-)
-
-var (
-	coinPkScript, _ = hex.DecodeString("76a914000000000000000000000000000000000000000088ac")
+	"github.com/decred/dcrlnd/lntest/mock"
 )
 
 // The block height returned by the mock BlockChainIO's GetBestBlock.
 const fundingBroadcastHeight = 123
 
-type mockNotfier struct {
-	confChannel chan *chainntnfs.TxConfirmation
-}
-
-func (m *mockNotfier) RegisterConfirmationsNtfn(txid *chainhash.Hash,
-	_ []byte, numConfs, heightHint uint32) (*chainntnfs.ConfirmationEvent, error) {
-	return &chainntnfs.ConfirmationEvent{
-		Confirmed: m.confChannel,
-	}, nil
-}
-func (m *mockNotfier) RegisterBlockEpochNtfn(
-	bestBlock *chainntnfs.BlockEpoch) (*chainntnfs.BlockEpochEvent, error) {
-	return &chainntnfs.BlockEpochEvent{
-		Epochs: make(chan *chainntnfs.BlockEpoch),
-		Cancel: func() {},
-	}, nil
-}
-
-func (m *mockNotfier) Start() error {
-	return nil
-}
-
-func (m *mockNotfier) Started() bool {
-	return true
-}
-
-func (m *mockNotfier) Stop() error {
-	return nil
-}
-func (m *mockNotfier) RegisterSpendNtfn(outpoint *wire.OutPoint, _ []byte,
-	heightHint uint32) (*chainntnfs.SpendEvent, error) {
-	return &chainntnfs.SpendEvent{
-		Spend:  make(chan *chainntnfs.SpendDetail),
-		Cancel: func() {},
-	}, nil
-}
-
-// mockSpendNotifier extends the mockNotifier so that spend notifications can be
-// triggered and delivered to subscribers.
+// mockSpendNotifier extends the mock.ChainNotifier so that spend
+// notifications can be triggered and delivered to subscribers.
 type mockSpendNotifier struct {
-	*mockNotfier
+	*mock.ChainNotifier
 	spendMap map[wire.OutPoint][]chan *chainntnfs.SpendDetail
 	spends   map[wire.OutPoint]*chainntnfs.SpendDetail
 	mtx      sync.Mutex
@@ -66,8 +23,10 @@ type mockSpendNotifier struct {
 
 func makeMockSpendNotifier() *mockSpendNotifier {
 	return &mockSpendNotifier{
-		mockNotfier: &mockNotfier{
-			confChannel: make(chan *chainntnfs.TxConfirmation),
+		ChainNotifier: &mock.ChainNotifier{
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
 		},
 		spendMap: make(map[wire.OutPoint][]chan *chainntnfs.SpendDetail),
 		spends:   make(map[wire.OutPoint]*chainntnfs.SpendDetail),
@@ -145,27 +104,4 @@ func (m *mockSpendNotifier) hasSpenderNotification(outpoint *wire.OutPoint) bool
 	_, ok := m.spendMap[*outpoint]
 	m.mtx.Unlock()
 	return ok
-}
-
-type mockChainIO struct {
-	bestHeight int32
-}
-
-var _ lnwallet.BlockChainIO = (*mockChainIO)(nil)
-
-func (m *mockChainIO) GetBestBlock() (*chainhash.Hash, int32, error) {
-	return &chainhash.Hash{}, m.bestHeight, nil
-}
-
-func (*mockChainIO) GetUtxo(op *wire.OutPoint, _ []byte,
-	heightHint uint32, _ <-chan struct{}) (*wire.TxOut, error) {
-	return nil, nil
-}
-
-func (*mockChainIO) GetBlockHash(blockHeight int64) (*chainhash.Hash, error) {
-	return nil, nil
-}
-
-func (*mockChainIO) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
-	return nil, nil
 }

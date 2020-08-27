@@ -13,6 +13,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet/chancloser"
 	"github.com/decred/dcrlnd/lnwire"
 )
@@ -34,8 +35,10 @@ var (
 func TestPeerChannelClosureAcceptFeeResponder(t *testing.T) {
 	t.Parallel()
 
-	notifier := &mockNotifier{
-		confChannel: make(chan *chainntnfs.TxConfirmation),
+	notifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	broadcastTxChan := make(chan *wire.MsgTx)
 
@@ -127,7 +130,7 @@ func TestPeerChannelClosureAcceptFeeResponder(t *testing.T) {
 	}
 
 	// Alice should be waiting in a goroutine for a confirmation.
-	notifier.confChannel <- &chainntnfs.TxConfirmation{}
+	notifier.ConfChan <- &chainntnfs.TxConfirmation{}
 }
 
 // TestPeerChannelClosureAcceptFeeInitiator tests the shutdown initiator's
@@ -135,8 +138,10 @@ func TestPeerChannelClosureAcceptFeeResponder(t *testing.T) {
 func TestPeerChannelClosureAcceptFeeInitiator(t *testing.T) {
 	t.Parallel()
 
-	notifier := &mockNotifier{
-		confChannel: make(chan *chainntnfs.TxConfirmation),
+	notifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	broadcastTxChan := make(chan *wire.MsgTx)
 
@@ -246,7 +251,7 @@ func TestPeerChannelClosureAcceptFeeInitiator(t *testing.T) {
 	}
 
 	// Alice should be waiting on a single confirmation for the coop close tx.
-	notifier.confChannel <- &chainntnfs.TxConfirmation{}
+	notifier.ConfChan <- &chainntnfs.TxConfirmation{}
 }
 
 // TestPeerChannelClosureFeeNegotiationsResponder tests the shutdown
@@ -255,8 +260,10 @@ func TestPeerChannelClosureAcceptFeeInitiator(t *testing.T) {
 func TestPeerChannelClosureFeeNegotiationsResponder(t *testing.T) {
 	t.Parallel()
 
-	notifier := &mockNotifier{
-		confChannel: make(chan *chainntnfs.TxConfirmation),
+	notifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	broadcastTxChan := make(chan *wire.MsgTx)
 
@@ -438,7 +445,7 @@ func TestPeerChannelClosureFeeNegotiationsResponder(t *testing.T) {
 	}
 
 	// Alice should be waiting on a single confirmation for the coop close tx.
-	notifier.confChannel <- &chainntnfs.TxConfirmation{}
+	notifier.ConfChan <- &chainntnfs.TxConfirmation{}
 }
 
 // TestPeerChannelClosureFeeNegotiationsInitiator tests the shutdown
@@ -447,8 +454,10 @@ func TestPeerChannelClosureFeeNegotiationsResponder(t *testing.T) {
 func TestPeerChannelClosureFeeNegotiationsInitiator(t *testing.T) {
 	t.Parallel()
 
-	notifier := &mockNotifier{
-		confChannel: make(chan *chainntnfs.TxConfirmation),
+	notifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	broadcastTxChan := make(chan *wire.MsgTx)
 
@@ -643,7 +652,7 @@ func TestPeerChannelClosureFeeNegotiationsInitiator(t *testing.T) {
 	}
 
 	// Alice should be waiting on a single confirmation for the coop close tx.
-	notifier.confChannel <- &chainntnfs.TxConfirmation{}
+	notifier.ConfChan <- &chainntnfs.TxConfirmation{}
 }
 
 // TestChooseDeliveryScript tests that chooseDeliveryScript correctly errors
@@ -780,8 +789,10 @@ func TestCustomShutdownScript(t *testing.T) {
 		test := test
 
 		t.Run(test.name, func(t *testing.T) {
-			notifier := &mockNotifier{
-				confChannel: make(chan *chainntnfs.TxConfirmation),
+			notifier := &mock.ChainNotifier{
+				SpendChan: make(chan *chainntnfs.SpendDetail),
+				EpochChan: make(chan *chainntnfs.BlockEpoch),
+				ConfChan:  make(chan *chainntnfs.TxConfirmation),
 			}
 			broadcastTxChan := make(chan *wire.MsgTx)
 

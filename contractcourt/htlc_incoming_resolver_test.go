@@ -12,6 +12,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch/hop"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/invoices"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -296,7 +297,7 @@ type incomingResolverTestContext struct {
 	registry       *mockRegistry
 	witnessBeacon  *mockWitnessBeacon
 	resolver       *htlcIncomingContestResolver
-	notifier       *mockNotifier
+	notifier       *mock.ChainNotifier
 	onionProcessor *mockOnionProcessor
 	resolveErr     chan error
 	nextResolver   ContractResolver
@@ -304,10 +305,10 @@ type incomingResolverTestContext struct {
 }
 
 func newIncomingResolverTestContext(t *testing.T, isExit bool) *incomingResolverTestContext {
-	notifier := &mockNotifier{
-		epochChan: make(chan *chainntnfs.BlockEpoch),
-		spendChan: make(chan *chainntnfs.SpendDetail),
-		confChan:  make(chan *chainntnfs.TxConfirmation),
+	notifier := &mock.ChainNotifier{
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 	witnessBeacon := newMockWitnessBeacon()
 	registry := &mockRegistry{
@@ -378,7 +379,7 @@ func (i *incomingResolverTestContext) resolve() {
 }
 
 func (i *incomingResolverTestContext) notifyEpoch(height int32) {
-	i.notifier.epochChan <- &chainntnfs.BlockEpoch{
+	i.notifier.EpochChan <- &chainntnfs.BlockEpoch{
 		Height: height,
 	}
 }

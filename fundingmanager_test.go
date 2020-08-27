@@ -341,8 +341,8 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 	signer := &mock.SingleSigner{
 		Privkey: alicePrivKey,
 	}
-	bio := &mockChainIO{
-		bestHeight: fundingBroadcastHeight,
+	bio := &mock.ChainIO{
+		BestHeight: fundingBroadcastHeight,
 	}
 
 	// The mock channel event notifier will receive events for each pending

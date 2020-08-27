@@ -9,6 +9,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -84,7 +85,7 @@ func TestHtlcOutgoingResolverRemoteClaim(t *testing.T) {
 
 	spendHash := spendTx.TxHash()
 
-	ctx.notifier.spendChan <- &chainntnfs.SpendDetail{
+	ctx.notifier.SpendChan <- &chainntnfs.SpendDetail{
 		SpendingTx:    spendTx,
 		SpenderTxHash: &spendHash,
 	}
@@ -118,7 +119,7 @@ type resolveResult struct {
 
 type outgoingResolverTestContext struct {
 	resolver           *htlcOutgoingContestResolver
-	notifier           *mockNotifier
+	notifier           *mock.ChainNotifier
 	preimageDB         *mockWitnessBeacon
 	resolverResultChan chan resolveResult
 	resolutionChan     chan ResolutionMsg
@@ -126,10 +127,10 @@ type outgoingResolverTestContext struct {
 }
 
 func newOutgoingResolverTestContext(t *testing.T) *outgoingResolverTestContext {
-	notifier := &mockNotifier{
-		epochChan: make(chan *chainntnfs.BlockEpoch),
-		spendChan: make(chan *chainntnfs.SpendDetail),
-		confChan:  make(chan *chainntnfs.TxConfirmation),
+	notifier := &mock.ChainNotifier{
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
 	}
 
 	checkPointChan := make(chan struct{}, 1)
@@ -216,7 +217,7 @@ func (i *outgoingResolverTestContext) resolve() {
 }
 
 func (i *outgoingResolverTestContext) notifyEpoch(height int32) {
-	i.notifier.epochChan <- &chainntnfs.BlockEpoch{
+	i.notifier.EpochChan <- &chainntnfs.BlockEpoch{
 		Height: height,
 	}
 }

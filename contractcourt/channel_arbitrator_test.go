@@ -20,6 +20,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
@@ -336,10 +337,10 @@ func createTestChannelArbitrator(t *testing.T, log ArbitratorLog,
 		},
 		OutgoingBroadcastDelta: 5,
 		IncomingBroadcastDelta: 5,
-		Notifier: &mockNotifier{
-			epochChan: make(chan *chainntnfs.BlockEpoch),
-			spendChan: make(chan *chainntnfs.SpendDetail),
-			confChan:  make(chan *chainntnfs.TxConfirmation),
+		Notifier: &mock.ChainNotifier{
+			EpochChan: make(chan *chainntnfs.BlockEpoch),
+			SpendChan: make(chan *chainntnfs.SpendDetail),
+			ConfChan:  make(chan *chainntnfs.TxConfirmation),
 		},
 		IncubateOutputs: func(wire.OutPoint,
 			*lnwallet.OutgoingHtlcResolution,
@@ -880,7 +881,7 @@ func TestChannelArbitratorLocalForceClosePendingHtlc(t *testing.T) {
 	// We'll grab the old notifier here as our resolvers are still holding
 	// a reference to this instance, and a new one will be created when we
 	// restart the channel arb below.
-	oldNotifier := chanArb.cfg.Notifier.(*mockNotifier)
+	oldNotifier := chanArb.cfg.Notifier.(*mock.ChainNotifier)
 
 	// At this point, in order to simulate a restart, we'll re-create the
 	// channel arbitrator. We do this to ensure that all information
@@ -929,7 +930,7 @@ func TestChannelArbitratorLocalForceClosePendingHtlc(t *testing.T) {
 	}
 
 	// Send a notification that the expiry height has been reached.
-	oldNotifier.epochChan <- &chainntnfs.BlockEpoch{Height: 10}
+	oldNotifier.EpochChan <- &chainntnfs.BlockEpoch{Height: 10}
 
 	// htlcOutgoingContestResolver is now transforming into a
 	// htlcTimeoutResolver and should send the contract off for incubation.
@@ -941,7 +942,7 @@ func TestChannelArbitratorLocalForceClosePendingHtlc(t *testing.T) {
 
 	// Notify resolver that the HTLC output of the commitment has been
 	// spent.
-	oldNotifier.spendChan <- &chainntnfs.SpendDetail{SpendingTx: closeTx}
+	oldNotifier.SpendChan <- &chainntnfs.SpendDetail{SpendingTx: closeTx}
 
 	// Finally, we should also receive a resolution message instructing the
 	// switch to cancel back the HTLC.
@@ -969,7 +970,7 @@ func TestChannelArbitratorLocalForceClosePendingHtlc(t *testing.T) {
 	}
 
 	// Notify resolver that the second level transaction is spent.
-	oldNotifier.spendChan <- &chainntnfs.SpendDetail{SpendingTx: closeTx}
+	oldNotifier.SpendChan <- &chainntnfs.SpendDetail{SpendingTx: closeTx}
 
 	// At this point channel should be marked as resolved.
 	chanArbCtxNew.AssertStateTransitions(StateFullyResolved)
