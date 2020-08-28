@@ -538,6 +538,9 @@ type rpcServer struct {
 	// extRestRegistrar  is optional and specifies the registration
 	// callback to register external REST subservers.
 	extRestRegistrar RestRegistrar
+
+	// interceptor is used to be able to request a shutdown
+	interceptor signal.Interceptor
 }
 
 // A compile time check to ensure that rpcServer fully implements the
@@ -549,7 +552,8 @@ var _ lnrpc.LightningServer = (*rpcServer)(nil)
 // be used to register the LightningService with the gRPC server.
 func newRPCServer(cfg *Config, interceptorChain *rpcperms.InterceptorChain,
 	extSubserverCfg *RPCSubserverConfig,
-	extRestRegistrar RestRegistrar) *rpcServer {
+	extRestRegistrar RestRegistrar,
+	interceptor signal.Interceptor) *rpcServer {
 
 	// We go trhough the list of registered sub-servers, and create a gRPC
 	// handler for each. These are used to register with the gRPC server
@@ -570,6 +574,7 @@ func newRPCServer(cfg *Config, interceptorChain *rpcperms.InterceptorChain,
 		extSubserverCfg:  extSubserverCfg,
 		extRestRegistrar: extRestRegistrar,
 		quit:             make(chan struct{}, 1),
+		interceptor:      interceptor,
 	}
 }
 
@@ -5696,8 +5701,7 @@ func (r *rpcServer) GetNetworkInfo(ctx context.Context,
 // a graceful shutdown of the daemon.
 func (r *rpcServer) StopDaemon(ctx context.Context,
 	_ *lnrpc.StopRequest) (*lnrpc.StopResponse, error) {
-
-	signal.RequestShutdown()
+	r.interceptor.RequestShutdown()
 	return &lnrpc.StopResponse{}, nil
 }
 

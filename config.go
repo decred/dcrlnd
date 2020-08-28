@@ -35,6 +35,7 @@ import (
 	"github.com/decred/dcrlnd/lnrpc/signrpc"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/routing"
+	"github.com/decred/dcrlnd/signal"
 	"github.com/decred/dcrlnd/tor"
 	flags "github.com/jessevdk/go-flags"
 )
@@ -469,7 +470,7 @@ func DefaultConfig() Config {
 //  2. Pre-parse the command line to check for an alternative config file
 //  3. Load configuration file overwriting defaults with any specified options
 //  4. Parse CLI options and overwrite/add any specified options
-func LoadConfig() (*Config, error) {
+func LoadConfig(interceptor signal.Interceptor) (*Config, error) {
 	// Pre-parse the command line options to pick up an alternative config
 	// file.
 	preCfg := DefaultConfig()
@@ -527,7 +528,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Make sure everything we just loaded makes sense.
-	cleanCfg, err := ValidateConfig(cfg, usageMessage)
+	cleanCfg, err := ValidateConfig(cfg, usageMessage, interceptor)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +546,8 @@ func LoadConfig() (*Config, error) {
 // ValidateConfig check the given configuration to be sane. This makes sure no
 // illegal values or combination of values are set. All file system paths are
 // normalized. The cleaned up config is returned on success.
-func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
+func ValidateConfig(cfg Config, usageMessage string,
+	interceptor signal.Interceptor) (*Config, error) {
 	// If the provided lnd directory is not the default, we'll modify the
 	// path to all of the files and directories that will live within it.
 	lndDir := CleanAndExpandPath(cfg.LndDir)
@@ -1013,7 +1015,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	}
 
 	// Initialize logging at the default logging level.
-	SetupLoggers(cfg.LogWriter)
+	SetupLoggers(cfg.LogWriter, interceptor)
 	err = cfg.LogWriter.InitLogRotator(
 		filepath.Join(cfg.LogDir, defaultLogFilename),
 		cfg.MaxLogFileSize, cfg.MaxLogFiles,

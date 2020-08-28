@@ -44,7 +44,7 @@ var outgoingPipeMessages = make(chan pipeMessage)
 // No control messages are currently defined and the only use for the pipe is to
 // start clean shutdown when the pipe is closed.  Control messages that follow
 // the pipe message format can be added later as needed.
-func serviceControlPipeRx(fd uintptr) {
+func serviceControlPipeRx(fd uintptr, interceptor *signal.Interceptor) {
 	pipe := os.NewFile(fd, fmt.Sprintf("|%v", fd))
 	r := bufio.NewReader(pipe)
 	for {
@@ -57,7 +57,7 @@ func serviceControlPipeRx(fd uintptr) {
 			break
 		}
 	}
-	signal.RequestShutdown()
+	interceptor.RequestShutdown()
 }
 
 // serviceControlPipeTx sends pipe messages to the file descriptor fd of a write

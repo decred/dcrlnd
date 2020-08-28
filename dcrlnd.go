@@ -13,13 +13,14 @@ var errShutdownRequested = errors.New("shutdown requested")
 // waitForInitialChainSync waits until the initial chain sync is completed
 // before returning. It creates a gRPC service to listen to requests to provide
 // the sync progress.
-func waitForInitialChainSync(activeChainControl *chainreg.ChainControl, svc *initchainsyncrpc.Server) error {
+func waitForInitialChainSync(activeChainControl *chainreg.ChainControl,
+	interceptor *signal.Interceptor, svc *initchainsyncrpc.Server) error {
 
 	svc.SetChainControl(activeChainControl.Wallet)
 
 	// Wait until the initial sync is done.
 	select {
-	case <-signal.ShutdownChannel():
+	case <-interceptor.ShutdownChannel():
 		return errShutdownRequested
 	case <-activeChainControl.Wallet.InitialSyncChannel():
 	}
