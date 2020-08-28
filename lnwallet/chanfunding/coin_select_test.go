@@ -2,6 +2,7 @@ package chanfunding
 
 import (
 	"encoding/hex"
+	"regexp"
 	"testing"
 
 	"github.com/decred/dcrd/dcrutil/v4"
@@ -205,9 +206,15 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 	t.Parallel()
 
 	const feeRate = chainfee.AtomPerKByte(100)
-	const highFeeRate = chainfee.AtomPerKByte(1000)
+	const highFeeRate = chainfee.AtomPerKByte(10000)
 	const dustLimit = dcrutil.Amount(1000)
 	const dust = dcrutil.Amount(100)
+
+	// removeAmounts replaces any amounts in string with "<amt>".
+	removeAmounts := func(s string) string {
+		re := regexp.MustCompile(`[[:digit:]]+\.?[[:digit:]]*`)
+		return re.ReplaceAllString(s, "<amt>")
+	}
 
 	type testCase struct {
 		name       string
@@ -218,7 +225,7 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 		expectedInput      []dcrutil.Amount
 		expectedFundingAmt dcrutil.Amount
 		expectedChange     dcrutil.Amount
-		expectErr          bool
+		expectErr          string
 	}
 
 	testCases := []testCase{
@@ -279,7 +286,8 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 			},
 			spendValue: fundingFee(feeRate, 1, false) + dust,
 
-			expectErr: true,
+			expectErr: "output amount(<amt> DCR) after subtracting " +
+				"fees(<amt> DCR) below dust limit(<amt> DCR)",
 		},
 		{
 			// After subtracting fees, the resulting change output
@@ -349,13 +357,13 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 				{
 					TxOut: wire.TxOut{
 						PkScript: p2pkhScript,
-						Value:    int64(5 * fundingFee(highFeeRate, 1, false)),
+						Value:    int64(6 * fundingFee(highFeeRate, 1, false)),
 					},
 				},
 			},
 			spendValue: 5 * fundingFee(highFeeRate, 1, false),
 
-			expectErr: true,
+			expectErr: "fee <amt> DCR on total output value <amt> DCR",
 		},
 	}
 
@@ -371,17 +379,26 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 			selected, localFundingAmt, changeAmt, err := CoinSelectSubtractFees(
 				feeRate, test.spendValue, dustLimit, test.coins,
 			)
-			if !test.expectErr && err != nil {
-				t.Fatalf(err.Error())
+			if err != nil {
+				switch {
+				case test.expectErr == "":
+					t.Fatalf(err.Error())
+
+				case test.expectErr != removeAmounts(err.Error()):
+					t.Fatalf("expected error '%v', got '%v'",
+						test.expectErr,
+						err.Error())
+
+				// If we got an expected error, there is
+				// nothing more to test.
+				default:
+					return
+				}
 			}
 
-			if test.expectErr && err == nil {
+			// Check that there was no expected error we missed.
+			if test.expectErr != "" {
 				t.Fatalf("expected error")
-			}
-
-			// If we got an expected error, there is nothing more to test.
-			if test.expectErr {
-				return
 			}
 
 			// Check that the selected inputs match what we expect.
