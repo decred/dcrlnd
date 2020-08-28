@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/decred/dcrlnd"
+	lnd "github.com/decred/dcrlnd"
 	"github.com/decred/dcrlnd/signal"
 	flags "github.com/jessevdk/go-flags"
 )
@@ -47,17 +47,18 @@ func Start(extraArgs string, unlockerReady, rpcReady Callback) {
 	// LoadConfig below.
 	os.Args = append(os.Args, splitArgs...)
 
-	// Load the configuration, and parse the extra arguments as command
-	// line options. This function will also set up logging properly.
-	loadedConfig, err := lnd.LoadConfig()
+	// Hook interceptor for os signals.
+	shutdownInterceptor, err := signal.Intercept()
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		rpcReady.OnError(err)
 		return
 	}
 
-	// Hook interceptor for os signals.
-	if err := signal.Intercept(); err != nil {
+	// Load the configuration, and parse the extra arguments as command
+	// line options. This function will also set up logging properly.
+	loadedConfig, err := lnd.LoadConfig(shutdownInterceptor)
+	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		rpcReady.OnError(err)
 		return
@@ -72,12 +73,12 @@ func Start(extraArgs string, unlockerReady, rpcReady Callback) {
 
 	// We call the main method with the custom in-memory listeners called
 	// by the mobile APIs, such that the grpc server will use these.
-	cfg := dcrlnd.ListenerCfg{
-		WalletUnlocker: &dcrlnd.ListenerWithSignal{
+	cfg := lnd.ListenerCfg{
+		WalletUnlocker: &lnd.ListenerWithSignal{
 			Listener: walletUnlockerLis,
 			Ready:    unlockerListening,
 		},
-		RPCListener: &dcrlnd.ListenerWithSignal{
+		RPCListener: &lnd.ListenerWithSignal{
 			Listener: lightningLis,
 			Ready:    rpcListening,
 		},
@@ -86,8 +87,8 @@ func Start(extraArgs string, unlockerReady, rpcReady Callback) {
 	// Call the "real" main in a nested manner so the defers will properly
 	// be executed in the case of a graceful shutdown.
 	go func() {
-		if err := dcrlnd.Main(
-			loadedConfig, cfg, signal.ShutdownChannel(),
+		if err := lnd.Main(
+			loadedConfig, cfg, shutdownInterceptor,
 		); err != nil {
 			if e, ok := err.(*flags.Error); ok &&
 				e.Type == flags.ErrHelp {

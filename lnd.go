@@ -188,7 +188,7 @@ type ListenerCfg struct {
 // validated main configuration struct and an optional listener config struct.
 // This function starts all main system components then blocks until a signal
 // is received on the shutdownChan at which point everything is shut down again.
-func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
+func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error {
 	defer func() {
 		ltndLog.Info("Shutdown complete\n")
 		err := cfg.LogWriter.Close()
@@ -205,7 +205,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// parent process, if any.  When this pipe is closed, shutdown is
 	// initialized.
 	if cfg.PipeRx != nil {
-		go serviceControlPipeRx(uintptr(*cfg.PipeRx))
+		go serviceControlPipeRx(uintptr(*cfg.PipeRx), &interceptor)
 	}
 	if cfg.PipeTx != nil {
 		go serviceControlPipeTx(uintptr(*cfg.PipeTx))
@@ -385,6 +385,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	rpcServer := newRPCServer(
 		cfg, interceptorChain, lisCfg.ExternalRPCSubserverCfg,
 		lisCfg.ExternalRestRegistrar,
+		interceptor,
 	)
 
 	err = rpcServer.RegisterWithGrpcServer(grpcServer)
@@ -419,7 +420,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// started with the --noseedbackup flag, we use the default password
 	// for wallet encryption.
 	if !cfg.NoSeedBackup || isRemoteWallet {
-		params, err := waitForWalletPassword(cfg, pwService)
+		params, err := waitForWalletPassword(cfg, pwService, interceptor.ShutdownChannel())
 		if err != nil {
 			err := fmt.Errorf("unable to set up wallet password "+
 				"listeners: %v", err)
@@ -595,7 +596,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	ltndLog.Infof("Waiting for chain backend to finish sync, "+
 		"start_height=%v", bestHeight)
 
-	err = waitForInitialChainSync(activeChainControl, syncerServer)
+	err = waitForInitialChainSync(activeChainControl, &interceptor, syncerServer)
 	if errors.Is(err, errShutdownRequested) {
 		return nil
 	} else if err != nil {
@@ -847,7 +848,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 
 	// Wait for shutdown signal from either a graceful server stop or from
 	// the interrupt handler.
-	<-shutdownChan
+	<-interceptor.ShutdownChannel()
 	return nil
 }
 
@@ -1338,7 +1339,8 @@ func startRestProxy(cfg *Config, rpcServer *rpcServer, restDialOpts []grpc.DialO
 // waitForWalletPassword blocks until a password is provided by the user to
 // this RPC server.
 func waitForWalletPassword(cfg *Config,
-	pwService *walletunlocker.UnlockerService) (*WalletUnlockParams, error) {
+	pwService *walletunlocker.UnlockerService,
+	shutdownChan <-chan struct{}) (*WalletUnlockParams, error) {
 
 	// Wait for user to provide the password.
 	ltndLog.Infof("Waiting for wallet encryption password. Use `dcrlncli " +
@@ -1420,7 +1422,8 @@ func waitForWalletPassword(cfg *Config,
 			MacResponseChan: pwService.MacResponseChan,
 		}, nil
 
-	case <-signal.ShutdownChannel():
+	// If we got a shutdown signal we just return with an error immediately
+	case <-shutdownChan:
 		return nil, fmt.Errorf("shutting down")
 	}
 }

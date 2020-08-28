@@ -14,10 +14,6 @@ import (
 // RotatingLogWriter is a wrapper around the LogWriter that supports log file
 // rotation.
 type RotatingLogWriter struct {
-	// GenSubLogger is a function that returns a new logger for a subsystem
-	// belonging to the current RotatingLogWriter.
-	GenSubLogger func(string) slog.Logger
-
 	logWriter *LogWriter
 
 	backendLog *slog.Backend
@@ -39,14 +35,17 @@ func NewRotatingLogWriter() *RotatingLogWriter {
 	logWriter := &LogWriter{}
 	backendLog := slog.NewBackend(logWriter)
 	return &RotatingLogWriter{
-		GenSubLogger: func(tag string) slog.Logger {
-			logger := backendLog.Logger(tag)
-			return NewShutdownLogger(logger)
-		},
 		logWriter:        logWriter,
 		backendLog:       backendLog,
 		subsystemLoggers: SubLoggers{},
 	}
+}
+
+// GenSubLogger creates a new sublogger. A shutdown callback function
+// is provided to be able to shutdown in case of a critical error.
+func (r *RotatingLogWriter) GenSubLogger(tag string, shutdown func()) slog.Logger {
+	logger := r.backendLog.Logger(tag)
+	return NewShutdownLogger(logger, shutdown)
 }
 
 // RegisterSubLogger registers a new subsystem logger.
