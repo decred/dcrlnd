@@ -103,7 +103,7 @@ func (b DcrdBackendConfig) Name() string {
 
 // NewBackend starts a new rpctest.Harness and returns a DcrdBackendConfig for
 // that node.
-func NewBackend(t *testing.T, miner *rpctest.Harness) (*DcrdBackendConfig, func(), error) {
+func NewBackend(t *testing.T, miner *rpctest.Harness) (*DcrdBackendConfig, func() error, error) {
 	chainBackend, cleanUp, err := newBackend(t, miner, logDir)
 	if err != nil {
 		return nil, nil, err

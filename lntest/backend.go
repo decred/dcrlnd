@@ -1,6 +1,7 @@
 package lntest
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"matheusd.com/testctx"
 )
 
-func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.Harness, func(), error) {
+func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.Harness, func() error, error) {
 	args := []string{
 		"--rejectnonstd",
 		"--txindex",
@@ -36,19 +37,26 @@ func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.H
 	// Connect this newly created node to the miner.
 	rpctest.ConnectNode(testctx.New(t), chainBackend, miner)
 
-	cleanUp := func() {
-		chainBackend.TearDown()
+	cleanUp := func() error {
+		var errStr string
+		if err := chainBackend.TearDown(); err != nil {
+			errStr += err.Error() + "\n"
+		}
 
 		// After shutting down the chain backend, we'll make a copy of
 		// the log file before deleting the temporary log dir.
 		logFile := logDir + "/" + netParams.Name + "/dcrd.log"
 		err := CopyFile("./output_dcrd_chainbackend.log", logFile)
 		if err != nil {
-			fmt.Printf("unable to copy file: %v\n", err)
+			errStr += fmt.Sprintf("unable to copy file: %v\n", err)
 		}
 		if err = os.RemoveAll(logDir); err != nil {
-			fmt.Printf("Cannot remove dir %s: %v\n", logDir, err)
+			errStr += fmt.Sprintf("Cannot remove dir %s: %v\n", logDir, err)
 		}
+		if errStr != "" {
+			return errors.New(errStr)
+		}
+		return nil
 	}
 
 	return chainBackend, cleanUp, nil

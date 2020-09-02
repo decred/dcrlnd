@@ -15601,7 +15601,11 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	if err != nil {
 		ht.Fatalf("unable to start dcrd: %v", err)
 	}
-	defer cleanUp()
+	defer func() {
+		require.NoError(
+			t, cleanUp(), "failed to clean up chain backend",
+		)
+	}()
 
 	binary := itestLndBinary
 	if runtime.GOOS == "windows" {

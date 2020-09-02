@@ -93,7 +93,7 @@ func (b SpvBackendConfig) Name() string {
 
 // NewBackend starts a new rpctest.Harness and returns a SpvBackendConfig for
 // that node.
-func NewBackend(t *testing.T, miner *rpctest.Harness) (*SpvBackendConfig, func(), error) {
+func NewBackend(t *testing.T, miner *rpctest.Harness) (*SpvBackendConfig, func() error, error) {
 	chainBackend, cleanUp, err := newBackend(t, miner, logDir)
 	if err != nil {
 		return nil, nil, err
