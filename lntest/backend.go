@@ -9,7 +9,6 @@ import (
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/internal/testutils"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
-	"matheusd.com/testctx"
 )
 
 func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.Harness, func() error, error) {
@@ -33,9 +32,6 @@ func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.H
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create dcrd node: %v", err)
 	}
-
-	// Connect this newly created node to the miner.
-	rpctest.ConnectNode(testctx.New(t), chainBackend, miner)
 
 	cleanUp := func() error {
 		var errStr string

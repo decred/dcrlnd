@@ -60,7 +60,6 @@ require (
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/macaroon-bakery.v2 v2.3.0
 	gopkg.in/macaroon.v2 v2.1.0
-	matheusd.com/testctx v0.1.0
 )
 
 require (

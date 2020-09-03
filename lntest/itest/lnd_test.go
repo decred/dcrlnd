@@ -2773,7 +2773,11 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Set up a new miner that we can use to cause a reorg.
-	args := []string{"--rejectnonstd", "--txindex"}
+	args := []string{
+		"--rejectnonstd",
+		"--txindex",
+		"--nobanning",
+	}
 	tempMiner, err := testutils.NewSetupRPCTest(
 		t.t, 5, harnessNetParams, &rpcclient.NotificationHandlers{}, args,
 		false, 0,
@@ -15606,6 +15610,12 @@ func TestLightningNetworkDaemon(t *testing.T) {
 			t, cleanUp(), "failed to clean up chain backend",
 		)
 	}()
+
+	// Connect chainbackend to miner.
+	require.NoError(
+		t, chainBackend.ConnectMiner(),
+		"failed to connect to miner",
+	)
 
 	binary := itestLndBinary
 	if runtime.GOOS == "windows" {
