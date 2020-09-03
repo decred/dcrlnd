@@ -97,6 +97,10 @@ type WalletUnlockMsg struct {
 	// ChanBackups a set of static channel backups that should be received
 	// after the wallet has been unlocked.
 	ChanBackups ChannelsToRecover
+
+	// UnloadWallet is a function for unloading the wallet, which should
+	// be called on shutdown.
+	UnloadWallet func() error
 }
 
 // UnlockerService implements the WalletUnlocker service used to provide lnd
@@ -463,8 +467,9 @@ func (u *UnlockerService) unlockRemoteWallet(ctx context.Context,
 	// We successfully opened the wallet and pass the instance back to
 	// avoid it needing to be unlocked again.
 	walletUnlockMsg := &WalletUnlockMsg{
-		Passphrase: in.WalletPassword,
-		Conn:       conn,
+		Passphrase:   in.WalletPassword,
+		Conn:         conn,
+		UnloadWallet: func() error { return nil },
 	}
 
 	// Before we return the unlock payload, we'll check if we can extract
@@ -528,6 +533,7 @@ func (u *UnlockerService) UnlockWallet(ctx context.Context,
 		RecoveryWindow: gapLimit,
 		Wallet:         unlockedWallet,
 		Loader:         loader,
+		UnloadWallet:   loader.UnloadWallet,
 	}
 
 	// Before we return the unlock payload, we'll check if we can extract
