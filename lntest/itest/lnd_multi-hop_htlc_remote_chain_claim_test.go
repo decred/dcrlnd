@@ -93,6 +93,10 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 	// hop logic.
 	waitForInvoiceAccepted(t, carol, payHash)
 
+	// Increase the fee estimate so that the following force close tx will
+	// be cpfp'ed.
+	net.SetFeeEstimate(30000)
+
 	// Next, Alice decides that she wants to exit the channel, so she'll
 	// immediately force close the channel by broadcast her commitment
 	// transaction.
@@ -215,10 +219,7 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 	// If there are anchors, Bob should also sweep his.
 	expectedTxes = 2
 	if c == commitTypeAnchors {
-		// Note(decred): due to using a single fee rate (the relay fee
-		// rate) sweeps are aggregated and one less transaction is
-		// expected when compared to upstream lnd.
-		expectedTxes = 2
+		expectedTxes = 3
 	}
 	txes, err := getNTxsFromMempool(net.Miner.Node, expectedTxes,
 		minerMempoolTimeout)

@@ -114,6 +114,10 @@ func testMultiHopReceiverChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 		t.Fatalf("settle invoice: %v", err)
 	}
 
+	// Increase the fee estimate so that the following force close tx will
+	// be cpfp'ed.
+	net.SetFeeEstimate(30000)
+
 	// Now we'll mine enough blocks to prompt carol to actually go to the
 	// chain in order to sweep her HTLC since the value is high enough.
 	// TODO(roasbeef): modify once go to chain policy changes
@@ -173,10 +177,8 @@ func testMultiHopReceiverChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 	if c == commitTypeAnchors {
 		// Note(decred): in lnd due to a large difference in fees, two
 		// transactions are expected at this point: one sweeping the
-		// commitment output and one the anchor output. In decred,
-		// since fees are all using the default relay fee only a single
-		// transaction sweeping both outputs is expected.
-		expectedTxes = 2
+		// commitment output and one the anchor output.
+		expectedTxes = 3
 	}
 	txes, err = getNTxsFromMempool(net.Miner.Node,
 		expectedTxes, minerMempoolTimeout)

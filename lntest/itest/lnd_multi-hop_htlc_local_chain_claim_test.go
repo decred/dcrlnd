@@ -93,6 +93,10 @@ func testMultiHopHtlcLocalChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 	// hop logic.
 	waitForInvoiceAccepted(t, carol, payHash)
 
+	// Increase the fee estimate so that the following force close tx will
+	// be cpfp'ed.
+	net.SetFeeEstimate(30000)
+
 	// At this point, Bob decides that he wants to exit the channel
 	// immediately, so he force closes his commitment transaction.
 	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
@@ -103,12 +107,7 @@ func testMultiHopHtlcLocalChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 	// anchors, Alice will also sweep hers.
 	expectedTxes := 1
 	if c == commitTypeAnchors {
-		// Note(decred): in lnd due to a large difference in fees, two
-		// transactions are expected at this point: one sweeping the
-		// commitment output and one the anchor output. In decred,
-		// since fees are all using the default relay fee only a single
-		// transaction sweeping both outputs is expected.
-		expectedTxes = 1
+		expectedTxes = 2
 	}
 	_, err = waitForNTxsInMempool(
 		net.Miner.Node, expectedTxes, minerMempoolTimeout,
@@ -199,8 +198,7 @@ func testMultiHopHtlcLocalChainClaim(net *lntest.NetworkHarness, t *harnessTest,
 	// anchor.
 	expectedTxes = 2
 	if c == commitTypeAnchors {
-		// Note(decred): this is reduced yet again.
-		expectedTxes = 2
+		expectedTxes = 3
 	}
 	txes, err := getNTxsFromMempool(
 		net.Miner.Node, expectedTxes, minerMempoolTimeout,

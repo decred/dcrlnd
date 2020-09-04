@@ -77,6 +77,10 @@ func testMultiHopRemoteForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
 
+	// Increase the fee estimate so that the following force close tx will
+	// be cpfp'ed.
+	net.SetFeeEstimate(30000)
+
 	// At this point, we'll now instruct Carol to force close the
 	// transaction. This will let us exercise that Bob is able to sweep the
 	// expired HTLC on Carol's version of the commitment transaction. If
@@ -116,12 +120,7 @@ func testMultiHopRemoteForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 	// sweep that as well.
 	expectedTxes := 1
 	if c == commitTypeAnchors {
-		// Note(decred): in lnd due to a large difference in fees, two
-		// transactions are expected at this point: one sweeping the
-		// commitment output and one the anchor output. In decred,
-		// since fees are all using the default relay fee only a single
-		// transaction sweeping both outputs is expected.
-		expectedTxes = 1
+		expectedTxes = 2
 	}
 
 	_, err = waitForNTxsInMempool(

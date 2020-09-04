@@ -6012,6 +6012,12 @@ type AnchorResolution struct {
 
 	// CommitAnchor is the anchor outpoint on the commit tx.
 	CommitAnchor wire.OutPoint
+
+	// CommitFee is the fee of the commit tx.
+	CommitFee dcrutil.Amount
+
+	// CommitSize is the size of the commit tx.
+	CommitSize int64
 }
 
 // LocalForceCloseSummary describes the final commitment state before the
@@ -6450,9 +6456,22 @@ func NewAnchorResolution(chanState *channeldb.OpenChannel,
 		HashType: txscript.SigHashAll,
 	}
 
+	// Calculate commit tx weight. This commit tx doesn't yet include the
+	// witness spending the funding output, so we add the (worst case)
+	// weight for that too.
+	size := int64(commitTx.SerializeSize()) + input.FundingOutputSigScriptSize
+
+	// Calculate commit tx fee.
+	fee := chanState.Capacity
+	for _, out := range commitTx.TxOut {
+		fee -= dcrutil.Amount(out.Value)
+	}
+
 	return &AnchorResolution{
 		CommitAnchor:         *outPoint,
 		AnchorSignDescriptor: *signDesc,
+		CommitSize:           size,
+		CommitFee:            fee,
 	}, nil
 }
 

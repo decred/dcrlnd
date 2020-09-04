@@ -21,6 +21,7 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
+	"github.com/decred/dcrlnd/sweep"
 	"github.com/stretchr/testify/require"
 )
 
@@ -369,6 +370,10 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 	for _, testCase := range testCases {
 		success := t.t.Run(testCase.name, func(t *testing.T) {
 			h := newHarnessTest(t, net)
+
+			// Start each test with the default static fee estimate.
+			net.SetFeeEstimate(10000)
+
 			testChanRestoreScenario(h, net, &testCase, password)
 		})
 		if !success {
@@ -1014,6 +1019,11 @@ func testChanRestoreScenario(t *harnessTest, net *lntest.NetworkHarness,
 	require.Contains(t.t, err.Error(), "cannot close channel with state: ")
 	require.Contains(t.t, err.Error(), "ChanStatusRestored")
 
+	// Increase the fee estimate so that the following force close tx will
+	// be cpfp'ed. This needs to be chosen at the correct rate so that the
+	// anchor commitment is still broadcast.
+	net.SetFeeEstimate(12500)
+
 	// Now that we have ensured that the channels restored by the backup are
 	// in the correct state even without the remote peer telling us so,
 	// let's start up Carol again.
@@ -1027,6 +1037,10 @@ func testChanRestoreScenario(t *harnessTest, net *lntest.NetworkHarness,
 	if err != nil {
 		t.Fatalf("node didn't connect after recovery: %v", err)
 	}
+
+	// Leave enough time for the sweep txs to be generated and broadcast
+	// using the correct fee estimate.
+	time.Sleep(sweep.DefaultBatchWindowDuration + time.Second)
 
 	// TODO(roasbeef): move dave restarts?
 
