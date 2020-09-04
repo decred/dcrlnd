@@ -338,6 +338,7 @@ func main() {
 		printMacaroonCommand,
 		trackPaymentCommand,
 		versionCommand,
+		profileSubCommand,
 	}
 
 	// Add any extra commands determined by build flags.
