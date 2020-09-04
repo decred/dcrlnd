@@ -134,9 +134,9 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	currentBlockHeight uint32, feePerKB chainfee.AtomPerKByte,
 	signer input.Signer, netParams *chaincfg.Params) (*wire.MsgTx, error) {
 
-	inputs, txSize := getSizeEstimate(inputs)
+	inputs, estimator := getSizeEstimate(inputs, feePerKB)
 
-	txFee := feePerKB.FeeForSize(txSize)
+	txFee := estimator.fee()
 
 	// Sum up the total value contained in the inputs.
 	var totalSum dcrutil.Amount
@@ -209,21 +209,29 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	}
 
 	log.Infof("Creating sweep transaction %v for %v inputs (%s) "+
-		"using %v atoms/kB, tx_fee=%v", sweepTx.TxHash(), len(inputs),
-		inputTypeSummary(inputs), int64(feePerKB), txFee)
+		"using %v atoms/kB, tx_size=%v tx_fee=%v, parents_count=%v, "+
+		"parents_fee=%v parents_size=%v",
+		sweepTx.TxHash(), len(inputs),
+		inputTypeSummary(inputs), int64(feePerKB),
+		estimator.size(), txFee,
+		len(estimator.parents), estimator.parentsFee,
+		estimator.parentsSize,
+	)
 
 	return sweepTx, nil
 }
 
 // getSizeEstimate returns a weight estimate for the given inputs.
 // Additionally, it returns counts for the number of csv and cltv inputs.
-func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
+func getSizeEstimate(inputs []input.Input, feeRate chainfee.AtomPerKByte) (
+	[]input.Input, *sizeEstimator) {
+
 	// We initialize a weight estimator so we can accurately asses the
 	// amount of fees we need to pay for this sweep transaction.
 	//
 	// TODO(roasbeef): can be more intelligent about buffering outputs to
 	// be more efficient on-chain.
-	sizeEstimate := newSizeEstimator()
+	sizeEstimate := newSizeEstimator(feeRate)
 
 	// Our sweep transaction will pay to a single p2pkh address,
 	// ensure it contributes to our size estimate.
@@ -248,7 +256,7 @@ func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
 		sweepInputs = append(sweepInputs, inp)
 	}
 
-	return sweepInputs, int64(sizeEstimate.size())
+	return sweepInputs, sizeEstimate
 }
 
 // inputSummary returns a string containing a human readable summary about the

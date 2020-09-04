@@ -39,7 +39,8 @@ func TestWeightEstimate(t *testing.T) {
 		))
 	}
 
-	_, size := getSizeEstimate(inputs)
+	_, estimator := getSizeEstimate(inputs, 0)
+	size := int64(estimator.size())
 	if size != expectedSize {
 		t.Fatalf("unexpected size. expected %d but got %d.",
 			expectedSize, size)

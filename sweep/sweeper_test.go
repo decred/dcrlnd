@@ -18,6 +18,7 @@ import (
 	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -78,6 +79,7 @@ func createTestInput(value int64, witnessType input.WitnessType) input.BaseInput
 			},
 		},
 		0,
+		nil,
 	)
 
 	testInputCount++
@@ -178,6 +180,18 @@ func (ctx *sweeperTestContext) tick() {
 	case <-time.After(defaultTestTimeout):
 		debug.PrintStack()
 		ctx.t.Fatal("tick timeout - no new timer created")
+	}
+}
+
+// assertNoTick asserts that the sweeper does not wait for a tick.
+func (ctx *sweeperTestContext) assertNoTick() {
+	ctx.t.Helper()
+
+	select {
+	case <-ctx.timeoutChan:
+		ctx.t.Fatal("unexpected tick")
+
+	case <-time.After(processingDelay):
 	}
 }
 
@@ -342,9 +356,10 @@ func assertTxFeeRate(t *testing.T, tx *wire.MsgTx,
 	outputAmt := tx.TxOut[0].Value
 
 	fee := dcrutil.Amount(inputAmt - outputAmt)
-	_, txSize := getSizeEstimate(inputs)
+	_, estimator := getSizeEstimate(inputs, 0)
+	txSize := estimator.size()
 
-	expectedFee := expectedFeeRate.FeeForSize(txSize)
+	expectedFee := expectedFeeRate.FeeForSize(int64(txSize))
 	if fee != expectedFee {
 		t.Fatalf("expected fee rate %v results in %v fee, got %v fee",
 			expectedFeeRate, expectedFee, fee)
@@ -1320,4 +1335,72 @@ func TestExclusiveGroup(t *testing.T) {
 	if result2.Err != ErrExclusiveGroupSpend {
 		t.Fatal("expected third input to be canceled")
 	}
+}
+
+// TestCpfp tests that the sweeper spends cpfp inputs at a fee rate that exceeds
+// the parent tx fee rate.
+func TestCpfp(t *testing.T) {
+	ctx := createSweeperTestContext(t)
+
+	ctx.estimator.updateFees(10000, chainfee.FeePerKBFloor)
+
+	// Offer an input with an unconfirmed parent tx to the sweeper. The
+	// parent tx pays 3000 sat/kw.
+	hash := chainhash.Hash{1}
+	input := input.MakeBaseInput(
+		&wire.OutPoint{Hash: hash},
+		input.CommitmentTimeLock,
+		&input.SignDescriptor{
+			Output: &wire.TxOut{
+				Value: 25000,
+			},
+			KeyDesc: keychain.KeyDescriptor{
+				PubKey: testPubKey,
+			},
+		},
+		0,
+		&input.TxInfo{
+			Size: 300,
+			Fee:  9000,
+		},
+	)
+
+	feePref := FeePreference{ConfTarget: 6}
+	result, err := ctx.sweeper.SweepInput(
+		&input, Params{Fee: feePref, Force: true},
+	)
+	require.NoError(t, err)
+
+	// Because we sweep at 1000 sat/kw, the parent cannot be paid for. We
+	// expect the sweeper to remain idle.
+	ctx.assertNoTick()
+
+	// Increase the fee estimate to above the parent tx fee rate.
+	ctx.estimator.updateFees(50000, chainfee.FeePerKBFloor)
+
+	// Signal a new block. This is a trigger for the sweeper to refresh fee
+	// estimates.
+	ctx.notifier.NotifyEpoch(1000)
+
+	// Now we do expect a sweep transaction to be published with our input
+	// and an attached wallet utxo.
+	ctx.tick()
+	tx := ctx.receiveTx()
+	require.Len(t, tx.TxIn, 2)
+	require.Len(t, tx.TxOut, 1)
+
+	// As inputs we have 10000 atoms from the wallet and 25000 atoms from
+	// the cpfp input. The sweep tx size is expected to be 432 bytes. There
+	// is an additional 300 bytes from the parent to include in the package,
+	// making a total of 732 bytes. At 50000 atoms/kB, the required fee for
+	// the package is 36600 atoms. The parent already paid 9000 atoms, so
+	// there is 27600 atoms remaining to be paid. The expected output value
+	// is therefore 10000 + 25000  - 27600 = 7400.
+	require.Equal(t, int64(7400), tx.TxOut[0].Value)
+
+	// Mine the tx and assert that the result is passed back.
+	ctx.backend.mine()
+	ctx.expectResult(result, nil)
+
+	ctx.finish(1)
 }

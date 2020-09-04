@@ -70,9 +70,6 @@ func (t *txInputSetState) clone() txInputSetState {
 type txInputSet struct {
 	txInputSetState
 
-	// feePerKB is the fee rate used to calculate the tx fee.
-	feePerKB chainfee.AtomPerKByte
-
 	// dustLimit is the minimum output value of the tx.
 	dustLimit dcrutil.Amount
 
@@ -94,11 +91,10 @@ func newTxInputSet(wallet Wallet, feePerKB,
 	dustLimit := lnwallet.DustThresholdForRelayFee(relayFee)
 
 	state := txInputSetState{
-		sizeEstimate: newSizeEstimator(),
+		sizeEstimate: newSizeEstimator(feePerKB),
 	}
 
 	b := txInputSet{
-		feePerKB:        feePerKB,
 		dustLimit:       dustLimit,
 		maxInputs:       maxInputs,
 		wallet:          wallet,
@@ -144,8 +140,7 @@ func (t *txInputSet) addToState(inp input.Input, constraints addConstraints) *tx
 	s.inputTotal += value
 
 	// Recalculate the tx fee.
-	newSize := s.sizeEstimate.size()
-	fee := t.feePerKB.FeeForSize(int64(newSize))
+	fee := s.sizeEstimate.fee()
 
 	// Calculate the new output value.
 	s.outputValue = s.inputTotal - fee

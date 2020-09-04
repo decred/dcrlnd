@@ -1,6 +1,7 @@
 package input
 
 import (
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 )
 
@@ -39,6 +40,19 @@ type Input interface {
 	// HeightHint returns the minimum height at which a confirmed spending
 	// tx can occur.
 	HeightHint() uint32
+
+	// UnconfParent returns information about a possibly unconfirmed parent
+	// tx.
+	UnconfParent() *TxInfo
+}
+
+// TxInfo describes properties of a parent tx that are relevant for CPFP.
+type TxInfo struct {
+	// Fee is the fee of the tx.
+	Fee dcrutil.Amount
+
+	// Size is the size of the tx.
+	Size int64
 }
 
 type inputKit struct {
@@ -47,6 +61,10 @@ type inputKit struct {
 	signDesc        SignDescriptor
 	heightHint      uint32
 	blockToMaturity uint32
+
+	// unconfParent contains information about a potential unconfirmed
+	// parent transaction.
+	unconfParent *TxInfo
 }
 
 // OutPoint returns the breached output's identifier that is to be included as
@@ -80,6 +98,11 @@ func (i *inputKit) BlocksToMaturity() uint32 {
 	return i.blockToMaturity
 }
 
+// Cpfp returns information about a possibly unconfirmed parent tx.
+func (i *inputKit) UnconfParent() *TxInfo {
+	return i.unconfParent
+}
+
 // BaseInput contains all the information needed to sweep a basic output
 // (CSV/CLTV/no time lock)
 type BaseInput struct {
@@ -89,14 +112,16 @@ type BaseInput struct {
 // MakeBaseInput assembles a new BaseInput that can be used to construct a
 // sweep transaction.
 func MakeBaseInput(outpoint *wire.OutPoint, witnessType WitnessType,
-	signDescriptor *SignDescriptor, heightHint uint32) BaseInput {
+	signDescriptor *SignDescriptor, heightHint uint32,
+	unconfParent *TxInfo) BaseInput {
 
 	return BaseInput{
 		inputKit{
-			outpoint:    *outpoint,
-			witnessType: witnessType,
-			signDesc:    *signDescriptor,
-			heightHint:  heightHint,
+			outpoint:     *outpoint,
+			witnessType:  witnessType,
+			signDesc:     *signDescriptor,
+			heightHint:   heightHint,
+			unconfParent: unconfParent,
 		},
 	}
 }
@@ -107,7 +132,7 @@ func NewBaseInput(outpoint *wire.OutPoint, witnessType WitnessType,
 	signDescriptor *SignDescriptor, heightHint uint32) *BaseInput {
 
 	input := MakeBaseInput(
-		outpoint, witnessType, signDescriptor, heightHint,
+		outpoint, witnessType, signDescriptor, heightHint, nil,
 	)
 
 	return &input
