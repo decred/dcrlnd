@@ -32,7 +32,7 @@ const (
 type txInputSetState struct {
 	// weightEstimate is the (worst case) tx weight with the current set of
 	// inputs.
-	sizeEstimate input.TxSizeEstimator
+	sizeEstimate *sizeEstimator
 
 	// inputTotal is the total value of all inputs.
 	inputTotal dcrutil.Amount
@@ -53,7 +53,7 @@ type txInputSetState struct {
 
 func (t *txInputSetState) clone() txInputSetState {
 	s := txInputSetState{
-		sizeEstimate:     t.sizeEstimate,
+		sizeEstimate:     t.sizeEstimate.clone(),
 		inputTotal:       t.inputTotal,
 		outputValue:      t.outputValue,
 		walletInputTotal: t.walletInputTotal,
@@ -93,11 +93,16 @@ func newTxInputSet(wallet Wallet, feePerKB,
 	// txes.
 	dustLimit := lnwallet.DustThresholdForRelayFee(relayFee)
 
+	state := txInputSetState{
+		weightEstimate: newWeightEstimator(),
+	}
+
 	b := txInputSet{
-		feePerKB:  feePerKB,
-		dustLimit: dustLimit,
-		maxInputs: maxInputs,
-		wallet:    wallet,
+		feePerKB:        feePerKB,
+		dustLimit:       dustLimit,
+		maxInputs:       maxInputs,
+		wallet:          wallet,
+		txInputSetState: state,
 	}
 
 	// Add the sweep tx output to the size estimate.
@@ -124,24 +129,15 @@ func (t *txInputSet) addToState(inp input.Input, constraints addConstraints) *tx
 		return nil
 	}
 
-	// Can ignore error, because it has already been checked when
-	// calculating the yields.
-	size, isNestedP2SH, _ := inp.WitnessType().SizeUpperBound()
-
 	// Clone the current set state.
 	s := t.clone()
 
 	// Add the new input.
 	s.inputs = append(s.inputs, inp)
 
-	// Add size of the new input.
-	if isNestedP2SH {
-		// This should never happen in decred.
-		log.Errorf("Attempting to sweep nested P2SH %v", inp.OutPoint)
-		return nil
-	} else {
-		s.sizeEstimate.AddCustomInput(size)
-	}
+	// Can ignore error, because it has already been checked when
+	// calculating the yields.
+	_ = s.sizeEstimate.add(inp)
 
 	// Add the value of the new input.
 	value := dcrutil.Amount(inp.SignDesc().Output.Value)

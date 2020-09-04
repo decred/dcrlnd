@@ -223,7 +223,7 @@ func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
 	//
 	// TODO(roasbeef): can be more intelligent about buffering outputs to
 	// be more efficient on-chain.
-	var sizeEstimate input.TxSizeEstimator
+	sizeEstimate := newSizeEstimator()
 
 	// Our sweep transaction will pay to a single p2pkh address,
 	// ensure it contributes to our size estimate.
@@ -236,8 +236,7 @@ func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
 	for i := range inputs {
 		inp := inputs[i]
 
-		wt := inp.WitnessType()
-		err := wt.AddSizeEstimation(&sizeEstimate)
+		err := sizeEstimate.add(inp)
 		if err != nil {
 			log.Warn(err)
 
@@ -249,7 +248,7 @@ func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
 		sweepInputs = append(sweepInputs, inp)
 	}
 
-	return sweepInputs, sizeEstimate.Size()
+	return sweepInputs, int64(sizeEstimate.Size())
 }
 
 // inputSummary returns a string containing a human readable summary about the
