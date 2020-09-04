@@ -29,10 +29,8 @@ const (
 	constraintsForce
 )
 
-// txInputSet is an object that accumulates tx inputs and keeps running counters
-// on various properties of the tx.
-type txInputSet struct {
-	// sizeEstimate is the (worst case) tx weight with the current set of
+type txInputSetState struct {
+	// weightEstimate is the (worst case) tx weight with the current set of
 	// inputs.
 	sizeEstimate input.TxSizeEstimator
 
@@ -42,11 +40,38 @@ type txInputSet struct {
 	// outputValue is the value of the tx output.
 	outputValue dcrutil.Amount
 
-	// feePerKB is the fee rate used to calculate the tx fee.
-	feePerKB chainfee.AtomPerKByte
-
 	// inputs is the set of tx inputs.
 	inputs []input.Input
+
+	// walletInputTotal is the total value of inputs coming from the wallet.
+	walletInputTotal dcrutil.Amount
+
+	// force indicates that this set must be swept even if the total yield
+	// is negative.
+	force bool
+}
+
+func (t *txInputSetState) clone() txInputSetState {
+	s := txInputSetState{
+		sizeEstimate:     t.sizeEstimate,
+		inputTotal:       t.inputTotal,
+		outputValue:      t.outputValue,
+		walletInputTotal: t.walletInputTotal,
+		force:            t.force,
+		inputs:           make([]input.Input, len(t.inputs)),
+	}
+	copy(s.inputs, t.inputs)
+
+	return s
+}
+
+// txInputSet is an object that accumulates tx inputs and keeps running counters
+// on various properties of the tx.
+type txInputSet struct {
+	txInputSetState
+
+	// feePerKB is the fee rate used to calculate the tx fee.
+	feePerKB chainfee.AtomPerKByte
 
 	// dustLimit is the minimum output value of the tx.
 	dustLimit dcrutil.Amount
@@ -55,16 +80,9 @@ type txInputSet struct {
 	// the set.
 	maxInputs int
 
-	// walletInputTotal is the total value of inputs coming from the wallet.
-	walletInputTotal dcrutil.Amount
-
 	// wallet contains wallet functionality required by the input set to
 	// retrieve utxos.
 	wallet Wallet
-
-	// force indicates that this set must be swept even if the total yield
-	// is negative.
-	force bool
 }
 
 // newTxInputSet constructs a new, empty input set.
@@ -97,58 +115,59 @@ func (t *txInputSet) dustLimitReached() bool {
 // add adds a new input to the set. It returns a bool indicating whether the
 // input was added to the set. An input is rejected if it decreases the tx
 // output value after paying fees.
-func (t *txInputSet) add(input input.Input, constraints addConstraints) bool {
+func (t *txInputSet) addToState(inp input.Input, constraints addConstraints) *txInputSetState {
 	// Stop if max inputs is reached. Do not count additional wallet inputs,
 	// because we don't know in advance how many we may need.
 	if constraints != constraintsWallet &&
 		len(t.inputs) >= t.maxInputs {
 
-		return false
+		return nil
 	}
 
 	// Can ignore error, because it has already been checked when
 	// calculating the yields.
-	size, isNestedP2SH, _ := input.WitnessType().SizeUpperBound()
+	size, isNestedP2SH, _ := inp.WitnessType().SizeUpperBound()
 
-	// Add size of this new candidate input to a copy of the weight
-	// estimator.
-	newSizeEstimate := t.sizeEstimate
+	// Clone the current set state.
+	s := t.clone()
+
+	// Add the new input.
+	s.inputs = append(s.inputs, inp)
+
+	// Add size of the new input.
 	if isNestedP2SH {
 		// This should never happen in decred.
-		log.Errorf("Attempting to sweep nested P2SH %v", input.OutPoint())
-		return false
+		log.Errorf("Attempting to sweep nested P2SH %v", inp.OutPoint)
+		return nil
 	} else {
-		newSizeEstimate.AddCustomInput(size)
+		s.sizeEstimate.AddCustomInput(size)
 	}
 
-	value := dcrutil.Amount(input.SignDesc().Output.Value)
-	newInputTotal := t.inputTotal + value
+	// Add the value of the new input.
+	value := dcrutil.Amount(inp.SignDesc().Output.Value)
+	s.inputTotal += value
 
-	size = newSizeEstimate.Size()
-	fee := t.feePerKB.FeeForSize(size)
+	// Recalculate the tx fee.
+	newSize := s.sizeEstimate.Size()
+	fee := t.feePerKB.FeeForSize(int64(newSize))
 
-	// Calculate the output value if the current input would be
-	// added to the set.
-	newOutputValue := newInputTotal - fee
-
-	// Initialize new wallet total with the current wallet total. This is
-	// updated below if this input is a wallet input.
-	newWalletTotal := t.walletInputTotal
+	// Calculate the new output value.
+	s.outputValue = s.inputTotal - fee
 
 	// Calculate the yield of this input from the change in tx output value.
-	inputYield := newOutputValue - t.outputValue
+	inputYield := s.outputValue - t.outputValue
 
 	switch constraints {
 
 	// Don't sweep inputs that cost us more to sweep than they give us.
 	case constraintsRegular:
 		if inputYield <= 0 {
-			return false
+			return nil
 		}
 
 	// For force adds, no further constraints apply.
 	case constraintsForce:
-		t.force = true
+		s.force = true
 
 	// We are attaching a wallet input to raise the tx output value above
 	// the dust limit.
@@ -156,12 +175,12 @@ func (t *txInputSet) add(input input.Input, constraints addConstraints) bool {
 		// Skip this wallet input if adding it would lower the output
 		// value.
 		if inputYield <= 0 {
-			return false
+			return nil
 		}
 
 		// Calculate the total value that we spend in this tx from the
 		// wallet if we'd add this wallet input.
-		newWalletTotal += value
+		s.walletInputTotal += value
 
 		// In any case, we don't want to lose money by sweeping. If we
 		// don't get more out of the tx then we put in ourselves, do not
@@ -176,25 +195,29 @@ func (t *txInputSet) add(input input.Input, constraints addConstraints) bool {
 		// value of the wallet input and what we get out of this
 		// transaction. To prevent attaching and locking a big utxo for
 		// very little benefit.
-		if !t.force && newWalletTotal >= newOutputValue {
+		if !s.force && s.walletInputTotal >= s.outputValue {
 			log.Debugf("Rejecting wallet input of %v, because it "+
 				"would make a negative yielding transaction "+
 				"(%v)",
-				value, newOutputValue-newWalletTotal)
+				value, s.outputValue-s.walletInputTotal)
 
-			return false
+			return nil
 		}
 	}
 
-	// Update running values.
-	//
-	// TODO: Return new instance?
-	t.inputTotal = newInputTotal
-	t.outputValue = newOutputValue
-	t.inputs = append(t.inputs, input)
-	t.sizeEstimate = newSizeEstimate
-	t.walletInputTotal = newWalletTotal
+	return &s
+}
 
+// add adds a new input to the set. It returns a bool indicating whether the
+// input was added to the set. An input is rejected if it decreases the tx
+// output value after paying fees.
+func (t *txInputSet) add(input input.Input, constraints addConstraints) bool {
+	newState := t.addToState(input, constraints)
+	if newState == nil {
+		return false
+	}
+
+	t.txInputSetState = *newState
 	return true
 }
 
