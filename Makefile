@@ -52,8 +52,6 @@ GOINSTALL := GO111MODULE=on go install -v
 GOTEST := GO111MODULE=on go test -v
 
 GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-GOLIST := go list $(PKG)/...
-GOLISTCOVER := $(shell go list -f '{{.ImportPath}}' ./... | sed -e 's/^$(ESCPKG)/./')
 
 TESTBINPKG := dcrlnd_testbins.tar.gz
 

@@ -31,6 +31,10 @@ else
 DEV_TAGS += embeddedwallet
 endif
 
+ifneq ($(tags),)
+DEV_TAGS += ${tags}
+endif
+
 # Define the log tags that will be applied only when running unit tests. If none
 # are provided, we default to "nolog" which will be silent.
 ifneq ($(log),)
@@ -46,6 +50,9 @@ TEST_FLAGS += -test.timeout=$(timeout)
 else
 TEST_FLAGS += -test.timeout=60m
 endif
+
+GOLIST := go list -tags="$(DEV_TAGS)" -deps $(PKG)/... | grep '$(PKG)'| grep -v '/vendor/'
+GOLISTCOVER := $(shell go list -tags="$(DEV_TAGS)" -deps -f '{{.ImportPath}}' ./... | grep '$(PKG)' | sed -e 's/^$(ESCPKG)/./')
 
 # UNIT_TARGTED is undefined iff a specific package and/or unit test case is
 # not being targeted.
