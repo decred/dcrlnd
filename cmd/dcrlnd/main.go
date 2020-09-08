@@ -14,8 +14,14 @@ func main() {
 	// function will also set up logging properly.
 	loadedConfig, err := dcrlnd.LoadConfig()
 	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		if e, ok := err.(*flags.Error); !ok || e.Type != flags.ErrHelp {
+			// Print error if not due to help request.
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		// Help was requested, exit normally.
+		os.Exit(0)
 	}
 
 	// Hook interceptor for os signals.
@@ -30,10 +36,7 @@ func main() {
 		loadedConfig, dcrlnd.ListenerCfg{}, signal.ShutdownChannel(),
 	)
 	if err != nil {
-		if e, ok := err.(*flags.Error); ok && e.Type == flags.ErrHelp {
-		} else {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-		}
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
