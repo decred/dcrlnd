@@ -12,12 +12,6 @@ import (
 )
 
 var (
-	// peersBucket is a bucket that tracks remote peer information.
-	//
-	// NOTE(decred): This will be reintroduced in the future in the peers.go
-	// file.
-	peersBucket = []byte("peers-bucket")
-
 	// peerLastGossipMsgTSKey is the key for a value in the peer bucket that
 	// tracks the unix timestamp of the last received gossip message
 	// (ChannelUpdate, ChannelAnnouncement, NodeAnnounce).
