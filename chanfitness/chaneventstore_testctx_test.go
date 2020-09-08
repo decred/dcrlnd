@@ -9,6 +9,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channelnotifier"
+	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/peernotifier"
 	"github.com/decred/dcrlnd/routing/route"
 	"github.com/decred/dcrlnd/subscribe"
@@ -33,6 +34,9 @@ type chanEventStoreTestCtx struct {
 	// for a single pubkey + channel combination because its actual value
 	// does not matter.
 	testVarIdx int
+
+	// clock is the clock that our test store will use.
+	clock *clock.TestClock
 }
 
 // newChanEventStoreTestCtx creates a test context which can be used to test
@@ -42,9 +46,11 @@ func newChanEventStoreTestCtx(t *testing.T) *chanEventStoreTestCtx {
 		t:                   t,
 		channelSubscription: newMockSubscription(t),
 		peerSubscription:    newMockSubscription(t),
+		clock:               clock.NewTestClock(testNow),
 	}
 
 	cfg := &Config{
+		Clock: testCtx.clock,
 		SubscribeChannelEvents: func() (subscribe.Subscription, error) {
 			return testCtx.channelSubscription, nil
 		},

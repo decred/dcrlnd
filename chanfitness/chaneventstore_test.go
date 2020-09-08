@@ -8,10 +8,14 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/routing/route"
 	"github.com/decred/dcrlnd/subscribe"
 	"github.com/stretchr/testify/require"
 )
+
+// testNow is the current time tests will use.
+var testNow = time.Unix(1592465134, 0)
 
 // TestStartStoreError tests the starting of the store in cases where the setup
 // functions fail. It does not test the mechanics of consuming events because
@@ -56,10 +60,13 @@ func TestStartStoreError(t *testing.T) {
 		test := test
 
 		t.Run(test.name, func(t *testing.T) {
+			clock := clock.NewTestClock(testNow)
+
 			store := NewChannelEventStore(&Config{
 				SubscribeChannelEvents: test.ChannelEvents,
 				SubscribePeerEvents:    test.PeerEvents,
 				GetOpenChannels:        test.GetChannels,
+				Clock:                  clock,
 			})
 
 			err := store.Start()
@@ -177,8 +184,6 @@ func testEventStore(t *testing.T, generateEvents func(*chanEventStoreTestCtx),
 // TestGetLifetime tests the GetLifetime function for the cases where a channel
 // is known and unknown to the store.
 func TestGetLifetime(t *testing.T) {
-	now := time.Now()
-
 	tests := []struct {
 		name          string
 		channelFound  bool
@@ -190,8 +195,8 @@ func TestGetLifetime(t *testing.T) {
 		{
 			name:          "Channel found",
 			channelFound:  true,
-			opened:        now,
-			closed:        now.Add(time.Hour * -1),
+			opened:        testNow,
+			closed:        testNow.Add(time.Hour * -1),
 			expectedError: nil,
 		},
 		{
@@ -235,11 +240,8 @@ func TestGetLifetime(t *testing.T) {
 // tests the unexpected edge cases where a tracked channel does not have any
 // events recorded, and when a zero time is specified for the uptime range.
 func TestGetUptime(t *testing.T) {
-	// Set time for deterministic unit tests.
-	now := time.Now()
-
-	twoHoursAgo := now.Add(time.Hour * -2)
-	fourHoursAgo := now.Add(time.Hour * -4)
+	twoHoursAgo := testNow.Add(time.Hour * -2)
+	fourHoursAgo := testNow.Add(time.Hour * -4)
 
 	tests := []struct {
 		name string
@@ -277,7 +279,7 @@ func TestGetUptime(t *testing.T) {
 		{
 			name:          "No events",
 			startTime:     twoHoursAgo,
-			endTime:       now,
+			endTime:       testNow,
 			channelFound:  true,
 			expectedError: nil,
 		},
@@ -296,7 +298,7 @@ func TestGetUptime(t *testing.T) {
 			openedAt:       fourHoursAgo,
 			expectedUptime: time.Hour * 2,
 			startTime:      fourHoursAgo,
-			endTime:        now,
+			endTime:        testNow,
 			channelFound:   true,
 			expectedError:  nil,
 		},
@@ -310,14 +312,14 @@ func TestGetUptime(t *testing.T) {
 			},
 			openedAt:       fourHoursAgo,
 			expectedUptime: time.Hour * 4,
-			endTime:        now,
+			endTime:        testNow,
 			channelFound:   true,
 			expectedError:  nil,
 		},
 		{
 			name:          "Channel not found",
 			startTime:     twoHoursAgo,
-			endTime:       now,
+			endTime:       testNow,
 			channelFound:  false,
 			expectedError: ErrChannelNotFound,
 		},
@@ -334,7 +336,7 @@ func TestGetUptime(t *testing.T) {
 			if test.channelFound {
 				eventLog := &chanEventLog{
 					events:   test.events,
-					now:      func() time.Time { return now },
+					clock:    clock.NewTestClock(testNow),
 					openedAt: test.openedAt,
 					closedAt: test.closedAt,
 				}
