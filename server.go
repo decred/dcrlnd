@@ -723,14 +723,16 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	}
 
 	srvrLog.Debugf("Instantiating payment session source with config: "+
-		"AttemptCost=%v, MinRouteProbability=%v",
+		"AttemptCost=%v + %v%%, MinRouteProbability=%v",
 		int64(routingConfig.AttemptCost),
+		float64(routingConfig.AttemptCostPPM)/10000,
 		routingConfig.MinRouteProbability)
 
 	pathFindingConfig := routing.PathFindingConfig{
 		AttemptCost: lnwire.NewMAtomsFromAtoms(
 			routingConfig.AttemptCost,
 		),
+		AttemptCostPPM: routingConfig.AttemptCostPPM,
 		MinProbability: routingConfig.MinRouteProbability,
 	}
 
