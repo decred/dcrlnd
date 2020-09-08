@@ -57,6 +57,7 @@ import (
 	"github.com/decred/dcrlnd/routing"
 	"github.com/decred/dcrlnd/routing/localchans"
 	"github.com/decred/dcrlnd/routing/route"
+	"github.com/decred/dcrlnd/subscribe"
 	"github.com/decred/dcrlnd/sweep"
 	"github.com/decred/dcrlnd/ticker"
 	"github.com/decred/dcrlnd/tor"
@@ -1193,9 +1194,13 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 
 	// Create a channel event store which monitors all open channels.
 	s.chanEventStore = chanfitness.NewChannelEventStore(&chanfitness.Config{
-		SubscribeChannelEvents: s.channelNotifier.SubscribeChannelEvents,
-		SubscribePeerEvents:    s.peerNotifier.SubscribePeerEvents,
-		GetOpenChannels:        s.remoteChanDB.FetchAllOpenChannels,
+		SubscribeChannelEvents: func() (subscribe.Subscription, error) {
+			return s.channelNotifier.SubscribeChannelEvents()
+		},
+		SubscribePeerEvents: func() (subscribe.Subscription, error) {
+			return s.peerNotifier.SubscribePeerEvents()
+		},
+		GetOpenChannels: s.remoteChanDB.FetchAllOpenChannels,
 	})
 
 	if cfg.WtClient.Active {
