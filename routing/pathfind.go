@@ -45,11 +45,10 @@ type pathFinder = func(g *graphParams, r *RestrictParams,
 	[]*channeldb.ChannelEdgePolicy, error)
 
 var (
-	// DefaultPaymentAttemptPenalty is the virtual cost in path finding weight
-	// units of executing a payment attempt that fails. It is used to trade
-	// off potentially better routes against their probability of
-	// succeeding.
-	DefaultPaymentAttemptPenalty = lnwire.NewMAtomsFromAtoms(100)
+	// DefaultAttemptCost is the default virtual cost in path finding of a
+	// failed payment attempt. It is used to trade off potentially better
+	// routes against their probability of succeeding.
+	DefaultAttemptCost = lnwire.NewMAtomsFromAtoms(100)
 
 	// DefaultMinRouteProbability is the default minimum probability for routes
 	// returned from findPath.
@@ -314,11 +313,10 @@ type RestrictParams struct {
 // PathFindingConfig defines global parameters that control the trade-off in
 // path finding between fees and probabiity.
 type PathFindingConfig struct {
-	// PaymentAttemptPenalty is the virtual cost in path finding weight
-	// units of executing a payment attempt that fails. It is used to trade
-	// off potentially better routes against their probability of
-	// succeeding.
-	PaymentAttemptPenalty lnwire.MilliAtom
+	// AttemptCost is the virtual cost in path finding of a failed
+	// payment attempt. It is used to trade off potentially better routes
+	// against their probability of succeeding.
+	AttemptCost lnwire.MilliAtom
 
 	// MinProbability defines the minimum success probability of the
 	// returned route.
@@ -643,7 +641,7 @@ func findPath(g *graphParams, r *RestrictParams, cfg *PathFindingConfig,
 		// probability.
 		tempDist := getProbabilityBasedDist(
 			tempWeight, probability,
-			int64(cfg.PaymentAttemptPenalty),
+			int64(cfg.AttemptCost),
 		)
 
 		// If there is already a best route stored, compare this

@@ -2578,8 +2578,8 @@ func testProbabilityRouting(t *testing.T, p10, p11, p20, minProbability float64,
 	}
 
 	ctx.pathFindingConfig = PathFindingConfig{
-		PaymentAttemptPenalty: lnwire.NewMAtomsFromAtoms(10),
-		MinProbability:        minProbability,
+		AttemptCost:    lnwire.NewMAtomsFromAtoms(10),
+		MinProbability: minProbability,
 	}
 
 	path, err := ctx.findPath(target, paymentAmt)
@@ -2652,7 +2652,7 @@ func TestEqualCostRouteSelection(t *testing.T) {
 	}
 
 	ctx.pathFindingConfig = PathFindingConfig{
-		PaymentAttemptPenalty: lnwire.NewMAtomsFromAtoms(1),
+		AttemptCost: lnwire.NewMAtomsFromAtoms(1),
 	}
 
 	path, err := ctx.findPath(target, paymentAmt)
