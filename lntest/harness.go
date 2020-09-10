@@ -13,7 +13,12 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc/grpclog"
+	"github.com/decred/dcrlnd"
+	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/lnrpc"
+	"github.com/decred/dcrlnd/lntest/wait"
+	"github.com/decred/dcrlnd/lnwallet/chainfee"
+	"github.com/decred/dcrlnd/lnwire"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -21,12 +26,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
-
-	"github.com/decred/dcrlnd"
-	"github.com/decred/dcrlnd/input"
-	"github.com/decred/dcrlnd/lnrpc"
-	"github.com/decred/dcrlnd/lntest/wait"
-	"github.com/decred/dcrlnd/lnwire"
+	"google.golang.org/grpc/grpclog"
 )
 
 // DefaultCSV is the CSV delay (remotedelay) we will start our test nodes with.
@@ -69,6 +69,10 @@ type NetworkHarness struct {
 	// to main process.
 	lndErrorChan chan error
 
+	// feeService is a web service that provides external fee estimates to
+	// lnd.
+	feeService *feeService
+
 	quit chan struct{}
 
 	mtx sync.Mutex
@@ -81,6 +85,8 @@ type NetworkHarness struct {
 func NewNetworkHarness(r *rpctest.Harness, b BackendConfig, lndBinary string) (
 	*NetworkHarness, error) {
 
+	feeService := startFeeService()
+
 	n := NetworkHarness{
 		activeNodes:         make(map[int]*HarnessNode),
 		nodesByPub:          make(map[string]*HarnessNode),
@@ -91,6 +97,7 @@ func NewNetworkHarness(r *rpctest.Harness, b BackendConfig, lndBinary string) (
 		Miner:               r,
 		BackendCfg:          b,
 		quit:                make(chan struct{}),
+		feeService:          feeService,
 		lndBinary:           lndBinary,
 	}
 	go n.networkWatcher()
@@ -293,6 +300,8 @@ func (n *NetworkHarness) TearDownAll() error {
 	close(n.lndErrorChan)
 	close(n.quit)
 
+	n.feeService.stop()
+
 	return nil
 }
 
@@ -402,6 +411,7 @@ func (n *NetworkHarness) newNode(name string, extraArgs []string,
 		ExtraArgs:    extraArgs,
 		RemoteWallet: useRemoteWallet(),
 		DcrwNode:     useDcrwNode(),
+		FeeURL:       n.feeService.url,
 	})
 	if err != nil {
 		return nil, err
@@ -1522,6 +1532,10 @@ func (n *NetworkHarness) SlowGenerate(nb uint32) ([]*chainhash.Hash, error) {
 		res[i] = genRes[0]
 	}
 	return res, nil
+}
+
+func (n *NetworkHarness) SetFeeEstimate(fee chainfee.AtomPerKByte) {
+	n.feeService.setFee(fee)
 }
 
 // CopyFile copies the file src to dest.
