@@ -440,9 +440,6 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 				if err != nil {
 					return nil, err
 				}
-				if err := cc.feeEstimator.Start(); err != nil {
-					return nil, err
-				}
 			}
 		}
 
@@ -451,6 +448,28 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		cc.signer = wc
 		cc.wc = wc
 		cc.keyRing = wc
+	}
+
+	// Override default fee estimator if an external service is specified.
+	if cfg.FeeURL != "" {
+		// Do not cache fees on regtest and simnet to make it easier to
+		// execute manual or automated test cases.
+		cacheFees := !cfg.RegTest && !cfg.SimNet
+
+		ltndLog.Infof("Using external fee estimator %v: cached=%v",
+			cfg.FeeURL, cacheFees)
+
+		cc.feeEstimator = chainfee.NewWebAPIEstimator(
+			chainfee.SparseConfFeeSource{
+				URL: cfg.FeeURL,
+			},
+			!cacheFees,
+		)
+	}
+
+	// Start the fee estimator.
+	if err := cc.feeEstimator.Start(); err != nil {
+		return nil, err
 	}
 
 	// Select the default channel constraints for the primary chain.

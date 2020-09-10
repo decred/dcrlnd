@@ -226,6 +226,8 @@ type Config struct {
 	FeeRate             lnwire.MilliAtom `long:"feerate" description:"The fee rate used when forwarding payments on our channels. The total fee charged is basefee + (amount * feerate / 1000000), where amount is the forwarded amount."`
 	TimeLockDelta       uint32           `long:"timelockdelta" description:"The CLTV delta we will subtract from a forwarded HTLC's timelock value"`
 
+	FeeURL string `long:"feeurl" description:"Optional URL for external fee estimation. If no URL is specified, the method for fee estimation will depend on the chosen backend and network."`
+
 	DcrdMode  *lncfg.DcrdConfig      `group:"dcrd" namespace:"dcrd"`
 	Dcrwallet *lncfg.DcrwalletConfig `group:"dcrwallet" namespace:"dcrwallet"`
 
