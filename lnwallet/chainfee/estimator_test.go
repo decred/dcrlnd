@@ -150,7 +150,7 @@ func TestWebAPIFeeEstimator(t *testing.T) {
 		fees: testFees,
 	}
 
-	estimator := NewWebAPIEstimator(feeSource, 10)
+	estimator := NewWebAPIEstimator(feeSource, false)
 	estimator.netGetter = emptyGetter
 
 	// Test that requesting a fee when no fees have been cached fails.

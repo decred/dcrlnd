@@ -353,6 +353,10 @@ type WebAPIEstimator struct {
 	// network.
 	netGetter func(url string) (*http.Response, error)
 
+	// noCache determines whether the web estimator should cache fee
+	// estimates.
+	noCache bool
+
 	quit chan struct{}
 	wg   sync.WaitGroup
 }
@@ -380,13 +384,12 @@ func defaultNetGetter(url string) (*http.Response, error) {
 
 // NewWebAPIEstimator creates a new WebAPIEstimator from a given URL and a
 // fallback default fee. The fees are updated whenever a new block is mined.
-func NewWebAPIEstimator(
-	api WebAPIFeeSource, defaultFee AtomPerKByte) *WebAPIEstimator {
-
+func NewWebAPIEstimator(api WebAPIFeeSource, noCache bool) *WebAPIEstimator {
 	return &WebAPIEstimator{
 		apiSource:        api,
 		feeByBlockTarget: make(map[uint32]uint32),
 		netGetter:        defaultNetGetter,
+		noCache:          noCache,
 		quit:             make(chan struct{}),
 	}
 }
@@ -403,11 +406,16 @@ func (w *WebAPIEstimator) EstimateFeePerKB(numBlocks uint32) (AtomPerKByte, erro
 			"accepted is %v", numBlocks, minBlockTarget)
 	}
 
-	feePerKB, err := w.getCachedFee(numBlocks)
+	// Get fee estimates now if we don't refresh periodically.
+	if w.noCache {
+		w.updateFeeEstimates()
+	}
+
+	feePerKb, err := w.getCachedFee(numBlocks)
 	if err != nil {
 		return 0, err
 	}
-	atomsPerKB := AtomPerKByte(feePerKB)
+	atomsPerKB := AtomPerKByte(feePerKb)
 
 	// If the result is too low, then we'll clamp it to our current fee
 	// floor.
@@ -426,6 +434,11 @@ func (w *WebAPIEstimator) EstimateFeePerKB(numBlocks uint32) (AtomPerKByte, erro
 //
 // NOTE: This method is part of the Estimator interface.
 func (w *WebAPIEstimator) Start() error {
+	// No update loop is needed when we don't cache.
+	if w.noCache {
+		return nil
+	}
+
 	var err error
 	w.started.Do(func() {
 		log.Infof("Starting web API fee estimator")
@@ -445,6 +458,11 @@ func (w *WebAPIEstimator) Start() error {
 //
 // NOTE: This method is part of the Estimator interface.
 func (w *WebAPIEstimator) Stop() error {
+	// Update loop is not running when we don't cache.
+	if w.noCache {
+		return nil
+	}
+
 	w.stopped.Do(func() {
 		log.Infof("Stopping web API fee estimator")
 
