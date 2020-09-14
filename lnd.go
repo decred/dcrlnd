@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	_ "net/http/pprof" // Blank import to set up profiling HTTP handlers.
 	"os"
 	"path/filepath"
 	"runtime/pprof"
@@ -19,19 +20,14 @@ import (
 	"sync"
 	"time"
 
-	// Blank import to set up profiling HTTP handlers.
-	_ "net/http/pprof"
-
+	"decred.org/dcrwallet/v3/wallet"
+	proxy "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"gopkg.in/macaroon-bakery.v2/bakery"
 	"gopkg.in/macaroon.v2"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
-	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
-	proxy "github.com/grpc-ecosystem/grpc-gateway/runtime"
-
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/cert"
