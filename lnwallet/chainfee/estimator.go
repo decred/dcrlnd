@@ -348,10 +348,6 @@ type WebAPIEstimator struct {
 	feesMtx          sync.Mutex
 	feeByBlockTarget map[uint32]uint32
 
-	// defaultFeePerKB is a fallback value that we'll use if we're unable
-	// to query the API for any reason.
-	defaultFeePerKB AtomPerKByte
-
 	// netGetter performs a GET http request to the specified URL and
 	// returns the response. It is exposed here to allow tests to mock the
 	// network.
@@ -390,7 +386,6 @@ func NewWebAPIEstimator(
 	return &WebAPIEstimator{
 		apiSource:        api,
 		feeByBlockTarget: make(map[uint32]uint32),
-		defaultFeePerKB:  defaultFee,
 		netGetter:        defaultNetGetter,
 		quit:             make(chan struct{}),
 	}
