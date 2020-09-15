@@ -2,6 +2,7 @@ package lookout
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -53,6 +54,7 @@ type breachedInput struct {
 	txOut    *wire.TxOut
 	outPoint wire.OutPoint
 	witness  [][]byte
+	sequence uint32
 }
 
 // commitToLocalInput extracts the information required to spend the commit
@@ -103,26 +105,40 @@ func (p *JusticeDescriptor) commitToLocalInput() (*breachedInput, error) {
 // commitToRemoteInput extracts the information required to spend the commit
 // to-remote output.
 func (p *JusticeDescriptor) commitToRemoteInput() (*breachedInput, error) {
-	// Retrieve the to-remote witness script from the justice kit.
-	toRemoteSerPubKey, err := p.JusticeKit.CommitToRemoteWitnessScript()
+	// Retrieve the to-remote redeem script from the justice kit.
+	toRemoteRedeemScript, err := p.JusticeKit.CommitToRemoteWitnessScript()
 	if err != nil {
 		return nil, err
 	}
 
-	// Since the to-remote witness script should just be a regular p2wkh
-	// output, we'll parse it to retrieve the public key.
-	toRemotePubKey, err := secp256k1.ParsePubKey(toRemoteSerPubKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// Compute the witness script hash from the to-remote pubkey, which will
-	// be used to locate the input on the breach commitment transaction.
-	toRemotePkScript, err := input.CommitScriptUnencumbered(
-		toRemotePubKey,
+	var (
+		toRemotePkScript []byte
+		toRemoteSequence uint32
 	)
-	if err != nil {
-		return nil, err
+	if p.JusticeKit.BlobType.IsAnchorChannel() {
+		// The P2SH PKScript can be directly computed from the redeem
+		// script.
+		toRemotePkScript, err = input.ScriptHashPkScript(
+			toRemoteRedeemScript,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		toRemoteSequence = 1
+	} else {
+		// Since the to-remote witness script should just be a regular p2pkh
+		// output, we'll parse it to retrieve the public key.
+		toRemotePubKey, err := secp256k1.ParsePubKey(toRemoteRedeemScript)
+		if err != nil {
+			return nil, err
+		}
+
+		// Compute the PKScript hash from the to-remote pubkey, which will
+		// be used to locate the input on the breach commitment transaction.
+		toRemotePkScript, err = input.CommitScriptUnencumbered(
+			toRemotePubKey,
+		)
 	}
 
 	// Locate the to-remote output on the breaching commitment transaction.
@@ -150,7 +166,8 @@ func (p *JusticeDescriptor) commitToRemoteInput() (*breachedInput, error) {
 	return &breachedInput{
 		txOut:    toRemoteTxOut,
 		outPoint: toRemoteOutPoint,
-		witness:  buildWitness(witnessStack, toRemoteSerPubKey),
+		witness:  buildWitness(witnessStack, toRemoteRedeemScript),
+		sequence: toRemoteSequence,
 	}, nil
 }
 
@@ -171,6 +188,7 @@ func (p *JusticeDescriptor) assembleJusticeTxn(txSize int64,
 		justiceTxn.AddTxIn(&wire.TxIn{
 			PreviousOutPoint: input.outPoint,
 			ValueIn:          input.txOut.Value,
+			Sequence:         input.sequence,
 		})
 	}
 
@@ -206,7 +224,7 @@ func (p *JusticeDescriptor) assembleJusticeTxn(txSize int64,
 	}
 
 	// Attach each of the provided witnesses to the transaction.
-	for _, inp := range inputs {
+	for inidx, inp := range inputs {
 		// Lookup the input's new post-sort position.
 		i := inputIndex[inp.outPoint]
 
@@ -228,7 +246,7 @@ func (p *JusticeDescriptor) assembleJusticeTxn(txSize int64,
 			return nil, err
 		}
 		if err := vm.Execute(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("validation error on input %d of justice tx: %v", inidx, err)
 		}
 	}
 
@@ -286,8 +304,13 @@ func (p *JusticeDescriptor) CreateJusticeTxn() (*wire.MsgTx, error) {
 		if err != nil {
 			return nil, err
 		}
-		sizeEstimate.AddP2PKHInput()
 		sweepInputs = append(sweepInputs, toRemoteInput)
+
+		if p.JusticeKit.BlobType.IsAnchorChannel() {
+			sizeEstimate.AddCustomInput(input.ToRemoteConfirmedWitnessSize)
+		} else {
+			sizeEstimate.AddP2PKHInput()
+		}
 	}
 
 	// TODO(conner): sweep htlc outputs
