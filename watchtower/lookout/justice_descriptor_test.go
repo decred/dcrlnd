@@ -1,11 +1,9 @@
 package lookout_test
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -21,6 +19,7 @@ import (
 	"github.com/decred/dcrlnd/watchtower/wtdb"
 	"github.com/decred/dcrlnd/watchtower/wtmock"
 	"github.com/decred/dcrlnd/watchtower/wtpolicy"
+	"github.com/stretchr/testify/require"
 )
 
 const csvDelay uint32 = 144
@@ -107,21 +106,15 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 	toLocalScript, err := input.CommitScriptToSelf(
 		csvDelay, toLocalPK, revPK,
 	)
-	if err != nil {
-		t.Fatalf("unable to create to-local script: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Compute the to-local witness script hash.
 	toLocalScriptHash, err := input.ScriptHashPkScript(toLocalScript)
-	if err != nil {
-		t.Fatalf("unable to create to-local witness script hash: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Compute the to-remote witness script hash.
 	toRemoteScriptHash, err := input.CommitScriptUnencumbered(toRemotePK)
-	if err != nil {
-		t.Fatalf("unable to create to-remote script: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Construct the breaching commitment txn, containing the to-local and
 	// to-remote outputs. We don't need any inputs for this test.
@@ -204,9 +197,7 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 		totalAmount, int64(txSize), justiceKit.SweepAddress,
 		sessionInfo.RewardAddress,
 	)
-	if err != nil {
-		t.Fatalf("unable to compute justice txouts: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Attach the txouts and BIP69 sort the resulting transaction.
 	justiceTxn.TxOut = outputs
@@ -236,15 +227,12 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 	}
 
 	// Verify that our test justice transaction is sane.
-	if err := standalone.CheckTransactionSanity(justiceTxn, uint64(netParams.MaxTxSize)); err != nil {
-		t.Fatalf("justice txn is not sane: %v", err)
-	}
+	err = standalone.CheckTransactionSanity(justiceTxn, uint64(netParams.MaxTxSize))
+	require.Nil(t, err)
 
 	// Compute a DER-encoded signature for the to-local input.
 	toLocalSigRaw, err := signer.SignOutputRaw(justiceTxn, toLocalSignDesc)
-	if err != nil {
-		t.Fatalf("unable to sign to-local input: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Compute the witness for the to-remote input. The first element is a
 	// DER-encoded signature under the to-remote pubkey. The sighash flag is
@@ -252,22 +240,16 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 	toRemoteWitness, err := input.CommitSpendNoDelay(
 		signer, toRemoteSignDesc, justiceTxn, false,
 	)
-	if err != nil {
-		t.Fatalf("unable to sign to-remote input: %v", err)
-	}
+	require.Nil(t, err)
 	toRemoteSigRaw := toRemoteWitness[0][:len(toRemoteWitness[0])-1]
 
 	// Convert the DER to-local sig into a fixed-size signature.
 	toLocalSig, err := lnwire.NewSigFromSignature(toLocalSigRaw)
-	if err != nil {
-		t.Fatalf("unable to parse to-local signature: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Convert the DER to-remote sig into a fixed-size signature.
 	toRemoteSig, err := lnwire.NewSigFromRawSignature(toRemoteSigRaw)
-	if err != nil {
-		t.Fatalf("unable to parse to-remote signature: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Complete our justice kit by copying the signatures into the payload.
 	copy(justiceKit.CommitToLocalSig[:], toLocalSig[:])
@@ -293,9 +275,7 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 	// Exact retribution on the offender. If no error is returned, we expect
 	// the justice transaction to be published via the channel.
 	err = punisher.Punish(justiceDesc, nil)
-	if err != nil {
-		t.Fatalf("unable to punish breach: %v", err)
-	}
+	require.Nil(t, err)
 
 	// Retrieve the published justice transaction.
 	var wtJusticeTxn *wire.MsgTx
@@ -325,9 +305,5 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 	}
 
 	// Assert that the watchtower derives the same justice txn.
-	if !reflect.DeepEqual(justiceTxn, wtJusticeTxn) {
-		t.Fatalf("expected justice txn: %v\ngot %v",
-			spew.Sdump(justiceTxn),
-			spew.Sdump(wtJusticeTxn))
-	}
+	require.Equal(t, justiceTxn, wtJusticeTxn)
 }
