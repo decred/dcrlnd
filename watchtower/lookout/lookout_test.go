@@ -142,8 +142,10 @@ func TestLookoutBreachMatching(t *testing.T) {
 	}
 
 	// Construct a justice kit for each possible breach transaction.
+	blobType := blob.FlagCommitOutputs.Type()
 	blob1 := &blob.JusticeKit{
 		SweepAddress:     makeRandomP2PKHPkScript(),
+		BlobType:         blobType,
 		RevocationPubKey: makePubKey(1),
 		LocalDelayPubKey: makePubKey(1),
 		CSVDelay:         144,
@@ -151,6 +153,7 @@ func TestLookoutBreachMatching(t *testing.T) {
 	}
 	blob2 := &blob.JusticeKit{
 		SweepAddress:     makeRandomP2PKHPkScript(),
+		BlobType:         blobType,
 		RevocationPubKey: makePubKey(2),
 		LocalDelayPubKey: makePubKey(2),
 		CSVDelay:         144,
@@ -161,13 +164,13 @@ func TestLookoutBreachMatching(t *testing.T) {
 	key2 := blob.NewBreachKeyFromHash(&hash2)
 
 	// Encrypt the first justice kit under breach key one.
-	encBlob1, err := blob1.Encrypt(key1, blob.FlagCommitOutputs.Type())
+	encBlob1, err := blob1.Encrypt(key1)
 	if err != nil {
 		t.Fatalf("unable to encrypt sweep detail 1: %v", err)
 	}
 
 	// Encrypt the second justice kit under breach key two.
-	encBlob2, err := blob2.Encrypt(key2, blob.FlagCommitOutputs.Type())
+	encBlob2, err := blob2.Encrypt(key2)
 	if err != nil {
 		t.Fatalf("unable to encrypt sweep detail 2: %v", err)
 	}
