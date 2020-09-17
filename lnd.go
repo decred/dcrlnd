@@ -857,9 +857,8 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 			HostPolicy: autocert.HostWhitelist(cfg.LetsEncryptDomain),
 		}
 
-		addr := fmt.Sprintf(":%v", cfg.LetsEncryptPort)
 		srv := &http.Server{
-			Addr:    addr,
+			Addr:    cfg.LetsEncryptListen,
 			Handler: manager.HTTPHandler(nil),
 		}
 		shutdownCompleted := make(chan struct{})
@@ -877,7 +876,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 
 		go func() {
 			ltndLog.Infof("Autocert challenge listener started "+
-				"at %v", addr)
+				"at %v", cfg.LetsEncryptListen)
 
 			err := srv.ListenAndServe()
 			if err != http.ErrServerClosed {

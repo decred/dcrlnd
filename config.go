@@ -66,7 +66,7 @@ const (
 	defaultMinBackoff                    = time.Second
 	defaultMaxBackoff                    = time.Hour
 	defaultLetsEncryptDirname            = "letsencrypt"
-	defaultLetsEncryptPort               = 80
+	defaultLetsEncryptListen             = ":80"
 
 	defaultTorSOCKSPort            = 9050
 	defaultTorDNSHost              = "soa.nodes.lightning.directory"
@@ -178,7 +178,7 @@ type Config struct {
 	RPCListenerEvents bool  `long:"rpclistenerevents" description:"Notify JSON-RPC and gRPC listener addresses over the TX pipe"`
 
 	LetsEncryptDir    string `long:"letsencryptdir" description:"The directory to store Let's Encrypt certificates within"`
-	LetsEncryptPort   int    `long:"letsencryptport" description:"The port on which lnd will listen for Let's Encrypt challenges. Let's Encrypt will always try to contact on port 80. Often non-root processes are not allowed to bind to ports lower than 1024. This configuration option allows a different port to be used, but must be used in combination with port forwarding from port 80."`
+	LetsEncryptListen string `long:"letsencryptlisten" description:"The IP:port on which lnd will listen for Let's Encrypt challenges. Let's Encrypt will always try to contact on port 80. Often non-root processes are not allowed to bind to ports lower than 1024. This configuration option allows a different port to be used, but must be used in combination with port forwarding from port 80. This configuration can also be used to specify another IP address to listen on, for example an IPv6 address."`
 	LetsEncryptDomain string `long:"letsencryptdomain" description:"Request a Let's Encrypt certificate for this domain. Note that the certicate is only requested and stored when the first rpc connection comes in."`
 
 	// We'll parse these 'raw' string arguments into real net.Addrs in the
@@ -327,24 +327,24 @@ type Config struct {
 // DefaultConfig returns all default values for the Config struct.
 func DefaultConfig() Config {
 	return Config{
-		LndDir:          DefaultLndDir,
-		ConfigFile:      DefaultConfigFile,
-		DataDir:         defaultDataDir,
-		DebugLevel:      defaultLogLevel,
-		TLSCertPath:     defaultTLSCertPath,
-		TLSKeyPath:      defaultTLSKeyPath,
-		LetsEncryptDir:  defaultLetsEncryptDir,
-		LetsEncryptPort: defaultLetsEncryptPort,
-		LogDir:          defaultLogDir,
-		MaxLogFiles:     defaultMaxLogFiles,
-		MaxLogFileSize:  defaultMaxLogFileSize,
-		AcceptorTimeout: defaultAcceptorTimeout,
-		MinHTLCIn:       defaultDecredMinHTLCInMAtoms,
-		MinHTLCOut:      defaultDecredMinHTLCOutMAtoms,
-		BaseFee:         DefaultDecredBaseFeeMAtoms,
-		FeeRate:         DefaultDecredFeeRate,
-		TimeLockDelta:   DefaultDecredTimeLockDelta,
-		Node:            "dcrd",
+		LndDir:            DefaultLndDir,
+		ConfigFile:        DefaultConfigFile,
+		DataDir:           defaultDataDir,
+		DebugLevel:        defaultLogLevel,
+		TLSCertPath:       defaultTLSCertPath,
+		TLSKeyPath:        defaultTLSKeyPath,
+		LetsEncryptDir:    defaultLetsEncryptDir,
+		LetsEncryptListen: defaultLetsEncryptListen,
+		LogDir:            defaultLogDir,
+		MaxLogFiles:       defaultMaxLogFiles,
+		MaxLogFileSize:    defaultMaxLogFileSize,
+		AcceptorTimeout:   defaultAcceptorTimeout,
+		MinHTLCIn:         defaultDecredMinHTLCInMAtoms,
+		MinHTLCOut:        defaultDecredMinHTLCOutMAtoms,
+		BaseFee:           DefaultDecredBaseFeeMAtoms,
+		FeeRate:           DefaultDecredFeeRate,
+		TimeLockDelta:     DefaultDecredTimeLockDelta,
+		Node:              "dcrd",
 		DcrdMode: &lncfg.DcrdConfig{
 			Dir:     defaultDcrdDir,
 			RPCHost: defaultRPCHost,
