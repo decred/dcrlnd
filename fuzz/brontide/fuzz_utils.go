@@ -10,6 +10,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/brontide"
+	"github.com/decred/dcrlnd/keychain"
 )
 
 var (
@@ -120,8 +121,11 @@ func getBrontideMachines() (*brontide.Machine, *brontide.Machine) {
 	respPriv, _ := secp256k1.GeneratePrivateKey()
 	respPub := (*secp256k1.PublicKey)(respPriv.PubKey())
 
-	initiator := brontide.NewBrontideMachine(true, initPriv, respPub)
-	responder := brontide.NewBrontideMachine(false, respPriv, nil)
+	initPrivECDH := &keychain.PrivKeyECDH{PrivKey: initPriv}
+	respPrivECDH := &keychain.PrivKeyECDH{PrivKey: respPriv}
+
+	initiator := brontide.NewBrontideMachine(true, initPrivECDH, respPub)
+	responder := brontide.NewBrontideMachine(false, respPrivECDH, nil)
 
 	return initiator, responder
 }
@@ -132,11 +136,14 @@ func getStaticBrontideMachines() (*brontide.Machine, *brontide.Machine) {
 	initPriv := secp256k1.PrivKeyFromBytes(initBytes)
 	respPriv, respPub := privKeyFromBytes(respBytes)
 
+	initPrivECDH := &keychain.PrivKeyECDH{PrivKey: initPriv}
+	respPrivECDH := &keychain.PrivKeyECDH{PrivKey: respPriv}
+
 	initiator := brontide.NewBrontideMachine(
-		true, initPriv, respPub, initEphemeral,
+		true, initPrivECDH, respPub, initEphemeral,
 	)
 	responder := brontide.NewBrontideMachine(
-		false, respPriv, nil, respEphemeral,
+		false, respPrivECDH, nil, respEphemeral,
 	)
 
 	return initiator, responder
