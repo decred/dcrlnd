@@ -296,7 +296,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	defer cleanUp()
 
 	// Only process macaroons if --no-macaroons isn't set.
-	tlsCfg, restCreds, restProxyDest, cleanUp, err := getTLSConfig(cfg)
+	serverOpts, restDialOpts, restListen, cleanUp, err := getTLSConfig(cfg)
 	if err != nil {
 		err := fmt.Errorf("unable to load TLS credentials: %v", err)
 		ltndLog.Error(err)
@@ -305,19 +305,20 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 
 	defer cleanUp()
 
-	serverCreds := credentials.NewTLS(tlsCfg)
-	serverOpts := []grpc.ServerOption{grpc.Creds(serverCreds)}
+	// We use the first RPC listener as the destination for our REST proxy.
+	// If the listener is set to listen on all interfaces, we replace it
+	// with localhost, as we cannot dial it directly.
+	restProxyDest := cfg.RPCListeners[0].String()
+	switch {
+	case strings.Contains(restProxyDest, "0.0.0.0"):
+		restProxyDest = strings.Replace(
+			restProxyDest, "0.0.0.0", "127.0.0.1", 1,
+		)
 
-	// For our REST dial options, we'll still use TLS, but also increase
-	// the max message size that we'll decode to allow clients to hit
-	// endpoints which return more data such as the DescribeGraph call.
-	// We set this to 200MiB atm. Should be the same value as maxMsgRecvSize
-	// in cmd/lncli/main.go.
-	restDialOpts := []grpc.DialOption{
-		grpc.WithTransportCredentials(*restCreds),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(1 * 1024 * 1024 * 200),
-		),
+	case strings.Contains(restProxyDest, "[::]"):
+		restProxyDest = strings.Replace(
+			restProxyDest, "[::]", "[::1]", 1,
+		)
 	}
 
 	var (
@@ -386,7 +387,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	if !cfg.NoSeedBackup || isRemoteWallet {
 		params, shutdown, err := waitForWalletPassword(
 			cfg, cfg.RESTListeners, serverOpts, restDialOpts,
-			restProxyDest, tlsCfg, walletUnlockerListeners, remoteChanDB,
+			restProxyDest, restListen, walletUnlockerListeners, remoteChanDB,
 		)
 		if err != nil {
 			err := fmt.Errorf("unable to set up wallet password "+
@@ -766,7 +767,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	rpcServer, err := newRPCServer(
 		cfg, server, macaroonService, cfg.SubRPCServers, serverOpts,
 		restDialOpts, restProxyDest, atplManager, server.invoices,
-		tower, tlsCfg, rpcListeners, chainedAcceptor,
+		tower, restListen, rpcListeners, chainedAcceptor,
 	)
 	if err != nil {
 		err := fmt.Errorf("unable to create RPC server: %v", err)
@@ -818,8 +819,8 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 
 // getTLSConfig returns a TLS configuration for the gRPC server and credentials
 // and a proxy destination for the REST reverse proxy.
-func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
-	string, func(), error) {
+func getTLSConfig(cfg *Config) ([]grpc.ServerOption, []grpc.DialOption,
+	func(net.Addr) (net.Listener, error), func(), error) {
 
 	// Ensure we create TLS key and certificate if they don't exist.
 	if !fileExists(cfg.TLSCertPath) && !fileExists(cfg.TLSKeyPath) {
@@ -830,7 +831,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 			cfg.TLSDisableAutofill, cert.DefaultAutogenValidity,
 		)
 		if err != nil {
-			return nil, nil, "", nil, err
+			return nil, nil, nil, nil, err
 		}
 		rpcsLog.Infof("Done generating TLS certificates")
 	}
@@ -839,7 +840,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 		cfg.TLSCertPath, cfg.TLSKeyPath,
 	)
 	if err != nil {
-		return nil, nil, "", nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// We check whether the certifcate we have on disk match the IPs and
@@ -853,7 +854,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 			cfg.TLSExtraDomains, cfg.TLSDisableAutofill,
 		)
 		if err != nil {
-			return nil, nil, "", nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 
@@ -865,12 +866,12 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 
 		err := os.Remove(cfg.TLSCertPath)
 		if err != nil {
-			return nil, nil, "", nil, err
+			return nil, nil, nil, nil, err
 		}
 
 		err = os.Remove(cfg.TLSKeyPath)
 		if err != nil {
-			return nil, nil, "", nil, err
+			return nil, nil, nil, nil, err
 		}
 
 		rpcsLog.Infof("Renewing TLS certificates...")
@@ -880,7 +881,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 			cfg.TLSDisableAutofill, cert.DefaultAutogenValidity,
 		)
 		if err != nil {
-			return nil, nil, "", nil, err
+			return nil, nil, nil, nil, err
 		}
 		rpcsLog.Infof("Done renewing TLS certificates")
 
@@ -889,7 +890,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 			cfg.TLSCertPath, cfg.TLSKeyPath,
 		)
 		if err != nil {
-			return nil, nil, "", nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 
@@ -897,20 +898,7 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 
 	restCreds, err := credentials.NewClientTLSFromFile(cfg.TLSCertPath, "")
 	if err != nil {
-		return nil, nil, "", nil, err
-	}
-
-	restProxyDest := cfg.RPCListeners[0].String()
-	switch {
-	case strings.Contains(restProxyDest, "0.0.0.0"):
-		restProxyDest = strings.Replace(
-			restProxyDest, "0.0.0.0", "127.0.0.1", 1,
-		)
-
-	case strings.Contains(restProxyDest, "[::]"):
-		restProxyDest = strings.Replace(
-			restProxyDest, "[::]", "[::1]", 1,
-		)
+		return nil, nil, nil, nil, err
 	}
 
 	// If Let's Encrypt is enabled, instantiate autocert to request/renew
@@ -970,7 +958,28 @@ func getTLSConfig(cfg *Config) (*tls.Config, *credentials.TransportCredentials,
 		tlsCfg.GetCertificate = getCertificate
 	}
 
-	return tlsCfg, &restCreds, restProxyDest, cleanUp, nil
+	serverCreds := credentials.NewTLS(tlsCfg)
+	serverOpts := []grpc.ServerOption{grpc.Creds(serverCreds)}
+
+	// For our REST dial options, we'll still use TLS, but also increase
+	// the max message size that we'll decode to allow clients to hit
+	// endpoints which return more data such as the DescribeGraph call.
+	// We set this to 200MiB atm. Should be the same value as maxMsgRecvSize
+	// in cmd/lncli/main.go.
+	restDialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(restCreds),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(1 * 1024 * 1024 * 200),
+		),
+	}
+
+	// Return a function closure that can be used to listen on a given
+	// address with the current TLS config.
+	restListen := func(addr net.Addr) (net.Listener, error) {
+		return lncfg.TLSListenOnAddress(addr, tlsCfg)
+	}
+
+	return serverOpts, restDialOpts, restListen, cleanUp, nil
 }
 
 // fileExists reports whether the named file or directory exists.
@@ -1103,7 +1112,7 @@ type WalletUnlockParams struct {
 // the user to this RPC server.
 func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	serverOpts []grpc.ServerOption, restDialOpts []grpc.DialOption,
-	restProxyDest string, tlsConf *tls.Config,
+	restProxyDest string, restListen func(net.Addr) (net.Listener, error),
 	getListeners rpcListeners, chanDB *channeldb.DB) (*WalletUnlockParams, func(), error) {
 
 	// The macaroonFiles are passed to the wallet unlocker so they can be
@@ -1192,7 +1201,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	srv := &http.Server{Handler: allowCORS(mux, cfg.RestCORS)}
 
 	for _, restEndpoint := range restEndpoints {
-		lis, err := lncfg.TLSListenOnAddress(restEndpoint, tlsConf)
+		lis, err := restListen(restEndpoint)
 		if err != nil {
 			ltndLog.Errorf("Password gRPC proxy unable to listen "+
 				"on %s", restEndpoint)
