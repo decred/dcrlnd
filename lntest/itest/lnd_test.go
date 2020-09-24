@@ -1476,7 +1476,7 @@ func channelCommitType(node *lntest.HarnessNode,
 }
 
 // assertChannelBalanceResp makes a ChannelBalance request and checks the
-// returned reponse matches the expected.
+// returned response matches the expected.
 func assertChannelBalanceResp(t *harnessTest,
 	node *lntest.HarnessNode, expected *lnrpc.ChannelBalanceResponse) {
 
