@@ -15,7 +15,7 @@ var (
 	testID                      = []byte("dummyId")
 	testLocation                = "dcrlnd"
 	testVersion                 = macaroon.LatestVersion
-	expectedTimeCaveatSubstring = "time-before " + fmt.Sprintf("%d", time.Now().Year())
+	expectedTimeCaveatSubstring = fmt.Sprintf("time-before %d", time.Now().Year())
 )
 
 func createDummyMacaroon(t *testing.T) *macaroon.Macaroon {
@@ -68,7 +68,7 @@ func TestTimeoutConstraint(t *testing.T) {
 	}
 
 	// Finally, check that the created caveat has an
-	// acceptable value
+	// acceptable value.
 	if !strings.HasPrefix(string(testMacaroon.Caveats()[0].Id),
 		expectedTimeCaveatSubstring) {
 		t.Fatalf("Added caveat '%s' does not meet the expectations!",
@@ -91,7 +91,7 @@ func TestIpLockConstraint(t *testing.T) {
 	}
 
 	// Finally, check that the created caveat has an
-	// acceptable value
+	// acceptable value.
 	if string(testMacaroon.Caveats()[0].Id) != "ipaddr 127.0.0.1" {
 		t.Fatalf("Added caveat '%s' does not meet the expectations!",
 			testMacaroon.Caveats()[0].Id)
