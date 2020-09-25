@@ -280,7 +280,7 @@ mnemonicCheck:
 			lookAhead, err := strconv.Atoi(answer)
 			if err != nil {
 				fmt.Printf("Unable to parse recovery "+
-					"window: %v", err)
+					"window: %v\n", err)
 				continue
 			}
 
@@ -324,6 +324,7 @@ mnemonicCheck:
 
 	fmt.Println("!!!YOU MUST WRITE DOWN THIS SEED TO BE ABLE TO " +
 		"RESTORE THE WALLET!!!")
+	fmt.Println()
 
 	fmt.Println("---------------BEGIN LND CIPHER SEED---------------")
 
