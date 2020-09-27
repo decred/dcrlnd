@@ -201,8 +201,8 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	}()
 
 	// Show version at startup.
-	ltndLog.Infof("Version: %s, build=%s, logging=%s",
-		build.Version(), build.Deployment, build.LoggingType)
+	ltndLog.Infof("Version: %s, build=%s, logging=%s, debuglevel=%s",
+		build.Version(), build.Deployment, build.LoggingType, cfg.DebugLevel)
 
 	// Read IPC messages from the read end of a pipe created and passed by the
 	// parent process, if any.  When this pipe is closed, shutdown is
