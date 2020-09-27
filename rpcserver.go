@@ -1070,14 +1070,15 @@ func allowCORS(handler http.Handler, origins []string) http.Handler {
 // more addresses specified in the passed payment map. The payment map maps an
 // address to a specified output value to be sent to that address.
 func (r *rpcServer) sendCoinsOnChain(paymentMap map[string]int64,
-	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*chainhash.Hash, error) {
+	feeRate chainfee.AtomPerKByte, minConf int32,
+	label, fromAccount string) (*chainhash.Hash, error) {
 
 	outputs, err := addrPairsToOutputs(paymentMap, r.cfg.ActiveNetParams.Params)
 	if err != nil {
 		return nil, err
 	}
 
-	tx, err := r.server.cc.wallet.SendOutputs(outputs, feeRate, label, fromAccount)
+	tx, err := r.server.cc.wallet.SendOutputs(outputs, feeRate, minConf, label, fromAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -1208,8 +1209,16 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 		return nil, err
 	}
 
-	rpcsLog.Infof("[sendcoins] addr=%v, amt=%v, atom/kb=%v, sweep_all=%v",
-		in.Addr, dcrutil.Amount(in.Amount), int64(feePerKB),
+	// Then, we'll extract the minimum number of confirmations that each
+	// output we use to fund the transaction should satisfy.
+	minConfs, err := lnrpc.ExtractMinConfs(in.MinConfs, in.SpendUnconfirmed)
+	if err != nil {
+		return nil, err
+	}
+
+	rpcsLog.Infof("[sendcoins] addr=%v, amt=%v, atom/kb=%v, min_confs=%v, "+
+		"sweep_all=%v",
+		in.Addr, dcrutil.Amount(in.Amount), int64(feePerKB), minConfs,
 		in.SendAll)
 
 	// Decode the address receiving the coins, we need to check whether the
@@ -1295,7 +1304,7 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 		paymentMap := map[string]int64{targetAddr.String(): in.Amount}
 		err := wallet.WithCoinSelectLock(func() error {
 			newTXID, err := r.sendCoinsOnChain(
-				paymentMap, feePerKB, label, in.Account,
+				paymentMap, feePerKB, minConfs, label, in.Account,
 			)
 			if err != nil {
 				return err
@@ -1333,6 +1342,13 @@ func (r *rpcServer) SendMany(ctx context.Context,
 		return nil, err
 	}
 
+	// Then, we'll extract the minimum number of confirmations that each
+	// output we use to fund the transaction should satisfy.
+	minConfs, err := lnrpc.ExtractMinConfs(in.MinConfs, in.SpendUnconfirmed)
+	if err != nil {
+		return nil, err
+	}
+
 	label, err := labels.ValidateAPI(in.Label)
 	if err != nil {
 		return nil, err
@@ -1350,7 +1366,7 @@ func (r *rpcServer) SendMany(ctx context.Context,
 	err = wallet.WithCoinSelectLock(func() error {
 
 		sendManyTXID, err := r.sendCoinsOnChain(
-			in.AddrToAmount, feePerKB, label, in.Account,
+			in.AddrToAmount, feePerKB, minConfs, label, in.Account,
 		)
 		if err != nil {
 			return err
@@ -1603,42 +1619,6 @@ func (r *rpcServer) DisconnectPeer(ctx context.Context,
 	return &lnrpc.DisconnectPeerResponse{}, nil
 }
 
-// extractOpenChannelMinConfs extracts the minimum number of confirmations from
-// the OpenChannelRequest that each output used to fund the channel's funding
-// transaction should satisfy.
-func extractOpenChannelMinConfs(in *lnrpc.OpenChannelRequest) (int32, error) {
-	switch {
-	// Ensure that the MinConfs parameter is non-negative.
-	case in.MinConfs < 0:
-		return 0, errors.New("minimum number of confirmations must " +
-			"be a non-negative number")
-
-	// The funding transaction should not be funded with unconfirmed outputs
-	// unless explicitly specified by SpendUnconfirmed. We do this to
-	// provide sane defaults to the OpenChannel RPC, as otherwise, if the
-	// MinConfs field isn't explicitly set by the caller, we'll use
-	// unconfirmed outputs without the caller being aware.
-	case in.MinConfs == 0 && !in.SpendUnconfirmed:
-		return 1, nil
-
-	// In the event that the caller set MinConfs > 0 and SpendUnconfirmed to
-	// true, we'll return an error to indicate the conflict.
-	case in.MinConfs > 0 && in.SpendUnconfirmed:
-		return 0, errors.New("SpendUnconfirmed set to true with " +
-			"MinConfs > 0")
-
-	// The funding transaction of the new channel to be created can be
-	// funded with unconfirmed outputs.
-	case in.SpendUnconfirmed:
-		return 0, nil
-
-	// If none of the above cases matched, we'll return the value set
-	// explicitly by the caller.
-	default:
-		return in.MinConfs, nil
-	}
-}
-
 // newFundingShimAssembler returns a new fully populated
 // chanfunding.CannedAssembler using a FundingShim obtained from an RPC caller.
 func newFundingShimAssembler(chanPointShim *lnrpc.ChanPointShim, initiator bool,
@@ -1848,7 +1828,7 @@ func (r *rpcServer) parseOpenChannelReq(in *lnrpc.OpenChannelRequest,
 	// Then, we'll extract the minimum number of confirmations that each
 	// output we use to fund the channel's funding transaction should
 	// satisfy.
-	minConfs, err := extractOpenChannelMinConfs(in)
+	minConfs, err := lnrpc.ExtractMinConfs(in.MinConfs, in.SpendUnconfirmed)
 	if err != nil {
 		return nil, err
 	}

@@ -75,6 +75,11 @@ var ErrNoOutputs = errors.New("no outputs")
 // LockID is equivalent to btcsuite/btcwallet/wtxmgr LockID type.
 type LockID [32]byte
 
+// ErrInvalidMinconf is returned if we try to create a transaction with
+// invalid minconf value.
+var ErrInvalidMinconf = errors.New("minimum number of confirmations must " +
+	"be a non-negative number")
+
 // Utxo is an unspent output denoted by its outpoint, and output value of the
 // original output.
 type Utxo struct {
@@ -227,7 +232,7 @@ type WalletController interface {
 	//
 	// NOTE: This method requires the global coin selection lock to be held.
 	SendOutputs(outputs []*wire.TxOut,
-		feeRate chainfee.AtomPerKByte, label string,
+		feeRate chainfee.AtomPerKByte, minconf int32, label string,
 		fromAccount string) (*wire.MsgTx, error)
 
 	// CreateSimpleTx creates a Bitcoin transaction paying to the specified

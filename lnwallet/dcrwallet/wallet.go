@@ -311,7 +311,7 @@ func (b *DcrWallet) IsOurAddress(a stdaddr.Address) bool {
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*wire.MsgTx, error) {
+	feeRate chainfee.AtomPerKByte, minConfs int32, label, fromAccount string) (*wire.MsgTx, error) {
 
 	// Sanity check outputs.
 	if len(outputs) < 1 {
@@ -336,7 +336,7 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 	defer b.wallet.SetRelayFee(oldRelayFee)
 
 	txHash, err := b.wallet.SendOutputs(context.TODO(), outputs,
-		acctNb, acctNb, 1)
+		acctNb, acctNb, minConfs)
 	if err != nil {
 		return nil, err
 	}

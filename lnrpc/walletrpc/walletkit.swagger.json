@@ -1212,6 +1212,15 @@
         "account": {
           "type": "string",
           "description": "The account from which to send funds. If empty, funds are sent from the\ndefault account."
+        },
+        "min_confs": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The minimum number of confirmations each one of your outputs used for\nthe transaction must satisfy."
+        },
+        "spend_unconfirmed": {
+          "type": "boolean",
+          "description": "Whether unconfirmed outputs should be used as inputs for the transaction."
         }
       }
     },

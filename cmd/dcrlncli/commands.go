@@ -35,6 +35,10 @@ import (
 
 const defaultRecoveryWindow int32 = 2500
 
+const (
+	defaultUtxoMinConf = 1
+)
+
 func printJSON(resp interface{}) {
 	b, err := json.Marshal(resp)
 	if err != nil {
@@ -248,6 +252,13 @@ var sendCoinsCommand = cli.Command{
 				"atoms/byte that should be used when crafting " +
 				"the transaction (optional)",
 		},
+		cli.Uint64Flag{
+			Name: "min_confs",
+			Usage: "(optional) the minimum number of confirmations " +
+				"each one of your outputs used for the transaction " +
+				"must satisfy",
+			Value: defaultUtxoMinConf,
+		},
 		txLabelFlag,
 	},
 	Action: actionDecorator(sendCoins),
@@ -302,13 +313,16 @@ func sendCoins(ctx *cli.Context) error {
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
+	minConfs := int32(ctx.Uint64("min_confs"))
 	req := &lnrpc.SendCoinsRequest{
-		Addr:         addr,
-		Amount:       amt,
-		TargetConf:   int32(ctx.Int64("conf_target")),
-		AtomsPerByte: ctx.Int64("atoms_per_byte"),
-		SendAll:      ctx.Bool("sweepall"),
-		Label:        ctx.String(txLabelFlag.Name),
+		Addr:             addr,
+		Amount:           amt,
+		TargetConf:       int32(ctx.Int64("conf_target")),
+		AtomsPerByte:     ctx.Int64("atoms_per_byte"),
+		SendAll:          ctx.Bool("sweepall"),
+		Label:            ctx.String(txLabelFlag.Name),
+		MinConfs:         minConfs,
+		SpendUnconfirmed: minConfs == 0,
 	}
 	txid, err := client.SendCoins(ctxb, req)
 	if err != nil {
@@ -464,6 +478,13 @@ var sendManyCommand = cli.Command{
 			Usage: "Manual fee expressed in atom/byte that should be " +
 				"used when crafting the transaction (optional)",
 		},
+		cli.Uint64Flag{
+			Name: "min_confs",
+			Usage: "(optional) the minimum number of confirmations " +
+				"each one of your outputs used for the transaction " +
+				"must satisfy",
+			Value: defaultUtxoMinConf,
+		},
 		txLabelFlag,
 	},
 	Action: actionDecorator(sendMany),
@@ -486,11 +507,14 @@ func sendMany(ctx *cli.Context) error {
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
+	minConfs := int32(ctx.Uint64("min_confs"))
 	txid, err := client.SendMany(ctxb, &lnrpc.SendManyRequest{
-		AddrToAmount: amountToAddr,
-		TargetConf:   int32(ctx.Int64("conf_target")),
-		AtomsPerByte: ctx.Int64("atoms_per_byte"),
-		Label:        ctx.String(txLabelFlag.Name),
+		AddrToAmount:     amountToAddr,
+		TargetConf:       int32(ctx.Int64("conf_target")),
+		AtomsPerByte:     ctx.Int64("atoms_per_byte"),
+		Label:            ctx.String(txLabelFlag.Name),
+		MinConfs:         minConfs,
+		SpendUnconfirmed: minConfs == 0,
 	})
 	if err != nil {
 		return err
@@ -1824,7 +1848,7 @@ var listChainTxnsCommand = cli.Command{
 	To get all transactions until the chain tip, including unconfirmed
 	transactions (identifiable with BlockHeight=0), set end_height to -1.
 	By default, this call will get all transactions our wallet was involved
-	in, including unconfirmed transactions. 
+	in, including unconfirmed transactions.
 `,
 	Action: actionDecorator(listChainTxns),
 }

@@ -326,7 +326,7 @@ func (b *DcrWallet) IsOurAddress(a stdaddr.Address) bool {
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*wire.MsgTx, error) {
+	feeRate chainfee.AtomPerKByte, minConfs int32, label, fromAccount string) (*wire.MsgTx, error) {
 
 	ctxb := context.Background()
 
@@ -351,9 +351,10 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 		}
 	}
 	req := &pb.ConstructTransactionRequest{
-		SourceAccount:    acctNb,
-		FeePerKb:         int32(feeRate),
-		NonChangeOutputs: reqOutputs,
+		SourceAccount:         acctNb,
+		FeePerKb:              int32(feeRate),
+		NonChangeOutputs:      reqOutputs,
+		RequiredConfirmations: minConfs,
 	}
 
 	resp, err := b.wallet.ConstructTransaction(ctxb, req)

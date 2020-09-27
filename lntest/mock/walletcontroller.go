@@ -96,7 +96,7 @@ func (w *WalletController) ImportPublicKey(pubKey *secp256k1.PublicKey) error {
 
 // SendOutputs currently returns dummy values.
 func (w *WalletController) SendOutputs(outputs []*wire.TxOut,
-	_ chainfee.AtomPerKByte, _, _ string) (*wire.MsgTx, error) {
+	_ chainfee.AtomPerKByte, _ int32, _, _ string) (*wire.MsgTx, error) {
 
 	return nil, nil
 }
