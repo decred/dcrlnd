@@ -33,7 +33,6 @@ import (
 	"github.com/decred/dcrlnd"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
-	"github.com/decred/dcrlnd/internal/testutils"
 	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
@@ -2844,22 +2843,18 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Set up a new miner that we can use to cause a reorg.
-	args := []string{
-		"--rejectnonstd",
-		"--txindex",
-		"--nobanning",
-	}
-	tempMiner, err := testutils.NewSetupRPCTest(
-		t.t, 5, harnessNetParams, &rpcclient.NotificationHandlers{}, args,
-		false, 0,
+
+	tempLogDir := "./.tempminerlogs"
+	logFilename := "output-open_channel_reorg-temp_miner.log"
+	tempMiner, tempMinerCleanUp, err := lntest.NewMiner(
+		t.t, tempLogDir, logFilename,
+		harnessNetParams, &rpcclient.NotificationHandlers{},
 	)
-	if err != nil {
-		t.Fatalf("unable to create mining node: %v", err)
-	}
+	require.NoError(t.t, err, "failed to create temp miner")
 	defer func() {
 		require.NoError(
-			t.t, tempMiner.TearDown(),
-			"failed to tear down temp miner",
+			t.t, tempMinerCleanUp(),
+			"failed to clean up temp miner",
 		)
 	}()
 
@@ -15692,47 +15687,19 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	//
 	// We will also connect it to our chain backend.
 	minerLogDir := "./.minerlogs"
-	args := []string{
-		"--rejectnonstd",
-		"--txindex",
-		"--debuglevel=debug",
-		"--logdir=" + minerLogDir,
-		"--maxorphantx=0",
-		"--nobanning",
-		"--rpcmaxclients=100",
-		"--rpcmaxwebsockets=100",
-		"--rpcmaxconcurrentreqs=100",
-		"--logsize=100M",
-		"--maxsameip=200",
-	}
 	handlers := &rpcclient.NotificationHandlers{
 		OnTxAccepted: func(hash *chainhash.Hash, amt dcrutil.Amount) {
 			lndHarness.OnTxAccepted(hash)
 		},
 	}
-	miner, err := testutils.NewSetupRPCTest(t, 5, harnessNetParams, handlers,
-		args, false, 0)
-	if err != nil {
-		ht.Fatalf("unable to create mining node: %v", err)
-	}
-	defer func() {
-		require.NoError(
-			t, miner.TearDown(), "failed to tear down miner",
-		)
 
-		// After shutting down the miner, we'll make a copy of the log
-		// file before deleting the temporary log dir.
-		logFile := fmt.Sprintf(
-			"%s/%s/dcrd.log", minerLogDir, harnessNetParams.Name,
-		)
-		err := lntest.CopyFile("./output_dcrd_miner.log", logFile)
-		if err != nil {
-			fmt.Printf("unable to copy file: %v\n", err)
-		}
-		if err = os.RemoveAll(minerLogDir); err != nil {
-			fmt.Printf("Cannot remove dir %s: %v\n",
-				minerLogDir, err)
-		}
+	miner, minerCleanUp, err := lntest.NewMiner(
+		t, minerLogDir, "output_dcrd_miner.log",
+		harnessNetParams, handlers,
+	)
+	require.NoError(t, err, "failed to create new miner")
+	defer func() {
+		require.NoError(t, minerCleanUp(), "failed to clean up miner")
 	}()
 
 	if err := miner.Node.NotifyNewTransactions(context.Background(), false); err != nil {
