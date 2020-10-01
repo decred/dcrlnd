@@ -17,8 +17,10 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/internal/psbt"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
+	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
 
 // FetchInputInfo queries for the WalletController's knowledge of the passed
@@ -281,6 +283,18 @@ func (b *DcrWallet) SignMessage(pubKey *secp256k1.PublicKey,
 	sign := ecdsa.Sign(privKey, msgDigest)
 
 	return sign, nil
+}
+
+// FundPsbt currently does nothing.
+func (b *DcrWallet) FundPsbt(_ *psbt.Packet,
+	_ chainfee.AtomPerKByte) (int32, error) {
+
+	return 0, fmt.Errorf("FundPSBT not supported")
+}
+
+// FinalizePsbt currently does nothing.
+func (b *DcrWallet) FinalizePsbt(_ *psbt.Packet) error {
+	return fmt.Errorf("FinalizePsbt not supported")
 }
 
 // A compile time check to ensure that DcrWallet implements the Messageinput.Signer

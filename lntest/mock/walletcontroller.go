@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 
+	"github.com/decred/dcrlnd/internal/psbt"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
@@ -156,6 +157,18 @@ func (w *WalletController) LeaseOutput(lnwallet.LockID, wire.OutPoint) (time.Tim
 
 // ReleaseOutput currently does nothing.
 func (w *WalletController) ReleaseOutput(lnwallet.LockID, wire.OutPoint) error {
+	return nil
+}
+
+// FundPsbt currently does nothing.
+func (w *WalletController) FundPsbt(_ *psbt.Packet,
+	_ chainfee.AtomPerKByte) (int32, error) {
+
+	return 0, nil
+}
+
+// FinalizePsbt currently does nothing.
+func (w *WalletController) FinalizePsbt(_ *psbt.Packet) error {
 	return nil
 }
 
