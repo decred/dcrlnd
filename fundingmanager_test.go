@@ -727,7 +727,7 @@ func fundChannel(t *testing.T, alice, bob *testNode, localFundingAmt,
 	}
 
 	// Let Bob handle the init message.
-	bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 	// Bob should answer with an AcceptChannel message.
 	acceptChannelResponse := assertFundingMsgSent(
@@ -740,7 +740,7 @@ func fundChannel(t *testing.T, alice, bob *testNode, localFundingAmt,
 	assertNumPendingReservations(t, bob, alicePubKey, 1)
 
 	// Forward the response to Alice.
-	alice.fundingMgr.processFundingAccept(acceptChannelResponse, bob)
+	alice.fundingMgr.ProcessFundingMsg(acceptChannelResponse, bob)
 
 	// Alice responds with a FundingCreated message.
 	fundingCreated := assertFundingMsgSent(
@@ -748,7 +748,7 @@ func fundChannel(t *testing.T, alice, bob *testNode, localFundingAmt,
 	).(*lnwire.FundingCreated)
 
 	// Give the message to Bob.
-	bob.fundingMgr.processFundingCreated(fundingCreated, alice)
+	bob.fundingMgr.ProcessFundingMsg(fundingCreated, alice)
 
 	// Finally, Bob should send the FundingSigned message.
 	fundingSigned := assertFundingMsgSent(
@@ -756,7 +756,7 @@ func fundChannel(t *testing.T, alice, bob *testNode, localFundingAmt,
 	).(*lnwire.FundingSigned)
 
 	// Forward the signature to Alice.
-	alice.fundingMgr.processFundingSigned(fundingSigned, bob)
+	alice.fundingMgr.ProcessFundingMsg(fundingSigned, bob)
 
 	// After Alice processes the singleFundingSignComplete message, she will
 	// broadcast the funding transaction to the network. We expect to get a
@@ -1286,8 +1286,8 @@ func TestFundingManagerNormalWorkflow(t *testing.T) {
 	waitForOpenUpdate(t, updateChan)
 
 	// Exchange the fundingLocked messages.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -1414,8 +1414,8 @@ func TestFundingManagerRestartBehavior(t *testing.T) {
 	}
 
 	// Exchange the fundingLocked messages.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -1576,8 +1576,8 @@ func TestFundingManagerOfflinePeer(t *testing.T) {
 	waitForOpenUpdate(t, updateChan)
 
 	// Exchange the fundingLocked messages.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -1714,7 +1714,7 @@ func TestFundingManagerPeerTimeoutAfterFundingOpen(t *testing.T) {
 	assertNumPendingReservations(t, alice, bobPubKey, 1)
 
 	// Let Bob handle the init message.
-	bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 	// Bob should answer with an AcceptChannel.
 	assertFundingMsgSent(t, bob.msgChan, "AcceptChannel")
@@ -1785,7 +1785,7 @@ func TestFundingManagerPeerTimeoutAfterFundingAccept(t *testing.T) {
 	assertNumPendingReservations(t, alice, bobPubKey, 1)
 
 	// Let Bob handle the init message.
-	bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 	// Bob should answer with an AcceptChannel.
 	acceptChannelResponse := assertFundingMsgSent(
@@ -1796,7 +1796,7 @@ func TestFundingManagerPeerTimeoutAfterFundingAccept(t *testing.T) {
 	assertNumPendingReservations(t, bob, alicePubKey, 1)
 
 	// Forward the response to Alice.
-	alice.fundingMgr.processFundingAccept(acceptChannelResponse, bob)
+	alice.fundingMgr.ProcessFundingMsg(acceptChannelResponse, bob)
 
 	// Alice responds with a FundingCreated messages.
 	assertFundingMsgSent(t, alice.msgChan, "FundingCreated")
@@ -1984,9 +1984,9 @@ func TestFundingManagerReceiveFundingLockedTwice(t *testing.T) {
 	waitForOpenUpdate(t, updateChan)
 
 	// Send the fundingLocked message twice to Alice, and once to Bob.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -2003,7 +2003,7 @@ func TestFundingManagerReceiveFundingLockedTwice(t *testing.T) {
 
 	// Another fundingLocked should also be ignored, since Alice should
 	// have updated her database at this point.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
 	select {
 	case <-alice.newChannels:
 		t.Fatalf("alice sent new channel to peer a second time")
@@ -2092,8 +2092,8 @@ func TestFundingManagerRestartAfterChanAnn(t *testing.T) {
 	recreateAliceFundingManager(t, alice)
 
 	// Exchange the fundingLocked messages.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -2164,10 +2164,10 @@ func TestFundingManagerRestartAfterReceivingFundingLocked(t *testing.T) {
 	assertFundingLockedSent(t, alice, bob, fundingOutPoint)
 
 	// Let Alice immediately get the fundingLocked message.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
 
 	// Also let Bob get the fundingLocked message.
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -2256,8 +2256,8 @@ func TestFundingManagerPrivateChannel(t *testing.T) {
 	waitForOpenUpdate(t, updateChan)
 
 	// Exchange the fundingLocked messages.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -2374,8 +2374,8 @@ func TestFundingManagerPrivateRestart(t *testing.T) {
 	waitForOpenUpdate(t, updateChan)
 
 	// Exchange the fundingLocked messages.
-	alice.fundingMgr.processFundingLocked(fundingLockedBob, bob)
-	bob.fundingMgr.processFundingLocked(fundingLockedAlice, alice)
+	alice.fundingMgr.ProcessFundingMsg(fundingLockedBob, bob)
+	bob.fundingMgr.ProcessFundingMsg(fundingLockedAlice, alice)
 
 	// Check that they notify the breach arbiter and peer about the new
 	// channel.
@@ -2529,7 +2529,7 @@ func TestFundingManagerCustomChannelParameters(t *testing.T) {
 	chanID := openChannelReq.PendingChannelID
 
 	// Let Bob handle the init message.
-	bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 	// Bob should answer with an AcceptChannel message.
 	acceptChannelResponse := assertFundingMsgSent(
@@ -2557,7 +2557,7 @@ func TestFundingManagerCustomChannelParameters(t *testing.T) {
 	}
 
 	// Forward the response to Alice.
-	alice.fundingMgr.processFundingAccept(acceptChannelResponse, bob)
+	alice.fundingMgr.ProcessFundingMsg(acceptChannelResponse, bob)
 
 	// Alice responds with a FundingCreated message.
 	fundingCreated := assertFundingMsgSent(
@@ -2668,7 +2668,7 @@ func TestFundingManagerCustomChannelParameters(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Give the message to Bob.
-	bob.fundingMgr.processFundingCreated(fundingCreated, alice)
+	bob.fundingMgr.ProcessFundingMsg(fundingCreated, alice)
 
 	// Finally, Bob should send the FundingSigned message.
 	fundingSigned := assertFundingMsgSent(
@@ -2676,7 +2676,7 @@ func TestFundingManagerCustomChannelParameters(t *testing.T) {
 	).(*lnwire.FundingSigned)
 
 	// Forward the signature to Alice.
-	alice.fundingMgr.processFundingSigned(fundingSigned, bob)
+	alice.fundingMgr.ProcessFundingMsg(fundingSigned, bob)
 
 	// After Alice processes the singleFundingSignComplete message, she will
 	// broadcast the funding transaction to the network. We expect to get a
@@ -2802,7 +2802,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 		}
 
 		// Let Bob handle the init message.
-		bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+		bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 		// Bob should answer with an AcceptChannel message for the
 		// first maxPending channels.
@@ -2825,7 +2825,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 	// Forward the responses to Alice.
 	var signs []*lnwire.FundingSigned
 	for _, accept := range accepts {
-		alice.fundingMgr.processFundingAccept(accept, bob)
+		alice.fundingMgr.ProcessFundingMsg(accept, bob)
 
 		// Alice responds with a FundingCreated message.
 		fundingCreated := assertFundingMsgSent(
@@ -2833,7 +2833,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 		).(*lnwire.FundingCreated)
 
 		// Give the message to Bob.
-		bob.fundingMgr.processFundingCreated(fundingCreated, alice)
+		bob.fundingMgr.ProcessFundingMsg(fundingCreated, alice)
 
 		// Finally, Bob should send the FundingSigned message.
 		fundingSigned := assertFundingMsgSent(
@@ -2845,7 +2845,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 
 	// Sending another init request from Alice should still make Bob
 	// respond with an error.
-	bob.fundingMgr.processFundingOpen(lastOpen, alice)
+	bob.fundingMgr.ProcessFundingMsg(lastOpen, alice)
 	_ = assertFundingMsgSent(
 		t, bob.msgChan, "Error",
 	).(*lnwire.Error)
@@ -2853,7 +2853,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 	// Give the FundingSigned messages to Alice.
 	var txs []*wire.MsgTx
 	for i, sign := range signs {
-		alice.fundingMgr.processFundingSigned(sign, bob)
+		alice.fundingMgr.ProcessFundingMsg(sign, bob)
 
 		// Alice should send a status update for each channel, and
 		// publish a funding tx to the network.
@@ -2880,7 +2880,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 	// Sending another init request from Alice should still make Bob
 	// respond with an error, since the funding transactions are not
 	// confirmed yet,
-	bob.fundingMgr.processFundingOpen(lastOpen, alice)
+	bob.fundingMgr.ProcessFundingMsg(lastOpen, alice)
 	_ = assertFundingMsgSent(
 		t, bob.msgChan, "Error",
 	).(*lnwire.Error)
@@ -2902,7 +2902,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 	}
 
 	// Now opening another channel should work.
-	bob.fundingMgr.processFundingOpen(lastOpen, alice)
+	bob.fundingMgr.ProcessFundingMsg(lastOpen, alice)
 
 	// Bob should answer with an AcceptChannel message.
 	_ = assertFundingMsgSent(
@@ -2961,7 +2961,7 @@ func TestFundingManagerRejectPush(t *testing.T) {
 	}
 
 	// Let Bob handle the init message.
-	bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 	// Assert Bob responded with an ErrNonZeroPushAmount error.
 	err := assertFundingMsgSent(t, bob.msgChan, "Error").(*lnwire.Error)
@@ -3018,7 +3018,7 @@ func TestFundingManagerMaxConfs(t *testing.T) {
 	}
 
 	// Let Bob handle the init message.
-	bob.fundingMgr.processFundingOpen(openChannelReq, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChannelReq, alice)
 
 	// Bob should answer with an AcceptChannel message.
 	acceptChannelResponse := assertFundingMsgSent(
@@ -3029,7 +3029,7 @@ func TestFundingManagerMaxConfs(t *testing.T) {
 	// MinAcceptDepth Alice won't be willing to accept.
 	acceptChannelResponse.MinAcceptDepth = chainntnfs.MaxNumConfs + 1
 
-	alice.fundingMgr.processFundingAccept(acceptChannelResponse, bob)
+	alice.fundingMgr.ProcessFundingMsg(acceptChannelResponse, bob)
 
 	// Alice should respond back with an error indicating MinAcceptDepth is
 	// too large.
@@ -3281,7 +3281,7 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 	// an error rejecting the channel that exceeds size limit.
 	alice.fundingMgr.initFundingWorkflow(bob, initReq)
 	openChanMsg := expectOpenChannelMsg(t, alice.msgChan)
-	bob.fundingMgr.processFundingOpen(openChanMsg, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChanMsg, alice)
 	assertErrorSent(t, bob.msgChan)
 
 	// Create a set of funding managers that will reject wumbo
@@ -3296,7 +3296,7 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 	// We expect Bob to respond with an Accept channel message.
 	alice.fundingMgr.initFundingWorkflow(bob, initReq)
 	openChanMsg = expectOpenChannelMsg(t, alice.msgChan)
-	bob.fundingMgr.processFundingOpen(openChanMsg, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChanMsg, alice)
 	assertFundingMsgSent(t, bob.msgChan, "AcceptChannel")
 
 	// Verify that wumbo accepting funding managers will respect --maxchansize
@@ -3316,7 +3316,7 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 	// an error rejecting the channel that exceeds size limit.
 	alice.fundingMgr.initFundingWorkflow(bob, initReq)
 	openChanMsg = expectOpenChannelMsg(t, alice.msgChan)
-	bob.fundingMgr.processFundingOpen(openChanMsg, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChanMsg, alice)
 	assertErrorSent(t, bob.msgChan)
 }
 
@@ -3349,7 +3349,7 @@ func TestWumboChannelConfig(t *testing.T) {
 	// We expect Bob to respond with an Accept channel message.
 	alice.fundingMgr.initFundingWorkflow(bob, initReq)
 	openChanMsg := expectOpenChannelMsg(t, alice.msgChan)
-	bob.fundingMgr.processFundingOpen(openChanMsg, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChanMsg, alice)
 	assertFundingMsgSent(t, bob.msgChan, "AcceptChannel")
 
 	// We'll now attempt to create a channel above the wumbo mark, which
@@ -3360,7 +3360,7 @@ func TestWumboChannelConfig(t *testing.T) {
 	// an error rejecting the channel.
 	alice.fundingMgr.initFundingWorkflow(bob, initReq)
 	openChanMsg = expectOpenChannelMsg(t, alice.msgChan)
-	bob.fundingMgr.processFundingOpen(openChanMsg, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChanMsg, alice)
 	assertErrorSent(t, bob.msgChan)
 
 	// Next, we'll re-create the funding managers, but this time allowing
@@ -3375,6 +3375,6 @@ func TestWumboChannelConfig(t *testing.T) {
 	// issues.
 	alice.fundingMgr.initFundingWorkflow(bob, initReq)
 	openChanMsg = expectOpenChannelMsg(t, alice.msgChan)
-	bob.fundingMgr.processFundingOpen(openChanMsg, alice)
+	bob.fundingMgr.ProcessFundingMsg(openChanMsg, alice)
 	assertFundingMsgSent(t, bob.msgChan, "AcceptChannel")
 }
