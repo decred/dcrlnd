@@ -286,6 +286,11 @@ http:
       get: "/v2/wallet/accounts"
     - selector: walletrpc.WalletKit.ImportAccount
       post: "/v2/wallet/accounts/import"
+    - selector: walletrpc.WalletKit.FundPsbt
+      post: "/v2/wallet/psbt/fund"
+      body: "*"
+    - selector: walletrpc.WalletKit.FinalizePsbt
+      post: "/v2/wallet/psbt/finalize"
       body: "*"
 
     # watchtowerrpc/watchtower.proto
