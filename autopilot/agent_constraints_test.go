@@ -49,16 +49,16 @@ func TestConstraintsChannelBudget(t *testing.T) {
 		{
 			[]LocalChannel{
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(prand.Int31()),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(prand.Int31()),
 				},
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(prand.Int31()),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(prand.Int31()),
 				},
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(prand.Int31()),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(prand.Int31()),
 				},
 			},
 			dcrutil.Amount(dcrutil.AtomsPerCoin * 10),
@@ -72,12 +72,12 @@ func TestConstraintsChannelBudget(t *testing.T) {
 		{
 			[]LocalChannel{
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin),
 				},
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin),
 				},
 			},
 			dcrutil.Amount(dcrutil.AtomsPerCoin * 2),
@@ -95,8 +95,8 @@ func TestConstraintsChannelBudget(t *testing.T) {
 		{
 			[]LocalChannel{
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin),
 				},
 			},
 			dcrutil.Amount(dcrutil.AtomsPerCoin * 9),
@@ -115,12 +115,12 @@ func TestConstraintsChannelBudget(t *testing.T) {
 		{
 			[]LocalChannel{
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin),
 				},
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin * 3),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin * 3),
 				},
 			},
 			dcrutil.Amount(dcrutil.AtomsPerCoin * 10),
@@ -134,12 +134,12 @@ func TestConstraintsChannelBudget(t *testing.T) {
 		{
 			[]LocalChannel{
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin),
 				},
 				{
-					ChanID:   randChanID(),
-					Capacity: dcrutil.Amount(dcrutil.AtomsPerCoin),
+					ChanID:  randChanID(),
+					Balance: dcrutil.Amount(dcrutil.AtomsPerCoin),
 				},
 			},
 			dcrutil.Amount(dcrutil.AtomsPerCoin),
