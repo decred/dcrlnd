@@ -1,0 +1,954 @@
+Merged PR #	Skipped PR #	Tag	Comment
+2454			
+2445			
+2289			
+2430			
+2452			
+2431			
+2446			
+2462			
+2275			
+2397			bugfix for fee rate
+2471			readme fixes
+2198			add sendall coins to rpc
+2463			refactor precond
+2466			docker stuff
+2473			new field in grpc
+2439			watchtower precond
+2448			watchtower proper
+2479			
+	1621		ignorada (already have lint)
+2320			mais watchtower
+2486			refactoring
+	2402		ignorada (docs)
+2494			make bugfix
+2503			watchtower bugfix
+	2499		ignorada (docs)
+2504			release script
+2314			mudanças no sistema de chainntfs
+2247			bugfix grpc server
+2460			new field (maxHtlc) in BOLT 7
+2405			autopilot precond refactor
+	2532		ignorada (deps)
+2075			bugfix for listing invoices
+2350			autopilot heuristics
+2370			initial chanbackup work
+2536			typo bugfix
+2547			docs 
+2543			typo bugfix
+2538			precond bugfix
+2505			make coverage
+2561			Bugfix compat with other impls
+2554			spec update
+2371			precond chanbackup (channeldb)
+2558			Bugfix
+2481			refactor into input package
+2493			bugfix
+2531			doco
+2495			stylistic improv
+2513			watchtower feature
+2514			watchtower improv
+2500			only connect to DLP-enabled hosts
+2570			bugfix
+2571			bugfix
+2496			stylistic improv
+2563			bugfix
+2385			memory perf improv
+1875			improv list channels
+2356			new feature (invoices subserver)
+2407			improv
+2515			improv after refactor
+2568			make
+2477			refactor
+2583			bugfix
+2580			trivial import fixes
+2584			bugfix
+2564			refactor
+2550			autopilot bugfix
+2521			new feature and deprecation
+	2586		ignorada (neutrino)
+1988			new feature subscribe to chan updates
+2516			watchtower stuff
+2457			new feature cancel invoices
+5181			doco
+	2589		ignorada (neutrino)
+2601			bugfix
+2591			log 
+	2517		ignorada (neutrino)
+2587			travis/make
+2604			watchtower refactor
+2605			watchttower
+2606			watchtower bugfix
+2572			new feature (filter)
+2630			typo
+2556			new feature (list unspent utxos)
+2603			bugfix
+	2624		ignorada (litcoin)
+2615			watchtower (protocol change)
+	2631		ignorada (neutrino)
+2639			cleanup old code
+	2637		ignorada (deps)
+2549			bugfix
+2212			autopilot refactor
+2602			modularize queue/ticker (parcial)
+2411			improv netann
+2419			improv perf and dos prevention
+1595			improv reliability
+2651			bugfix
+2083			new feature router subserver
+	2679		ignorada (lint)
+2364			typo
+	2656		ignorada (neutrino)
+2610			itest fixes
+2501			perfm improvement
+	2672		ignorada (doc install)
+2474			improv memory 
+2434			new feature (max htlc)
+2707			bugfix
+	2703		ignorada (doco)
+	2711		ignorada (doco)
+2437			new feature (max htlc)
+2713			logging
+2732			bugfix
+2702			bugfix
+2661			new feature (rpc new addr)
+2690			network perf improv
+2565			refactor
+2739			make
+2746			bugfix
+	2745		ignorada (make/btcd)
+2749			serious bugfix. Could cause publishing old state
+2680			feature (pwd length check)
+2497			deprecating feature for multiple routes
+	2768		ignorada (deps)
+2671			error detection
+2633			autopilot improv
+2766			bugfix
+2022			new feature (hodl invoices)
+2490			tor on whonix
+2618			watchtower client
+1228			new feature (estimate fee)
+2736			config default workers
+2691			bugfix
+	2705		ignorada (travis)
+2800			refactor
+2779			watchtotower feature future proofing
+	2804		ignorada (deps)
+	2790		ignorada (readme)
+2781			routerrpc fix
+2765			Watchtower + breacharbiter integration
+2794			autopilot refactor
+2590			bugfix
+2744			bugfix
+2773			refactor
+	2058		ignorada (connection stuff already fixed)
+2819			improv (write timeout)
+2806			logs
+	2828		ignorada (Docs)
+	2831		ignorada (docs)
+2640			new feature (cltv limit in payments)
+2750			log 
+2824			bugfix
+2842			improv
+2759			constant change
+2797			autopilot improv
+	2843		ignorada (deps)
+2832			bugfix
+2777			improv
+2845			log 
+2846			test nits
+2775			bugfix
+2313			static backups. Yay!
+2839			bugfix
+2870			bugfix
+2847			improv cache
+	2868		ignorada (bitcoind)
+2876			scp rpc endpoints
+2880			bugfix
+2740			improv bandwidth
+2882			bugfix
+2888			typo
+2889			typo
+2883			test bugfix
+2890			bugfix
+	2896		ignorada (lint)
+2892			api improv
+2893			bugfix
+	2841		ignorada (docs)
+2879			bugifix/reversion
+2885			improv
+	2830		ignorada (docs)
+2902			improv/reversion
+2915			bugfix
+	2910		ignorada (neutrino)
+2908			logging
+2905			improv
+	2898		ignorada (neutrino)
+2925			logging
+2921			bugfix
+2917			bugfix (privacy)
+2923			scb itest improv
+2918			bugfix
+2931			itest improv
+2929			bugfix/itest/improv
+	2928		ignorada (docker+docs)
+2933			recover funds docs
+2944			test bugfix
+2937			test bugfix
+2947			typo
+2939			bugfix
+2960			bugfix
+2959			err improv
+2900			fee for spv clients
+2871			bugfix
+2950			bugfix
+2953			remove stuff
+2014			bugfix
+	2978		ignorada (neutrino)
+	1865		ignorada (litecoin)
+	2987		ignorada (docs)
+2949			bugfix
+2922			improv
+	2989		ignorada (deps)
+2956			itest fixes
+3007			itest fixes
+3008			itest fixes
+1926			move main to other pkg
+2820			watchtotower feature future proofing
+2982			test improv
+	3013		ignorada (deps)
+3015			bugfix pra rodar itests
+2866			constant nit
+2932			refactor improv
+2783			watchtotower
+2924			bugfix and improv
+2958			refactor
+	2189		ignorada (litecoin)
+2916			improv
+2855			dlp bugfix
+3038			tor bugfix
+2887			improv
+3027			improv future proofing spec change
+	3045		ignorada (litecoin)
+3049			bugfix
+3050			bugfix
+3044			typos
+3065			bugfix
+3064			future proof feature
+2716			bugfix
+3054			refactor
+3019			bugfix
+3068			typos
+1662			new feature (sendToRoute)
+2913			refactor
+3063			refactor
+3090			bugfix
+	2974		ignorada (docker)
+3081			refactor
+3076			typos
+3093			bugfix
+3096			sample config
+3098			constant change
+2704			feature (multiple tls ips)
+	3108		ignorada (deps)
+3104			bugfix
+	3111		ignorada (deps)
+3082			protobuf upgrade
+2312			improv
+2308			improv
+3075			log 
+3103			bugfix/improv
+	3117		ignorada (dep)
+3106			watchtotower
+3101			make
+3095			bugfix
+	3114		ignorada (deps)
+3026			improv
+	1881		parcial
+2761			reliable payments
+	3125		ignorada (lint)
+3130			bugfix
+3129			bugfix
+2985			improv
+3087			refactor
+3113			bugfix
+2717			feature (show payreq in listing)
+990			bugfix
+	3154		ignorada (neutrino)
+3155			bugfix
+3161			bugfix
+2802			improv/feature probability routing
+3142			bugfix
+2973			improv
+	3163		ignorada (dep)
+2535			refactor
+2089			improv
+	3031		ignorada (docker)
+	3118		ignorada (neutrino)
+2762			improv reliable payments
+3170			cleanup old code
+3172			bugfix
+3174			feature (raw tx hex)
+3134			feature (prometheus logs)
+3145			refactor
+3140			feature (cpfp)
+3199			bugfix
+3201			bugfix
+3190			feature (payment status)
+3181			bugfix
+3173			feature (routing stats)
+3011			bugfix
+	3182		ignorada (desnecessária)
+	3141		ignorada (deps)
+3133			watchtotower
+	3203		ignorada (dep)
+3198			
+3187			feature
+3177			
+3139			bugfix
+3213			bugfix
+3195			bugfix
+3212			bugfix/improv
+3220			bugfix
+	3218		ignorada (btcwallet)
+3222			bugfix
+3225			constant change
+3226			log 
+3228			docs 
+3219			bugfix
+3211			bugfix
+3224			refactor
+3232			watchtotower
+	3231		ignorada (deps)
+	3250		ignorada (docker)
+3248			bugfix
+3227			bugfix
+3254			bugfix
+	3255		ignorada (deps)
+3253			feature
+3257			bugfix
+3259			docs 
+3262			bugfix
+3251			improv
+3229			bugfix
+3263			typo
+3271			typo
+3156			improv
+3178			refactor
+	3280		ignorada (btcwallet)
+3279			improv
+	3269		ignorada (docs)
+	3285		ignorada (docs)
+3246			improv
+1933			bugfix
+3245			bugfix
+3293			doc
+	3295		ignorada (docs)
+	3294		ignorada (deps)
+3238			new feature (chan reserve fields)
+3296			typo
+2366			new feature (last update time)
+3188			refactor
+3297			doc
+2957			itest fixup
+	3284		ignorada (dep)
+3306			bugfix
+2682			itest fixes
+2926			perfm improvement
+	3313		ignorada (neutrino)
+3314			improv
+3298			refactor
+3307			api improv
+3325			log 
+3316			improv
+3221			new feature (query mission control)
+3165			improv (use full funds to open channels)
+3197			improv (zombie channel pruning)
+3237			test improv
+3330			bugfix
+3143			improv
+3334			doc
+3303			improv
+	3338		ignorada (deps)
+	3337		ignorada (not wanted)
+3339			bugfix
+3342			constant change
+3345			bugfix
+	3344		ignorada (dep)
+	3346		ignorada (dep)
+	3347		ignorada (mod)
+3278			boltdb perf improv
+3356			doc
+3184			watchtower rpc server
+3348			constant change
+3359			perfm improvement
+3164			feature persistent mission control
+3374			log 
+	3377		ignorada (pgp key)
+3354			feature (peer notifier)
+3380			feature (log grpc errors)
+3061			perf/feature/rfc update
+3379			constant change
+3331			lint
+3383			bugfix
+	3384		ignorada (make)
+3355			feature (graph sync status %)
+3391			feature/spec compliance
+3389			bugfix
+1734			improv pruning behavior
+3387			more tlv
+3400			bugfix
+3402			refactor
+3256			improv
+	3419		ignorada (btcwallet)
+3366			improv
+3424			bugfix
+3406			log 
+3362			new feature (tlv in onion)
+3372			improv
+3059			bugfix
+2203			new feature (reject htlc config)
+3405			bugfix
+3432			spec update
+3427			bugfix
+3010			itest improv
+3434			itest improv
+	3456		ignorada (já tem)
+3455			err improv
+	3438		ignorada (já tem)
+	2088		ignorada (dcrd não tem trickle interval)
+3433			log and perf improv (autopilot)
+3390			track invoice htlcs (pre AMP)
+3441			spec update
+	1583		ignorada (bitcoind)
+3401			improv fee handling
+3466			refactor
+3449			improv
+3475			log fix
+3479			bugfix migration
+3282			mobile RPCs
+3468			refactor
+3483			bugfix migration
+3465			refactor
+3439			bugfix
+3486			remove stuff
+3484			logging
+3488			travis bugfix
+3490			log bugfix
+3467			new feature (disable rest api)
+	3487		ignorada (já tem)
+3491			log 
+3498			test bugfix
+	3501		ignorada (já tem)
+3502			error returns
+3503			lint
+3458			Go 1.13
+3485			(partial) only allow migrations from most recent version
+3497			log 
+3414			spec update
+3495			race condition
+3496			bugfix
+2084			improv
+	3521		ignorada (make)
+	3522		ignorada (neutrino)
+3512			bugfix
+3513			lint
+3515			build tag
+3517			log 
+3504			test bugfix
+3509			test bugfix
+3369			improv
+	3524		ignorada (já tem)
+3519			docker stuff
+3523			spec update
+2485			spec update
+3505			Bugfix / improv
+	3536		ignorada (deps)
+3440			new feature (custom route)
+	3538		ignorada (não aplica)
+3510			test feature (test rbf)
+3393			docker stuff
+	3543		ignorada (readme)
+3534			test refactor
+3039			feature (programmable accept channel)
+1910			refactor fundingmgr
+3540			docs 
+3535			refactor
+3016			improv (store close tx and republish)
+3480			bugfix
+	3358		ignorada (neutrino)
+3531			improv
+3554			improv
+3551			bugfix
+3481			docker stuff
+3566			bugfix
+	3567		ignorada (bitcoind)
+3562			bugfix
+3563			test improv
+3571			metrics
+3568			spec update
+3572			spell
+3545			reproducible builds
+3573			log 
+3561			refactor
+3575			disable
+3578			improv
+3577			build script
+3541			lntest 
+3360			bugfix
+3592			bugfix
+3588			docs 
+3597			não tinha aplicado as anteriores
+3595			bugfix
+	3593		ignorada (neutrino)
+	3603	v0.8.0	typo (already had)
+3532			refactor logging
+3564			refactor logging
+2352			protobuf bugfix
+3557			refactor
+3609			new fields in lnrpc
+2813			tor addr override
+3615			doc
+3533			test bugfix
+3462			new feature (historical estimation)
+3547			bugfix
+3569			bugfix
+2327			macaroon permissions
+1160			feature generate macaroons
+3418			perf improvement (routing)
+3332			Feature: track peer uptime
+3632			bugfix
+3634			bugfix
+3646			test bugfix
+3558			feature (non-strict routing)
+	2598		ignorada (docker)
+3556			feature (query router prob)
+3654			refactor
+3653			refactor
+3650			dep update
+3650			autopilot improv
+3633			improv migrations
+3470			improv onion decoding
+3674			docs 
+3442			improv (preparing mpp)
+3616			bugfix
+	3682		ignorada (Docs)
+3664			refactor
+3684			typos
+3687			bugfix
+3661			deprecating lnrpc fields
+3686			bugfix
+2927			bugfix
+3685			spec update
+	2533		ignorada (docker)
+3699			bugfix
+	3704		ignorada (neutrino)
+3665			refactor
+3710			refactor
+3594			refactor
+3701			refactor
+3706			improv
+3726			new test
+3649			(partial) test fix
+3644			refactor
+3705			logging
+3730			constant change
+3729			improv
+3732			bugfix
+3713			refactor
+3739			feature (last hop restricitons)
+	2520		ignorada (docker)
+3740			constant change
+3667			logs
+3721			bugfix
+1152			new test
+3499			MPP work
+3493			improv routing stats
+3754			doc
+	3751		ignorada (já tem)
+	3750		ignorada (já tem) 
+3757			typo
+3737			bugfix
+3648			refactor
+	3756		ignorada (não desejada)
+	3759		ignorada (bitcoind)
+3748			mobile bindings
+3693			refactor
+3736			new feature (send to self)
+3659			refactor fundingmgr
+3782			improv
+	3584		ignorada (litcoin)
+	3776		ignorada (já tem)
+3743			improv
+3762			mobile bindings
+3749			improv: local check before payment
+3744			refactor
+3790			refactor
+3752			more logging
+3698			SCB warning
+3719			bugfix
+3655			spec update
+	3767		ignorada (já tem)
+3770			refactor MPP
+3788			improv MPP
+3789			bugfix
+	3794		ignorada (travis)
+3774			bugfix
+3804			Revert 3790
+3742			refactor
+3815			typo
+	3813		ignorada (bitcoind)
+3702			feature
+3802			feature
+3785			bugfix
+3820			log 
+3815			MPP!!!
+3812			feature
+3825			bugfix
+3826			log 
+3824			feature
+3819			bugfix
+3828			improv
+	3832		ignorada (já tem)
+3745			feature
+3694			bugfix
+3837			feature
+3840			doc
+3834			improv
+3775			improv
+3763			feature
+3799			bugfix
+3397			feature
+3814			refactor
+3783			mobile feature
+3850			bugfix
+3796			feature (upfront shutdown address)
+3818			bugfix
+3679			MPP work
+3847			test bugfix
+3838			bugfix
+3845			improv
+3858			bugfix
+3849			test bugfix
+3862			improv
+3831			improv
+3863			bugfix
+3841			refactor
+3855			test bugfix
+3857			comment typo
+3647			improv
+	3873		ignorada (já tem)
+3722			feature (external funding)
+3795			feature (key send)
+3777			feature (DH shared key)
+3870			typo
+3889			bugfix
+3886			build script
+3836			spec bugfix
+3891			update lightning-onion
+3900			feature (extra data cli)
+3911			bugfix
+3843			refactor
+	3917		ignorada (docs)
+3918			bugfix
+3922			refactor (rename)
+3948			dep update
+3949		v0.9.0-beta	release script
+3809			feature (force sweep)
+3947			log 
+2137			race condition
+3908			mobile bindings
+3797			testing
+3872			bugfix: sign after restart
+3925			spec bugfix
+3582			feature: pending open api
+	3927		ignorada (btcwallet)
+3950			improv: startup time with cancelled invoices
+3945			improv: routing
+3965			improv: empty values in REST proxy
+3194			Itest: extra assertions 
+3926			typo
+2593			fuzz tests
+3957			wip amp
+3915			bugfix
+3979			lint
+3978			log 
+3980			fix deadlock
+3984			improv
+3844			wip htlc notifier
+3916			typo
+3990			bugfix
+3995			log 
+3964			itest fixes
+3992			bugfix
+3932			improv
+3951			wip anchor outputs
+	4007		ignorada (deps)
+3998			improv
+3876			improv
+	3988		ignorada (docker)
+4012			remove stuff
+3910			improv
+3781			wip htlc notifier
+3691			routing improv
+	4026		ignorada (travis)
+	4017		ignorada (btcwallet)
+3961			improv (track coop close initiator)
+4003			cmd arg change
+	4013		ignorada (readme)
+4035			typo
+4030			itest flake
+4040			feature (shortchanid)
+4053			sample config
+4045			cmd arg change
+4055			remove stuff
+3996			json api change
+3993			bugfix
+1895			fuzz tests
+3963			docs 
+4034			(partial) size estimator bugfix
+4000			wip mpp
+3821			anchor commitments
+4048			feature tor
+	4062		ignorada (size)
+4042			Verify protoc files
+4070			fix prev
+4010			itest fixes
+	4069		ignorada (travis)
+4071			log 
+	4061		ignorada (deps)
+4056			tor
+4068			api improv
+	4080		ignorada (bitcoind)
+4082			Scb + anchors
+4051			track peer errors
+3848			feature htlc notifier
+	4094		ignorada (bitcoind)
+3758			anchor commitments
+3833			kv store
+4101			typo
+4104			doc
+	4105		ignorada (já tem)
+4095			feature
+2669			refactor
+	4064		ignorada (neutrino)
+4081			feature (frozen channels)
+4303			itest fixes
+	4108		ignorada (Docs)
+4110			itest fixes
+	4112		ignorada (mod)
+4114			log 
+4111			rpc fields
+4067			rpc fields
+	4117		ignorada (docs)
+3924			itest fixes
+	4078		ignorada (bitcoind)
+4107			log 
+4122			typo
+3865			feature graph metrics
+4092			improv
+4073			anchor outputs itests
+4113			improv
+4125			fix prev pr
+4087			watchtower tor
+4079			(partial) psbt
+4129			rpc fields
+4128			default routerrpc enabled
+	4124		ignorada (travis)
+4130			refactor
+4133			bugfix
+4138			log 
+4144			bugfix
+3970			MPP work
+4091			(partial) btcwallet bugfix
+4151			log 
+4143			itest fixes
+4121			bugfix
+4140			rpc stuff
+4145			improv
+4152			refactor
+3960			feature (pagination in listpayments)
+3972			improv
+3967			MPP work
+4075			remove stuff
+4172			size tests
+4163			version rpc
+	4185		ignorada (dep)
+4169			test
+4175			bugfix
+4189			rename field
+4188			typo
+4184			bugfix
+	4190		ignorada (versão)
+4174			improv
+4195			fix prev pr
+4199			bugfix
+4206			typo
+4198			MPP work
+4209			bugfix
+4182			rpc stuff
+4211			bugfix
+4205			improv
+4212			(partial) release script
+4196			cli improv
+4224			doc
+	4230	v0.10.0-beta	ignorada (bitcoind)
+	4192		parcial
+4207			bugfix
+4089			config
+4176			feature
+4194			bugfix
+4237			bugfix
+4239			doc
+4161			make
+	4242		itest whitelist
+4148			refactor
+4221			release script
+4241			refactor
+4234			bugfix
+4249			itest whitelist
+4259			docker stuff
+4139			feature
+4236			docs 
+4253			compat
+	4256		itest whitelist
+	4220		ignorada (github actions)
+4250			refactor
+3018			log 
+2668			db migration dryrun
+4257			improv
+3892			(partial)
+4282			comments
+4147			refactor
+4280			refactor
+	4276		ignorada (github actions)
+4274			bugfix
+4277			bugfix
+	4294		ignorada (github actions)
+	4295		ignorada (dep)
+	4291		parcial
+4286			refactor
+4213			feature: tx labels
+4183			bugfix pathfind
+4227			refactor signing
+4304			bugfix for arm
+	4300		(already have) refactor remove fastsha256
+4302			bugfix possible panic
+4132			itest refactor
+4015			feature etcd as kvdb
+	4315		(already have) go.mod tidy
+4309			bugfix
+4316			typo
+4317			test improv
+4228			feature (label txs)
+4252			refactor (rename dbtx)
+4298			bugfix invoices
+	4324		ignored (version bump)
+4285			feature: track invoices by unique random pay addr
+4320			refactor logging
+	4331		(already have) typo
+4326			(partial) test improv
+	4335		ignored (still enforcing payment limits)
+4332			log typo
+4327			bugfix
+4334			improv hodl invoices
+4339			(partial) etcd mod bump
+4342			bugfix gossip
+4318			bugfix etcd kvdb
+4341			improv log
+4303			feature coin selection rpc
+4251			improv rest gateway
+4358			doc
+4356			bugfix signrpc
+4357			test improv
+4261			db migration
+4355			bugfix chainntfs
+4369			(partial) improv coin selection
+	4345		(already have) test fix
+	4262		(ignored) Makefile
+	4366		(ignored) deps
+4264			docs 
+	4033		(ignored) deps
+4141			improv rest gateway
+4365			refactor chan closer
+4395			bugfix discovery
+4370			bugfix graph
+4391			bugfix lnwire
+4379			bugfix scb
+4018			feature hold HTLCs
+4275			bugfix
+$20b42ce26			cli improv
+4328			improv
+4361			bugfix
+	4410		(already have) replace fastsha256
+4106			feature: track wallet restore
+4407			bugfix: restore keysend ability
+4352			(partial) already had most of it
+4405			feature: htlc interception
+4167			feature hold keysend
+4731			feature: expose rpc stuff
+4428			feature: relative thaw height for new chans
+4418			test anchor txs
+4347			refactor peer pkg
+4281			feature: dynamic ips
+971			feature: open chan flags
+4157			feature: track onchain resolution txs
+	4451		(ignored) lint
+4446			doc
+4456			bugfix: scb file
+4429			wumbo channels
+	4465		(ignored) already have
+4460			improv: log
+4412			feature: disable height hint cache
+	4344		(ignored) already have
+	$6d815379d		(ignored) docker
+4469			mobile bindings
+4467			improv
+4384			improv: autopilot algo
+4455			feature: dont publish channel
+4478			typo
+	4482		(ignored) CI
+4488			constant change (min cltv)
+4430			bugfix lnwallet restore
+4390			docs 
+4480			typo
+4431			bugfix lnwallet restore
+4408			(partial) fix arm build
+4432			bugfix lnwallet restore
+	4438		(ignored) already have
+	4494		(ignored) travis
+4411			improv etcd
+4504			mobile bindings
+4506			bugfix bbolt opts
+4509			typo
+4475			(partial) windows bugfix
+4511			bugfix rest proxy
+4507			doc config
+4348			improv etcd
+4496			itest whitelist
+4526			bugfix etcd
+4529			bugfix chainntfs
+4525			bugfix scb restores
+4528			typo
+4521			improv mpp
+4533			(partial) bugfix
+	4534		dep
+4461		v0.11.0-beta	lnwallet tests
+4551			bugfix rest proxy
+4527			improv: config max htlcs
+	4570		not applicable
+4560			improv external channels
+4580			bugfix prev pr
+4427			improv advanced macaroons
+4463			improv advanced macaroons
+4596			bugfix
+4464			improv advanced macaroons
+4558			improv anchors
+4614			bugfix
+4479			feature: critical log shutdown
+4615			improv: disable disk health check
+4567			improv: wumbo limit
+4618			bugfix healthcheck
+4620			bugfix chainntfs
+4421			improv tls
+4601		v0.11.1-beta	improv psbt
