@@ -13,7 +13,7 @@ type AgentConstraints interface {
 	// the first return value will represent the amount of additional funds
 	// available towards creating channels. The second return value is the
 	// exact *number* of additional channels available.
-	ChannelBudget(chans []Channel, balance dcrutil.Amount) (
+	ChannelBudget(chans []LocalChannel, balance dcrutil.Amount) (
 		dcrutil.Amount, uint32)
 
 	// MaxPendingOpens returns the maximum number of pending channel
@@ -82,7 +82,7 @@ func NewConstraints(minChanSize, maxChanSize dcrutil.Amount, chanLimit,
 // additional channels available.
 //
 // Note: part of the AgentConstraints interface.
-func (h *agentConstraints) ChannelBudget(channels []Channel,
+func (h *agentConstraints) ChannelBudget(channels []LocalChannel,
 	funds dcrutil.Amount) (dcrutil.Amount, uint32) {
 
 	// If we're already over our maximum allowed number of channels, then
