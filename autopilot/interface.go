@@ -47,12 +47,6 @@ type Channel struct {
 	// Capacity is the capacity of the channel expressed in base units.
 	Capacity dcrutil.Amount
 
-	// FundedAmt is the amount the local node funded into the target
-	// channel.
-	//
-	// TODO(roasbeef): need this?
-	FundedAmt dcrutil.Amount
-
 	// Node is the peer that this channel has been established with.
 	Node NodeID
 
