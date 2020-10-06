@@ -581,7 +581,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		towerDBDir := filepath.Join(
 			cfg.Watchtower.TowerDir,
 			cfg.registeredChains.PrimaryChain().String(),
-			normalizeNetwork(cfg.ActiveNetParams.Name),
+			lncfg.NormalizeNetwork(cfg.ActiveNetParams.Name),
 		)
 
 		towerDB, err := wtdb.OpenTowerDB(towerDBDir)
