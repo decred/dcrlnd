@@ -1037,13 +1037,21 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	restProxyDest string, tlsConf *tls.Config,
 	getListeners rpcListeners, chanDB *channeldb.DB) (*WalletUnlockParams, error) {
 
-	// Start a gRPC server listening for HTTP/2 connections, solely used
-	// for getting the encryption password from the client.
-	listeners, cleanup, err := getListeners()
-	if err != nil {
-		return nil, err
+	// The macaroon files are passed to the wallet unlocker since they are
+	// also encrypted with the wallet's password. These files will be
+	// deleted within it and recreated when successfully changing the
+	// wallet's password.
+	macaroonFiles := []string{
+		filepath.Join(cfg.networkDir, macaroons.DBFilename),
+		cfg.AdminMacPath, cfg.ReadMacPath, cfg.InvoiceMacPath,
 	}
-	defer cleanup()
+	pwService := walletunlocker.New(
+		cfg.Decred.ChainDir, cfg.ActiveNetParams.Params,
+		!cfg.SyncFreelist, macaroonFiles,
+		chanDB, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
+		cfg.Dcrwallet.ClientKeyPath, cfg.Dcrwallet.ClientCertPath,
+		cfg.Dcrwallet.AccountNumber,
+	)
 
 	// Set up a new PasswordService, which will listen for passwords
 	// provided over RPC.
@@ -1061,22 +1069,15 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		time.Sleep(100 * time.Millisecond)
 		grpcServer.GracefulStop()
 	}()
-
-	// The macaroon files are passed to the wallet unlocker since they are
-	// also encrypted with the wallet's password. These files will be
-	// deleted within it and recreated when successfully changing the
-	// wallet's password.
-	macaroonFiles := []string{
-		filepath.Join(cfg.networkDir, macaroons.DBFilename),
-		cfg.AdminMacPath, cfg.ReadMacPath, cfg.InvoiceMacPath,
-	}
-	pwService := walletunlocker.New(
-		cfg.Decred.ChainDir, cfg.ActiveNetParams.Params, !cfg.SyncFreelist,
-		macaroonFiles, chanDB, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
-		cfg.Dcrwallet.ClientKeyPath, cfg.Dcrwallet.ClientCertPath,
-		cfg.Dcrwallet.AccountNumber,
-	)
 	lnrpc.RegisterWalletUnlockerServer(grpcServer, pwService)
+
+	// Start a gRPC server listening for HTTP/2 connections, solely used
+	// for getting the encryption password from the client.
+	listeners, cleanup, err := getListeners()
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
 
 	// Use a WaitGroup so we can be sure the instructions on how to input the
 	// password is the last thing to be printed to the console.
