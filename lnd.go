@@ -322,6 +322,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 
 	var (
 		walletInitParams WalletUnlockParams
+		shutdownUnlocker = func() {}
 		privateWalletPw  = lnwallet.DefaultPrivatePassphrase
 		publicWalletPw   = lnwallet.DefaultPublicPassphrase
 	)
@@ -383,7 +384,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// started with the --noseedbackup flag, we use the default password
 	// for wallet encryption.
 	if !cfg.NoSeedBackup || isRemoteWallet {
-		params, err := waitForWalletPassword(
+		params, shutdown, err := waitForWalletPassword(
 			cfg, cfg.RESTListeners, serverOpts, restDialOpts,
 			restProxyDest, tlsCfg, walletUnlockerListeners, remoteChanDB,
 		)
@@ -395,6 +396,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		}
 
 		walletInitParams = *params
+		shutdownUnlocker = shutdown
 		privateWalletPw = walletInitParams.Password
 		publicWalletPw = walletInitParams.Password
 		defer func() {
@@ -448,6 +450,10 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 			}
 		}
 	}
+
+	// Now we're definitely done with the unlocker, shut it down so we can
+	// start the main RPC service later.
+	shutdownUnlocker()
 
 	// With the information parsed from the configuration, create valid
 	// instances of the pertinent interfaces required to operate the
@@ -1035,7 +1041,7 @@ type WalletUnlockParams struct {
 func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	serverOpts []grpc.ServerOption, restDialOpts []grpc.DialOption,
 	restProxyDest string, tlsConf *tls.Config,
-	getListeners rpcListeners, chanDB *channeldb.DB) (*WalletUnlockParams, error) {
+	getListeners rpcListeners, chanDB *channeldb.DB) (*WalletUnlockParams, func(), error) {
 
 	// The macaroon files are passed to the wallet unlocker since they are
 	// also encrypted with the wallet's password. These files will be
@@ -1056,7 +1062,15 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	// Set up a new PasswordService, which will listen for passwords
 	// provided over RPC.
 	grpcServer := grpc.NewServer(serverOpts...)
-	defer func() {
+	lnrpc.RegisterWalletUnlockerServer(grpcServer, pwService)
+
+	var shutdownFuncs []func()
+	shutdown := func() {
+		for _, shutdownFn := range shutdownFuncs {
+			shutdownFn()
+		}
+	}
+	shutdownFuncs = append(shutdownFuncs, func() {
 		// Unfortunately the grpc lib does not offer any external
 		// method to check if there are existing connections and while
 		// it claims GracefulStop() will wait for outstanding RPC calls
@@ -1068,16 +1082,15 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		// clients to finish processing.
 		time.Sleep(100 * time.Millisecond)
 		grpcServer.GracefulStop()
-	}()
-	lnrpc.RegisterWalletUnlockerServer(grpcServer, pwService)
+	})
 
 	// Start a gRPC server listening for HTTP/2 connections, solely used
 	// for getting the encryption password from the client.
 	listeners, cleanup, err := getListeners()
 	if err != nil {
-		return nil, err
+		return nil, shutdown, err
 	}
-	defer cleanup()
+	shutdownFuncs = append(shutdownFuncs, cleanup)
 
 	// Use a WaitGroup so we can be sure the instructions on how to input the
 	// password is the last thing to be printed to the console.
@@ -1086,21 +1099,21 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	for _, lis := range listeners {
 		wg.Add(1)
 		go func(lis *ListenerWithSignal) {
-			rpcsLog.Infof("password RPC server listening on %s",
+			rpcsLog.Infof("Password RPC server listening on %s",
 				lis.Addr())
 
 			// Close the ready chan to indicate we are listening.
 			close(lis.Ready)
 
 			wg.Done()
-			grpcServer.Serve(lis)
+			_ = grpcServer.Serve(lis)
 		}(lis)
 	}
 
 	// Start a REST proxy for our gRPC server above.
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	shutdownFuncs = append(shutdownFuncs, cancel)
 
 	mux := proxy.NewServeMux()
 
@@ -1108,7 +1121,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		ctx, mux, restProxyDest, restDialOpts,
 	)
 	if err != nil {
-		return nil, err
+		return nil, shutdown, err
 	}
 
 	srv := &http.Server{Handler: allowCORS(mux, cfg.RestCORS)}
@@ -1116,22 +1129,24 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	for _, restEndpoint := range restEndpoints {
 		lis, err := lncfg.TLSListenOnAddress(restEndpoint, tlsConf)
 		if err != nil {
-			ltndLog.Errorf(
-				"password gRPC proxy unable to listen on %s",
-				restEndpoint,
-			)
-			return nil, err
+			ltndLog.Errorf("Password gRPC proxy unable to listen "+
+				"on %s", restEndpoint)
+			return nil, shutdown, err
 		}
-		defer lis.Close()
+		shutdownFuncs = append(shutdownFuncs, func() {
+			err := lis.Close()
+			if err != nil {
+				rpcsLog.Errorf("Error closing listener: %v",
+					err)
+			}
+		})
 
 		wg.Add(1)
 		go func() {
-			rpcsLog.Infof(
-				"password gRPC proxy started at %s",
-				lis.Addr(),
-			)
+			rpcsLog.Infof("Password gRPC proxy started at %s",
+				lis.Addr())
 			wg.Done()
-			srv.Serve(lis)
+			_ = srv.Serve(lis)
 		}()
 	}
 
@@ -1162,8 +1177,8 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		// version, then we'll return an error as we don't understand
 		// this.
 		if cipherSeed.InternalVersion != keychain.KeyDerivationVersion {
-			return nil, fmt.Errorf("invalid internal seed version "+
-				"%v, current version is %v",
+			return nil, shutdown, fmt.Errorf("invalid internal "+
+				"seed version %v, current version is %v",
 				cipherSeed.InternalVersion,
 				keychain.KeyDerivationVersion)
 		}
@@ -1188,7 +1203,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 				ltndLog.Errorf("Could not unload new "+
 					"wallet: %v", err)
 			}
-			return nil, err
+			return nil, shutdown, err
 		}
 
 		return &WalletUnlockParams{
@@ -1199,7 +1214,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 			Loader:         loader,
 			ChansToRestore: initMsg.ChanBackups,
 			UnloadWallet:   loader.UnloadWallet,
-		}, nil
+		}, shutdown, nil
 
 	// The wallet has already been created in the past, and is simply being
 	// unlocked. So we'll just return these passphrases.
@@ -1212,10 +1227,10 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 			ChansToRestore: unlockMsg.ChanBackups,
 			Conn:           unlockMsg.Conn,
 			UnloadWallet:   unlockMsg.UnloadWallet,
-		}, nil
+		}, shutdown, nil
 
 	case <-signal.ShutdownChannel():
-		return nil, fmt.Errorf("shutting down")
+		return nil, shutdown, fmt.Errorf("shutting down")
 	}
 }
 
