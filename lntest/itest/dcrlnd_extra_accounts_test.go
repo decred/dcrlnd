@@ -25,8 +25,8 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Create a Carol node to use in tests.
 	password := []byte("12345678")
-	carol, mnemonic, err := net.NewNodeWithSeed(
-		"carol", nil, password,
+	carol, mnemonic, _, err := net.NewNodeWithSeed(
+		"carol", nil, password, false,
 	)
 	require.NoError(t.t, err)
 
