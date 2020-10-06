@@ -93,8 +93,11 @@ func New(cfg *Config) (*Server, lnrpc.MacaroonPerms, error) {
 	)
 
 	// Now that we know the full path of the invoices macaroon, we can
-	// check to see if we need to create it or not.
-	if !lnrpc.FileExists(macFilePath) && cfg.MacService != nil {
+	// check to see if we need to create it or not. If stateless_init is set
+	// then we don't write the macaroons.
+	if cfg.MacService != nil && !cfg.MacService.StatelessInit &&
+		!lnrpc.FileExists(macFilePath) {
+
 		log.Infof("Baking macaroons for invoices RPC Server at: %v",
 			macFilePath)
 
@@ -114,7 +117,7 @@ func New(cfg *Config) (*Server, lnrpc.MacaroonPerms, error) {
 		}
 		err = ioutil.WriteFile(macFilePath, invoicesMacBytes, 0644)
 		if err != nil {
-			os.Remove(macFilePath)
+			_ = os.Remove(macFilePath)
 			return nil, nil, err
 		}
 	}
