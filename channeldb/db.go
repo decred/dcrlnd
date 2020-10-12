@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/migration12"
 	"github.com/decred/dcrlnd/channeldb/migration13"
 	"github.com/decred/dcrlnd/channeldb/migration16"
+	"github.com/decred/dcrlnd/channeldb/migration20"
 	"github.com/decred/dcrlnd/channeldb/migration_01_to_11"
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/lnwire"
@@ -170,6 +171,17 @@ var (
 			number:    18,
 			migration: mig.CreateTLB(peersBucket),
 		},
+		{
+			// Create a top level bucket which holds outpoint
+			// information.
+			number:    19,
+			migration: mig.CreateTLB(outpointBucket),
+		},
+		{
+			// Migrate some data to the outpoint index.
+			number:    20,
+			migration: migration20.MigrateOutpointIndex,
+		},
 	}
 
 	// Big endian is the preferred byte order, due to cursor scans over
@@ -315,6 +327,7 @@ var topLevelBuckets = [][]byte{
 	graphMetaBucket,
 	metaBucket,
 	closeSummaryBucket,
+	outpointBucket,
 }
 
 // Wipe completely deletes all saved state within all used buckets within the
