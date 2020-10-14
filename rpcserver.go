@@ -3665,6 +3665,7 @@ func createRPCOpenChannel(r *rpcServer, graph *channeldb.ChannelGraph,
 			Amount:           int64(htlc.Amt.ToAtoms()),
 			HashLock:         rHash[:],
 			ExpirationHeight: htlc.RefundTimeout,
+			HtlcIndex:        htlc.HtlcIndex,
 		}
 		channel.UnsettledBalance += channel.PendingHtlcs[i].Amount
 	}
