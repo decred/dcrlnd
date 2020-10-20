@@ -501,7 +501,7 @@ func TestPaymentControlDeleteNonInFligt(t *testing.T) {
 			indexCount++
 			return nil
 		})
-	})
+	}, func() { indexCount = 0 })
 	require.NoError(t, err)
 
 	require.Equal(t, 1, indexCount)
@@ -988,7 +988,8 @@ func fetchPaymentIndexEntry(_ *testing.T, p *PaymentControl,
 		var err error
 		hash, err = deserializePaymentIndex(r)
 		return err
-
+	}, func() {
+		hash = lntypes.Hash{}
 	}); err != nil {
 		return nil, err
 	}

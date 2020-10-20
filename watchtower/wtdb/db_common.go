@@ -75,6 +75,8 @@ func createDBIfNotExist(dbPath, name string) (kvdb.Backend, bool, error) {
 		err = kvdb.View(bdb, func(tx kvdb.RTx) error {
 			metadataExists = tx.ReadBucket(metadataBkt) != nil
 			return nil
+		}, func() {
+			metadataExists = false
 		})
 		if err != nil {
 			return nil, false, err

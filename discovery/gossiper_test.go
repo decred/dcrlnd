@@ -1111,6 +1111,9 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -1143,6 +1146,9 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -1212,6 +1218,9 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -1349,6 +1358,9 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -1460,6 +1472,9 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -1563,6 +1578,9 @@ out:
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -1747,6 +1765,9 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -2577,6 +2598,9 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -2605,6 +2629,9 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)

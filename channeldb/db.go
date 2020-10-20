@@ -363,6 +363,8 @@ func (d *DB) FetchOpenChannels(nodeID *secp256k1.PublicKey) ([]*OpenChannel, err
 		var err error
 		channels, err = d.fetchOpenChannels(tx, nodeID)
 		return err
+	}, func() {
+		channels = nil
 	})
 
 	return channels, err
@@ -548,7 +550,7 @@ func (d *DB) FetchChannel(chanPoint wire.OutPoint) (*OpenChannel, error) {
 		})
 	}
 
-	err := kvdb.View(d, chanScan)
+	err := kvdb.View(d, chanScan, func() {})
 	if err != nil {
 		return nil, err
 	}
@@ -715,6 +717,8 @@ func fetchChannels(d *DB, filters ...fetchChannelsFilter) ([]*OpenChannel, error
 			})
 
 		})
+	}, func() {
+		channels = nil
 	})
 	if err != nil {
 		return nil, err
@@ -755,6 +759,8 @@ func (d *DB) FetchClosedChannels(pendingOnly bool) ([]*ChannelCloseSummary, erro
 			chanSummaries = append(chanSummaries, chanSummary)
 			return nil
 		})
+	}, func() {
+		chanSummaries = nil
 	}); err != nil {
 		return nil, err
 	}
@@ -791,6 +797,8 @@ func (d *DB) FetchClosedChannel(chanID *wire.OutPoint) (*ChannelCloseSummary, er
 		chanSummary, err = deserializeCloseChannelSummary(summaryReader)
 
 		return err
+	}, func() {
+		chanSummary = nil
 	}); err != nil {
 		return nil, err
 	}
@@ -839,6 +847,8 @@ func (d *DB) FetchClosedChannelForID(cid lnwire.ChannelID) (
 			return nil
 		}
 		return ErrClosedChannelNotFound
+	}, func() {
+		chanSummary = nil
 	}); err != nil {
 		return nil, err
 	}
@@ -1026,6 +1036,8 @@ func (d *DB) AddrsForNode(nodePub *secp256k1.PublicKey) ([]net.Addr, error) {
 		}
 
 		return nil
+	}, func() {
+		linkNode = nil
 	})
 	if dbErr != nil {
 		return nil, dbErr
@@ -1235,6 +1247,8 @@ func (db *DB) FetchHistoricalChannel(outPoint *wire.OutPoint) (*OpenChannel, err
 
 		channel, err = fetchOpenChannel(chanBucket, outPoint)
 		return err
+	}, func() {
+		channel = nil
 	})
 	if err != nil {
 		return nil, err

@@ -95,7 +95,7 @@ func (d *DB) ReadPeerLastGossipMsgTS(peer route.Vertex) (time.Time, error) {
 		var err error
 		ts, err = readPeerLastGossipMsgTS(peers, peer)
 		return err
-	})
+	}, func() { ts = time.Time{} })
 
 	return ts, err
 }

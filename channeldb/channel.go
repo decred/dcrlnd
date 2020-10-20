@@ -765,7 +765,7 @@ func (c *OpenChannel) RefreshShortChanID() error {
 		}
 
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
@@ -959,6 +959,8 @@ func (c *OpenChannel) DataLossCommitPoint() (*secp256k1.PublicKey, error) {
 		}
 
 		return nil
+	}, func() {
+		commitPoint = nil
 	})
 	if err != nil {
 		return nil, err
@@ -1177,6 +1179,8 @@ func (c *OpenChannel) getClosingTx(key []byte) (*wire.MsgTx, error) {
 		}
 		r := bytes.NewReader(bs)
 		return ReadElement(r, &closeTx)
+	}, func() {
+		closeTx = nil
 	})
 	if err != nil {
 		return nil, err
@@ -2092,6 +2096,8 @@ func (c *OpenChannel) RemoteCommitChainTip() (*CommitDiff, error) {
 
 		cd = dcd
 		return nil
+	}, func() {
+		cd = nil
 	})
 	if err != nil {
 		return nil, err
@@ -2124,6 +2130,8 @@ func (c *OpenChannel) UnsignedAckedUpdates() ([]LogUpdate, error) {
 		r := bytes.NewReader(updateBytes)
 		updates, err = deserializeLogUpdates(r)
 		return err
+	}, func() {
+		updates = nil
 	})
 	if err != nil {
 		return nil, err
@@ -2157,6 +2165,8 @@ func (c *OpenChannel) RemoteUnsignedLocalUpdates() ([]LogUpdate, error) {
 		r := bytes.NewReader(updateBytes)
 		updates, err = deserializeLogUpdates(r)
 		return err
+	}, func() {
+		updates = nil
 	})
 	if err != nil {
 		return nil, err
@@ -2396,6 +2406,8 @@ func (c *OpenChannel) LoadFwdPkgs() ([]*FwdPkg, error) {
 		var err error
 		fwdPkgs, err = c.Packager.LoadFwdPkgs(tx)
 		return err
+	}, func() {
+		fwdPkgs = nil
 	}); err != nil {
 		return nil, err
 	}
@@ -2506,7 +2518,7 @@ func (c *OpenChannel) RevocationLogTail() (*ChannelCommitment, error) {
 		}
 
 		return nil
-	}); err != nil {
+	}, func() {}); err != nil {
 		return nil, err
 	}
 
@@ -2540,6 +2552,8 @@ func (c *OpenChannel) CommitmentHeight() (uint64, error) {
 
 		height = commit.CommitHeight
 		return nil
+	}, func() {
+		height = 0
 	})
 	if err != nil {
 		return 0, err
@@ -2578,7 +2592,7 @@ func (c *OpenChannel) FindPreviousState(updateNum uint64) (*ChannelCommitment, e
 
 		commit = c
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		return nil, err
 	}
@@ -2901,7 +2915,7 @@ func (c *OpenChannel) LatestCommitments() (*ChannelCommitment, *ChannelCommitmen
 		}
 
 		return fetchChanCommitments(chanBucket, c)
-	})
+	}, func() {})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -2923,7 +2937,7 @@ func (c *OpenChannel) RemoteRevocationStore() (shachain.Store, error) {
 		}
 
 		return fetchChanRevocationState(chanBucket, c)
-	})
+	}, func() {})
 	if err != nil {
 		return nil, err
 	}

@@ -368,6 +368,8 @@ func assertNumChanOutputs(t *testing.T, ns NurseryStore,
 	err := ns.ForChanOutputs(chanPoint, func([]byte, []byte) error {
 		count++
 		return nil
+	}, func() {
+		count = 0
 	})
 
 	if count == 0 && err == ErrContractNotFound {

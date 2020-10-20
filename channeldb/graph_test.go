@@ -2293,7 +2293,7 @@ func TestChannelEdgePruningUpdateIndexDeletion(t *testing.T) {
 
 				return nil
 			})
-		})
+		}, func() {})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -2879,7 +2879,7 @@ func TestEdgePolicyMissingMaxHtcl(t *testing.T) {
 		}
 
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		t.Fatalf("error reading db: %v", err)
 	}

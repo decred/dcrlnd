@@ -39,7 +39,7 @@ func (c *ChannelGraph) IsKnownSpent(channelID uint64) (bool, error) {
 		v := index.Get(k[:])
 		knownSpent = len(v) > 0 && v[0] == 0x00
 		return nil
-	})
+	}, func() { knownSpent = false })
 
 	return knownSpent, err
 }

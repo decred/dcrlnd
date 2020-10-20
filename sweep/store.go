@@ -226,6 +226,8 @@ func (s *sweeperStore) GetLastPublishedTx() (*wire.MsgTx, error) {
 		}
 
 		return nil
+	}, func() {
+		sweepTx = nil
 	})
 	if err != nil {
 		return nil, err
@@ -248,6 +250,8 @@ func (s *sweeperStore) IsOurTx(hash chainhash.Hash) (bool, error) {
 		ours = txHashesBucket.Get(hash[:]) != nil
 
 		return nil
+	}, func() {
+		ours = false
 	})
 	if err != nil {
 		return false, err
@@ -276,6 +280,8 @@ func (s *sweeperStore) ListSweeps() ([]chainhash.Hash, error) {
 
 			return nil
 		})
+	}, func() {
+		sweepTxns = nil
 	}); err != nil {
 		return nil, err
 	}
