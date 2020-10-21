@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwallet/chanfunding"
 	"github.com/decred/dcrlnd/lnwire"
@@ -161,6 +162,10 @@ type ChannelReservation struct {
 	chanFunder chanfunding.Assembler
 
 	fundingIntent chanfunding.Intent
+
+	// nextRevocationKeyLoc stores the key locator information for this
+	// channel.
+	nextRevocationKeyLoc keychain.KeyLocator
 }
 
 // NewChannelReservation creates a new channel reservation. This function is
