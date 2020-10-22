@@ -68,7 +68,7 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 		&routerrpc.SendPaymentRequest{
 			PaymentRequest: carolInvoice.PaymentRequest,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 	if err != nil {

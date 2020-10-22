@@ -69,7 +69,7 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		&routerrpc.SendPaymentRequest{
 			PaymentRequest: invoiceResp.PaymentRequest,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 	if hex.EncodeToString(preimage) != resp.PaymentPreimage {
@@ -121,7 +121,7 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		&routerrpc.SendPaymentRequest{
 			PaymentRequest: invoiceResp.PaymentRequest,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 
@@ -150,7 +150,7 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 				record.KeySendType: keySendPreimage[:],
 			},
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 

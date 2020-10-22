@@ -67,7 +67,7 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest,
 			PaymentHash:    dustPayHash,
 			FinalCltvDelta: finalCltvDelta,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 	if err != nil {
@@ -82,7 +82,7 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest,
 			PaymentHash:    payHash,
 			FinalCltvDelta: finalCltvDelta,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 	if err != nil {

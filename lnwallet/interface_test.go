@@ -26,7 +26,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/secp256k1/v3"
-	"github.com/decred/dcrd/dcrjson/v2"
+	"github.com/decred/dcrd/dcrjson/v3"
 	"github.com/decred/dcrd/dcrutil/v3"
 	dcrutilv3 "github.com/decred/dcrd/dcrutil/v3"
 	"github.com/decred/dcrd/rpcclient/v6"

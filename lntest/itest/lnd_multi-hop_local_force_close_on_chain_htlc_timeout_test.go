@@ -56,7 +56,7 @@ func testMultiHopLocalForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 			PaymentHash:    payHash,
 			FinalCltvDelta: finalCltvDelta,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 	if err != nil {
