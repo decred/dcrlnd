@@ -67,7 +67,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 	time.Sleep(time.Second)
 
 	daveRestored, err := net.RestoreNodeWithSeed(
-		"dave", nil, password, mnemonic, 1000,
+		"dave", nil, password, mnemonic, "", 1000,
 		nil, copyPorts(dave),
 	)
 	require.Nil(t.t, err)

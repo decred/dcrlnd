@@ -79,7 +79,7 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 	_, err = net.SuspendNode(carol)
 	require.NoError(t.t, err)
 	carol, err = net.RestoreNodeWithSeed(
-		"carol", nil, password, mnemonic, 1000, nil,
+		"carol", nil, password, mnemonic, "", 1000, nil,
 	)
 	defer shutdownAndAssert(net, t, carol)
 	require.NoError(t.t, err)
