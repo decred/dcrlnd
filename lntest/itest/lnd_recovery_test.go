@@ -8,6 +8,7 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
+	"github.com/stretchr/testify/require"
 )
 
 // testGetRecoveryInfo checks whether lnd gives the right information about
@@ -129,9 +130,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 	carol, mnemonic, _, err := net.NewNodeWithSeed(
 		"Carol", nil, password, false,
 	)
-	if err != nil {
-		t.Fatalf("unable to create node with seed; %v", err)
-	}
+	require.NoError(t.t, err)
 	shutdownAndAssert(net, t, carol)
 
 	// As long as the mnemonic is non-nil and the extended key is empty, the
@@ -146,15 +145,15 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 	restoreCheckBalance := func(expAmount int64, expectedNumUTXOs uint32,
 		recoveryWindow int32, fn func(*lntest.HarnessNode)) {
 
+		t.t.Helper()
+
 		// Restore Carol, passing in the password, mnemonic, and
 		// desired recovery window.
 		node, err := net.RestoreNodeWithSeed(
 			"Carol", nil, password, mnemonic, rootKey,
 			recoveryWindow, nil,
 		)
-		if err != nil {
-			t.Fatalf("unable to restore node: %v", err)
-		}
+		require.NoError(t.t, err)
 
 		// Query carol for her current wallet balance, and also that we
 		// gain the expected number of UTXOs.
@@ -166,10 +165,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 			req := &lnrpc.WalletBalanceRequest{}
 			ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 			resp, err := node.WalletBalance(ctxt, req)
-			if err != nil {
-				t.Fatalf("unable to query wallet balance: %v",
-					err)
-			}
+			require.NoError(t.t, err)
 			currBalance = resp.ConfirmedBalance
 
 			utxoReq := &lnrpc.ListUnspentRequest{
@@ -177,9 +173,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 			}
 			ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 			utxoResp, err := node.ListUnspent(ctxt, utxoReq)
-			if err != nil {
-				t.Fatalf("unable to query utxos: %v", err)
-			}
+			require.NoError(t.t, err)
 			currNumUTXOs = uint32(len(utxoResp.Utxos))
 
 			// Verify that Carol's balance and number of UTXOs
@@ -225,10 +219,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 			for i := 0; i < nskip; i++ {
 				ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 				_, err = node.NewAddress(ctxt, newP2PKHAddrReq)
-				if err != nil {
-					t.Fatalf("unable to generate new "+
-						"p2pkh address: %v", err)
-				}
+				require.NoError(t.t, err)
 			}
 
 			// Send one DCR to the next P2PKH address.
@@ -288,28 +279,22 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 	const minerAmt = 5 * dcrutil.AtomsPerCoin
 	const finalBalance = 6 * dcrutil.AtomsPerCoin
 	promptChangeAddr := func(node *lntest.HarnessNode) {
+		t.t.Helper()
 		minerAddr, err := net.Miner.NewAddress(ctxb)
-		if err != nil {
-			t.Fatalf("unable to create new miner address: %v", err)
-		}
+		require.NoError(t.t, err)
+
 		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		resp, err := node.SendCoins(ctxt, &lnrpc.SendCoinsRequest{
 			Addr:   minerAddr.String(),
 			Amount: minerAmt,
 		})
-		if err != nil {
-			t.Fatalf("unable to send coins to miner: %v", err)
-		}
+		require.NoError(t.t, err)
 		txid, err := waitForTxInMempool(
 			net.Miner.Node, minerMempoolTimeout,
 		)
-		if err != nil {
-			t.Fatalf("transaction not found in mempool: %v", err)
-		}
-		if resp.Txid != txid.String() {
-			t.Fatalf("txid mismatch: %v vs %v", resp.Txid,
-				txid.String())
-		}
+		require.NoError(t.t, err)
+		require.Equal(t.t, txid.String(), resp.Txid)
+
 		block := mineBlocks(t, net, 1, 1)[0]
 		assertTxInBlock(t, block, txid)
 	}
@@ -320,4 +305,24 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 	// only have one UTXO present (the change output) of 6 - 5 - fee BTC.
 	const fee = 27750
 	restoreCheckBalance(finalBalance-minerAmt-fee, 1, 21, nil)
+
+	// Last of all, make sure we can also restore a node from the extended
+	// master root key directly instead of the seed.
+	//
+	// Note(decred): this is disabled as we don't support restoring from
+	// extended priv keys yet.
+	/*
+		var seedMnemonic aezeed.Mnemonic
+		copy(seedMnemonic[:], mnemonic)
+		cipherSeed, err := seedMnemonic.ToCipherSeed(password)
+		require.NoError(t.t, err)
+		extendedRootKey, err := hdkeychain.NewMaster(
+			cipherSeed.Entropy[:], harnessNetParams,
+		)
+		require.NoError(t.t, err)
+		rootKey = extendedRootKey.String()
+		mnemonic = nil
+
+		restoreCheckBalance(finalBalance-minerAmt-fee, 1, 21, nil)
+	*/
 }
