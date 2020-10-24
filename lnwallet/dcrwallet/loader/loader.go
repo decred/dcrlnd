@@ -19,6 +19,7 @@ import (
 	"decred.org/dcrwallet/v3/wallet/txrules"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrlnd/kvdb"
 )
 
@@ -192,6 +193,13 @@ func (l *Loader) CreateWatchingOnlyWallet(ctx context.Context, extendedPubKey st
 
 	l.onLoaded(w, db)
 	return w, nil
+}
+
+func (l *Loader) CreateNewWalletExtendedKey(ctx context.Context,
+	pubPassphrase, privPassphrase []byte,
+	xpriv *hdkeychain.ExtendedKey) (w *wallet.Wallet, err error) {
+
+	panic("boo")
 }
 
 // CreateNewWallet creates a new wallet using the provided public and private
