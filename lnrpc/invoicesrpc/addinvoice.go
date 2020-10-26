@@ -48,6 +48,9 @@ type AddInvoiceConfig struct {
 	// channel graph.
 	ChanDB *channeldb.DB
 
+	// Graph holds a reference to the ChannelGraph database.
+	Graph *channeldb.ChannelGraph
+
 	// GenInvoiceFeatures returns a feature containing feature bits that
 	// should be advertised on freshly generated invoices.
 	GenInvoiceFeatures func() *lnwire.FeatureVector
@@ -332,9 +335,8 @@ func AddInvoice(ctx context.Context, cfg *AddInvoiceConfig,
 
 // chanCanBeHopHint returns true if the target channel is eligible to be a hop
 // hint.
-func chanCanBeHopHint(channel *channeldb.OpenChannel,
-	graph *channeldb.ChannelGraph,
-	cfg *AddInvoiceConfig) (*channeldb.ChannelEdgePolicy, bool) {
+func chanCanBeHopHint(channel *channeldb.OpenChannel, cfg *AddInvoiceConfig) (
+	*channeldb.ChannelEdgePolicy, bool) {
 
 	// Since we're only interested in our private channels, we'll skip
 	// public ones.
@@ -361,7 +363,7 @@ func chanCanBeHopHint(channel *channeldb.OpenChannel,
 	// channels.
 	var remotePub [33]byte
 	copy(remotePub[:], channel.IdentityPub.SerializeCompressed())
-	isRemoteNodePublic, err := graph.IsPublicNode(remotePub)
+	isRemoteNodePublic, err := cfg.Graph.IsPublicNode(remotePub)
 	if err != nil {
 		log.Errorf("Unable to determine if node %x "+
 			"is advertised: %v", remotePub, err)
@@ -377,7 +379,7 @@ func chanCanBeHopHint(channel *channeldb.OpenChannel,
 
 	// Fetch the policies for each end of the channel.
 	chanID := channel.ShortChanID().ToUint64()
-	info, p1, p2, err := graph.FetchChannelEdgesByID(chanID)
+	info, p1, p2, err := cfg.Graph.FetchChannelEdgesByID(chanID)
 	if err != nil {
 		log.Errorf("Unable to fetch the routing "+
 			"policies for the edges of the channel "+
@@ -425,8 +427,6 @@ func selectHopHints(amtMAtoms lnwire.MilliAtom, cfg *AddInvoiceConfig,
 	openChannels []*channeldb.OpenChannel,
 	numMaxHophints int) []func(*zpay32.Invoice) {
 
-	graph := cfg.ChanDB.ChannelGraph()
-
 	// We'll add our hop hints in two passes, first we'll add all channels
 	// that are eligible to be hop hints, and also have a local balance
 	// above the payment amount.
@@ -435,9 +435,7 @@ func selectHopHints(amtMAtoms lnwire.MilliAtom, cfg *AddInvoiceConfig,
 	hopHints := make([]func(*zpay32.Invoice), 0, numMaxHophints)
 	for _, channel := range openChannels {
 		// If this channel can't be a hop hint, then skip it.
-		edgePolicy, canBeHopHint := chanCanBeHopHint(
-			channel, graph, cfg,
-		)
+		edgePolicy, canBeHopHint := chanCanBeHopHint(channel, cfg)
 		if edgePolicy == nil || !canBeHopHint {
 			continue
 		}
@@ -487,9 +485,7 @@ func selectHopHints(amtMAtoms lnwire.MilliAtom, cfg *AddInvoiceConfig,
 		// If the channel can't be a hop hint, then we'll skip it.
 		// Otherwise, we'll use the policy information to populate the
 		// hop hint.
-		remotePolicy, canBeHopHint := chanCanBeHopHint(
-			channel, graph, cfg,
-		)
+		remotePolicy, canBeHopHint := chanCanBeHopHint(channel, cfg)
 		if !canBeHopHint || remotePolicy == nil {
 			continue
 		}
