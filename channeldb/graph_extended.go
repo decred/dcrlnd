@@ -22,7 +22,7 @@ func (c *ChannelGraph) MarkKnownSpent(channelID uint64) error {
 		var v [1]byte = [1]byte{0x00}
 		byteOrder.PutUint64(k[:], channelID)
 		return index.Put(k[:], v[:])
-	})
+	}, func() {})
 }
 
 // IsKnownSpent returns if the channel is known to be spent on-chain.

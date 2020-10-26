@@ -26,7 +26,7 @@ func (d *DB) AccountDiscoveryDisabled() (bool, error) {
 
 		res = disableDiscoverAcct[0] == accountDiscoveryDisabled
 		return nil
-	})
+	}, func() { res = false })
 	return res, err
 }
 
@@ -40,5 +40,5 @@ func (d *DB) DisableAccountDiscovery() error {
 		v := []byte{accountDiscoveryDisabled}
 		wallet.Put(disableDiscoverAcctBucket, v)
 		return nil
-	})
+	}, func() {})
 }

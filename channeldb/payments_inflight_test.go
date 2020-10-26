@@ -34,7 +34,7 @@ func testPaymentInflightIndexCase(t *testing.T, noIndex, recreateIndex bool) {
 	if noIndex {
 		err = kvdb.Update(db, func(tx kvdb.RwTx) error {
 			return tx.DeleteTopLevelBucket(paymentsInflightIndexBucket)
-		})
+		}, func() {})
 		require.Nil(t, err)
 	}
 
@@ -99,7 +99,7 @@ func testPaymentInflightIndexCase(t *testing.T, noIndex, recreateIndex bool) {
 	if recreateIndex {
 		err = kvdb.Update(db, func(tx kvdb.RwTx) error {
 			return recreatePaymentsInflightIndex(tx)
-		})
+		}, func() {})
 		require.Nil(t, err)
 		assertFetchesInflight(t, pControl, info)
 	}

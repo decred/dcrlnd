@@ -1266,7 +1266,7 @@ func (rs *retributionStore) Add(ret *retributionInfo) error {
 		}
 
 		return retBucket.Put(outBuf.Bytes(), retBuf.Bytes())
-	})
+	}, func() {})
 }
 
 // Finalize writes a signed justice transaction to the retribution store. This
@@ -1291,7 +1291,7 @@ func (rs *retributionStore) Finalize(chanPoint *wire.OutPoint,
 		}
 
 		return justiceBkt.Put(chanBuf.Bytes(), txBuf.Bytes())
-	})
+	}, func() {})
 }
 
 // GetFinalizedTxn loads the finalized justice transaction for the provided
@@ -1397,7 +1397,7 @@ func (rs *retributionStore) Remove(chanPoint *wire.OutPoint) error {
 		}
 
 		return justiceBkt.Delete(chanBytes)
-	})
+	}, func() {})
 }
 
 // ForAll iterates through all stored retributions and executes the passed

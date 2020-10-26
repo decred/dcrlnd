@@ -53,7 +53,7 @@ func beforeMigrationFuncV11(t *testing.T, d *DB, invoices []Invoice) {
 		}
 
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		t.Fatal(err)
 	}

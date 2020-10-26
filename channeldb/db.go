@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
@@ -188,6 +189,46 @@ type DB struct {
 	dryRun bool
 }
 
+// Update is a wrapper around walletdb.Update which calls into the extended
+// backend when available. This call is needed to be able to cast DB to
+// ExtendedBackend. The passed reset function is called before the start of the
+// transaction and can be used to reset intermediate state. As callers may
+// expect retries of the f closure (depending on the database backend used), the
+// reset function will be called before each retry respectively.
+func (db *DB) Update(f func(tx walletdb.ReadWriteTx) error, reset func()) error {
+	if v, ok := db.Backend.(kvdb.ExtendedBackend); ok {
+		return v.Update(f, reset)
+	}
+
+	reset()
+	return walletdb.Update(db, f)
+}
+
+// View is a wrapper around walletdb.View which calls into the extended
+// backend when available. This call is needed to be able to cast DB to
+// ExtendedBackend. The passed reset function is called before the start of the
+// transaction and can be used to reset intermediate state. As callers may
+// expect retries of the f closure (depending on the database backend used), the
+// reset function will be called before each retry respectively.
+func (db *DB) View(f func(tx walletdb.ReadTx) error, reset func()) error {
+	if v, ok := db.Backend.(kvdb.ExtendedBackend); ok {
+		return v.View(f, reset)
+	}
+
+	reset()
+	return walletdb.View(db, f)
+}
+
+// PrintStats calls into the extended backend if available. This call is needed
+// to be able to cast DB to ExtendedBackend.
+func (db *DB) PrintStats() string {
+	if v, ok := db.Backend.(kvdb.ExtendedBackend); ok {
+		return v.PrintStats()
+	}
+
+	return "unimplemented"
+}
+
 // Open opens or creates channeldb. Any necessary schemas migrations due
 // to updates will take place as necessary.
 // TODO(bhandras): deprecate this function.
@@ -280,7 +321,7 @@ func (d *DB) Wipe() error {
 			}
 		}
 		return nil
-	})
+	}, func() {})
 }
 
 // createChannelDB creates and initializes a fresh version of channeldb. In
@@ -334,7 +375,7 @@ func initChannelDB(db kvdb.Backend) error {
 
 		meta.DbVersionNumber = getLatestDBVersion(dbVersions)
 		return putMeta(meta, tx)
-	})
+	}, func() {})
 	if err != nil {
 		return fmt.Errorf("unable to create new channeldb: %v", err)
 	}
@@ -909,7 +950,7 @@ func (d *DB) MarkChanFullyClosed(chanPoint *wire.OutPoint) error {
 		// garbage collect it to ensure we don't establish persistent
 		// connections to peers without open channels.
 		return d.pruneLinkNode(tx, chanSummary.RemotePub)
-	})
+	}, func() {})
 }
 
 // pruneLinkNode determines whether we should garbage collect a link node from
@@ -949,7 +990,7 @@ func (d *DB) PruneLinkNodes() error {
 		}
 
 		return nil
-	})
+	}, func() {})
 }
 
 // ChannelShell is a shell of a channel that is meant to be used for channel
@@ -996,7 +1037,7 @@ func (d *DB) RestoreChannelShells(channelShells ...*ChannelShell) error {
 		}
 
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
@@ -1180,7 +1221,7 @@ func (d *DB) syncVersions(versions []version) error {
 		}
 
 		return nil
-	})
+	}, func() {})
 }
 
 // ChannelGraph returns a new instance of the directed channel graph.

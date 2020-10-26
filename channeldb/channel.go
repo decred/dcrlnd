@@ -902,7 +902,7 @@ func (c *OpenChannel) MarkAsOpen(openLoc lnwire.ShortChannelID) error {
 		channel.ShortChannelID = openLoc
 
 		return putOpenChannel(chanBucket.(kvdb.RwBucket), channel)
-	}); err != nil {
+	}, func() {}); err != nil {
 		return err
 	}
 
@@ -1228,7 +1228,7 @@ func (c *OpenChannel) putChanStatus(status ChannelStatus,
 		}
 
 		return nil
-	}); err != nil {
+	}, func() {}); err != nil {
 		return err
 	}
 
@@ -1257,7 +1257,7 @@ func (c *OpenChannel) clearChanStatus(status ChannelStatus) error {
 		channel.chanStatus = status
 
 		return putOpenChannel(chanBucket, channel)
-	}); err != nil {
+	}, func() {}); err != nil {
 		return err
 	}
 
@@ -1365,7 +1365,7 @@ func (c *OpenChannel) SyncPending(addr net.Addr, pendingHeight uint32) error {
 
 	return kvdb.Update(c.Db, func(tx kvdb.RwTx) error {
 		return syncNewChannel(tx, c, []net.Addr{addr})
-	})
+	}, func() {})
 }
 
 // syncNewChannel will write the passed channel to disk, and also create a
@@ -1510,7 +1510,7 @@ func (c *OpenChannel) UpdateCommitment(newCommitment *ChannelCommitment,
 		}
 
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
@@ -2060,7 +2060,7 @@ func (c *OpenChannel) AppendRemoteCommitChain(diff *CommitDiff) error {
 			return err
 		}
 		return chanBucket.Put(commitDiffKey, b2.Bytes())
-	})
+	}, func() {})
 }
 
 // RemoteCommitChainTip returns the "tip" of the current remote commitment
@@ -2197,7 +2197,7 @@ func (c *OpenChannel) InsertNextRevocation(revKey *secp256k1.PublicKey) error {
 		}
 
 		return putChanRevocationState(chanBucket, c)
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
@@ -2358,6 +2358,8 @@ func (c *OpenChannel) AdvanceCommitChainTail(fwdPkg *FwdPkg,
 		newRemoteCommit = &newCommit.Commitment
 
 		return nil
+	}, func() {
+		newRemoteCommit = nil
 	})
 	if err != nil {
 		return err
@@ -2424,7 +2426,7 @@ func (c *OpenChannel) AckAddHtlcs(addRefs ...AddRef) error {
 
 	return kvdb.Update(c.Db, func(tx kvdb.RwTx) error {
 		return c.Packager.AckAddHtlcs(tx, addRefs...)
-	})
+	}, func() {})
 }
 
 // AckSettleFails updates the SettleFailFilter containing any of the provided
@@ -2437,7 +2439,7 @@ func (c *OpenChannel) AckSettleFails(settleFailRefs ...SettleFailRef) error {
 
 	return kvdb.Update(c.Db, func(tx kvdb.RwTx) error {
 		return c.Packager.AckSettleFails(tx, settleFailRefs...)
-	})
+	}, func() {})
 }
 
 // SetFwdFilter atomically sets the forwarding filter for the forwarding package
@@ -2448,7 +2450,7 @@ func (c *OpenChannel) SetFwdFilter(height uint64, fwdFilter *PkgFilter) error {
 
 	return kvdb.Update(c.Db, func(tx kvdb.RwTx) error {
 		return c.Packager.SetFwdFilter(tx, height, fwdFilter)
-	})
+	}, func() {})
 }
 
 // RemoveFwdPkgs atomically removes forwarding packages specified by the remote
@@ -2469,7 +2471,7 @@ func (c *OpenChannel) RemoveFwdPkgs(heights ...uint64) error {
 		}
 
 		return nil
-	})
+	}, func() {})
 }
 
 // RevocationLogTail returns the "tail", or the end of the current revocation
@@ -2830,7 +2832,7 @@ func (c *OpenChannel) CloseChannel(summary *ChannelCloseSummary,
 		return putChannelCloseSummary(
 			tx, chanPointBuf.Bytes(), summary, chanState,
 		)
-	})
+	}, func() {})
 }
 
 // ChannelSnapshot is a frozen snapshot of the current channel state. A

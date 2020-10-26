@@ -73,7 +73,7 @@ func TestSaneNextKeyFamilyIndex(t *testing.T) {
 		byteOrder.PutUint32(v[:], 0x7fffffff)
 		keyFamilies.Put(k[:], v[:])
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		t.Fatalf("unable to manipulate db: %v", err)
 	}

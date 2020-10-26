@@ -105,7 +105,7 @@ func (d *DB) NextKeyFamilyIndex(keyFamily uint32) (uint32, error) {
 		keyFamilies.Put(k[:], v[:])
 
 		return nil
-	})
+	}, func() { index = 0 })
 
 	return index, err
 }
@@ -131,5 +131,5 @@ func (d *DB) CompareAndStoreAccountID(id []byte) error {
 		}
 
 		return nil
-	})
+	}, func() {})
 }

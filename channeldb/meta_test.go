@@ -209,7 +209,7 @@ func TestMigrationWithPanic(t *testing.T) {
 			}
 
 			return bucket.Put(keyPrefix, beforeMigration)
-		})
+		}, func() {})
 		if err != nil {
 			t.Fatalf("unable to insert: %v", err)
 		}
@@ -251,7 +251,7 @@ func TestMigrationWithPanic(t *testing.T) {
 			}
 
 			return nil
-		})
+		}, func() {})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -283,7 +283,7 @@ func TestMigrationWithFatal(t *testing.T) {
 			}
 
 			return bucket.Put(keyPrefix, beforeMigration)
-		})
+		}, func() {})
 		if err != nil {
 			t.Fatalf("unable to insert pre migration key: %v", err)
 		}
@@ -326,7 +326,7 @@ func TestMigrationWithFatal(t *testing.T) {
 			}
 
 			return nil
-		})
+		}, func() {})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -352,15 +352,17 @@ func TestMigrationWithoutErrors(t *testing.T) {
 
 	// Populate database with initial data.
 	beforeMigrationFunc := func(d *DB) {
-		kvdb.Update(d, func(tx kvdb.RwTx) error {
+		err := kvdb.Update(d, func(tx kvdb.RwTx) error {
 			bucket, err := tx.CreateTopLevelBucket(bucketPrefix)
 			if err != nil {
 				return err
 			}
 
-			bucket.Put(keyPrefix, beforeMigration)
-			return nil
-		})
+			return bucket.Put(keyPrefix, beforeMigration)
+		}, func() {})
+		if err != nil {
+			t.Fatalf("unable to update db pre migration: %v", err)
+		}
 	}
 
 	// Create migration function which changes the initially created data.
@@ -399,7 +401,7 @@ func TestMigrationWithoutErrors(t *testing.T) {
 			}
 
 			return nil
-		})
+		}, func() {})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -446,7 +448,7 @@ func TestMigrationReversion(t *testing.T) {
 		}
 
 		return putMeta(newMeta, tx)
-	})
+	}, func() {})
 
 	// Close the database. Even if we succeeded, our next step is to reopen.
 	cdb.Close()

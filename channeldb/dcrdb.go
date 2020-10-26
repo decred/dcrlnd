@@ -13,5 +13,5 @@ func (db *DB) initDcrlndFeatures() error {
 		}
 
 		return nil
-	})
+	}, func() {})
 }

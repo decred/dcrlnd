@@ -83,7 +83,7 @@ func (d *DB) UpdatePeerLastGossipMsgTS(peer route.Vertex, ts time.Time) error {
 		}
 
 		return nil
-	})
+	}, func() {})
 }
 
 // ReadPeerLastGossipMsgTS returns the timestamp stored as most recent for

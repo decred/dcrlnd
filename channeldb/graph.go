@@ -435,7 +435,7 @@ func (c *ChannelGraph) SetSourceNode(node *LightningNode) error {
 		// Finally, we commit the information of the lightning node
 		// itself.
 		return addLightningNode(tx, node)
-	})
+	}, func() {})
 }
 
 // AddLightningNode adds a vertex/node to the graph database. If the node is not
@@ -449,7 +449,7 @@ func (c *ChannelGraph) SetSourceNode(node *LightningNode) error {
 func (c *ChannelGraph) AddLightningNode(node *LightningNode) error {
 	return kvdb.Update(c.db, func(tx kvdb.RwTx) error {
 		return addLightningNode(tx, node)
-	})
+	}, func() {})
 }
 
 func addLightningNode(tx kvdb.RwTx, node *LightningNode) error {
@@ -520,7 +520,7 @@ func (c *ChannelGraph) DeleteLightningNode(nodePub route.Vertex) error {
 		}
 
 		return c.deleteLightningNode(nodes, nodePub[:])
-	})
+	}, func() {})
 }
 
 // deleteLightningNode uses an existing database transaction to remove a
@@ -580,7 +580,7 @@ func (c *ChannelGraph) AddChannelEdge(edge *ChannelEdgeInfo) error {
 
 	err := kvdb.Update(c.db, func(tx kvdb.RwTx) error {
 		return c.addChannelEdge(tx, edge)
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
@@ -821,7 +821,7 @@ func (c *ChannelGraph) UpdateChannelEdge(edge *ChannelEdgeInfo) error {
 		}
 
 		return putChanEdgeInfo(edgeIndex, edge, chanKey)
-	})
+	}, func() {})
 }
 
 const (
@@ -944,6 +944,8 @@ func (c *ChannelGraph) PruneGraph(spentOutputs []*wire.OutPoint,
 		// prune any nodes that have had a channel closed within the
 		// latest block.
 		return c.pruneGraphNodes(nodes, edgeIndex)
+	}, func() {
+		chansClosed = nil
 	})
 	if err != nil {
 		return nil, err
@@ -977,7 +979,7 @@ func (c *ChannelGraph) PruneGraphNodes() error {
 		}
 
 		return c.pruneGraphNodes(nodes, edgeIndex)
-	})
+	}, func() {})
 }
 
 // pruneGraphNodes attempts to remove any nodes from the graph who have had a
@@ -1196,6 +1198,8 @@ func (c *ChannelGraph) DisconnectBlockAtHeight(height uint32) ([]*ChannelEdgeInf
 		}
 
 		return nil
+	}, func() {
+		removedChans = nil
 	}); err != nil {
 		return nil, err
 	}
@@ -1298,7 +1302,7 @@ func (c *ChannelGraph) DeleteChannelEdges(chanIDs ...uint64) error {
 		}
 
 		return nil
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
@@ -1937,6 +1941,8 @@ func (c *ChannelGraph) UpdateEdgePolicy(edge *ChannelEdgePolicy) error {
 		var err error
 		isUpdate1, err = updateEdgePolicy(tx, edge)
 		return err
+	}, func() {
+		isUpdate1 = false
 	})
 	if err != nil {
 		return err
@@ -3266,7 +3272,7 @@ func (c *ChannelGraph) MarkEdgeLive(chanID uint64) error {
 		var k [8]byte
 		byteOrder.PutUint64(k[:], chanID)
 		return zombieIndex.Delete(k[:])
-	})
+	}, func() {})
 	if err != nil {
 		return err
 	}
