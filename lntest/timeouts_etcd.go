@@ -1,5 +1,5 @@
-//go:build !darwin && !kvdb_etcd
-// +build !darwin,!kvdb_etcd
+//go:build !darwin && kvdb_etcd
+// +build !darwin,kvdb_etcd
 
 package lntest
 
@@ -16,7 +16,7 @@ const (
 
 	// ChannelCloseTimeout is the max time we will wait before a channel is
 	// considered closed.
-	ChannelCloseTimeout = time.Second * 30
+	ChannelCloseTimeout = time.Second * 120
 
 	// DefaultTimeout is a timeout that will be used for various wait
 	// scenarios where no custom timeout value is defined.
@@ -24,5 +24,5 @@ const (
 
 	// AsyncBenchmarkTimeout is the timeout used when running the async
 	// payments benchmark.
-	AsyncBenchmarkTimeout = time.Minute * 5
+	AsyncBenchmarkTimeout = 2 * time.Minute
 )
