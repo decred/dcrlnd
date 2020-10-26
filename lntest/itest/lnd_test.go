@@ -2017,7 +2017,7 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 
 // testPaymentFollowingChannelOpen tests that the channel transition from
 // 'pending' to 'open' state does not cause any inconsistencies within other
-// subsystems trying to udpate the channel state in the db. We follow this
+// subsystems trying to update the channel state in the db. We follow this
 // transition with a payment that updates the commitment state and verify that
 // the pending state is up to date.
 func testPaymentFollowingChannelOpen(net *lntest.NetworkHarness, t *harnessTest) {
@@ -2048,7 +2048,7 @@ func testPaymentFollowingChannelOpen(net *lntest.NetworkHarness, t *harnessTest)
 		t.Fatalf("Bob restart failed: %v", err)
 	}
 
-	// We ensure that Bob reconnets to Alice.
+	// We ensure that Bob reconnects to Alice.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	if err := net.EnsureConnected(ctxt, net.Bob, net.Alice); err != nil {
 		t.Fatalf("peers unable to reconnect after restart: %v", err)
@@ -2057,7 +2057,7 @@ func testPaymentFollowingChannelOpen(net *lntest.NetworkHarness, t *harnessTest)
 	// We mine one block for the channel to be confirmed.
 	_ = mineBlocks(t, net, 6, 1)[0]
 
-	// We verify that the chanel is open from both nodes point of view.
+	// We verify that the channel is open from both nodes point of view.
 	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
 	defer cancel()
 	assertNumOpenChannelsPending(ctxt, t, net.Alice, net.Bob, 0)
@@ -2073,14 +2073,11 @@ func testPaymentFollowingChannelOpen(net *lntest.NetworkHarness, t *harnessTest)
 
 	// Send payment to Bob so that a channel update to disk will be
 	// executed.
-	sendAndAssertSuccess(
-		t, net.Alice,
-		&routerrpc.SendPaymentRequest{
-			PaymentRequest: bobPayReqs[0],
-			TimeoutSeconds: 60,
-			FeeLimitAtoms:  1000000,
-		},
-	)
+	sendAndAssertSuccess(t, net.Alice, &routerrpc.SendPaymentRequest{
+		PaymentRequest: bobPayReqs[0],
+		TimeoutSeconds: 60,
+		FeeLimitAtoms:  1000000,
+	})
 
 	// At this point we want to make sure the channel is opened and not
 	// pending.
@@ -15671,6 +15668,11 @@ var testsCases = []*testCase{
 // TestLightningNetworkDaemon performs a series of integration tests amongst a
 // programmatically driven network of lnd nodes.
 func TestLightningNetworkDaemon(t *testing.T) {
+	// If no tests are registered, then we can exit early.
+	if len(testsCases) == 0 {
+		t.Skip("integration tests not selected with flag 'rpctest'")
+	}
+
 	ht := newHarnessTest(t, nil)
 
 	// Declare the network harness here to gain access to its
