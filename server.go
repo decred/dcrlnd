@@ -972,6 +972,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	})
 
 	// Select the configuration and funding parameters for Decred
+	chainCfg := cfg.Decred
 	minRemoteDelay := minDcrRemoteDelay
 	maxRemoteDelay := maxDcrRemoteDelay
 
@@ -1164,6 +1165,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		MaxChanSize:                   dcrutil.Amount(cfg.MaxChanSize),
 		MaxPendingChannels:            cfg.MaxPendingChannels,
 		RejectPush:                    cfg.RejectPush,
+		MaxLocalCSVDelay:              chainCfg.MaxLocalDelay,
 		NotifyOpenChannelEvent:        s.channelNotifier.NotifyOpenChannelEvent,
 		OpenChannelPredicate:          chanPredicate,
 		NotifyPendingOpenChannelEvent: s.channelNotifier.NotifyPendingOpenChannelEvent,

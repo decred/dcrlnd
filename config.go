@@ -91,11 +91,6 @@ const (
 	// backing IP of a host has changed.
 	defaultHostSampleInterval = time.Minute * 5
 
-	// defaultRemoteMaxHtlcs specifies the default limit for maximum
-	// concurrent HTLCs the remote party may add to commitment transactions.
-	// This value can be overridden with --default-remote-max-htlcs.
-	defaultRemoteMaxHtlcs = input.MaxHTLCNumber / 2
-
 	defaultChainInterval = time.Minute
 	defaultChainTimeout  = time.Second * 10
 	defaultChainBackoff  = time.Second * 30
@@ -111,6 +106,16 @@ const (
 	defaultDiskTimeout  = time.Second * 5
 	defaultDiskBackoff  = time.Minute
 	defaultDiskAttempts = 0
+
+	// defaultRemoteMaxHtlcs specifies the default limit for maximum
+	// concurrent HTLCs the remote party may add to commitment transactions.
+	// This value can be overridden with --default-remote-max-htlcs.
+	defaultRemoteMaxHtlcs = input.MaxHTLCNumber / 2
+
+	// defaultMaxLocalCSVDelay is the maximum delay we accept on our
+	// commitment output.
+	// TODO(halseth): find a more scientific choice of value.
+	defaultMaxLocalCSVDelay = 10000
 )
 
 var (
@@ -334,6 +339,7 @@ func DefaultConfig() Config {
 			BaseFee:       chainreg.DefaultDecredBaseFeeMAtoms,
 			FeeRate:       chainreg.DefaultDecredFeeRate,
 			TimeLockDelta: chainreg.DefaultDecredTimeLockDelta,
+			MaxLocalDelay: defaultMaxLocalCSVDelay,
 			Node:          "dcrd",
 		},
 		DcrdMode: &lncfg.DcrdConfig{
@@ -802,9 +808,9 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		cfg.ActiveNetParams = chainreg.DecredMainNetParams
 	}
 
-	if cfg.Decred.TimeLockDelta < minTimeLockDelta {
-		return nil, fmt.Errorf("timelockdelta must be at least %v",
-			minTimeLockDelta)
+	err = cfg.Decred.Validate(minTimeLockDelta, minDcrRemoteDelay)
+	if err != nil {
+		return nil, err
 	}
 
 	switch cfg.Decred.Node {

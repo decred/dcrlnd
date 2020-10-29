@@ -324,6 +324,10 @@ type fundingConfig struct {
 	// incoming channels having a non-zero push amount.
 	RejectPush bool
 
+	// MaxLocalCSVDelay is the maximum csv delay we will allow for our
+	// commit output. Channels that exceed this value will be failed.
+	MaxLocalCSVDelay uint16
+
 	// NotifyOpenChannelEvent informs the ChannelNotifier when channels
 	// transition from pending open to open.
 	NotifyOpenChannelEvent func(wire.OutPoint)
@@ -1333,7 +1337,9 @@ func (f *fundingManager) handleFundingOpen(peer lnpeer.Peer,
 		MaxAcceptedHtlcs: msg.MaxAcceptedHTLCs,
 		CsvDelay:         msg.CsvDelay,
 	}
-	err = reservation.CommitConstraints(channelConstraints)
+	err = reservation.CommitConstraints(
+		channelConstraints, f.cfg.MaxLocalCSVDelay,
+	)
 	if err != nil {
 		fndgLog.Errorf("Unacceptable channel constraints: %v", err)
 		f.failFundingFlow(peer, msg.PendingChannelID, err)
@@ -1519,7 +1525,9 @@ func (f *fundingManager) handleFundingAccept(peer lnpeer.Peer,
 		MaxAcceptedHtlcs: msg.MaxAcceptedHTLCs,
 		CsvDelay:         msg.CsvDelay,
 	}
-	err = resCtx.reservation.CommitConstraints(channelConstraints)
+	err = resCtx.reservation.CommitConstraints(
+		channelConstraints, f.cfg.MaxLocalCSVDelay,
+	)
 	if err != nil {
 		fndgLog.Warnf("Unacceptable channel constraints: %v", err)
 		f.failFundingFlow(peer, msg.PendingChannelID, err)

@@ -96,7 +96,8 @@ var (
 	bobAddr, _   = net.ResolveTCPAddr("tcp", "10.0.0.2:9000")
 	aliceAddr, _ = net.ResolveTCPAddr("tcp", "10.0.0.3:9000")
 
-	defaultFeeRate = chainfee.AtomPerKByte(1e4)
+	defaultFeeRate                 = chainfee.AtomPerKByte(1e4)
+	defaultMaxLocalCsvDelay uint16 = 10000
 )
 
 // assertProperBalance asserts than the total value of the unspent outputs
@@ -460,7 +461,9 @@ func testDualFundingReservationWorkflow(miner *rpctest.Harness,
 		MaxAcceptedHtlcs: input.MaxHTLCNumber / 2,
 		CsvDelay:         csvDelay,
 	}
-	err = aliceChanReservation.CommitConstraints(channelConstraints)
+	err = aliceChanReservation.CommitConstraints(
+		channelConstraints, defaultMaxLocalCsvDelay,
+	)
 	if err != nil {
 		t.Fatalf("unable to verify constraints: %v", err)
 	}
@@ -498,7 +501,9 @@ func testDualFundingReservationWorkflow(miner *rpctest.Harness,
 	if err != nil {
 		t.Fatalf("bob unable to init channel reservation: %v", err)
 	}
-	err = bobChanReservation.CommitConstraints(channelConstraints)
+	err = bobChanReservation.CommitConstraints(
+		channelConstraints, defaultMaxLocalCsvDelay,
+	)
 	if err != nil {
 		t.Fatalf("unable to verify constraints: %v", err)
 	}
@@ -923,7 +928,9 @@ func testSingleFunderReservationWorkflow(miner *rpctest.Harness,
 		MaxAcceptedHtlcs: input.MaxHTLCNumber / 2,
 		CsvDelay:         csvDelay,
 	}
-	err = aliceChanReservation.CommitConstraints(channelConstraints)
+	err = aliceChanReservation.CommitConstraints(
+		channelConstraints, defaultMaxLocalCsvDelay,
+	)
 	if err != nil {
 		t.Fatalf("unable to verify constraints: %v", err)
 	}
@@ -964,7 +971,9 @@ func testSingleFunderReservationWorkflow(miner *rpctest.Harness,
 	if err != nil {
 		t.Fatalf("unable to create bob reservation: %v", err)
 	}
-	err = bobChanReservation.CommitConstraints(channelConstraints)
+	err = bobChanReservation.CommitConstraints(
+		channelConstraints, defaultMaxLocalCsvDelay,
+	)
 	if err != nil {
 		t.Fatalf("unable to verify constraints: %v", err)
 	}
