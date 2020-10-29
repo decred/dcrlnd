@@ -38,12 +38,12 @@ _testmain.go
 /dcrlnd_testbins.tar.gz
 
 # Integration test log files
-lntest/itest/output*.log
-lntest/itest/pprof*.log
+lntest/itest/*.log
 lntest/itest/.backendlogs
 lntest/itest/.minerlogs
 lntest/itest/dcrlnd-itest
 lntest/itest/.logs-*
+lntest/itest/.tempminerlogs
 lnwallet/output*.log
 lnwallet/.miner-logs*
 chainscan/csdrivers/.*
