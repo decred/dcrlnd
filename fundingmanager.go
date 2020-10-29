@@ -116,6 +116,9 @@ type reservationWithCtx struct {
 	remoteMaxValue lnwire.MilliAtom
 	remoteMaxHtlcs uint16
 
+	// maxLocalCsv is the maximum csv we will accept from the remote.
+	maxLocalCsv uint16
+
 	updateMtx   sync.RWMutex
 	lastUpdated time.Time
 
@@ -1398,6 +1401,7 @@ func (f *fundingManager) handleFundingOpen(peer lnpeer.Peer,
 		remoteMinHtlc:  minHtlc,
 		remoteMaxValue: remoteMaxValue,
 		remoteMaxHtlcs: maxHtlcs,
+		maxLocalCsv:    f.cfg.MaxLocalCSVDelay,
 		err:            make(chan error, 1),
 		peer:           peer,
 	}
@@ -1526,7 +1530,7 @@ func (f *fundingManager) handleFundingAccept(peer lnpeer.Peer,
 		CsvDelay:         msg.CsvDelay,
 	}
 	err = resCtx.reservation.CommitConstraints(
-		channelConstraints, f.cfg.MaxLocalCSVDelay,
+		channelConstraints, resCtx.maxLocalCsv,
 	)
 	if err != nil {
 		fndgLog.Warnf("Unacceptable channel constraints: %v", err)
@@ -3058,7 +3062,14 @@ func (f *fundingManager) handleInitFundingMsg(msg *initFundingMsg) {
 		remoteCsvDelay = msg.remoteCsvDelay
 		maxValue       = msg.maxValueInFlight
 		maxHtlcs       = msg.maxHtlcs
+		maxCSV         = msg.maxLocalCsv
 	)
+
+	// If no maximum CSV delay was set for this channel, we use our default
+	// value.
+	if maxCSV == 0 {
+		maxCSV = f.cfg.MaxLocalCSVDelay
+	}
 
 	// We'll determine our dust limit depending on which chain is active.
 	var ourDustLimit dcrutil.Amount
@@ -3221,6 +3232,7 @@ func (f *fundingManager) handleInitFundingMsg(msg *initFundingMsg) {
 		remoteMinHtlc:  minHtlcIn,
 		remoteMaxValue: maxValue,
 		remoteMaxHtlcs: maxHtlcs,
+		maxLocalCsv:    maxCSV,
 		reservation:    reservation,
 		peer:           msg.peer,
 		updates:        msg.updates,
