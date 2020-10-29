@@ -181,11 +181,11 @@ func extractPathArgs(ctx *cli.Context) (string, string, error) {
 		return "", "", err
 	}
 
-	// We'll now fetch the dcrlnddir so we can make a decision  on how to
+	// We'll now fetch the lnddir so we can make a decision  on how to
 	// properly read the macaroons (if needed) and also the cert. This will
 	// either be the default, or will have been overwritten by the end
 	// user.
-	lndDir := cleanAndExpandPath(ctx.GlobalString("dcrlnddir"))
+	lndDir := cleanAndExpandPath(ctx.GlobalString("lnddir"))
 
 	// If the macaroon path as been manually provided, then we'll only
 	// target the specified file.
@@ -194,7 +194,7 @@ func extractPathArgs(ctx *cli.Context) (string, string, error) {
 		macPath = cleanAndExpandPath(ctx.GlobalString("macaroonpath"))
 	} else {
 		// Otherwise, we'll go into the path:
-		// dcrlnddir/data/chain/<chain>/<network> in order to fetch the
+		// lnddir/data/chain/<chain>/<network> in order to fetch the
 		// macaroon that we need.
 		macPath = filepath.Join(
 			lndDir, defaultDataDir, defaultChainSubDir, chain,
@@ -228,7 +228,7 @@ func main() {
 			Usage: "host:port of Decred LN daemon",
 		},
 		cli.StringFlag{
-			Name:  "dcrlnddir",
+			Name:  "lnddir",
 			Value: defaultLndDir,
 			Usage: "path to dcrlnd's base directory",
 		},
