@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1532,6 +1533,52 @@ func (s *server) Start() error {
 			startErr = err
 			return
 		}
+
+		// setSeedList is a helper function that turns multiple DNS seed
+		// server tuples from the command line or config file into the
+		// data structure we need and does a basic formal sanity check
+		// in the process.
+		setSeedList := func(tuples []string, genesisHash chainhash.Hash) {
+			if len(tuples) == 0 {
+				return
+			}
+
+			result := make([][2]string, len(tuples))
+			for idx, tuple := range tuples {
+				tuple = strings.TrimSpace(tuple)
+				if len(tuple) == 0 {
+					return
+				}
+
+				servers := strings.Split(tuple, ",")
+				if len(servers) > 2 || len(servers) == 0 {
+					srvrLog.Warnf("Ignoring invalid DNS "+
+						"seed tuple: %v", servers)
+					return
+				}
+
+				copy(result[idx][:], servers)
+			}
+
+			chainreg.ChainDNSSeeds[genesisHash] = result
+		}
+
+		// Let users overwrite the DNS seed nodes. We only allow them
+		// for decred mainnet/testnet, all other combinations will just
+		// be ignored.
+		if !s.cfg.Decred.TestNet3 && !s.cfg.Decred.SimNet && !s.cfg.Decred.RegTest {
+			setSeedList(
+				s.cfg.Decred.DNSSeeds,
+				chainreg.DecredMainNetParams.GenesisHash,
+			)
+		}
+		if s.cfg.Decred.TestNet3 {
+			setSeedList(
+				s.cfg.Decred.DNSSeeds,
+				chainreg.DecredTestNetParams.GenesisHash,
+			)
+		}
+
 		// If network bootstrapping hasn't been disabled, then we'll
 		// configure the set of active bootstrappers, and launch a
 		// dedicated goroutine to maintain a set of persistent
