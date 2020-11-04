@@ -11,9 +11,6 @@ import (
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
-// logDir is the name of the temporary log directory.
-const logDir = "./.backendlogs"
-
 // SpvBackendConfig is an implementation of the BackendConfig interface
 // backed by a btcd node.
 type SpvBackendConfig struct {
@@ -94,7 +91,7 @@ func (b SpvBackendConfig) Name() string {
 // NewBackend starts a new rpctest.Harness and returns a SpvBackendConfig for
 // that node.
 func NewBackend(t *testing.T, miner *rpctest.Harness) (*SpvBackendConfig, func() error, error) {
-	chainBackend, cleanUp, err := newBackend(t, miner, logDir)
+	chainBackend, cleanUp, err := newBackend(t, miner)
 	if err != nil {
 		return nil, nil, err
 	}

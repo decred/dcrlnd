@@ -14,9 +14,6 @@ import (
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
-// logDir is the name of the temporary log directory.
-const logDir = "./.backendlogs"
-
 // DcrdBackendConfig is an implementation of the BackendConfig interface
 // backed by a btcd node.
 type DcrdBackendConfig struct {
@@ -104,7 +101,7 @@ func (b DcrdBackendConfig) Name() string {
 // NewBackend starts a new rpctest.Harness and returns a DcrdBackendConfig for
 // that node.
 func NewBackend(t *testing.T, miner *rpctest.Harness) (*DcrdBackendConfig, func() error, error) {
-	chainBackend, cleanUp, err := newBackend(t, miner, logDir)
+	chainBackend, cleanUp, err := newBackend(t, miner)
 	if err != nil {
 		return nil, nil, err
 	}

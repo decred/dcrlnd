@@ -11,15 +11,19 @@ import (
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
+// logDirPattern is the pattern of the temporary log directory.
+const logDirPattern = "%s/.backendlogs"
+
 // newBackend initializes a new dcrd rpctest backend.
 //
 //nolint:unused
-func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.Harness, func() error, error) {
+func newBackend(t *testing.T, miner *rpctest.Harness) (*rpctest.Harness, func() error, error) {
+	baseLogDir := fmt.Sprintf(logDirPattern, GetLogDir())
 	args := []string{
 		"--rejectnonstd",
 		"--txindex",
 		"--debuglevel=debug",
-		"--logdir=" + logDir,
+		"--logdir=" + baseLogDir,
 		"--maxorphantx=0",
 		"--nobanning",
 		"--rpcmaxclients=100",
@@ -44,13 +48,14 @@ func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.H
 
 		// After shutting down the chain backend, we'll make a copy of
 		// the log file before deleting the temporary log dir.
-		logFile := logDir + "/" + netParams.Name + "/dcrd.log"
-		err := CopyFile("./output_dcrd_chainbackend.log", logFile)
+		logFile := baseLogDir + "/" + netParams.Name + "/dcrd.log"
+		destLogFile := fmt.Sprintf("%s/output_dcrd_chainbackend.log", GetLogDir())
+		err := CopyFile(destLogFile, logFile)
 		if err != nil {
 			errStr += fmt.Sprintf("unable to copy file: %v\n", err)
 		}
-		if err = os.RemoveAll(logDir); err != nil {
-			errStr += fmt.Sprintf("Cannot remove dir %s: %v\n", logDir, err)
+		if err = os.RemoveAll(baseLogDir); err != nil {
+			errStr += fmt.Sprintf("Cannot remove dir %s: %v\n", baseLogDir, err)
 		}
 		if errStr != "" {
 			return errors.New(errStr)

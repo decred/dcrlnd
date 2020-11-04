@@ -2680,8 +2680,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Set up a new miner that we can use to cause a reorg.
-
-	tempLogDir := "./.tempminerlogs"
+	tempLogDir := fmt.Sprintf("%s/.tempminerlogs", lntest.GetLogDir())
 	logFilename := "output-open_channel_reorg-temp_miner.log"
 	tempMiner, tempMinerCleanUp, err := lntest.NewMiner(
 		t.t, tempLogDir, logFilename,
@@ -15150,6 +15149,8 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	}
 
 	// Parse testing flags that influence our test execution.
+	logDir := lntest.GetLogDir()
+	require.NoError(t, os.MkdirAll(logDir, 0700))
 	testCases, trancheIndex, trancheOffset := getTestCaseSplitTranche()
 	lntest.ApplyPortOffset(uint32(trancheIndex) * 1000)
 
@@ -15168,8 +15169,7 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	// guarantees of getting included in to blocks.
 	//
 	// We will also connect it to our chain backend.
-	minerLogDir := "./.minerlogs"
-
+	minerLogDir := fmt.Sprintf("%s/.minerlogs", logDir)
 	miner, minerCleanUp, err := lntest.NewMiner(
 		t, minerLogDir, "output_dcrd_miner.log",
 		harnessNetParams, &rpcclient.NotificationHandlers{},
