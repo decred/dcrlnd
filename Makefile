@@ -191,6 +191,27 @@ itest-only:
 
 itest: dcrd dcrwallet build-itest itest-only
 
+itest-parallel: dcrd dcrwallet
+	@$(call print, "Building dcrlnd binary")
+	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o lntest/itest/dcrlnd-itest $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
+
+	@$(call print, "Building itest binary for $(backend) backend")
+	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -c -o lntest/itest/itest.test
+
+	@$(call print, "Running tests")
+	rm -rf lntest/itest/*.log lntest/itest/.logs-*
+	echo -n "$$(seq 0 $$(expr $(NUM_ITEST_TRANCHES) - 1))" | xargs -P $(NUM_ITEST_TRANCHES) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
+
+itest-parallel-windows: dcrd dcrwallet
+	@$(call print, "Building dcrlnd binary")
+	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o lntest/itest/dcrlnd-itest.exe $(ITEST_LDFLAGS) $(PKG)/cmd/lnd
+
+	@$(call print, "Building itest binary for $(backend) backend")
+	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -logoutput -goroutinedump -c -o lntest/itest/itest.test.exe
+
+	@$(call print, "Running tests")
+	EXEC_SUFFIX=".exe" echo -n "$$(seq 0 $$(expr $(NUM_ITEST_TRANCHES) - 1))" | xargs -P $(NUM_ITEST_TRANCHES) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
+
 itest-windows: dcrd dcrwallet build-itest-windows itest-only
 
 unit-only:

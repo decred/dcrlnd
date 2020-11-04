@@ -3,7 +3,18 @@ LOG_TAGS =
 UTEST_TAGS = unittest
 TEST_FLAGS =
 RACE_ENV = CGO_ENABLED=1 GORACE="history_size=7 halt_on_errors=1"
-COVER_PKG = $$(go list ./... | grep -v lnrpc)
+COVER_PKG = $$(go list -deps ./... | grep '$(PKG)' | grep -v lnrpc)
+NUM_ITEST_TRANCHES = 6
+
+# If rpc option is set also add all extra RPC tags to DEV_TAGS
+ifneq ($(with-rpc),)
+DEV_TAGS += $(RPC_TAGS)
+endif
+
+# Scale the number of parallel running itest tranches.
+ifneq ($(tranches),)
+NUM_ITEST_TRANCHES = $(tranches)
+endif
 
 # If specific package is being unit tested, construct the full name of the
 # subpackage.
@@ -21,7 +32,7 @@ endif
 
 # Define the integration test.run filter if the icase argument was provided.
 ifneq ($(icase),)
-TEST_FLAGS += -test.run=TestLightningNetworkDaemon/$(icase)
+TEST_FLAGS += -test.run="TestLightningNetworkDaemon/.*-of-.*/.*/$(icase)"
 endif
 
 # Default to embedded wallet implementation if not set.

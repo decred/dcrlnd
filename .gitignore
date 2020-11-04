@@ -42,6 +42,8 @@ lntest/itest/output*.log
 lntest/itest/pprof*.log
 lntest/itest/.backendlogs
 lntest/itest/.minerlogs
+lntest/itest/dcrlnd-itest
+lntest/itest/.logs-*
 lnwallet/output*.log
 lnwallet/.miner-logs*
 chainscan/csdrivers/.*
