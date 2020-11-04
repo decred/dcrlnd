@@ -3,4 +3,4 @@
 
 package itest
 
-var testsCases = []*testCase{}
+var allTestCases = []*testCase{}

@@ -3,7 +3,7 @@
 
 package itest
 
-var testsCases = []*testCase{
+var allTestCases = []*testCase{
 	// This test needs to happen before SVH, so that we don't have to run a
 	// second voter on the second chain to observe the reorg.
 	{
