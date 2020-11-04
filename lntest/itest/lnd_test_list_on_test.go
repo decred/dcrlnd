@@ -20,6 +20,10 @@ var allTestCases = []*testCase{
 		test: testConcurrentNodeConnection,
 	},
 	{
+		name: "test multi-hop htlc",
+		test: testMultiHopHtlcClaims,
+	},
+	{
 		name: "sweep coins",
 		test: testSweepAllCoins,
 	},
@@ -160,10 +164,6 @@ var allTestCases = []*testCase{
 	{
 		name: "async bidirectional payments",
 		test: testBidirectionalAsyncPayments,
-	},
-	{
-		name: "test multi-hop htlc",
-		test: testMultiHopHtlcClaims,
 	},
 	{
 		name: "switch circuit persistence",
