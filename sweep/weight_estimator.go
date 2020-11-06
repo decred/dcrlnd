@@ -3,6 +3,7 @@ package sweep
 import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
@@ -89,6 +90,12 @@ func (w *sizeEstimator) tryAddParent(inp input.Input) {
 // native P2PKH output.
 func (w *sizeEstimator) addP2PKHOutput() {
 	w.estimator.AddP2PKHOutput()
+}
+
+// addOutput updates the weight estimate to account for the known
+// output given.
+func (w *sizeEstimator) addOutput(txOut *wire.TxOut) {
+	w.estimator.AddTxOutput(txOut)
 }
 
 // size gets the estimated size of the transaction.

@@ -3,6 +3,8 @@ package sweep
 import (
 	"testing"
 
+	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -76,4 +78,33 @@ func TestWeightEstimator(t *testing.T) {
 	) - parentTxLowFee.Fee
 
 	require.Equal(t, expectedFee, w.fee())
+}
+
+// TestWeightEstimatorAddOutput tests that adding the raw P2WKH output to the
+// estimator yield the same result as an estimated add.
+func TestWeightEstimatorAddOutput(t *testing.T) {
+	testFeeRate := chainfee.AtomPerKByte(20000)
+
+	p2pkhAddr, err := stdaddr.NewAddressPubKeyHashEcdsaSecp256k1(
+		0, make([]byte, 20), chaincfg.MainNetParams(),
+	)
+	require.NoError(t, err)
+
+	version, p2pkhScript := p2pkhAddr.PaymentScript()
+
+	// Create two estimators, add the raw P2WKH out to one.
+	txOut := &wire.TxOut{
+		Version:  version,
+		PkScript: p2pkhScript,
+		Value:    10000,
+	}
+
+	w1 := newSizeEstimator(testFeeRate)
+	w1.addOutput(txOut)
+
+	w2 := newSizeEstimator(testFeeRate)
+	w2.addP2PKHOutput()
+
+	// Estimate hhould be the same.
+	require.Equal(t, w1.size(), w2.size())
 }

@@ -765,6 +765,14 @@ func (twe *TxSizeEstimator) AddCustomInput(sigScriptSize int64) *TxSizeEstimator
 	return twe
 }
 
+// AddTxOutput adds a known TxOut to the weight estimator.
+func (twe *TxSizeEstimator) AddTxOutput(txOut *wire.TxOut) *TxSizeEstimator {
+	twe.OutputSize += int64(txOut.SerializeSize())
+	twe.outputCount++
+
+	return twe
+}
+
 // AddP2PKHOutput updates the size estimate to account for an additional P2PKH
 // output.
 func (twe *TxSizeEstimator) AddP2PKHOutput() *TxSizeEstimator {
