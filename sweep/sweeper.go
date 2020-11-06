@@ -1213,7 +1213,7 @@ func (s *UtxoSweeper) sweep(inputs inputSet, feeRate chainfee.AtomPerKByte,
 	// Create sweep tx.
 	tx, err := createSweepTx(
 		inputs, s.currentOutputScript, uint32(currentHeight), feeRate,
-		s.cfg.Signer, s.cfg.NetParams,
+		dustLimit(s.relayFeeRate), s.cfg.Signer, s.cfg.NetParams,
 	)
 	if err != nil {
 		return fmt.Errorf("create sweep tx: %v", err)
@@ -1503,7 +1503,8 @@ func (s *UtxoSweeper) CreateSweepTx(inputs []input.Input, feePref FeePreference,
 	}
 
 	return createSweepTx(
-		inputs, pkScript, currentBlockHeight, feePerKB, s.cfg.Signer, s.cfg.NetParams,
+		inputs, pkScript, currentBlockHeight, feePerKB,
+		dustLimit(s.relayFeeRate), s.cfg.Signer, s.cfg.NetParams,
 	)
 }
 

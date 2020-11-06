@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
@@ -158,10 +159,10 @@ type WalletSweepPackage struct {
 // by the delivery address. The sweep transaction will be crafted with the
 // target fee rate, and will use the utxoSource and outpointLocker as sources
 // for wallet funds.
-func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, blockHeight uint32,
-	deliveryAddr stdaddr.Address, coinSelectLocker CoinSelectionLocker,
-	utxoSource UtxoSource, outpointLocker OutpointLocker,
-	feeEstimator chainfee.Estimator,
+func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
+	blockHeight uint32, deliveryAddr stdaddr.Address,
+	coinSelectLocker CoinSelectionLocker, utxoSource UtxoSource,
+	outpointLocker OutpointLocker, feeEstimator chainfee.Estimator,
 	signer input.Signer, netParams *chaincfg.Params) (*WalletSweepPackage, error) {
 
 	// TODO(roasbeef): turn off ATPL as well when available?
@@ -276,8 +277,8 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, blockHeight uint32,
 	// Finally, we'll ask the sweeper to craft a sweep transaction which
 	// respects our fee preference and targets all the UTXOs of the wallet.
 	sweepTx, err := createSweepTx(
-		inputsToSweep, deliveryPkScript, blockHeight, feeRate, signer,
-		netParams,
+		inputsToSweep, deliveryPkScript, blockHeight, feeRate,
+		dustLimit, signer, netParams,
 	)
 	if err != nil {
 		unlockOutputs()

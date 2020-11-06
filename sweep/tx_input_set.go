@@ -82,13 +82,15 @@ type txInputSet struct {
 	wallet Wallet
 }
 
+func dustLimit(relayFee chainfee.AtomPerKByte) dcrutil.Amount {
+	return lnwallet.DustThresholdForRelayFee(relayFee)
+}
+
 // newTxInputSet constructs a new, empty input set.
 func newTxInputSet(wallet Wallet, feePerKB,
 	relayFee chainfee.AtomPerKByte, maxInputs int) *txInputSet {
 
-	// Calculate dust limit based on the P2PKH output script of the sweep
-	// txes.
-	dustLimit := lnwallet.DustThresholdForRelayFee(relayFee)
+	dustLimit := dustLimit(relayFee)
 
 	state := txInputSetState{
 		sizeEstimate: newSizeEstimator(feePerKB),

@@ -132,7 +132,7 @@ func generateInputPartitionings(sweepableInputs []txInput,
 // createSweepTx builds a signed tx spending the inputs to a the output script.
 func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	currentBlockHeight uint32, feePerKB chainfee.AtomPerKByte,
-	signer input.Signer, netParams *chaincfg.Params) (*wire.MsgTx, error) {
+	dustLimit dcrutil.Amount, signer input.Signer, netParams *chaincfg.Params) (*wire.MsgTx, error) {
 
 	inputs, estimator := getSizeEstimate(inputs, feePerKB)
 
@@ -171,14 +171,16 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	}
 
 	// Sweep as much possible, after subtracting txn fees.
-	sweepAmt := int64(totalSum - txFee)
+	sweepAmt := totalSum - txFee
 
 	// The txn will sweep the amount after fees to the pkscript generated
 	// above.
-	sweepTx.AddTxOut(&wire.TxOut{
-		PkScript: outputPkScript,
-		Value:    sweepAmt,
-	})
+	if sweepAmt >= dustLimit {
+		sweepTx.AddTxOut(&wire.TxOut{
+			PkScript: outputPkScript,
+			Value:    int64(sweepAmt),
+		})
+	}
 
 	// We'll default to using the current block height as locktime, if none
 	// of the inputs commits to a different locktime.
