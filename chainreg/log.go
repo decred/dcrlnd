@@ -5,11 +5,15 @@ import (
 	"github.com/decred/slog"
 )
 
+// Subsystem defines the logging code for this subsystem.
+const Subsystem = "CHRE"
+
+// log is a logger that is initialized with the slog.Disabled logger.
 var log slog.Logger
 
 // The default amount of logging is none.
 func init() {
-	UseLogger(build.NewSubLogger("CHRE", nil))
+	UseLogger(build.NewSubLogger(Subsystem, nil))
 }
 
 // DisableLog disables all logging output.

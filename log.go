@@ -7,6 +7,7 @@ import (
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/chainntnfs"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/chainscan/csdrivers"
 	"github.com/decred/dcrlnd/chanbackup"
@@ -136,6 +137,7 @@ func SetupLoggers(root *build.RotatingLogWriter) {
 	AddSubLogger(root, chanfitness.Subsystem, chanfitness.UseLogger)
 	AddSubLogger(root, verrpc.Subsystem, verrpc.UseLogger)
 	AddSubLogger(root, healthcheck.Subsystem, healthcheck.UseLogger)
+	AddSubLogger(root, chainreg.Subsystem, chainreg.UseLogger)
 
 	// Decred-specific logs.
 	AddSubLogger(root, "DCRW", dcrwallet.UseLogger)
