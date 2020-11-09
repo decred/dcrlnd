@@ -65,7 +65,7 @@ var (
 func createTestInput(value int64, witnessType input.WitnessType) input.BaseInput {
 	hash := chainhash.Hash{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		byte(testInputCount)}
+		byte(testInputCount + 1)}
 
 	input := input.MakeBaseInput(
 		&wire.OutPoint{
@@ -107,7 +107,7 @@ func createSweeperTestContext(t *testing.T) *sweeperTestContext {
 	backend := newMockBackend(t, notifier)
 	backend.walletUtxos = []*lnwallet.Utxo{
 		{
-			Value:       dcrutil.Amount(10000),
+			Value:       dcrutil.Amount(1_000_000),
 			AddressType: lnwallet.PubKeyHash,
 		},
 	}
@@ -517,7 +517,7 @@ func TestWalletUtxo(t *testing.T) {
 	}
 
 	// Calculate expected output value based on wallet utxo of 10000 sats.
-	expectedOutputValue := int64(3900 + 10000 - 3830)
+	expectedOutputValue := int64(3900 + 1_000_000 - 3830)
 	if sweepTx.TxOut[0].Value != expectedOutputValue {
 		t.Fatalf("Expected output value of %v, but got %v",
 			expectedOutputValue, sweepTx.TxOut[0].Value)
@@ -1391,14 +1391,14 @@ func TestCpfp(t *testing.T) {
 	require.Len(t, tx.TxIn, 2)
 	require.Len(t, tx.TxOut, 1)
 
-	// As inputs we have 10000 atoms from the wallet and 25000 atoms from
+	// As inputs we have 1000000 atoms from the wallet and 25000 atoms from
 	// the cpfp input. The sweep tx size is expected to be 432 bytes. There
 	// is an additional 300 bytes from the parent to include in the package,
 	// making a total of 732 bytes. At 50000 atoms/kB, the required fee for
 	// the package is 36600 atoms. The parent already paid 9000 atoms, so
 	// there is 27600 atoms remaining to be paid. The expected output value
-	// is therefore 10000 + 25000  - 27600 = 7400.
-	require.Equal(t, int64(7400), tx.TxOut[0].Value)
+	// is therefore 1000000 + 25000  - 27600 = 7400.
+	require.Equal(t, int64(997400), tx.TxOut[0].Value)
 
 	// Mine the tx and assert that the result is passed back.
 	ctx.backend.mine()
