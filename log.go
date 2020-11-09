@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/chainscan/csdrivers"
+	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/chanbackup"
 	"github.com/decred/dcrlnd/chanfitness"
 	"github.com/decred/dcrlnd/channeldb"
@@ -105,6 +106,13 @@ func SetupLoggers(root *build.RotatingLogWriter) {
 	signal.UseLogger(ltndLog)
 	autopilot.UseLogger(atplLog)
 
+	// Decred-specific logs.
+	AddSubLogger(root, "DCRW", dcrwallet.UseLogger)
+	AddSubLogger(root, "RDCW", remotedcrwallet.UseLogger)
+	AddSubLogger(root, "KCHN", keychain.UseLogger)
+	AddSubLogger(root, "CSCN", chainscan.UseLogger)
+	AddSubLogger(root, "CSDR", csdrivers.UseLogger)
+
 	AddSubLogger(root, "LNWL", lnwallet.UseLogger)
 	AddSubLogger(root, "DISC", discovery.UseLogger)
 	AddSubLogger(root, "NTFN", chainntnfs.UseLogger)
@@ -138,13 +146,7 @@ func SetupLoggers(root *build.RotatingLogWriter) {
 	AddSubLogger(root, verrpc.Subsystem, verrpc.UseLogger)
 	AddSubLogger(root, healthcheck.Subsystem, healthcheck.UseLogger)
 	AddSubLogger(root, chainreg.Subsystem, chainreg.UseLogger)
-
-	// Decred-specific logs.
-	AddSubLogger(root, "DCRW", dcrwallet.UseLogger)
-	AddSubLogger(root, "RDCW", remotedcrwallet.UseLogger)
-	AddSubLogger(root, "KCHN", keychain.UseLogger)
-	AddSubLogger(root, "CSCN", chainscan.UseLogger)
-	AddSubLogger(root, "CSDR", csdrivers.UseLogger)
+	AddSubLogger(root, chanacceptor.Subsystem, chanacceptor.UseLogger)
 }
 
 // AddSubLogger is a helper method to conveniently create and register the
