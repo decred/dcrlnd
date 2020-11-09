@@ -5,9 +5,12 @@ import (
 	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/htlcswitch"
+	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -716,4 +719,24 @@ func calcCompromiseFee(chanPoint wire.OutPoint, ourIdealFee, lastSentFee,
 		// TODO(roasbeef): fail if their fee isn't in expected range
 		return remoteFee
 	}
+}
+
+// ParseUpfrontShutdownAddress attempts to parse an upfront shutdown address.
+// If the address is empty, it returns nil. If it successfully decoded the
+// address, it returns a script that pays out to the address.
+func ParseUpfrontShutdownAddress(address string,
+	params *chaincfg.Params) (lnwire.DeliveryAddress, error) {
+
+	if len(address) == 0 {
+		return nil, nil
+	}
+
+	addr, err := stdaddr.DecodeAddress(
+		address, params,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address: %v", err)
+	}
+
+	return input.PayToAddrScript(addr)
 }
