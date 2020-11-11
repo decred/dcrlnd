@@ -180,6 +180,11 @@ type ChainControl struct {
 	// ChainIO represents an abstraction over a source that can query the blockchain.
 	ChainIO lnwallet.BlockChainIO
 
+	// HealthCheck is a function which can be used to send a low-cost, fast
+	// query to the chain backend to ensure we still have access to our
+	// node.
+	HealthCheck func() error
+
 	// FeeEstimator is used to estimate an optimal fee for transactions important to us.
 	FeeEstimator chainfee.Estimator
 
@@ -528,6 +533,12 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 
 	// Select the default channel constraints for the primary chain.
 	channelConstraints := DefaultDcrChannelConstraints
+
+	// Set the chain IO healthcheck.
+	cc.HealthCheck = func() error {
+		_, _, err := cc.ChainIO.GetBestBlock()
+		return err
+	}
 
 	// Create, and start the lnwallet, which handles the core payment
 	// channel logic, and exposes control via proxy state machines.
