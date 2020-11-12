@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
@@ -602,21 +603,63 @@ func (c *ChainArbitrator) Start() error {
 		close(watcherErrs)
 	}()
 
+	// stopAndLog is a helper function which shuts down the chain arb and
+	// logs errors if they occur.
+	stopAndLog := func() {
+		if err := c.Stop(); err != nil {
+			log.Errorf("ChainArbitrator could not shutdown: %v", err)
+		}
+	}
+
 	// Handle all errors returned from spawning our chain watchers. If any
 	// of them failed, we will stop the chain arb to shutdown any active
 	// goroutines.
 	for err := range watcherErrs {
 		if err != nil {
-			c.Stop()
+			stopAndLog()
 			return err
 		}
+	}
+
+	// Before we start all of our arbitrators, we do a preliminary state
+	// lookup so that we can combine all of these lookups in a single db
+	// transaction.
+	var startStates map[wire.OutPoint]*chanArbStartState
+
+	err = kvdb.View(c.chanSource, func(tx walletdb.ReadTx) error {
+		for _, arbitrator := range c.activeChannels {
+			startState, err := arbitrator.getStartState(tx)
+			if err != nil {
+				return err
+			}
+
+			startStates[arbitrator.cfg.ChanPoint] = startState
+		}
+
+		return nil
+	}, func() {
+		startStates = make(
+			map[wire.OutPoint]*chanArbStartState,
+			len(c.activeChannels),
+		)
+	})
+	if err != nil {
+		stopAndLog()
+		return err
 	}
 
 	// Launch all the goroutines for each arbitrator so they can carry out
 	// their duties.
 	for _, arbitrator := range c.activeChannels {
-		if err := arbitrator.Start(); err != nil {
-			c.Stop()
+		startState, ok := startStates[arbitrator.cfg.ChanPoint]
+		if !ok {
+			stopAndLog()
+			return fmt.Errorf("arbitrator: %v has no start state",
+				arbitrator.cfg.ChanPoint)
+		}
+
+		if err := arbitrator.Start(startState); err != nil {
+			stopAndLog()
 			return err
 		}
 	}
@@ -1066,7 +1109,7 @@ func (c *ChainArbitrator) WatchNewChannel(newChan *channeldb.OpenChannel) error 
 	// arbitrators, then launch it.
 	c.activeChannels[chanPoint] = channelArb
 
-	if err := channelArb.Start(); err != nil {
+	if err := channelArb.Start(nil); err != nil {
 		return err
 	}
 
