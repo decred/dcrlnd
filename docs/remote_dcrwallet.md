@@ -27,7 +27,7 @@ according to their specific security and privacy considerations.
 
 ```shell
 # Generate the CA key and cert (do it on wallet host)
-$ openssl genpkey -algorithm ed25519 -out clientca.key
+$ openssl genpkey -algorithm ed25519 -out client-ca.key
 $ openssl req -x509 -nodes -key client-ca.key -sha256 -days 1024 -out client-ca.cert
 # (accept defaults)
 
@@ -39,8 +39,7 @@ $ openssl req -new -key client.key -out client.csr
 # (copy the CSR from dcrlnd host to wallet host)
 
 # Generate the client cert signed by the CA key.
-$ openssl x509 -req -in client.csr -CA client-ca.cert -CAkey client-ca.key \
-	-CAcreateserial -out client.cert -days 1024 -sha256
+$ openssl x509 -req -in client.csr -CA client-ca.cert -CAkey client-ca.key -CAcreateserial -out client.cert -days 1024 -sha256
 
 # (copy client.cert and client.key to the dcrlnd host)
 ```
@@ -50,14 +49,14 @@ $ openssl x509 -req -in client.csr -CA client-ca.cert -CAkey client-ca.key \
 Add the following to the applicable `dcrwallet.conf` file:
 
 ```ini
+[Application Options]
 # Replace 127.0.0.1 for your private network IP.
 # Replace 19221 for some other port (and adjust firewall).
 grpclisten = 127.0.0.1:19221
 
 # Replace for full path to client-ca.cert.
-clientcafile = client-ca.cert
+clientcafile = /path/to/client-ca.cert
 
-authtype = clientcert
 ```
 
 ## `dcrlnd` Config
@@ -81,8 +80,10 @@ node = dcrw
 # Replace 19221 for the correct port.
 dcrwallet.grpchost = 127.0.0.1:19221
 
-# This is a copy of the standard wallet rpc.cert file.
-dcrwallet.certpath = rpc.cert
+# This is a copy of the standard dcrwallet rpc.cert file.
+# If you are running dcrwallet and dcrlnd on the same host
+# this will be in ~/.dcrwallet/rpc.cert by default.
+dcrwallet.certpath = /path/to/rpc.cert
 
 # Account number from which the LN keys will be derived. DO NOT CHANGE after the
 # dcrlnd wallet is setup. The account must already exist.
@@ -90,6 +91,8 @@ dcrwallet.accountnumber = 1
 
 # Replace for the full path to the client.key and client.cert files previously
 # created.
-dcrwallet.clientkeypath = client.key
-dcrwallet.clientcertpath = client.cert
+dcrwallet.clientkeypath = /path/to/client-ca.key
+dcrwallet.clientcertpath = /path/to/client-ca.cert
 ```
+On startup, dcrlnd will still prompt to unlock the wallet even if the dcrwallet instance is unlocked.
+Execute **dcrlncli unlock**, typing the wallet's private passphrase so that dcrlnd extracts the keys needed for its operation.
