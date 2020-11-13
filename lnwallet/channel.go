@@ -4074,7 +4074,7 @@ func (lc *LightningChannel) computeView(view *htlcView, remoteChain bool,
 	}
 	for _, htlc := range filteredHTLCView.theirUpdates {
 		if htlcIsDust(
-			lc.channelState.ChanType, !remoteChain, !remoteChain,
+			lc.channelState.ChanType, true, !remoteChain,
 			feePerKB, htlc.Amount.ToAtoms(), dustLimit,
 		) {
 			continue
