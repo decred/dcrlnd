@@ -1796,7 +1796,8 @@ type ListSweepsRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Retrieve the full sweep transaction details. If false, only the sweep txids
-	// will be returned.
+	// will be returned. Note that some sweeps that LND publishes will have been
+	// replaced-by-fee, so will not be included in this output.
 	Verbose bool `protobuf:"varint,1,opt,name=verbose,proto3" json:"verbose,omitempty"`
 }
 
