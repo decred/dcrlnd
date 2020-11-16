@@ -6,14 +6,27 @@ import (
 	"strings"
 
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrlnd"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/lntest"
+	"github.com/stretchr/testify/require"
 )
 
 // testMaxChannelSize tests that lnd handles --maxchansize parameter
 // correctly. Wumbo nodes should enforce a default soft limit of 10 BTC by
 // default. This limit can be adjusted with --maxchansize config option
 func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
+
+	// Mine blocks until the miner wallet has enough funds to start the test.
+	var blockCount int
+	for net.Miner.ConfirmedBalance() < 520e8 {
+		_, err := net.Generate(5)
+		require.NoError(t.t, err)
+		blockCount += 5
+		if blockCount > 1000 {
+			t.Fatalf("mined too many blocks")
+		}
+	}
+
 	// We'll make two new nodes, both wumbo but with the default limit on
 	// maximum channel size (500 DCR)
 	wumboNode, err := net.NewNode(
@@ -48,7 +61,7 @@ func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect peers: %v", err)
 	}
 
-	chanAmt := dcrlnd.MaxDecredFundingAmountWumbo + 1
+	chanAmt := funding.MaxDecredFundingAmountWumbo + 1
 	_, err = net.OpenChannel(
 		ctxb, wumboNode, wumboNode2, lntest.OpenChannelParams{
 			Amt: chanAmt,
@@ -96,7 +109,7 @@ func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
 	// to accept our wumbo channel funding.
 	wumboNode3, err := net.NewNode(
 		"wumbo3", []string{"--protocol.wumbo-channels",
-			fmt.Sprintf("--maxchansize=%v", int64(dcrlnd.MaxDecredFundingAmountWumbo+1))},
+			fmt.Sprintf("--maxchansize=%v", int64(funding.MaxDecredFundingAmountWumbo+1))},
 	)
 	if err != nil {
 		t.Fatalf("unable to create new node: %v", err)

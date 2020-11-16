@@ -36,6 +36,7 @@ import (
 	"github.com/decred/dcrlnd/contractcourt"
 	"github.com/decred/dcrlnd/discovery"
 	"github.com/decred/dcrlnd/feature"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/healthcheck"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/htlcswitch/hop"
@@ -114,6 +115,17 @@ var (
 	// validColorRegexp is a regexp that lets you check if a particular
 	// color string matches the standard hex color format #RRGGBB.
 	validColorRegexp = regexp.MustCompile("^#[A-Fa-f0-9]{6}$")
+
+	// MaxFundingAmount is a soft-limit of the maximum channel size
+	// currently accepted within the Lightning Protocol. This is
+	// defined in BOLT-0002, and serves as an initial precautionary limit
+	// while implementations are battle tested in the real world.
+	//
+	// At the moment, this value depends on which chain is active. It is set
+	// to the value under the Bitcoin chain as default.
+	//
+	// TODO(roasbeef): add command line param to modify
+	MaxFundingAmount = funding.MaxFundingAmount
 )
 
 // errPeerAlreadyConnected is an error returned by the server when we're
@@ -978,8 +990,8 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 
 	// Select the configuration and funding parameters for Decred
 	chainCfg := cfg.Decred
-	minRemoteDelay := minDcrRemoteDelay
-	maxRemoteDelay := maxDcrRemoteDelay
+	minRemoteDelay := funding.MinDcrRemoteDelay
+	maxRemoteDelay := funding.MaxDcrRemoteDelay
 
 	var chanIDSeed [32]byte
 	if _, err := rand.Read(chanIDSeed[:]); err != nil {

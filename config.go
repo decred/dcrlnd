@@ -26,6 +26,7 @@ import (
 	"github.com/decred/dcrlnd/chanbackup"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/discovery"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/htlcswitch/hodl"
 	"github.com/decred/dcrlnd/input"
@@ -374,7 +375,7 @@ func DefaultConfig() Config {
 		Autopilot: &lncfg.AutoPilot{
 			MaxChannels:    5,
 			Allocation:     0.6,
-			MinChannelSize: int64(minChanFundingSize),
+			MinChannelSize: int64(funding.MinChanFundingSize),
 			MaxChannelSize: int64(MaxFundingAmount),
 			MinConfs:       1,
 			ConfTarget:     autopilot.DefaultConfTarget,
@@ -390,7 +391,7 @@ func DefaultConfig() Config {
 		HeightHintCacheQueryDisable:   defaultHeightHintCacheQueryDisable,
 		Alias:                         defaultAlias,
 		Color:                         defaultColor,
-		MinChanSize:                   int64(minChanFundingSize),
+		MinChanSize:                   int64(funding.MinChanFundingSize),
 		MaxChanSize:                   int64(0),
 		DefaultRemoteMaxHtlcs:         defaultRemoteMaxHtlcs,
 		NumGraphSyncPeers:             defaultMinPeers,
@@ -654,8 +655,8 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 
 	// Ensure that the specified values for the min and max channel size
 	// are within the bounds of the normal chan size constraints.
-	if cfg.Autopilot.MinChannelSize < int64(minChanFundingSize) {
-		cfg.Autopilot.MinChannelSize = int64(minChanFundingSize)
+	if cfg.Autopilot.MinChannelSize < int64(funding.MinChanFundingSize) {
+		cfg.Autopilot.MinChannelSize = int64(funding.MinChanFundingSize)
 	}
 	if cfg.Autopilot.MaxChannelSize > int64(MaxFundingAmount) {
 		cfg.Autopilot.MaxChannelSize = int64(MaxFundingAmount)
@@ -672,9 +673,9 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	// unset (marked by 0 value), then enforce proper default.
 	if cfg.MaxChanSize == 0 {
 		if cfg.ProtocolOptions.Wumbo() {
-			cfg.MaxChanSize = int64(MaxDecredFundingAmountWumbo)
+			cfg.MaxChanSize = int64(funding.MaxDecredFundingAmountWumbo)
 		} else {
-			cfg.MaxChanSize = int64(MaxDecredFundingAmount)
+			cfg.MaxChanSize = int64(funding.MaxDecredFundingAmount)
 		}
 	}
 
@@ -835,7 +836,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		cfg.ActiveNetParams = chainreg.DecredMainNetParams
 	}
 
-	err = cfg.Decred.Validate(minTimeLockDelta, minDcrRemoteDelay)
+	err = cfg.Decred.Validate(minTimeLockDelta, funding.MinDcrRemoteDelay)
 	if err != nil {
 		return nil, err
 	}
@@ -924,8 +925,8 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 
 	// Ensure that the specified values for the min and max channel size
 	// don't are within the bounds of the normal chan size constraints.
-	if cfg.Autopilot.MinChannelSize < int64(minChanFundingSize) {
-		cfg.Autopilot.MinChannelSize = int64(minChanFundingSize)
+	if cfg.Autopilot.MinChannelSize < int64(funding.MinChanFundingSize) {
+		cfg.Autopilot.MinChannelSize = int64(funding.MinChanFundingSize)
 	}
 	if cfg.Autopilot.MaxChannelSize > int64(MaxFundingAmount) {
 		cfg.Autopilot.MaxChannelSize = int64(MaxFundingAmount)

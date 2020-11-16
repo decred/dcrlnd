@@ -40,6 +40,7 @@ import (
 	"github.com/decred/dcrlnd/contractcourt"
 	"github.com/decred/dcrlnd/discovery"
 	"github.com/decred/dcrlnd/feature"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/htlcswitch/hop"
 	"github.com/decred/dcrlnd/input"
@@ -81,7 +82,7 @@ const (
 	// MaxDcrPaymentMAtoms is the maximum allowed Decred payment currently
 	// permitted as defined in BOLT-0002. This is the same as the maximum
 	// channel size.
-	maxDcrPaymentMAtoms = lnwire.MilliAtom(MaxDecredFundingAmount * 1000)
+	maxDcrPaymentMAtoms = lnwire.MilliAtom(funding.MaxDecredFundingAmount * 1000)
 )
 
 var (
@@ -1819,9 +1820,9 @@ func (r *rpcServer) parseOpenChannelReq(in *lnrpc.OpenChannelRequest,
 	// Restrict the size of the channel we'll actually open. At a later
 	// level, we'll ensure that the output we create after accounting for
 	// fees that a dust output isn't created.
-	if localFundingAmt < minChanFundingSize {
+	if localFundingAmt < funding.MinChanFundingSize {
 		return nil, fmt.Errorf("channel is too small, the minimum "+
-			"channel size is: %v atoms", int64(minChanFundingSize))
+			"channel size is: %v atoms", int64(funding.MinChanFundingSize))
 	}
 
 	// Prevent users from submitting a max-htlc value that would exceed the

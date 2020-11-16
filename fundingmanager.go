@@ -39,43 +39,12 @@ const (
 	// TODO(roasbeef): tune
 	msgBufferSize = 50
 
-	// minDcrRemoteDelay and maxDcrRemoteDelay are the extremes of the
-	// Decred CSV delay we will require the remote to use for its
-	// commitment transaction. The actual delay we will require will be
-	// somewhere between these values, depending on channel size.
-	minDcrRemoteDelay uint16 = 288
-	maxDcrRemoteDelay uint16 = 4032
-
 	// for the funding transaction to be confirmed before forgetting
 	// channels that aren't initiated by us. 4032 blocks is ~2 weeks.
 	maxWaitNumBlocksFundingConf = 4032
-
-	// minChanFundingSize is the smallest channel that we'll allow to be
-	// created over the RPC interface.
-	minChanFundingSize = dcrutil.Amount(20000)
-
-	// maxDecredFundingAmount is a soft-limit of the maximum channel size
-	// currently accepted on the Decred chain within the Lightning
-	// Protocol. This limit is defined in BOLT-0002, and serves as an
-	// initial precautionary limit while implementations are battle tested
-	// in the real world.
-	MaxDecredFundingAmount = dcrutil.Amount(1<<30) - 1
-
-	// MaxDecredFundingAmountWumbo is a soft-limit on the maximum size of
-	// wumbo channels. This limit is 500 DCR and is the only thing standing
-	// between you and limitless channel size (apart from 21 million cap)
-	MaxDecredFundingAmountWumbo = dcrutil.Amount(500 * 1e8)
 )
 
 var (
-	// MaxFundingAmount is a soft-limit of the maximum channel size
-	// currently accepted within the Lightning Protocol. This limit is
-	// defined in BOLT-0002, and serves as an initial precautionary limit
-	// while implementations are battle tested in the real world.
-	//
-	// TODO(roasbeef): add command line param to modify
-	MaxFundingAmount = MaxDecredFundingAmount
-
 	// ErrFundingManagerShuttingDown is an error returned when attempting to
 	// process a funding request/message but the funding manager has already
 	// been signaled to shut down.
