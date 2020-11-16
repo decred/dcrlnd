@@ -19,6 +19,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/discovery"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
@@ -3534,7 +3535,7 @@ func (f *fundingManager) saveChannelOpeningState(chanPoint *wire.OutPoint,
 		}
 
 		var outpointBytes bytes.Buffer
-		if err = writeOutpoint(&outpointBytes, chanPoint); err != nil {
+		if err = funding.WriteOutpoint(&outpointBytes, chanPoint); err != nil {
 			return err
 		}
 
@@ -3566,7 +3567,7 @@ func (f *fundingManager) getChannelOpeningState(chanPoint *wire.OutPoint) (
 		}
 
 		var outpointBytes bytes.Buffer
-		if err := writeOutpoint(&outpointBytes, chanPoint); err != nil {
+		if err := funding.WriteOutpoint(&outpointBytes, chanPoint); err != nil {
 			return err
 		}
 
@@ -3595,7 +3596,7 @@ func (f *fundingManager) deleteChannelOpeningState(chanPoint *wire.OutPoint) err
 		}
 
 		var outpointBytes bytes.Buffer
-		if err := writeOutpoint(&outpointBytes, chanPoint); err != nil {
+		if err := funding.WriteOutpoint(&outpointBytes, chanPoint); err != nil {
 			return err
 		}
 
