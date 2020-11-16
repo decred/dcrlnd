@@ -148,16 +148,24 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	// Track whether any of the inputs require a certain locktime.
 	locktime := int32(-1)
 
-	// Sum up the total value contained in the inputs, and add all inputs
-	// to the sweep transaction. Ensure that for each csvInput, we set the
-	// sequence number properly.
-	var totalSum dcrutil.Amount
+	// We start by adding all inputs that commit to an output. We do this
+	// since the input and output index must stay the same for the
+	// signatures to be valid.
+	var (
+		totalInput     dcrutil.Amount
+		requiredOutput dcrutil.Amount
+	)
 	for _, o := range inputs {
+		if o.RequiredTxOut() == nil {
+			continue
+		}
+
 		sweepTx.AddTxIn(&wire.TxIn{
 			PreviousOutPoint: *o.OutPoint(),
 			Sequence:         o.BlocksToMaturity(),
 			ValueIn:          o.SignDesc().Output.Value,
 		})
+		sweepTx.AddTxOut(o.RequiredTxOut())
 
 		if lt, ok := o.RequiredLockTime(); ok {
 			// If another input commits to a different locktime,
@@ -169,18 +177,44 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 			locktime = int32(lt)
 		}
 
-		totalSum += dcrutil.Amount(o.SignDesc().Output.Value)
+		totalInput += dcrutil.Amount(o.SignDesc().Output.Value)
+		requiredOutput += dcrutil.Amount(o.RequiredTxOut().Value)
 	}
 
-	// Sweep as much possible, after subtracting txn fees.
-	sweepAmt := totalSum - txFee
+	// Sum up the value contained in the remaining inputs, and add them to
+	// the sweep transaction.
+	for _, o := range inputs {
+		if o.RequiredTxOut() != nil {
+			continue
+		}
+
+		sweepTx.AddTxIn(&wire.TxIn{
+			PreviousOutPoint: *o.OutPoint(),
+			Sequence:         o.BlocksToMaturity(),
+		})
+
+		if lt, ok := o.RequiredLockTime(); ok {
+			if locktime != -1 && locktime != int32(lt) {
+				return nil, fmt.Errorf("incompatible locktime")
+			}
+
+			locktime = int32(lt)
+		}
+
+		totalInput += dcrutil.Amount(o.SignDesc().Output.Value)
+	}
+
+	// The value remaining after the required output and fees, go to
+	// change. Not that this fee is what we would have to pay in case the
+	// sweep tx has a change output.
+	changeAmt := totalInput - requiredOutput - txFee
 
 	// The txn will sweep the amount after fees to the pkscript generated
 	// above.
-	if sweepAmt >= dustLimit {
+	if changeAmt >= dustLimit {
 		sweepTx.AddTxOut(&wire.TxOut{
 			PkScript: outputPkScript,
-			Value:    int64(sweepAmt),
+			Value:    int64(changeAmt),
 		})
 	}
 
@@ -256,7 +290,12 @@ func getSizeEstimate(inputs []input.Input, feeRate chainfee.AtomPerKByte) (
 	sizeEstimate := newSizeEstimator(feeRate)
 
 	// Our sweep transaction will pay to a single p2pkh address,
-	// ensure it contributes to our size estimate.
+	// ensure it contributes to our size estimate. If the inputs we add
+	// have required TxOuts, then this will be our change address. Note
+	// that if we have required TxOuts, we might end up creating a sweep tx
+	// without a change output. It is okay to add the change output to the
+	// size estimate regardless, since the estimated fee will just be
+	// subtracted from this already dust output, and trimmed.
 	sizeEstimate.addP2PKHOutput()
 
 	// For each output, use its witness type to determine the estimate
@@ -273,6 +312,12 @@ func getSizeEstimate(inputs []input.Input, feeRate chainfee.AtomPerKByte) (
 			// Skip inputs for which no size estimate can be
 			// given.
 			continue
+		}
+
+		// If this input comes with a committed output, add that as
+		// well.
+		if inp.RequiredTxOut() != nil {
+			sizeEstimate.addOutput(inp.RequiredTxOut())
 		}
 
 		sweepInputs = append(sweepInputs, inp)
