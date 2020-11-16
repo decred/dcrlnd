@@ -24,7 +24,7 @@ import (
 	"github.com/decred/dcrlnd/contractcourt"
 	"github.com/decred/dcrlnd/discovery"
 	"github.com/decred/dcrlnd/feature"
-	"github.com/decred/dcrlnd/fmgr"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/htlcswitch/hodl"
 	"github.com/decred/dcrlnd/htlcswitch/hop"
@@ -275,8 +275,8 @@ type Config struct {
 	FetchLastChanUpdate func(lnwire.ShortChannelID) (*lnwire.ChannelUpdate,
 		error)
 
-	// FundingManager is an implementation of the fmgr.Manager interface.
-	FundingManager fmgr.Manager
+	// FundingManager is an implementation of the funding.Manager interface.
+	FundingManager funding.Manager
 
 	// Hodl is used when creating ChannelLinks to specify HodlFlags as
 	// breakpoints in dev builds.
