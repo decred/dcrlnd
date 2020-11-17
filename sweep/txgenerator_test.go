@@ -15,7 +15,7 @@ var (
 		input.HtlcOfferedRemoteTimeout,
 		input.PublicKeyHash,
 	}
-	expectedSize    = int64(926)
+	expectedSize    = int64(923)
 	expectedSummary = "0000000000000000000000000000000000000000000000000000000000000000:10 (CommitmentTimeLock), " +
 		"0000000000000000000000000000000000000000000000000000000000000001:11 (HtlcAcceptedSuccessSecondLevel), " +
 		"0000000000000000000000000000000000000000000000000000000000000002:12 (HtlcOfferedRemoteTimeout), " +
