@@ -203,12 +203,12 @@ const (
 	//                      - OP_DROP                        1 byte
 	//                      - OP_CHECKSIG                    1 byte
 	//              - OP_ENDIF                               1 byte
-	//		- OP_DATA_1				 1 byte
-	//		- OP_CHECKSEQUENCEVERIFY		 1 byte
-	//		- OP_DROP				 1 byte
+	//		- OP_DATA_1				 1 byte  // The following 3 ops starting here
+	//		- OP_CHECKSEQUENCEVERIFY		 1 byte  // (OP_DATA_1, OP_CSV, OP_DROP) are
+	//		- OP_DROP				 1 byte  // only used in the confirmed version.
 	//      - OP_ENDIF                                       1 byte
 	//
-	// Total: 145 bytes
+	// Total: 142 bytes
 	//
 	// Note: Unfortunately a previous version of this had an off-by-one
 	// error where it failed to account for the OP_DATA_1 (in addition to
@@ -218,7 +218,12 @@ const (
 	// TODO(decred) verify whether the maximum cltv_expirt can actually occupy
 	// the full 5 bytes (which is the maximum used by OP_CHECKLOCKTIMEVERIFY).
 	acceptedHtlcRedeemScriptSize int64 = 3*1 + 20 + 5*1 + 33 + 9*1 + 20 + 4*1 +
-		33 + 5*1 + 5 + 8*1 + offByOneCompatDecrement
+		33 + 5*1 + 5 + 5*1 + offByOneCompatDecrement
+
+	// acceptedHtlcRedeemScriptSizeConfirmed is the size of an accepted HTLC
+	// redeem script with the added ops for anchor outputs.
+	// acceptedHtlcRedeemScriptSizeConfirmed int64 = acceptedHtlcRedeemScriptSize +
+	//	htlcConfirmedScriptOverhead
 
 	// offeredHtlcRedeemScriptSize is the worst (largest) size of a redeemScript used
 	// by the local node when sending payment via an HTLC output.
@@ -258,13 +263,18 @@ const (
 	//		                - OP_EQUALVERIFY             1 byte
 	//		                - OP_CHECKSIG                1 byte
 	//		        - OP_ENDIF                           1 byte
-	//			- OP_1				     1 byte
-	//			- OP_CHECKSEQUENCEVERIFY	     1 byte
-	//			- OP_DROP			     1 byte
+	//			- OP_1				     1 byte  // The following 3 ops
+	//			- OP_CHECKSEQUENCEVERIFY	     1 byte  // are only used in the
+	//			- OP_DROP			     1 byte  // "confirmed" version.
 	//		- OP_ENDIF                                   1 byte
 	//
-	// Total: 137 bytes
-	offeredHtlcRedeemScriptSize int64 = 3*1 + 20 + 5*1 + 33 + 10*1 + 33 + 6*1 + 20 + 7*1
+	// Total: 134 bytes
+	offeredHtlcRedeemScriptSize int64 = 3*1 + 20 + 5*1 + 33 + 10*1 + 33 + 6*1 + 20 + 4*1
+
+	// offeredHtlcRedeemScriptSizeConfirmed is the size of an offered HTLC
+	// redeem script with the added ops that require output confirmation.
+	// offeredHtlcRedeemScriptSizeConfirmed = offeredHtlcRedeemScriptSize +
+	//	htlcConfirmedScriptOverhead
 
 	// AnchorRedeemScriptSize is the size of the redeem script used for
 	// anchor outputs of commitment transactions.
@@ -366,11 +376,19 @@ const (
 	//		- OP_0                            1 byte
 	//		- OP_PUSHDATA1                    1 byte
 	//		- 140                             1 byte
-	//		- accepted_htlc script          145 bytes
+	//		- accepted_htlc script          142 bytes
 	//
-	// Total: 222 bytes
+	// Total: 219 bytes
 	AcceptedHtlcTimeoutSigScriptSize int64 = 1 + 73 + 1 + 1 + 1 +
 		acceptedHtlcRedeemScriptSize
+
+	// AcceptedHtlcTimeoutSigScriptSizeConfirmed is the same as
+	// AcceptedHtlcTimeoutSigScriptSize with the added overhead for the
+	// additional ops that require output confirmation.
+	//
+	// Total: 222 bytes
+	AcceptedHtlcTimeoutSigScriptSizeConfirmed = AcceptedHtlcTimeoutSigScriptSize +
+		htlcConfirmedScriptOverhead
 
 	// AcceptedHtlcSuccessSigScriptSize is the size of a sigScript used
 	// when redeeming an acceptedHtlcScript using the "success" code path.
@@ -383,20 +401,17 @@ const (
 	//		- payment_preimage                  32 bytes
 	//		- OP_PUSHDATA1                       1 byte
 	//		- 145                                1 byte
-	//		- accepted_htlc script             145 bytes
+	//		- accepted_htlc script             142 bytes
 	//
-	// Total: 328 bytes
+	// Total: 325 bytes
 	AcceptedHtlcSuccessSigScriptSize int64 = 1 + 73 + 1 + 73 + 1 + 32 +
 		1 + 1 + acceptedHtlcRedeemScriptSize
 
 	// AcceptedHtlcSuccessSigScriptSizeConfirmed is the size of a sigScript
 	// used when redeeming an acceptedHtlcScript using the "success" code
 	// path when the redeem script includes the additional OP_CSV check.
-	//
-	// Note: the original acceptedHtlcRedeemScriptSize constant already
-	// included the size of the additional OP_CSV check, therefore this is
-	// the same as the original sig script size.
-	AcceptedHtlcSuccessSigScriptSizeConfirmed = AcceptedHtlcSuccessSigScriptSize
+	AcceptedHtlcSuccessSigScriptSizeConfirmed = AcceptedHtlcSuccessSigScriptSize +
+		htlcConfirmedScriptOverhead
 
 	// AcceptedHtlcPenaltySigScriptSize is the size of a sigScript used
 	// when redeeming an acceptedHtlcScript using the "penalty" code path.
@@ -407,11 +422,19 @@ const (
 	//		- revocation_key                   33 bytes
 	//		- OP_PUSHDATA1                      1 byte
 	//		- 140                               1 byte
-	//		- accepted_htlc script            145 bytes
+	//		- accepted_htlc script            142 bytes
 	//
-	// Total: 255 bytes
+	// Total: 252 bytes
 	AcceptedHtlcPenaltySigScriptSize int64 = 1 + 73 + 1 + 33 + 1 + 1 +
 		acceptedHtlcRedeemScriptSize
+
+	// AcceptedHtlcPenaltySigScriptSizeConfirmed is the same as
+	// AcceptedHtlcPenaltySigScriptSize with the added overhead for the
+	// ops that require output confirmation.
+	//
+	// Total: 255 bytes
+	AcceptedHtlcPenaltySigScriptSizeConfirmed = AcceptedHtlcPenaltySigScriptSize +
+		htlcConfirmedScriptOverhead
 
 	// OfferedHtlcTimeoutSigScriptSize is the size of a sigScript used
 	// when redeeming an offeredHtlcScript using the "timeout" code path.
@@ -422,10 +445,10 @@ const (
 	//		- sig_bob+hash_type                 73 bytes
 	//		- OP_0                               1 byte
 	//		- OP_PUSHDATA1                       1 byte
-	//		- 137                                1 byte
-	//		- offered_htlc script              137 bytes
+	//		- 134                                1 byte
+	//		- offered_htlc script              134 bytes
 	//
-	// Total: 288 bytes
+	// Total: 285 bytes
 	OfferedHtlcTimeoutSigScriptSize int64 = 1 + 73 + 1 + 73 + 1 + 1 +
 		1 + offeredHtlcRedeemScriptSize
 
@@ -433,10 +456,9 @@ const (
 	// when redeeming an offeredHtlcScript using the "timeout" code path,
 	// when the script includes the additional OP_CSV check.
 	//
-	// Note: the original offeredHtlcRedeemScriptSize already includes the
-	// additional bytes of the check, therefore this is the same as the
-	// original path.
-	OfferedHtlcTimeoutSigScriptSizeConfirmed = OfferedHtlcTimeoutSigScriptSize
+	// Total: 288 bytes
+	OfferedHtlcTimeoutSigScriptSizeConfirmed = OfferedHtlcTimeoutSigScriptSize +
+		htlcConfirmedScriptOverhead
 
 	// OfferedHtlcSuccessSigScriptSize is the size of a sigScript used
 	// when redeeming an offeredHtlcScript using the "success" code path.
@@ -447,11 +469,19 @@ const (
 	//		- payment_preimage               32 bytes
 	//		- OP_PUSHDATA1                    1 byte
 	//		- 137                             1 byte
-	//		- offered_htlc script           137 bytes
+	//		- offered_htlc script           134 bytes
 	//
-	// Total: 246 bytes
+	// Total: 243 bytes
 	OfferedHtlcSuccessSigScriptSize int64 = 1 + 73 + 1 + 32 +
 		1 + 1 + offeredHtlcRedeemScriptSize
+
+	// OfferedHtlcSuccessSigScriptSizeConfirmed is the same as
+	// OfferedHtlcSuccessSigScriptSizeConfirmed  with the added overhead
+	// for the ops that require output confirmation.
+	//
+	// Total: 246 bytes
+	OfferedHtlcSuccessSigScriptSizeConfirmed = OfferedHtlcSuccessSigScriptSize +
+		htlcConfirmedScriptOverhead
 
 	// OfferedHtlcPenaltySigScriptSize is the size of a sigScript used
 	// when redeeming an offeredHtlcScript using the "penalty" code path.
@@ -462,11 +492,18 @@ const (
 	//		- revocation_key                 33 bytes
 	//		- OP_PUSHDATA1                    1 byte
 	//		- 137                             1 byte
-	//		- offered_htlc script           137 bytes
+	//		- offered_htlc script           134 bytes
 	//
-	// Total: 247 bytes
+	// Total: 243 bytes
 	OfferedHtlcPenaltySigScriptSize int64 = 1 + 73 + 1 + 33 + 1 + 1 +
 		offeredHtlcRedeemScriptSize
+
+	// OfferedHtlcPenaltySigScriptSizeConfirmed is the same as OfferedHtlcPenaltySigScriptSize,
+	// with the added overhead for the ops that require output confirmation.
+	//
+	// Total: 247 bytes
+	OfferedHtlcPenaltySigScriptSizeConfirmed = OfferedHtlcPenaltySigScriptSize +
+		htlcConfirmedScriptOverhead
 
 	// AnchorSigScriptSize is the size of the signature script used when
 	// redeeming anchor outputs of commitment transactions.
@@ -583,14 +620,9 @@ const (
 	//		- p2sh pkscript                                    23 bytes
 	//		- input count witness varint                        1 byte
 	//		- offered_htlc_timeout sigscript varint             3 bytes
-	//		- offered_htlc_timeout sigscript                  287 bytes
+	//		- offered_htlc_timeout sigscript                  284 bytes
 	//
-	// Total: 396 bytes
-	//
-	// Note that we subtract the htlcConfirmedScriptOverhead here to
-	// account for the fact that this is the size of the unconfirmed
-	// version of the timeout tx (that is, the one that uses the
-	// offered_htlc_timeout redeem script without the extra csv check).
+	// Total: 393 bytes
 	//
 	// Also note that due to a previous mistake in calculating the varint
 	// size, the "offered_htlc_timeout sigscript varint" was initially one
@@ -602,8 +634,8 @@ const (
 	// TODO(decred) Double check correctness of selected sigScript
 	// alternative
 	HTLCTimeoutTxSize int64 = baseTxSize + 1 + InputSize + 1 + OutputSize + 1 +
-		P2SHPkScriptSize + 1 + 3 + OfferedHtlcTimeoutSigScriptSize -
-		htlcConfirmedScriptOverhead + offByOneCompatDecrement
+		P2SHPkScriptSize + 1 + 3 + OfferedHtlcTimeoutSigScriptSize +
+		offByOneCompatDecrement
 
 	// HTLCTimeoutConfirmedTxSize is the size of the HTLC timeout
 	// transaction which will transition an outgoing HTLC to the
@@ -625,20 +657,15 @@ const (
 	//		- p2pkh pkscript                                 25 bytes
 	//		- input count witness varint                      1 byte
 	//		- accepted_htlc_success sigscript varint          3 bytes
-	//		- accepted_htlc_timeout sigscript               326 bytes
+	//		- accepted_htlc_timeout sigscript               323 bytes
 	//
-	// Total: 437 bytes
-	//
-	// Note that we subtract the htlcConfirmedScriptOverhead here to
-	// account for the fact that this is the size of the unconfirmed
-	// version of the timeout tx (that is, the one that uses the
-	// offered_htlc_timeout redeem script without the extra csv check).
+	// Total: 434 bytes
 	//
 	// TODO(decred) Double check correctness of selected sigScript
 	// alternative
 	HTLCSuccessTxSize int64 = baseTxSize + 1 + InputSize + 1 + OutputSize + 1 +
-		P2PKHPkScriptSize + 1 + 3 + AcceptedHtlcSuccessSigScriptSize -
-		htlcConfirmedScriptOverhead + offByOneCompatDecrement
+		P2PKHPkScriptSize + 1 + 3 + AcceptedHtlcSuccessSigScriptSize +
+		offByOneCompatDecrement
 
 	// HTLCSuccessConfirmedTxSize is the size of the HTLC success
 	// transaction which will transition an incoming HTLC to the

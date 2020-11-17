@@ -334,7 +334,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "offered htlc revoke",
-		expSize: input.OfferedHtlcPenaltySigScriptSize - 3,
+		expSize: input.OfferedHtlcPenaltySigScriptSize,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.SenderHTLCScript(
 				testPubkey, testPubkey, testPubkey,
@@ -364,7 +364,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "offered htlc revoke confirmed",
-		expSize: input.OfferedHtlcPenaltySigScriptSize,
+		expSize: input.OfferedHtlcPenaltySigScriptSizeConfirmed,
 		genWitness: func(t *testing.T) input.TxWitness {
 			hash := make([]byte, 20)
 
@@ -396,7 +396,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "offered htlc timeout",
-		expSize: input.OfferedHtlcTimeoutSigScriptSize - 3,
+		expSize: input.OfferedHtlcTimeoutSigScriptSize,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.SenderHTLCScript(
 				testPubkey, testPubkey, testPubkey,
@@ -423,7 +423,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "offered htlc timeout confirmed",
-		expSize: input.OfferedHtlcTimeoutSigScriptSize,
+		expSize: input.OfferedHtlcTimeoutSigScriptSizeConfirmed,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.SenderHTLCScript(
 				testPubkey, testPubkey, testPubkey,
@@ -450,7 +450,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "offered htlc success",
-		expSize: input.OfferedHtlcSuccessSigScriptSize - 3,
+		expSize: input.OfferedHtlcSuccessSigScriptSize,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.SenderHTLCScript(
 				testPubkey, testPubkey, testPubkey,
@@ -479,7 +479,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "offered htlc success confirmed",
-		expSize: input.OfferedHtlcSuccessSigScriptSize,
+		expSize: input.OfferedHtlcSuccessSigScriptSizeConfirmed,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.SenderHTLCScript(
 				testPubkey, testPubkey, testPubkey,
@@ -505,7 +505,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "accepted htlc revoke",
-		expSize: input.AcceptedHtlcPenaltySigScriptSize - 3,
+		expSize: input.AcceptedHtlcPenaltySigScriptSize,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.ReceiverHTLCScript(
 				testCLTVExpiry, testPubkey, testPubkey,
@@ -535,7 +535,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "accepted htlc revoke confirmed",
-		expSize: input.AcceptedHtlcPenaltySigScriptSize,
+		expSize: input.AcceptedHtlcPenaltySigScriptSizeConfirmed,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.ReceiverHTLCScript(
 				testCLTVExpiry, testPubkey, testPubkey,
@@ -565,7 +565,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "accepted htlc timeout",
-		expSize: input.AcceptedHtlcTimeoutSigScriptSize - 3,
+		expSize: input.AcceptedHtlcTimeoutSigScriptSize,
 		genWitness: func(t *testing.T) input.TxWitness {
 
 			witScript, err := input.ReceiverHTLCScript(
@@ -593,7 +593,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "accepted htlc timeout confirmed",
-		expSize: input.AcceptedHtlcTimeoutSigScriptSize,
+		expSize: input.AcceptedHtlcTimeoutSigScriptSizeConfirmed,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.ReceiverHTLCScript(
 				testCLTVExpiry, testPubkey, testPubkey,
@@ -620,7 +620,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "accepted htlc success",
-		expSize: input.AcceptedHtlcSuccessSigScriptSize - 3,
+		expSize: input.AcceptedHtlcSuccessSigScriptSize,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.ReceiverHTLCScript(
 				testCLTVExpiry, testPubkey, testPubkey,
@@ -650,7 +650,7 @@ var witnessSizeTests = []witnessSizeTest{
 	},
 	{
 		name:    "accepted htlc success confirmed",
-		expSize: input.AcceptedHtlcSuccessSigScriptSize,
+		expSize: input.AcceptedHtlcSuccessSigScriptSizeConfirmed,
 		genWitness: func(t *testing.T) input.TxWitness {
 			witScript, err := input.ReceiverHTLCScript(
 				testCLTVExpiry, testPubkey, testPubkey,
