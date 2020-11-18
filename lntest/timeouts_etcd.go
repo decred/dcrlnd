@@ -1,5 +1,5 @@
-//go:build !darwin && kvdb_etcd
-// +build !darwin,kvdb_etcd
+//go:build kvdb_etcd
+// +build kvdb_etcd
 
 package lntest
 
