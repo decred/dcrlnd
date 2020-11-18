@@ -1492,7 +1492,7 @@ func TestBalanceAtHeight(t *testing.T) {
 			targetHeight:          unknownHeight,
 			expectedLocalBalance:  0,
 			expectedRemoteBalance: 0,
-			expectedError:         errLogEntryNotFound,
+			expectedError:         ErrLogEntryNotFound,
 		},
 		{
 			name:                  "height not reached",
