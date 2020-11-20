@@ -320,6 +320,13 @@ type AuthenticatedGossiper struct {
 	// network.
 	reliableSender *reliableSender
 
+	// heightForLastChanUpdate keeps track of the height at which we
+	// processed the latest channel update for a specific direction.
+	//
+	// NOTE: This map must be synchronized with the main
+	// AuthenticatedGossiper lock.
+	heightForLastChanUpdate map[uint64][2]uint32
+
 	sync.Mutex
 }
 
@@ -336,6 +343,7 @@ func New(cfg Config, selfKey *secp256k1.PublicKey) *AuthenticatedGossiper {
 		prematureChannelUpdates: make(map[uint64][]*networkMsg),
 		channelMtx:              multimutex.NewMutex(),
 		recentRejects:           make(map[uint64]struct{}),
+		heightForLastChanUpdate: make(map[uint64][2]uint32),
 		syncMgr: newSyncManager(&SyncManagerCfg{
 			ChainHash:               cfg.ChainHash,
 			ChanSeries:              cfg.ChanSeries,
@@ -1857,7 +1865,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		// point and when we call UpdateEdge() later.
 		d.channelMtx.Lock(msg.ShortChannelID.ToUint64())
 		defer d.channelMtx.Unlock(msg.ShortChannelID.ToUint64())
-		chanInfo, _, _, err := d.cfg.Router.GetChannelByID(msg.ShortChannelID)
+		chanInfo, edge1, edge2, err := d.cfg.Router.GetChannelByID(msg.ShortChannelID)
 		switch err {
 		// No error, break.
 		case nil:
@@ -1956,12 +1964,56 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		// The least-significant bit in the flag on the channel update
 		// announcement tells us "which" side of the channels directed
 		// edge is being updated.
-		var pubKey *secp256k1.PublicKey
-		switch {
-		case msg.ChannelFlags&lnwire.ChanUpdateDirection == 0:
+		var (
+			pubKey       *secp256k1.PublicKey
+			edgeToUpdate *channeldb.ChannelEdgePolicy
+		)
+		direction := msg.ChannelFlags & lnwire.ChanUpdateDirection
+		switch direction {
+		case 0:
 			pubKey, _ = chanInfo.NodeKey1()
-		case msg.ChannelFlags&lnwire.ChanUpdateDirection == 1:
+			edgeToUpdate = edge1
+		case 1:
 			pubKey, _ = chanInfo.NodeKey2()
+			edgeToUpdate = edge2
+		}
+
+		// If we have a previous version of the edge being updated,
+		// we'll want to rate limit its updates to prevent spam
+		// throughout the network.
+		if nMsg.isRemote && edgeToUpdate != nil {
+			// If it's a keep-alive update, we'll only propagate one
+			// if it's been a day since the previous. This follows
+			// our own heuristic of sending keep-alive updates after
+			// the same duration (see retransmitStaleAnns).
+			timeSinceLastUpdate := timestamp.Sub(edgeToUpdate.LastUpdate)
+			if IsKeepAliveUpdate(msg, edgeToUpdate) {
+				if timeSinceLastUpdate < d.cfg.RebroadcastInterval {
+					log.Debugf("Ignoring keep alive update "+
+						"not within %v period for "+
+						"channel %v",
+						d.cfg.RebroadcastInterval,
+						shortChanID)
+					nMsg.err <- nil
+					return nil
+				}
+			} else {
+				// If it's not, we'll only allow a single update
+				// for this channel per block.
+				d.Lock()
+				lastUpdateHeight := d.heightForLastChanUpdate[shortChanID.ToUint64()]
+				if lastUpdateHeight[direction] == d.bestHeight {
+					log.Debugf("Ignoring update for "+
+						"channel %s due to previous "+
+						"update occurring within the "+
+						"same block %v", shortChanID,
+						d.bestHeight)
+					d.Unlock()
+					nMsg.err <- nil
+					return nil
+				}
+				d.Unlock()
+			}
 		}
 
 		// Validate the channel announcement with the expected public key and
@@ -2006,6 +2058,15 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 			nMsg.err <- err
 			return nil
 		}
+
+		// With the edge successfully updated on disk, we'll note the
+		// current height so that we're able to rate limit any future
+		// updates for the same channel.
+		d.Lock()
+		lastUpdateHeight := d.heightForLastChanUpdate[shortChanID.ToUint64()]
+		lastUpdateHeight[direction] = d.bestHeight
+		d.heightForLastChanUpdate[shortChanID.ToUint64()] = lastUpdateHeight
+		d.Unlock()
 
 		// If this is a local ChannelUpdate without an AuthProof, it
 		// means it is an update to a channel that is not (yet)
@@ -2549,4 +2610,50 @@ func (d *AuthenticatedGossiper) updateChannel(info *channeldb.ChannelEdgeInfo,
 // SyncManager returns the gossiper's SyncManager instance.
 func (d *AuthenticatedGossiper) SyncManager() *SyncManager {
 	return d.syncMgr
+}
+
+// IsKeepAliveUpdate determines whether this channel update is considered a
+// keep-alive update based on the previous channel update processed for the same
+// direction.
+func IsKeepAliveUpdate(update *lnwire.ChannelUpdate,
+	prev *channeldb.ChannelEdgePolicy) bool {
+
+	// Both updates should be from the same direction.
+	if update.ChannelFlags&lnwire.ChanUpdateDirection !=
+		prev.ChannelFlags&lnwire.ChanUpdateDirection {
+		return false
+	}
+
+	// The timestamp should always increase for a keep-alive update.
+	timestamp := time.Unix(int64(update.Timestamp), 0)
+	if !timestamp.After(prev.LastUpdate) {
+		return false
+	}
+
+	// None of the remaining fields should change for a keep-alive update.
+	if update.ChannelFlags.IsDisabled() != prev.ChannelFlags.IsDisabled() {
+		return false
+	}
+	if lnwire.MilliAtom(update.BaseFee) != prev.FeeBaseMAtoms {
+		return false
+	}
+	if lnwire.MilliAtom(update.FeeRate) != prev.FeeProportionalMillionths {
+		return false
+	}
+	if update.TimeLockDelta != prev.TimeLockDelta {
+		return false
+	}
+	if update.HtlcMinimumMAtoms != prev.MinHTLC {
+		return false
+	}
+	if update.MessageFlags.HasMaxHtlc() && !prev.MessageFlags.HasMaxHtlc() {
+		return false
+	}
+	if update.HtlcMaximumMAtoms != prev.MaxHTLC {
+		return false
+	}
+	if !bytes.Equal(update.ExtraOpaqueData, prev.ExtraOpaqueData) {
+		return false
+	}
+	return true
 }

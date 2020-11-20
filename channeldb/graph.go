@@ -2863,8 +2863,7 @@ func (c *ChannelEdgePolicy) SetSigBytes(sig []byte) {
 
 // IsDisabled determines whether the edge has the disabled bit set.
 func (c *ChannelEdgePolicy) IsDisabled() bool {
-	return c.ChannelFlags&lnwire.ChanUpdateDisabled ==
-		lnwire.ChanUpdateDisabled
+	return c.ChannelFlags.IsDisabled()
 }
 
 // ComputeFee computes the fee to forward an HTLC of `amt` milli-atoms over the
