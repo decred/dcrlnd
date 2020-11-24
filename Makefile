@@ -57,7 +57,8 @@ GOBUILD := CGO_ENABLED=0 GO111MODULE=on go build -v
 GOINSTALL := CGO_ENABLED=0 GO111MODULE=on go install -v
 GOTEST := GO111MODULE=on go test -v
 
-GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+GOVERSION := $(shell go version | awk '{print $$3}')
+GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*" -not -name "*pb.go" -not -name "*pb.gw.go")
 
 TESTBINPKG := dcrlnd_testbins.tar.gz
 
