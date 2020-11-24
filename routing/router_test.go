@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/require"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -2920,6 +2921,10 @@ func TestSendToRouteMaxHops(t *testing.T) {
 func TestBuildRoute(t *testing.T) {
 	// Setup a three node network.
 	chanCapSat := dcrutil.Amount(100000)
+	paymentAddrFeatures := lnwire.NewFeatureVector(
+		lnwire.NewRawFeatureVector(lnwire.PaymentAddrOptional),
+		lnwire.Features,
+	)
 	testChannels := []*testChannel{
 		// Create two local channels from a. The bandwidth is estimated
 		// in this test as the channel capacity. For building routes, we
@@ -2944,29 +2949,33 @@ func TestBuildRoute(t *testing.T) {
 		// nodes are recommended to keep their channel policies towards
 		// the same peer identical.
 		symmetricTestChannel("b", "c", chanCapSat, &testChannelPolicy{
-			Expiry:  144,
-			FeeRate: 50000,
-			MinHTLC: lnwire.NewMAtomsFromAtoms(20),
-			MaxHTLC: lnwire.NewMAtomsFromAtoms(120),
+			Expiry:   144,
+			FeeRate:  50000,
+			MinHTLC:  lnwire.NewMAtomsFromAtoms(20),
+			MaxHTLC:  lnwire.NewMAtomsFromAtoms(120),
+			Features: paymentAddrFeatures,
 		}, 2),
 		symmetricTestChannel("b", "c", chanCapSat, &testChannelPolicy{
-			Expiry:  144,
-			FeeRate: 60000,
-			MinHTLC: lnwire.NewMAtomsFromAtoms(20),
-			MaxHTLC: lnwire.NewMAtomsFromAtoms(120),
+			Expiry:   144,
+			FeeRate:  60000,
+			MinHTLC:  lnwire.NewMAtomsFromAtoms(20),
+			MaxHTLC:  lnwire.NewMAtomsFromAtoms(120),
+			Features: paymentAddrFeatures,
 		}, 7),
 
 		symmetricTestChannel("a", "e", chanCapSat, &testChannelPolicy{
-			Expiry:  144,
-			FeeRate: 80000,
-			MinHTLC: lnwire.NewMAtomsFromAtoms(5),
-			MaxHTLC: lnwire.NewMAtomsFromAtoms(10),
+			Expiry:   144,
+			FeeRate:  80000,
+			MinHTLC:  lnwire.NewMAtomsFromAtoms(5),
+			MaxHTLC:  lnwire.NewMAtomsFromAtoms(10),
+			Features: paymentAddrFeatures,
 		}, 5),
 		symmetricTestChannel("e", "c", chanCapSat, &testChannelPolicy{
-			Expiry:  144,
-			FeeRate: 100000,
-			MinHTLC: lnwire.NewMAtomsFromAtoms(20),
-			MaxHTLC: lnwire.NewMAtomsFromAtoms(chanCapSat),
+			Expiry:   144,
+			FeeRate:  100000,
+			MinHTLC:  lnwire.NewMAtomsFromAtoms(20),
+			MaxHTLC:  lnwire.NewMAtomsFromAtoms(chanCapSat),
+			Features: paymentAddrFeatures,
 		}, 4),
 	}
 
@@ -2986,7 +2995,9 @@ func TestBuildRoute(t *testing.T) {
 	}
 	defer cleanUp()
 
-	checkHops := func(rt *route.Route, expected []uint64) {
+	checkHops := func(rt *route.Route, expected []uint64,
+		payAddr [32]byte) {
+
 		t.Helper()
 
 		if len(rt.Hops) != len(expected) {
@@ -2999,7 +3010,15 @@ func TestBuildRoute(t *testing.T) {
 					expected[i], i, hop.ChannelID)
 			}
 		}
+
+		lastHop := rt.Hops[len(rt.Hops)-1]
+		require.NotNil(t, lastHop.MPP)
+		require.Equal(t, lastHop.MPP.PaymentAddr(), payAddr)
 	}
+
+	var payAddr [32]byte
+	_, err = rand.Read(payAddr[:])
+	require.NoError(t, err)
 
 	// Create hop list from the route node pubkeys.
 	hops := []route.Vertex{
@@ -3009,7 +3028,7 @@ func TestBuildRoute(t *testing.T) {
 
 	// Build the route for the given amount.
 	rt, err := ctx.router.BuildRoute(
-		&amt, hops, nil, 40,
+		&amt, hops, nil, 40, &payAddr,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -3018,14 +3037,14 @@ func TestBuildRoute(t *testing.T) {
 	// Check that we get the expected route back. The total amount should be
 	// the amount to deliver to hop c (100 sats) plus the max fee for the
 	// connection b->c (6 sats).
-	checkHops(rt, []uint64{1, 7})
+	checkHops(rt, []uint64{1, 7}, payAddr)
 	if rt.TotalAmount != 106000 {
 		t.Fatalf("unexpected total amount %v", rt.TotalAmount)
 	}
 
 	// Build the route for the minimum amount.
 	rt, err = ctx.router.BuildRoute(
-		nil, hops, nil, 40,
+		nil, hops, nil, 40, &payAddr,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -3035,7 +3054,7 @@ func TestBuildRoute(t *testing.T) {
 	// send from b to c is 20 sats. Hop b charges 1200 msat for the
 	// forwarding. The channel between hop a and b can carry amounts in the
 	// range [5, 100], so 21200 msats is the minimum amount for this route.
-	checkHops(rt, []uint64{1, 7})
+	checkHops(rt, []uint64{1, 7}, payAddr)
 	if rt.TotalAmount != 21200 {
 		t.Fatalf("unexpected total amount %v", rt.TotalAmount)
 	}
@@ -3046,7 +3065,7 @@ func TestBuildRoute(t *testing.T) {
 		ctx.aliases["e"], ctx.aliases["c"],
 	}
 	_, err = ctx.router.BuildRoute(
-		nil, hops, nil, 40,
+		nil, hops, nil, 40, nil,
 	)
 	errNoChannel, ok := err.(ErrNoChannel)
 	if !ok {
