@@ -1759,7 +1759,7 @@ func TestFundingManagerOfflinePeer(t *testing.T) {
 
 // TestFundingManagerPeerTimeoutAfterInitFunding checks that the zombie sweeper
 // will properly clean up a zombie reservation that times out after the
-// initFundingMsg has been handled.
+// InitFundingMsg has been handled.
 func TestFundingManagerPeerTimeoutAfterInitFunding(t *testing.T) {
 	t.Parallel()
 
