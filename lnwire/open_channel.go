@@ -106,7 +106,7 @@ type OpenChannel struct {
 	DelayedPaymentPoint *secp256k1.PublicKey
 
 	// HtlcPoint is the base point used to derive the set of keys for this
-	// party that will be used within the HTLC public key scripts.  This
+	// party that will be used within the HTLC public key scripts. This
 	// value is combined with the receiver's revocation base point in order
 	// to derive the keys that are used within HTLC scripts.
 	HtlcPoint *secp256k1.PublicKey
