@@ -39,6 +39,7 @@ import (
 type backupTask struct {
 	id         wtdb.BackupID
 	breachInfo *lnwallet.BreachRetribution
+	chanType   channeldb.ChannelType
 
 	// state-dependent variables
 
@@ -93,18 +94,33 @@ func newBackupTask(chanID *lnwire.ChannelID,
 	if breachInfo.LocalOutputSignDesc != nil {
 		var witnessType input.WitnessType
 		switch {
+		case chanType.HasAnchors():
+			witnessType = input.CommitmentToRemoteConfirmed
 		case chanType.IsTweakless():
 			witnessType = input.CommitSpendNoDelayTweakless
 		default:
 			witnessType = input.CommitmentNoDelay
 		}
 
-		toRemoteInput = input.NewBaseInput(
-			&breachInfo.LocalOutpoint,
-			witnessType,
-			breachInfo.LocalOutputSignDesc,
-			0,
-		)
+		// Anchor channels have a CSV-encumbered to-remote output. We'll
+		// construct a CSV input in that case and assign the proper CSV
+		// delay of 1, otherwise we fallback to the a regular P2WKH
+		// to-remote output for tweaked or tweakless channels.
+		if chanType.HasAnchors() {
+			toRemoteInput = input.NewCsvInput(
+				&breachInfo.LocalOutpoint,
+				witnessType,
+				breachInfo.LocalOutputSignDesc,
+				0, 1,
+			)
+		} else {
+			toRemoteInput = input.NewBaseInput(
+				&breachInfo.LocalOutpoint,
+				witnessType,
+				breachInfo.LocalOutputSignDesc,
+				0,
+			)
+		}
 
 		totalAmt += breachInfo.LocalOutputSignDesc.Output.Value
 	}
@@ -116,6 +132,7 @@ func newBackupTask(chanID *lnwire.ChannelID,
 			CommitHeight: breachInfo.RevokedStateNum,
 		},
 		breachInfo:    breachInfo,
+		chanType:      chanType,
 		toLocalInput:  toLocalInput,
 		toRemoteInput: toRemoteInput,
 		totalAmt:      dcrutil.Amount(totalAmt),
@@ -154,7 +171,14 @@ func (t *backupTask) bindSession(session *wtdb.ClientSessionBody) error {
 		sizeEstimate.AddCustomInput(input.ToLocalPenaltySigScriptSize)
 	}
 	if t.toRemoteInput != nil {
-		sizeEstimate.AddP2PKHInput()
+		// Legacy channels (both tweaked and non-tweaked) spend from
+		// P2PKH output. Anchor channels spend a to-remote confirmed
+		// P2SH  output.
+		if t.chanType.HasAnchors() {
+			sizeEstimate.AddCustomInput(input.ToRemoteConfirmedWitnessSize)
+		} else {
+			sizeEstimate.AddP2PKHInput()
+		}
 	}
 
 	// All justice transactions have a p2pkh output paying to the victim.
@@ -164,6 +188,12 @@ func (t *backupTask) bindSession(session *wtdb.ClientSessionBody) error {
 	// contribution to the size estimate.
 	if session.Policy.BlobType.Has(blob.FlagReward) {
 		sizeEstimate.AddP2PKHOutput()
+	}
+
+	if t.chanType.HasAnchors() != session.Policy.IsAnchorChannel() {
+		log.Criticalf("Invalid task (has_anchors=%t) for session "+
+			"(has_anchors=%t)", t.chanType.HasAnchors(),
+			session.Policy.IsAnchorChannel())
 	}
 
 	// Now, compute the output values depending on whether FlagReward is set
@@ -223,9 +253,10 @@ func (t *backupTask) craftSessionPayload(
 	// information. This will either be contain both the to-local and
 	// to-remote outputs, or only be the to-local output.
 	inputs := t.inputs()
-	for prevOutPoint := range inputs {
+	for prevOutPoint, input := range inputs {
 		justiceTxn.AddTxIn(&wire.TxIn{
 			PreviousOutPoint: prevOutPoint,
+			Sequence:         input.BlocksToMaturity(),
 		})
 	}
 
@@ -288,6 +319,8 @@ func (t *backupTask) craftSessionPayload(
 		case input.CommitSpendNoDelayTweakless:
 			fallthrough
 		case input.CommitmentNoDelay:
+			fallthrough
+		case input.CommitmentToRemoteConfirmed:
 			copy(justiceKit.CommitToRemoteSig[:], signature[:])
 		default:
 			return hint, nil, fmt.Errorf("invalid witness type: %v",
