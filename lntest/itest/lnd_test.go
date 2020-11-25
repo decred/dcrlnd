@@ -9973,6 +9973,19 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 func testRevokedCloseRetributionAltruistWatchtower(net *lntest.NetworkHarness,
 	t *harnessTest) {
 
+	t.t.Run("anchors", func(tt *testing.T) {
+		ht := newHarnessTest(tt, net)
+		testRevokedCloseRetributionAltruistWatchtowerCase(net, ht, true)
+	})
+	t.t.Run("legacy", func(tt *testing.T) {
+		ht := newHarnessTest(tt, net)
+		testRevokedCloseRetributionAltruistWatchtowerCase(net, ht, false)
+	})
+}
+
+func testRevokedCloseRetributionAltruistWatchtowerCase(
+	net *lntest.NetworkHarness, t *harnessTest, anchors bool) {
+
 	ctxb := context.Background()
 	const (
 		chanAmt     = defaultChanAmt
@@ -9983,9 +9996,11 @@ func testRevokedCloseRetributionAltruistWatchtower(net *lntest.NetworkHarness,
 
 	// Since we'd like to test some multi-hop failure scenarios, we'll
 	// introduce another node into our test network: Carol.
-	carol, err := net.NewNode("Carol", []string{
-		"--hodl.exit-settle",
-	})
+	carolArgs := []string{"--hodl.exit-settle"}
+	if anchors {
+		carolArgs = append(carolArgs, "--protocol.anchors")
+	}
+	carol, err := net.NewNode("Carol", carolArgs)
 	if err != nil {
 		t.Fatalf("unable to create new nodes: %v", err)
 	}
@@ -10038,10 +10053,14 @@ func testRevokedCloseRetributionAltruistWatchtower(net *lntest.NetworkHarness,
 	// Dave will be the breached party. We set --nolisten to ensure Carol
 	// won't be able to connect to him and trigger the channel data
 	// protection logic automatically.
-	dave, err := net.NewNode("Dave", []string{
+	daveArgs := []string{
 		"--nolisten",
 		"--wtclient.active",
-	})
+	}
+	if anchors {
+		daveArgs = append(daveArgs, "--protocol.anchors")
+	}
+	dave, err := net.NewNode("Dave", daveArgs)
 	if err != nil {
 		t.Fatalf("unable to create new node: %v", err)
 	}
@@ -10152,8 +10171,11 @@ func testRevokedCloseRetributionAltruistWatchtower(net *lntest.NetworkHarness,
 	// Wait until the backup has been accepted by the watchtower before
 	// shutting down Dave.
 	err = wait.NoError(func() error {
-		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-		bkpStats, err := dave.WatchtowerClient.Stats(ctxt, &wtclientrpc.StatsRequest{})
+		ctxt, cancel := context.WithTimeout(ctxb, defaultTimeout)
+		defer cancel()
+		bkpStats, err := dave.WatchtowerClient.Stats(ctxt,
+			&wtclientrpc.StatsRequest{},
+		)
 		if err != nil {
 			return err
 		}
