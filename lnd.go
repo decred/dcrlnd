@@ -1359,6 +1359,7 @@ func initializeDatabases(ctx context.Context,
 			databaseBackends.LocalDB,
 			channeldb.OptionSetRejectCacheSize(cfg.Caches.RejectCacheSize),
 			channeldb.OptionSetChannelCacheSize(cfg.Caches.ChannelCacheSize),
+			channeldb.OptionSetBatchCommitInterval(cfg.DB.BatchCommitInterval),
 			channeldb.OptionDryRunMigration(cfg.DryRunMigration),
 		)
 		switch {
@@ -1387,6 +1388,7 @@ func initializeDatabases(ctx context.Context,
 			databaseBackends.LocalDB,
 			channeldb.OptionSetRejectCacheSize(cfg.Caches.RejectCacheSize),
 			channeldb.OptionSetChannelCacheSize(cfg.Caches.ChannelCacheSize),
+			channeldb.OptionSetBatchCommitInterval(cfg.DB.BatchCommitInterval),
 			channeldb.OptionDryRunMigration(cfg.DryRunMigration),
 		)
 		switch {
@@ -1411,6 +1413,7 @@ func initializeDatabases(ctx context.Context,
 		remoteChanDB, err = channeldb.CreateWithBackend(
 			databaseBackends.RemoteDB,
 			channeldb.OptionDryRunMigration(cfg.DryRunMigration),
+			channeldb.OptionSetBatchCommitInterval(cfg.DB.BatchCommitInterval),
 		)
 		switch {
 		case err == channeldb.ErrDryRunMigrationOK:
