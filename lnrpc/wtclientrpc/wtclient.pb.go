@@ -24,6 +24,54 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PolicyType int32
+
+const (
+	// Selects the policy from the legacy tower client.
+	PolicyType_LEGACY PolicyType = 0
+	// Selects the policy from the anchor tower client.
+	PolicyType_ANCHOR PolicyType = 1
+)
+
+// Enum value maps for PolicyType.
+var (
+	PolicyType_name = map[int32]string{
+		0: "LEGACY",
+		1: "ANCHOR",
+	}
+	PolicyType_value = map[string]int32{
+		"LEGACY": 0,
+		"ANCHOR": 1,
+	}
+)
+
+func (x PolicyType) Enum() *PolicyType {
+	p := new(PolicyType)
+	*p = x
+	return p
+}
+
+func (x PolicyType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PolicyType) Descriptor() protoreflect.EnumDescriptor {
+	return file_wtclientrpc_wtclient_proto_enumTypes[0].Descriptor()
+}
+
+func (PolicyType) Type() protoreflect.EnumType {
+	return &file_wtclientrpc_wtclient_proto_enumTypes[0]
+}
+
+func (x PolicyType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PolicyType.Descriptor instead.
+func (PolicyType) EnumDescriptor() ([]byte, []int) {
+	return file_wtclientrpc_wtclient_proto_rawDescGZIP(), []int{0}
+}
+
 type AddTowerRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -660,6 +708,9 @@ type PolicyRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	// The client type from which to retrieve the active offering policy.
+	PolicyType PolicyType `protobuf:"varint,1,opt,name=policy_type,json=policyType,proto3,enum=wtclientrpc.PolicyType" json:"policy_type,omitempty"`
 }
 
 func (x *PolicyRequest) Reset() {
@@ -692,6 +743,13 @@ func (x *PolicyRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PolicyRequest.ProtoReflect.Descriptor instead.
 func (*PolicyRequest) Descriptor() ([]byte, []int) {
 	return file_wtclientrpc_wtclient_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *PolicyRequest) GetPolicyType() PolicyType {
+	if x != nil {
+		return x.PolicyType
+	}
+	return PolicyType_LEGACY
 }
 
 type PolicyResponse struct {
@@ -825,14 +883,20 @@ var file_wtclientrpc_wtclient_proto_rawDesc = []byte{
 	0x6d, 0x5f, 0x73, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x5f, 0x65, 0x78, 0x68, 0x61, 0x75,
 	0x73, 0x74, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x14, 0x6e, 0x75, 0x6d, 0x53,
 	0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x78, 0x68, 0x61, 0x75, 0x73, 0x74, 0x65, 0x64,
-	0x22, 0x0f, 0x0a, 0x0d, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x22, 0x62, 0x0a, 0x0e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x6d, 0x61, 0x78, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x6d, 0x61, 0x78, 0x55, 0x70, 0x64,
-	0x61, 0x74, 0x65, 0x73, 0x12, 0x2f, 0x0a, 0x14, 0x73, 0x77, 0x65, 0x65, 0x70, 0x5f, 0x61, 0x74,
-	0x6f, 0x6d, 0x73, 0x5f, 0x70, 0x65, 0x72, 0x5f, 0x62, 0x79, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0d, 0x52, 0x11, 0x73, 0x77, 0x65, 0x65, 0x70, 0x41, 0x74, 0x6f, 0x6d, 0x73, 0x50, 0x65,
-	0x72, 0x42, 0x79, 0x74, 0x65, 0x32, 0xc5, 0x03, 0x0a, 0x10, 0x57, 0x61, 0x74, 0x63, 0x68, 0x74,
+	0x22, 0x49, 0x0a, 0x0d, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x38, 0x0a, 0x0b, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x17, 0x2e, 0x77, 0x74, 0x63, 0x6c, 0x69, 0x65, 0x6e,
+	0x74, 0x72, 0x70, 0x63, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52,
+	0x0a, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x54, 0x79, 0x70, 0x65, 0x22, 0x62, 0x0a, 0x0e, 0x50,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a,
+	0x0b, 0x6d, 0x61, 0x78, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0d, 0x52, 0x0a, 0x6d, 0x61, 0x78, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x73, 0x12, 0x2f,
+	0x0a, 0x14, 0x73, 0x77, 0x65, 0x65, 0x70, 0x5f, 0x61, 0x74, 0x6f, 0x6d, 0x73, 0x5f, 0x70, 0x65,
+	0x72, 0x5f, 0x62, 0x79, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x11, 0x73, 0x77,
+	0x65, 0x65, 0x70, 0x41, 0x74, 0x6f, 0x6d, 0x73, 0x50, 0x65, 0x72, 0x42, 0x79, 0x74, 0x65, 0x2a,
+	0x24, 0x0a, 0x0a, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0a, 0x0a,
+	0x06, 0x4c, 0x45, 0x47, 0x41, 0x43, 0x59, 0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06, 0x41, 0x4e, 0x43,
+	0x48, 0x4f, 0x52, 0x10, 0x01, 0x32, 0xc5, 0x03, 0x0a, 0x10, 0x57, 0x61, 0x74, 0x63, 0x68, 0x74,
 	0x6f, 0x77, 0x65, 0x72, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x12, 0x47, 0x0a, 0x08, 0x41, 0x64,
 	0x64, 0x54, 0x6f, 0x77, 0x65, 0x72, 0x12, 0x1c, 0x2e, 0x77, 0x74, 0x63, 0x6c, 0x69, 0x65, 0x6e,
 	0x74, 0x72, 0x70, 0x63, 0x2e, 0x41, 0x64, 0x64, 0x54, 0x6f, 0x77, 0x65, 0x72, 0x52, 0x65, 0x71,
@@ -879,42 +943,45 @@ func file_wtclientrpc_wtclient_proto_rawDescGZIP() []byte {
 	return file_wtclientrpc_wtclient_proto_rawDescData
 }
 
+var file_wtclientrpc_wtclient_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_wtclientrpc_wtclient_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_wtclientrpc_wtclient_proto_goTypes = []interface{}{
-	(*AddTowerRequest)(nil),     // 0: wtclientrpc.AddTowerRequest
-	(*AddTowerResponse)(nil),    // 1: wtclientrpc.AddTowerResponse
-	(*RemoveTowerRequest)(nil),  // 2: wtclientrpc.RemoveTowerRequest
-	(*RemoveTowerResponse)(nil), // 3: wtclientrpc.RemoveTowerResponse
-	(*GetTowerInfoRequest)(nil), // 4: wtclientrpc.GetTowerInfoRequest
-	(*TowerSession)(nil),        // 5: wtclientrpc.TowerSession
-	(*Tower)(nil),               // 6: wtclientrpc.Tower
-	(*ListTowersRequest)(nil),   // 7: wtclientrpc.ListTowersRequest
-	(*ListTowersResponse)(nil),  // 8: wtclientrpc.ListTowersResponse
-	(*StatsRequest)(nil),        // 9: wtclientrpc.StatsRequest
-	(*StatsResponse)(nil),       // 10: wtclientrpc.StatsResponse
-	(*PolicyRequest)(nil),       // 11: wtclientrpc.PolicyRequest
-	(*PolicyResponse)(nil),      // 12: wtclientrpc.PolicyResponse
+	(PolicyType)(0),             // 0: wtclientrpc.PolicyType
+	(*AddTowerRequest)(nil),     // 1: wtclientrpc.AddTowerRequest
+	(*AddTowerResponse)(nil),    // 2: wtclientrpc.AddTowerResponse
+	(*RemoveTowerRequest)(nil),  // 3: wtclientrpc.RemoveTowerRequest
+	(*RemoveTowerResponse)(nil), // 4: wtclientrpc.RemoveTowerResponse
+	(*GetTowerInfoRequest)(nil), // 5: wtclientrpc.GetTowerInfoRequest
+	(*TowerSession)(nil),        // 6: wtclientrpc.TowerSession
+	(*Tower)(nil),               // 7: wtclientrpc.Tower
+	(*ListTowersRequest)(nil),   // 8: wtclientrpc.ListTowersRequest
+	(*ListTowersResponse)(nil),  // 9: wtclientrpc.ListTowersResponse
+	(*StatsRequest)(nil),        // 10: wtclientrpc.StatsRequest
+	(*StatsResponse)(nil),       // 11: wtclientrpc.StatsResponse
+	(*PolicyRequest)(nil),       // 12: wtclientrpc.PolicyRequest
+	(*PolicyResponse)(nil),      // 13: wtclientrpc.PolicyResponse
 }
 var file_wtclientrpc_wtclient_proto_depIdxs = []int32{
-	5,  // 0: wtclientrpc.Tower.sessions:type_name -> wtclientrpc.TowerSession
-	6,  // 1: wtclientrpc.ListTowersResponse.towers:type_name -> wtclientrpc.Tower
-	0,  // 2: wtclientrpc.WatchtowerClient.AddTower:input_type -> wtclientrpc.AddTowerRequest
-	2,  // 3: wtclientrpc.WatchtowerClient.RemoveTower:input_type -> wtclientrpc.RemoveTowerRequest
-	7,  // 4: wtclientrpc.WatchtowerClient.ListTowers:input_type -> wtclientrpc.ListTowersRequest
-	4,  // 5: wtclientrpc.WatchtowerClient.GetTowerInfo:input_type -> wtclientrpc.GetTowerInfoRequest
-	9,  // 6: wtclientrpc.WatchtowerClient.Stats:input_type -> wtclientrpc.StatsRequest
-	11, // 7: wtclientrpc.WatchtowerClient.Policy:input_type -> wtclientrpc.PolicyRequest
-	1,  // 8: wtclientrpc.WatchtowerClient.AddTower:output_type -> wtclientrpc.AddTowerResponse
-	3,  // 9: wtclientrpc.WatchtowerClient.RemoveTower:output_type -> wtclientrpc.RemoveTowerResponse
-	8,  // 10: wtclientrpc.WatchtowerClient.ListTowers:output_type -> wtclientrpc.ListTowersResponse
-	6,  // 11: wtclientrpc.WatchtowerClient.GetTowerInfo:output_type -> wtclientrpc.Tower
-	10, // 12: wtclientrpc.WatchtowerClient.Stats:output_type -> wtclientrpc.StatsResponse
-	12, // 13: wtclientrpc.WatchtowerClient.Policy:output_type -> wtclientrpc.PolicyResponse
-	8,  // [8:14] is the sub-list for method output_type
-	2,  // [2:8] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	6,  // 0: wtclientrpc.Tower.sessions:type_name -> wtclientrpc.TowerSession
+	7,  // 1: wtclientrpc.ListTowersResponse.towers:type_name -> wtclientrpc.Tower
+	0,  // 2: wtclientrpc.PolicyRequest.policy_type:type_name -> wtclientrpc.PolicyType
+	1,  // 3: wtclientrpc.WatchtowerClient.AddTower:input_type -> wtclientrpc.AddTowerRequest
+	3,  // 4: wtclientrpc.WatchtowerClient.RemoveTower:input_type -> wtclientrpc.RemoveTowerRequest
+	8,  // 5: wtclientrpc.WatchtowerClient.ListTowers:input_type -> wtclientrpc.ListTowersRequest
+	5,  // 6: wtclientrpc.WatchtowerClient.GetTowerInfo:input_type -> wtclientrpc.GetTowerInfoRequest
+	10, // 7: wtclientrpc.WatchtowerClient.Stats:input_type -> wtclientrpc.StatsRequest
+	12, // 8: wtclientrpc.WatchtowerClient.Policy:input_type -> wtclientrpc.PolicyRequest
+	2,  // 9: wtclientrpc.WatchtowerClient.AddTower:output_type -> wtclientrpc.AddTowerResponse
+	4,  // 10: wtclientrpc.WatchtowerClient.RemoveTower:output_type -> wtclientrpc.RemoveTowerResponse
+	9,  // 11: wtclientrpc.WatchtowerClient.ListTowers:output_type -> wtclientrpc.ListTowersResponse
+	7,  // 12: wtclientrpc.WatchtowerClient.GetTowerInfo:output_type -> wtclientrpc.Tower
+	11, // 13: wtclientrpc.WatchtowerClient.Stats:output_type -> wtclientrpc.StatsResponse
+	13, // 14: wtclientrpc.WatchtowerClient.Policy:output_type -> wtclientrpc.PolicyResponse
+	9,  // [9:15] is the sub-list for method output_type
+	3,  // [3:9] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_wtclientrpc_wtclient_proto_init() }
@@ -1085,13 +1152,14 @@ func file_wtclientrpc_wtclient_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_wtclientrpc_wtclient_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_wtclientrpc_wtclient_proto_goTypes,
 		DependencyIndexes: file_wtclientrpc_wtclient_proto_depIdxs,
+		EnumInfos:         file_wtclientrpc_wtclient_proto_enumTypes,
 		MessageInfos:      file_wtclientrpc_wtclient_proto_msgTypes,
 	}.Build()
 	File_wtclientrpc_wtclient_proto = out.File
