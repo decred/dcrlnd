@@ -95,6 +95,7 @@ func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainreg.Cha
 	sweeper *sweep.UtxoSweeper,
 	tower *watchtower.Standalone,
 	towerClient wtclient.Client,
+	anchorTowerClient wtclient.Client,
 	tcpResolver lncfg.TCPResolver,
 	genInvoiceFeatures func() *lnwire.FeatureVector,
 	rpcLogger slog.Logger) error {
@@ -239,12 +240,15 @@ func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainreg.Cha
 		case *wtclientrpc.Config:
 			subCfgValue := extractReflectValue(subCfg)
 
-			if towerClient != nil {
+			if towerClient != nil && anchorTowerClient != nil {
 				subCfgValue.FieldByName("Active").Set(
 					reflect.ValueOf(towerClient != nil),
 				)
 				subCfgValue.FieldByName("Client").Set(
 					reflect.ValueOf(towerClient),
+				)
+				subCfgValue.FieldByName("AnchorClient").Set(
+					reflect.ValueOf(anchorTowerClient),
 				)
 			}
 			subCfgValue.FieldByName("Resolver").Set(
