@@ -14,6 +14,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -84,7 +85,7 @@ type backupTaskTest struct {
 	bindErr          error
 	expSweepScript   []byte
 	signer           input.Signer
-	tweakless        bool
+	chanType         channeldb.ChannelType
 }
 
 func privKeyFromBytes(b []byte) (*secp256k1.PrivateKey, *secp256k1.PublicKey) {
@@ -107,7 +108,7 @@ func genTaskTest(
 	expSweepAmt int64,
 	expRewardAmt int64,
 	bindErr error,
-	tweakless bool) backupTaskTest {
+	chanType channeldb.ChannelType) backupTaskTest {
 
 	// Parse the key pairs for all keys used in the test.
 	revSK, revPK := privKeyFromBytes(
@@ -208,9 +209,12 @@ func genTaskTest(
 			Index: index,
 		}
 
-		witnessType := input.CommitmentNoDelay
-		if tweakless {
+		var witnessType input.WitnessType
+		switch {
+		case chanType.IsTweakless():
 			witnessType = input.CommitSpendNoDelayTweakless
+		default:
+			witnessType = input.CommitmentNoDelay
 		}
 
 		toRemoteInput = input.NewBaseInput(
@@ -243,7 +247,7 @@ func genTaskTest(
 		bindErr:        bindErr,
 		expSweepScript: makeAddrSlice(22),
 		signer:         signer,
-		tweakless:      tweakless,
+		chanType:       chanType,
 	}
 }
 
@@ -270,8 +274,13 @@ var (
 func TestBackupTask(t *testing.T) {
 	t.Parallel()
 
+	chanTypes := []channeldb.ChannelType{
+		channeldb.SingleFunderBit,
+		channeldb.SingleFunderTweaklessBit,
+	}
+
 	var backupTaskTests []backupTaskTest
-	for _, tweakless := range []bool{true, false} {
+	for _, chanType := range chanTypes {
 		backupTaskTests = append(backupTaskTests, []backupTaskTest{
 			genTaskTest(
 				"commit no-reward, both outputs",
@@ -284,7 +293,7 @@ func TestBackupTask(t *testing.T) {
 				299568,                 // expSweepAmt
 				0,                      // expRewardAmt
 				nil,                    // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit no-reward, to-local output only",
@@ -297,7 +306,7 @@ func TestBackupTask(t *testing.T) {
 				199734,                 // expSweepAmt
 				0,                      // expRewardAmt
 				nil,                    // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit no-reward, to-remote output only",
@@ -310,7 +319,7 @@ func TestBackupTask(t *testing.T) {
 				99783,                  // expSweepAmt
 				0,                      // expRewardAmt
 				nil,                    // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit no-reward, to-remote output only, creates dust",
@@ -323,7 +332,7 @@ func TestBackupTask(t *testing.T) {
 				0,                       // expSweepAmt
 				0,                       // expRewardAmt
 				wtpolicy.ErrCreatesDust, // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit no-reward, no outputs, fee rate exceeds inputs",
@@ -336,7 +345,7 @@ func TestBackupTask(t *testing.T) {
 				0,                            // expSweepAmt
 				0,                            // expRewardAmt
 				wtpolicy.ErrFeeExceedsInputs, // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit no-reward, no outputs, fee rate of 0 creates dust",
@@ -349,7 +358,7 @@ func TestBackupTask(t *testing.T) {
 				0,                       // expSweepAmt
 				0,                       // expRewardAmt
 				wtpolicy.ErrCreatesDust, // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit reward, both outputs",
@@ -362,7 +371,7 @@ func TestBackupTask(t *testing.T) {
 				296532,               // expSweepAmt
 				3000,                 // expRewardAmt
 				nil,                  // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit reward, to-local output only",
@@ -375,7 +384,7 @@ func TestBackupTask(t *testing.T) {
 				197698,               // expSweepAmt
 				2000,                 // expRewardAmt
 				nil,                  // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit reward, to-remote output only",
@@ -388,7 +397,7 @@ func TestBackupTask(t *testing.T) {
 				98747,                // expSweepAmt
 				1000,                 // expRewardAmt
 				nil,                  // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit reward, to-remote output only, creates dust",
@@ -401,7 +410,7 @@ func TestBackupTask(t *testing.T) {
 				0,                       // expSweepAmt
 				0,                       // expRewardAmt
 				wtpolicy.ErrCreatesDust, // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit reward, no outputs, fee rate exceeds inputs",
@@ -414,7 +423,7 @@ func TestBackupTask(t *testing.T) {
 				0,                            // expSweepAmt
 				0,                            // expRewardAmt
 				wtpolicy.ErrFeeExceedsInputs, // bindErr
-				tweakless,
+				chanType,
 			),
 			genTaskTest(
 				"commit reward, no outputs, fee rate of 0 creates dust",
@@ -427,7 +436,7 @@ func TestBackupTask(t *testing.T) {
 				0,                       // expSweepAmt
 				0,                       // expRewardAmt
 				wtpolicy.ErrCreatesDust, // bindErr
-				tweakless,
+				chanType,
 			),
 		}...)
 	}
@@ -447,7 +456,7 @@ func testBackupTask(t *testing.T, test backupTaskTest) {
 	// Create a new backupTask from the channel id and breach info.
 	task := newBackupTask(
 		&test.chanID, test.breachInfo, test.expSweepScript,
-		chaincfg.TestNet3Params(), test.tweakless,
+		test.chanType, chaincfg.TestNet3Params(),
 	)
 
 	// Assert that all parameters set during initialization are properly

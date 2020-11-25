@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -104,7 +105,8 @@ type Client interface {
 	// negotiated policy. If the channel we're trying to back up doesn't
 	// have a tweak for the remote party's output, then isTweakless should
 	// be true.
-	BackupState(*lnwire.ChannelID, *lnwallet.BreachRetribution, bool) error
+	BackupState(*lnwire.ChannelID, *lnwallet.BreachRetribution,
+		channeldb.ChannelType) error
 
 	// Start initializes the watchtower client, allowing it process requests
 	// to backup revoked channel states.
@@ -597,7 +599,8 @@ func (c *TowerClient) RegisterChannel(chanID lnwire.ChannelID) error {
 //   - breached outputs contain too little value to sweep at the target sweep fee
 //     rate.
 func (c *TowerClient) BackupState(chanID *lnwire.ChannelID,
-	breachInfo *lnwallet.BreachRetribution, isTweakless bool) error {
+	breachInfo *lnwallet.BreachRetribution,
+	chanType channeldb.ChannelType) error {
 
 	// Retrieve the cached sweep pkscript used for this channel.
 	c.backupMu.Lock()
@@ -623,8 +626,8 @@ func (c *TowerClient) BackupState(chanID *lnwire.ChannelID,
 	c.backupMu.Unlock()
 
 	task := newBackupTask(
-		chanID, breachInfo, summary.SweepPkScript, c.cfg.ChainParams,
-		isTweakless,
+		chanID, breachInfo, summary.SweepPkScript, chanType,
+		c.cfg.ChainParams,
 	)
 
 	return c.pipeline.QueueBackupTask(task)

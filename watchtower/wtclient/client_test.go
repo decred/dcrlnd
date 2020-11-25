@@ -12,6 +12,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -610,7 +611,7 @@ func (h *testHarness) backupState(id, i uint64, expErr error) {
 	_, retribution := h.channel(id).getState(i)
 
 	chanID := chanIDFromInt(id)
-	err := h.client.BackupState(&chanID, retribution, false)
+	err := h.client.BackupState(&chanID, retribution, channeldb.SingleFunderBit)
 	if err != expErr {
 		h.t.Fatalf("back error mismatch, want: %v, got: %v",
 			expErr, err)

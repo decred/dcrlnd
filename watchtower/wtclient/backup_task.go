@@ -7,6 +7,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/dcrutil/v4/txsort"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -56,9 +57,8 @@ type backupTask struct {
 // variables.
 func newBackupTask(chanID *lnwire.ChannelID,
 	breachInfo *lnwallet.BreachRetribution,
-	sweepPkScript []byte,
-	chainParams *chaincfg.Params,
-	isTweakless bool) *backupTask {
+	sweepPkScript []byte, chanType channeldb.ChannelType,
+	chainParams *chaincfg.Params) *backupTask {
 
 	// Parse the non-dust outputs from the breach transaction,
 	// simultaneously computing the total amount contained in the inputs
@@ -89,9 +89,12 @@ func newBackupTask(chanID *lnwire.ChannelID,
 		totalAmt += breachInfo.RemoteOutputSignDesc.Output.Value
 	}
 	if breachInfo.LocalOutputSignDesc != nil {
-		witnessType := input.CommitmentNoDelay
-		if isTweakless {
+		var witnessType input.WitnessType
+		switch {
+		case chanType.IsTweakless():
 			witnessType = input.CommitSpendNoDelayTweakless
+		default:
+			witnessType = input.CommitmentNoDelay
 		}
 
 		toRemoteInput = input.NewBaseInput(
