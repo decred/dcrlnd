@@ -5049,6 +5049,7 @@ func (r *rpcServer) AddInvoice(ctx context.Context,
 		AddIndex:       dbInvoice.AddIndex,
 		PaymentRequest: string(dbInvoice.PaymentRequest),
 		RHash:          hash[:],
+		PaymentAddr:    dbInvoice.Terms.PaymentAddr[:],
 	}, nil
 }
 
