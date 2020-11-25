@@ -257,7 +257,7 @@ type ChannelLinkConfig struct {
 
 	// TowerClient is an optional engine that manages the signing,
 	// encrypting, and uploading of justice transactions to the daemon's
-	// configured set of watchtowers.
+	// configured set of watchtowers for legacy channels.
 	TowerClient TowerClient
 
 	// MaxOutgoingCltvExpiry is the maximum outgoing timelock that the link
@@ -436,12 +436,7 @@ func (l *channelLink) Start() error {
 
 	// If the config supplied watchtower client, ensure the channel is
 	// registered before trying to use it during operation.
-	// TODO(halseth): support anchor types for watchtower.
-	state := l.channel.State()
-	if l.cfg.TowerClient != nil && state.ChanType.HasAnchors() {
-		l.log.Warnf("Skipping tower registration for anchor " +
-			"channel type")
-	} else if l.cfg.TowerClient != nil && !state.ChanType.HasAnchors() {
+	if l.cfg.TowerClient != nil {
 		err := l.cfg.TowerClient.RegisterChannel(l.ChanID())
 		if err != nil {
 			return err
@@ -1836,14 +1831,9 @@ func (l *channelLink) handleUpstreamMsg(msg lnwire.Message) {
 			return
 		}
 
-		// If we have a tower client, we'll proceed in backing up the
-		// state that was just revoked.
-		// TODO(halseth): support anchor types for watchtower.
-		state := l.channel.State()
-		if l.cfg.TowerClient != nil && state.ChanType.HasAnchors() {
-			l.log.Warnf("Skipping tower backup for anchor " +
-				"channel type")
-		} else if l.cfg.TowerClient != nil && !state.ChanType.HasAnchors() {
+		// If we have a tower client for this channel type, we'll
+		if l.cfg.TowerClient != nil {
+			state := l.channel.State()
 			breachInfo, err := lnwallet.NewBreachRetribution(
 				state, state.RemoteCommitment.CommitHeight-1, 0,
 			)
@@ -1853,10 +1843,9 @@ func (l *channelLink) handleUpstreamMsg(msg lnwire.Message) {
 				return
 			}
 
-			chanType := l.channel.State().ChanType
 			chanID := l.ChanID()
 			err = l.cfg.TowerClient.BackupState(
-				&chanID, breachInfo, chanType,
+				&chanID, breachInfo, state.ChanType,
 			)
 			if err != nil {
 				l.fail(LinkFailureError{code: ErrInternalError},
