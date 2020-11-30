@@ -268,6 +268,7 @@ func (cfg NodeConfig) genArgs() []string {
 	args = append(args, fmt.Sprintf("--invoicemacaroonpath=%v", cfg.InvoiceMacPath))
 	args = append(args, fmt.Sprintf("--trickledelay=%v", trickleDelay))
 	args = append(args, fmt.Sprintf("--profile=%d", cfg.ProfilePort))
+	args = append(args, fmt.Sprintf("--protocol.legacy.no-gossip-throttle"))
 
 	if cfg.RemoteWallet {
 		args = append(args, fmt.Sprintf("--dcrwallet.grpchost=localhost:%d", cfg.WalletPort))
