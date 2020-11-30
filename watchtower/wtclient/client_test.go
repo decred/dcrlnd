@@ -425,7 +425,7 @@ func newHarness(t *testing.T, cfg harnessCfg) *testHarness {
 		ReadTimeout:    timeout,
 		WriteTimeout:   timeout,
 		MinBackoff:     time.Millisecond,
-		MaxBackoff:     10 * time.Millisecond,
+		MaxBackoff:     time.Second,
 		ForceQuitDelay: 10 * time.Second,
 		ChainParams:    chaincfg.TestNet3Params(),
 	}
