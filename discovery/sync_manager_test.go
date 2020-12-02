@@ -2,7 +2,6 @@ package discovery
 
 import (
 	"fmt"
-	"math"
 	"reflect"
 	"sync/atomic"
 	"testing"
@@ -35,6 +34,9 @@ func newTestSyncManager(numActiveSyncers int) *SyncManager {
 		RotateTicker:         ticker.NewForce(DefaultSyncerRotationInterval),
 		HistoricalSyncTicker: ticker.NewForce(DefaultHistoricalSyncInterval),
 		NumActiveSyncers:     numActiveSyncers,
+		BestHeight: func() uint32 {
+			return latestKnownHeight
+		},
 	})
 }
 
@@ -203,7 +205,7 @@ func TestSyncManagerInitialHistoricalSync(t *testing.T) {
 	syncMgr.InitSyncState(peer)
 	assertMsgSent(t, peer, &lnwire.QueryChannelRange{
 		FirstBlockHeight: 0,
-		NumBlocks:        math.MaxUint32,
+		NumBlocks:        latestKnownHeight,
 	})
 
 	// The graph should not be considered as synced since the initial
@@ -291,7 +293,7 @@ func TestSyncManagerForceHistoricalSync(t *testing.T) {
 	syncMgr.InitSyncState(peer)
 	assertMsgSent(t, peer, &lnwire.QueryChannelRange{
 		FirstBlockHeight: 0,
-		NumBlocks:        math.MaxUint32,
+		NumBlocks:        latestKnownHeight,
 	})
 
 	// If an additional peer connects, then a historical sync should not be
@@ -306,7 +308,7 @@ func TestSyncManagerForceHistoricalSync(t *testing.T) {
 	syncMgr.cfg.HistoricalSyncTicker.(*ticker.Force).Force <- time.Time{}
 	assertMsgSent(t, extraPeer, &lnwire.QueryChannelRange{
 		FirstBlockHeight: 0,
-		NumBlocks:        math.MaxUint32,
+		NumBlocks:        latestKnownHeight,
 	})
 }
 
@@ -327,7 +329,7 @@ func TestSyncManagerGraphSyncedAfterHistoricalSyncReplacement(t *testing.T) {
 	syncMgr.InitSyncState(peer)
 	assertMsgSent(t, peer, &lnwire.QueryChannelRange{
 		FirstBlockHeight: 0,
-		NumBlocks:        math.MaxUint32,
+		NumBlocks:        latestKnownHeight,
 	})
 
 	// The graph should not be considered as synced since the initial
@@ -532,7 +534,7 @@ func assertTransitionToChansSynced(t *testing.T, s *GossipSyncer, peer *mockPeer
 
 	query := &lnwire.QueryChannelRange{
 		FirstBlockHeight: 0,
-		NumBlocks:        math.MaxUint32,
+		NumBlocks:        latestKnownHeight,
 	}
 	assertMsgSent(t, peer, query)
 

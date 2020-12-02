@@ -194,6 +194,9 @@ func newTestSyncer(hID lnwire.ShortChannelID,
 			return nil
 		},
 		delayedQueryReplyInterval: 2 * time.Second,
+		bestHeight: func() uint32 {
+			return latestKnownHeight
+		},
 	}
 	syncer := newGossipSyncer(cfg)
 
@@ -1171,9 +1174,9 @@ func TestGossipSyncerGenChanRangeQuery(t *testing.T) {
 			rangeQuery.FirstBlockHeight,
 			startingHeight-chanRangeQueryBuffer)
 	}
-	if rangeQuery.NumBlocks != math.MaxUint32-firstHeight {
+	if rangeQuery.NumBlocks != latestKnownHeight-firstHeight {
 		t.Fatalf("wrong num blocks: expected %v, got %v",
-			math.MaxUint32-firstHeight, rangeQuery.NumBlocks)
+			latestKnownHeight-firstHeight, rangeQuery.NumBlocks)
 	}
 
 	// Generating a historical range query should result in a start height
@@ -1186,9 +1189,9 @@ func TestGossipSyncerGenChanRangeQuery(t *testing.T) {
 		t.Fatalf("incorrect chan range query: expected %v, %v", 0,
 			rangeQuery.FirstBlockHeight)
 	}
-	if rangeQuery.NumBlocks != math.MaxUint32 {
+	if rangeQuery.NumBlocks != latestKnownHeight {
 		t.Fatalf("wrong num blocks: expected %v, got %v",
-			math.MaxUint32, rangeQuery.NumBlocks)
+			latestKnownHeight, rangeQuery.NumBlocks)
 	}
 }
 
@@ -2283,7 +2286,7 @@ func TestGossipSyncerHistoricalSync(t *testing.T) {
 	// sent to the remote peer with a FirstBlockHeight of 0.
 	expectedMsg := &lnwire.QueryChannelRange{
 		FirstBlockHeight: 0,
-		NumBlocks:        math.MaxUint32,
+		NumBlocks:        latestKnownHeight,
 	}
 
 	select {
