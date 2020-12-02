@@ -431,6 +431,7 @@ func (m *SyncManager) createGossipSyncer(peer lnpeer.Peer) *GossipSyncer {
 		maxUndelayedQueryReplies:  DefaultMaxUndelayedQueryReplies,
 		delayedQueryReplyInterval: DefaultDelayedQueryReplyInterval,
 		bestHeight:                m.cfg.BestHeight,
+		maxQueryChanRangeReplies:  maxQueryChanRangeReplies,
 	})
 
 	// Gossip syncers are initialized by default in a PassiveSync type

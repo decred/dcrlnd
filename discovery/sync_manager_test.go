@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/ticker"
+	"github.com/stretchr/testify/require"
 )
 
 // randPeer creates a random peer.
@@ -538,10 +539,14 @@ func assertTransitionToChansSynced(t *testing.T, s *GossipSyncer, peer *mockPeer
 	}
 	assertMsgSent(t, peer, query)
 
-	s.ProcessQueryMsg(&lnwire.ReplyChannelRange{
+	require.Eventually(t, func() bool {
+		return s.syncState() == waitingQueryRangeReply
+	}, time.Second, 500*time.Millisecond)
+
+	require.NoError(t, s.ProcessQueryMsg(&lnwire.ReplyChannelRange{
 		QueryChannelRange: *query,
 		Complete:          1,
-	}, nil)
+	}, nil))
 
 	chanSeries := s.cfg.channelSeries.(*mockChannelGraphTimeSeries)
 
