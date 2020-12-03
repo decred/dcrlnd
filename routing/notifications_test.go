@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"bytes"
 	"fmt"
 	"image/color"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/stretchr/testify/require"
 
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/input"
@@ -574,6 +576,9 @@ func TestNodeUpdateNotification(t *testing.T) {
 		t.Fatalf("unable to create test node: %v", err)
 	}
 
+	testFeaturesBuf := new(bytes.Buffer)
+	require.NoError(t, testFeatures.Encode(testFeaturesBuf))
+
 	edge := &channeldb.ChannelEdgeInfo{
 		ChannelID:     chanID.ToUint64(),
 		NodeKey1Bytes: node1.PubKeyBytes,
@@ -625,6 +630,14 @@ func TestNodeUpdateNotification(t *testing.T) {
 				"got %x", nodeKey.SerializeCompressed(),
 				nodeUpdate.IdentityKey.SerializeCompressed())
 		}
+
+		featuresBuf := new(bytes.Buffer)
+		require.NoError(t, nodeUpdate.Features.Encode(featuresBuf))
+
+		require.Equal(
+			t, testFeaturesBuf.Bytes(), featuresBuf.Bytes(),
+		)
+
 		if nodeUpdate.Alias != ann.Alias {
 			t.Fatalf("node alias doesn't match: expected %v, got %v",
 				ann.Alias, nodeUpdate.Alias)
