@@ -152,18 +152,8 @@ build:
 
 build-itest:
 	@$(call print, "Building itest dcrlnd and dcrlncli.")
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlncli
-
-build-all:
-	@$(call print, "Building debug dcrlnd and dcrlncli with all submodules.")
-	$(GOBUILD) -o dcrlnd-debug $(LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -o dcrlncli-debug $(LDFLAGS) $(PKG)/cmd/dcrlncli
-
-build-itest-windows:
-	@$(call print, "Building itest lnd and lncli.")
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest.exe $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest.exe $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlncli
+	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
+	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlncli
 
 install:
 	@$(call print, "Installing dcrlnd and dcrlncli.")
@@ -190,7 +180,7 @@ itest-only:
 
 	@$(call print, "Running integration tests with ${backend} backend.")
 	rm -rf lntest/itest/*.log lntest/itest/.logs-*; date
-	scripts/itest_part.sh 0 1 $(TEST_FLAGS) $(ITEST_FLAGS)
+	EXEC_SUFFIX=$(EXEC_SUFFIX) scripts/itest_part.sh 0 1 $(TEST_FLAGS) $(ITEST_FLAGS)
 	lntest/itest/log_check_errors.sh
 
 itest: dcrd dcrwallet build-itest itest-only
@@ -201,20 +191,9 @@ itest-parallel-run:
 
 	@$(call print, "Running tests")
 	rm -rf lntest/itest/*.log lntest/itest/.logs-*
-	echo "$$(seq 0 $$(expr $(ITEST_PARALLELISM) - 1))" | xargs -P $(ITEST_PARALLELISM) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
+	EXEC_SUFFIX=$(EXEC_SUFFIX) echo "$$(seq 0 $$(expr $(ITEST_PARALLELISM) - 1))" | xargs -P $(ITEST_PARALLELISM) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
 
 itest-parallel: dcrd dcrwallet build-itest itest-parallel-run
-
-itest-windows: dcrd dcrwallet build-itest-windows itest-only
-
-itest-parallel-windows-run:
-	@$(call print, "Building itest binary for $(backend) backend")
-	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -logoutput -goroutinedump -c -o lntest/itest/itest.test.exe
-
-	@$(call print, "Running tests")
-	EXEC_SUFFIX=".exe" echo "$$(seq 0 $$(expr $(ITEST_PARALLELISM) - 1))" | xargs -P $(ITEST_PARALLELISM) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
-
-itest-parallel-windows: dcrd dcrwallet build-itest-windows itest-parallel-windows-run
 
 unit-only:
 	@$(call print, "Running unit tests.")
