@@ -185,10 +185,13 @@ scratch: build
 check: unit itest
 
 itest-only:
+	@$(call print, "Building itest binary for $(backend) backend")
+	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -c -o lntest/itest/itest.test
+
 	@$(call print, "Running integration tests with ${backend} backend.")
-	echo $(GOBIN)
-	$(ITEST)
-#	lntest/itest/log_check_errors.sh
+	rm -rf lntest/itest/*.log lntest/itest/.logs-*; date
+	scripts/itest_part.sh 0 1 $(TEST_FLAGS) $(ITEST_FLAGS)
+	lntest/itest/log_check_errors.sh
 
 itest: dcrd dcrwallet build-itest itest-only
 
@@ -255,7 +258,7 @@ unpack-test-binaries:
 
 flakehunter: build-itest
 	@$(call print, "Flake hunting ${backend} integration tests.")
-	while [ $$? -eq 0 ]; do $(ITEST); done
+	while [ $$? -eq 0 ]; do make itest-only icase='${icase}' backend='${backend}'; done
 
 flake-unit:
 	@$(call print, "Flake hunting unit tests.")

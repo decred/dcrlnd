@@ -99,11 +99,9 @@ endif
 # Construct the integration test command with the added build flags.
 ITEST_TAGS := $(DEV_TAGS) rpctest
 
-# Default to btcd backend if not set.
+# Default to dcrd backend if not set.
 ifneq ($(backend),)
 ITEST_TAGS += ${backend}
 else
 ITEST_TAGS += dcrd
 endif
-
-ITEST := rm ./lntest/itest/*.log; date; $(GOTEST) ./lntest/itest -tags="$(ITEST_TAGS)" $(TEST_FLAGS) -logoutput -goroutinedump

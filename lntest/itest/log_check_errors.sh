@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Note(decred) this is currently disabled due to not being up to date with dcrlnd.
+exit 0
+
 BASEDIR=$(dirname "$0")
 
 echo ""
