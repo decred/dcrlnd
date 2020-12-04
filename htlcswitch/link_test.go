@@ -1393,7 +1393,7 @@ func TestChannelLinkMultiHopUnknownPaymentHash(t *testing.T) {
 		if !ok {
 			t.Fatalf("unexpected shutdown")
 		}
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatalf("no result arrive")
 	}
 
