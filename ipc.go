@@ -33,12 +33,12 @@ var outgoingPipeMessages = make(chan pipeMessage)
 
 // serviceControlPipeRx reads from the file descriptor fd of a read end pipe.
 // This is intended to be used as a simple control mechanism for parent
-// processes to communicate with and and manage the lifetime of a dcrd child
+// processes to communicate with and and manage the lifetime of a dcrlnd child
 // process using a unidirectional pipe (on Windows, this is an anonymous pipe,
 // not a named pipe).
 //
 // When the pipe is closed or any other errors occur reading the control
-// message, shutdown begins.  This prevents dcrd from continuing to run
+// message, shutdown begins.  This prevents dcrlnd from continuing to run
 // unsupervised after the parent process closes unexpectedly.
 //
 // No control messages are currently defined and the only use for the pipe is to
@@ -62,7 +62,7 @@ func serviceControlPipeRx(fd uintptr) {
 
 // serviceControlPipeTx sends pipe messages to the file descriptor fd of a write
 // end pipe.  This is intended to be a simple response and notification system
-// for a child dcrd process to communicate with a parent process without the
+// for a child dcrlnd process to communicate with a parent process without the
 // need to go through the RPC server.
 //
 // See the comment on the pipeMessage interface for the binary encoding of a
