@@ -95,6 +95,10 @@ type Config struct {
 	// FeeURL defines the URL for fee estimation we will use. This field is
 	// optional.
 	FeeURL string
+
+	// DBTimeOut specifies the timeout value to use when opening the wallet
+	// database.
+	DBTimeOut time.Duration
 }
 
 const (

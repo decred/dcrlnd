@@ -39,7 +39,8 @@ func setupTestRootKeyStorage(t *testing.T) string {
 		t.Fatalf("Error creating temp dir: %v", err)
 	}
 	db, err := kvdb.Create(
-		kvdb.BoltBackendName, path.Join(tempDir, "macaroons.db"), true, kvdb.DefaultDBTimeout,
+		kvdb.BoltBackendName, path.Join(tempDir, "macaroons.db"), true,
+		kvdb.DefaultDBTimeout,
 	)
 	if err != nil {
 		t.Fatalf("Error opening store DB: %v", err)
@@ -67,7 +68,8 @@ func TestNewService(t *testing.T) {
 	// Second, create the new service instance, unlock it and pass in a
 	// checker that we expect it to add to the bakery.
 	service, err := macaroons.NewService(
-		tempDir, "dcrlnd", false, macaroons.IPLockChecker,
+		tempDir, "dcrlnd", false, kvdb.DefaultDBTimeout,
+		macaroons.IPLockChecker,
 	)
 	if err != nil {
 		t.Fatalf("Error creating new service: %v", err)
@@ -118,7 +120,8 @@ func TestValidateMacaroon(t *testing.T) {
 	tempDir := setupTestRootKeyStorage(t)
 	defer os.RemoveAll(tempDir)
 	service, err := macaroons.NewService(
-		tempDir, "dcrlnd", false, macaroons.IPLockChecker,
+		tempDir, "dcrlnd", false, kvdb.DefaultDBTimeout,
+		macaroons.IPLockChecker,
 	)
 	if err != nil {
 		t.Fatalf("Error creating new service: %v", err)
@@ -178,7 +181,8 @@ func TestListMacaroonIDs(t *testing.T) {
 	// Second, create the new service instance, unlock it and pass in a
 	// checker that we expect it to add to the bakery.
 	service, err := macaroons.NewService(
-		tempDir, "dcrlnd", false, macaroons.IPLockChecker,
+		tempDir, "dcrlnd", false, kvdb.DefaultDBTimeout,
+		macaroons.IPLockChecker,
 	)
 	require.NoError(t, err, "Error creating new service")
 	defer service.Close()
@@ -210,7 +214,8 @@ func TestDeleteMacaroonID(t *testing.T) {
 	// Second, create the new service instance, unlock it and pass in a
 	// checker that we expect it to add to the bakery.
 	service, err := macaroons.NewService(
-		tempDir, "dcrlnd", false, macaroons.IPLockChecker,
+		tempDir, "dcrlnd", false, kvdb.DefaultDBTimeout,
+		macaroons.IPLockChecker,
 	)
 	require.NoError(t, err, "Error creating new service")
 	defer service.Close()

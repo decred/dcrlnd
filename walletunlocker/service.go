@@ -152,11 +152,16 @@ type UnlockerService struct {
 	// different access permissions. These might not exist in a stateless
 	// initialization of lnd.
 	macaroonFiles []string
+
+	// dbTimeout specifies the timeout value to use when opening the wallet
+	// database.
+	dbTimeout time.Duration
 }
 
 // New creates and returns a new UnlockerService.
 func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
-	macaroonFiles []string, db *channeldb.DB, dcrwHost, dcrwCert, dcrwClientKey,
+	macaroonFiles []string, dbTimeout time.Duration,
+	db *channeldb.DB, dcrwHost, dcrwCert, dcrwClientKey,
 	dcrwClientCert string, dcrwAccount int32) *UnlockerService {
 
 	return &UnlockerService{
@@ -176,6 +181,7 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 		chainDir:        chainDir,
 		netParams:       params,
 		macaroonFiles:   macaroonFiles,
+		dbTimeout:       dbTimeout,
 	}
 }
 
@@ -718,7 +724,7 @@ func (u *UnlockerService) ChangePassword(ctx context.Context,
 	// Attempt to open the macaroon DB, unlock it and then change
 	// the passphrase.
 	macaroonService, err := macaroons.NewService(
-		netDir, "lnd", in.StatelessInit,
+		netDir, "lnd", in.StatelessInit, u.dbTimeout,
 	)
 	if err != nil {
 		return nil, err

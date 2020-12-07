@@ -12,9 +12,6 @@ import (
 )
 
 const (
-	// DefaultDBTimeout is taken from github.com/btcsuite/btcwallet/wallet/loader.go
-	DefaultDBTimeout = 60 * time.Second
-
 	// DefaultTempDBFileName is the default name of the temporary bolt DB
 	// file that we'll use to atomically compact the primary DB file on
 	// startup.
@@ -67,6 +64,10 @@ type BoltBackendConfig struct {
 	// since a bolt database file was last compacted for the compaction to
 	// be considered again.
 	AutoCompactMinAge time.Duration
+
+	// DBTimeout specifies the timeout value to use when opening the wallet
+	// database.
+	DBTimeout time.Duration
 }
 
 // GetBoltBackend opens (or creates if doesn't exits) a bbolt backed database
@@ -82,7 +83,10 @@ func GetBoltBackend(cfg *BoltBackendConfig) (Backend, error) {
 			}
 		}
 
-		return Create(BoltBackendName, dbFilePath, cfg.NoFreelistSync, DefaultDBTimeout)
+		return Create(
+			BoltBackendName, dbFilePath,
+			cfg.NoFreelistSync, cfg.DBTimeout,
+		)
 	}
 
 	// This is an existing database. We might want to compact it on startup
@@ -93,7 +97,10 @@ func GetBoltBackend(cfg *BoltBackendConfig) (Backend, error) {
 		}
 	}
 
-	return Open(BoltBackendName, dbFilePath, cfg.NoFreelistSync, DefaultDBTimeout)
+	return Open(
+		BoltBackendName, dbFilePath,
+		cfg.NoFreelistSync, cfg.DBTimeout,
+	)
 }
 
 // compactAndSwap will attempt to write a new temporary DB file to disk with
@@ -159,8 +166,9 @@ func compactAndSwap(cfg *BoltBackendConfig) error {
 		_ = os.Remove(tempDestFilePath)
 	}()
 	c := &compacter{
-		srcPath: sourceFilePath,
-		dstPath: tempDestFilePath,
+		srcPath:   sourceFilePath,
+		dstPath:   tempDestFilePath,
+		dbTimeout: cfg.DBTimeout,
 	}
 	initialSize, newSize, err := c.execute()
 	if err != nil {
@@ -238,6 +246,7 @@ func GetTestBackend(path, name string) (Backend, func(), error) {
 			DBPath:         path,
 			DBFileName:     name,
 			NoFreelistSync: true,
+			DBTimeout:      DefaultDBTimeout,
 		})
 		if err != nil {
 			return nil, nil, err

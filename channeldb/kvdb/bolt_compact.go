@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/decred/dcrlnd/healthcheck"
 	bolt "go.etcd.io/bbolt"
@@ -38,6 +39,9 @@ type compacter struct {
 	srcPath   string
 	dstPath   string
 	txMaxSize int64
+
+	// dbTimeout specifies the timeout value used when opening the db.
+	dbTimeout time.Duration
 }
 
 // execute opens the source and destination databases and then compacts the
@@ -79,6 +83,7 @@ func (cmd *compacter) execute() (int64, int64, error) {
 	// possible freelist sync problems.
 	src, err := bolt.Open(cmd.srcPath, 0444, &bolt.Options{
 		ReadOnly: true,
+		Timeout:  cmd.dbTimeout,
 	})
 	if err != nil {
 		return 0, 0, fmt.Errorf("error opening source database: %v",
@@ -91,7 +96,9 @@ func (cmd *compacter) execute() (int64, int64, error) {
 	}()
 
 	// Open destination database.
-	dst, err := bolt.Open(cmd.dstPath, fi.Mode(), nil)
+	dst, err := bolt.Open(cmd.dstPath, fi.Mode(), &bolt.Options{
+		Timeout: cmd.dbTimeout,
+	})
 	if err != nil {
 		return 0, 0, fmt.Errorf("error opening destination database: "+
 			"%v", err)

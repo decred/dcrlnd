@@ -50,6 +50,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/tv42/zbase32 v0.0.0-20220222190657-f76a9fc892fa
 	github.com/urfave/cli v1.20.0
+	go.etcd.io/bbolt v1.3.7
 	golang.org/x/crypto v0.8.0
 	golang.org/x/exp v0.0.0-20230711023510-fffb14384f22
 	golang.org/x/net v0.9.0
@@ -126,7 +127,6 @@ require (
 	gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 // indirect
 	gitlab.com/NebulousLabs/go-upnp v0.0.0-20211002182029-11da932010b6 // indirect
 	gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec // indirect
-	go.etcd.io/bbolt v1.3.7 // indirect
 	go.mongodb.org/mongo-driver v1.5.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

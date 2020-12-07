@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 )
@@ -44,7 +45,9 @@ func fileExists(path string) bool {
 // one doesn't exist. The boolean returned indicates if the database did not
 // exist before, or if it has been created but no version metadata exists within
 // it.
-func createDBIfNotExist(dbPath, name string) (kvdb.Backend, bool, error) {
+func createDBIfNotExist(dbPath, name string,
+	dbTimeout time.Duration) (kvdb.Backend, bool, error) {
+
 	path := filepath.Join(dbPath, name)
 
 	// If the database file doesn't exist, this indicates we much initialize
@@ -60,7 +63,9 @@ func createDBIfNotExist(dbPath, name string) (kvdb.Backend, bool, error) {
 
 	// Specify bbolt freelist options to reduce heap pressure in case the
 	// freelist grows to be very large.
-	bdb, err := kvdb.Create(kvdb.BoltBackendName, path, true, kvdb.DefaultDBTimeout)
+	bdb, err := kvdb.Create(
+		kvdb.BoltBackendName, path, true, dbTimeout,
+	)
 	if err != nil {
 		return nil, false, err
 	}

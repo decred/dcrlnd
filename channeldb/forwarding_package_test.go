@@ -808,7 +808,9 @@ func makeFwdPkgDB(t *testing.T, path string) kvdb.Backend {
 		path = filepath.Join(path, "fwdpkg.db")
 	}
 
-	bdb, err := kvdb.Create(kvdb.BoltBackendName, path, true, kvdb.DefaultDBTimeout)
+	bdb, err := kvdb.Create(
+		kvdb.BoltBackendName, path, true, kvdb.DefaultDBTimeout,
+	)
 	if err != nil {
 		t.Fatalf("unable to open bboltdb: %v", err)
 	}
