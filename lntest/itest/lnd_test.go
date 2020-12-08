@@ -383,7 +383,7 @@ func assertChannelClosed(ctx context.Context, t *harnessTest,
 		}
 
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("closing transaction not marked as fully closed")
 	}
@@ -639,7 +639,7 @@ func assertNumOpenChannelsPending(ctxt context.Context, t *harnessTest,
 		}
 
 		return nil
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -833,7 +833,7 @@ func completePaymentRequests(ctx context.Context, client lnrpc.LightningClient,
 		}
 
 		return false
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		return err
 	}
@@ -987,7 +987,7 @@ func testGetRecoveryInfo(net *lntest.NetworkHarness, t *harnessTest) {
 			}
 
 			return true
-		}, 15*time.Second)
+		}, defaultTimeout)
 		if err != nil {
 			t.Fatalf("expected recovery mode to be %v, got %v, "+
 				"expected recovery finished to be %v, got %v, "+
@@ -1091,7 +1091,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 			}
 
 			return true
-		}, 15*time.Second)
+		}, defaultTimeout)
 		if err != nil {
 			t.Fatalf("expected restored node to have %d atoms, "+
 				"instead has %d atoms, expected %d utxos "+
@@ -2054,7 +2054,7 @@ out:
 			}
 		case err := <-subscription.errChan:
 			t.Fatalf("unable to recv graph update: %v", err)
-		case <-time.After(20 * time.Second):
+		case <-time.After(defaultTimeout):
 			t.Fatalf("did not receive channel update")
 		}
 	}
@@ -2645,7 +2645,7 @@ func waitForNodeBlockHeight(ctx context.Context, node *lntest.HarnessNode,
 	height int64) error {
 	var predErr error
 	err := wait.Predicate(func() bool {
-		ctxt, _ := context.WithTimeout(ctx, 10*time.Second)
+		ctxt, _ := context.WithTimeout(ctx, defaultTimeout)
 		info, err := node.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
 		if err != nil {
 			predErr = err
@@ -2658,7 +2658,7 @@ func waitForNodeBlockHeight(ctx context.Context, node *lntest.HarnessNode,
 			return false
 		}
 		return true
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		return predErr
 	}
@@ -2694,7 +2694,7 @@ func assertMinerBlockHeightDelta(t *harnessTest,
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -2915,7 +2915,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -3855,7 +3855,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numInvoices)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -4060,7 +4060,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		}
 
 		return nil
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -4179,7 +4179,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		}
 
 		return nil
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -4312,7 +4312,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		}
 
 		return true
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -4386,7 +4386,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		}
 
 		return nil
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -4546,7 +4546,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 
 		predErr = checkPendingChannelNumHtlcs(forceClose, numInvoices)
 		return predErr == nil
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -4676,7 +4676,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		}
 
 		return true
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -4714,7 +4714,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		}
 
 		return true
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -5545,7 +5545,7 @@ func assertAmountPaid(t *harnessTest, channelName string,
 	// are in place
 	var timeover uint32
 	go func() {
-		<-time.After(time.Second * 20)
+		<-time.After(defaultTimeout)
 		atomic.StoreUint32(&timeover, 1)
 	}()
 
@@ -6437,7 +6437,7 @@ func testUnannouncedChannels(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -6802,7 +6802,7 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -6984,7 +6984,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -8021,7 +8021,7 @@ func testFailingChannel(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -8057,7 +8057,7 @@ func testFailingChannel(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -8079,7 +8079,7 @@ func testFailingChannel(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -8127,7 +8127,7 @@ func testFailingChannel(net *lntest.NetworkHarness, t *harnessTest) {
 			return false
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -8230,13 +8230,13 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 
 	err = wait.Predicate(func() bool {
 		return isConnected(net.Bob.PubKeyStr)
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("alice did not reconnect to bob")
 	}
 	err = wait.Predicate(func() bool {
 		return isConnected(carol.PubKeyStr)
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("alice did not reconnect to carol")
 	}
@@ -8249,19 +8249,19 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 
 	err = wait.Predicate(func() bool {
 		return isConnected(net.Bob.PubKeyStr)
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("alice did not reconnect to bob")
 	}
 	err = wait.Predicate(func() bool {
 		return isConnected(carol.PubKeyStr)
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("alice did not reconnect to carol")
 	}
 	err = wait.Predicate(func() bool {
 		return isConnected(dave.PubKeyStr)
-	}, 15*time.Second)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("alice did not reconnect to dave")
 	}
@@ -8299,7 +8299,7 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 		err = wait.Predicate(func() bool {
 			return isConnected(dave.PubKeyStr)
-		}, 20*time.Second)
+		}, defaultTimeout)
 		if err != nil {
 			t.Fatalf("alice didn't reconnect to Dave")
 		}
@@ -8367,7 +8367,7 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 
 		predErr = checkNumForceClosedChannels(pendingChanResp, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("channels not marked as fully resolved: %v", predErr)
 	}
@@ -8501,7 +8501,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 
 		bobChan = bChan
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -8587,7 +8587,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 
 		return true
-	}, time.Second*10)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("unable to close channel: %v", predErr)
 	}
@@ -8849,7 +8849,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 			ctxt, carol, chanPoint, force,
 		)
 		return closeErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("unable to close channel: %v", closeErr)
 	}
@@ -9874,7 +9874,28 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 
 		justiceTxid = txid
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
+	if err != nil && predErr == errNotFound {
+		// If Dave is unable to broadcast his justice tx on first
+		// attempt because of the second layer transactions, he will
+		// wait until the next block epoch before trying again. Because
+		// of this, we'll mine a block if we cannot find the justice tx
+		// immediately. Since we cannot tell for sure how many
+		// transactions will be in the mempool at this point, we pass 0
+		// as the last argument, indicating we don't care what's in the
+		// mempool.
+		mineBlocks(t, net, 1, 0)
+		err = wait.Predicate(func() bool {
+			txid, err := findJusticeTx()
+			if err != nil {
+				predErr = err
+				return false
+			}
+
+			justiceTxid = txid
+			return true
+		}, defaultTimeout)
+	}
 	if err != nil {
 		t.Fatalf(predErr.Error())
 	}
@@ -10381,7 +10402,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 		}
 
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -10405,7 +10426,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 		}
 
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -10459,7 +10480,7 @@ func assertNumPendingChannels(t *harnessTest, node *lntest.HarnessNode,
 				"pending open, found %d", expPendingOpen, n)
 		}
 		return true
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", predErr)
 	}
@@ -10714,7 +10735,7 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 
 			nodeChan = bChan
 			return true
-		}, time.Second*15)
+		}, defaultTimeout)
 		if err != nil {
 			t.Fatalf("%v", predErr)
 		}
@@ -10949,7 +10970,7 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 
 		return nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -10985,7 +11006,7 @@ func assertNodeNumChannels(t *harnessTest, node *lntest.HarnessNode,
 		return true
 	}
 
-	if err := wait.Predicate(pred, time.Second*15); err != nil {
+	if err := wait.Predicate(pred, defaultTimeout); err != nil {
 		t.Fatalf("node has incorrect number of channels: %v", predErr)
 	}
 }
@@ -11540,7 +11561,7 @@ func testNodeAnnouncement(net *lntest.NetworkHarness, t *harnessTest) {
 				}
 			case err := <-graphSub.errChan:
 				t.Fatalf("unable to recv graph update: %v", err)
-			case <-time.After(20 * time.Second):
+			case <-time.After(defaultTimeout):
 				t.Fatalf("did not receive node ann update")
 			}
 		}
@@ -12292,7 +12313,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12327,7 +12348,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12350,7 +12371,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12609,7 +12630,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12642,7 +12663,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Invariant(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
 		return predErr == nil
-	}, time.Second*2)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc change: %v", predErr)
 	}
@@ -12676,7 +12697,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(carolNode, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12692,7 +12713,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12956,7 +12977,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -12993,7 +13014,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 		predErr = assertNumActiveHtlcsChanPoint(dave, carolFundPoint, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -13027,7 +13048,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -13291,7 +13312,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodes, numPayments)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -13319,7 +13340,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 
 		predErr = assertNumActiveHtlcsChanPoint(dave, carolFundPoint, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -13361,7 +13382,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 	err = wait.Predicate(func() bool {
 		predErr = assertNumActiveHtlcs(nodesMinusCarol, 0)
 		return predErr == nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
@@ -14713,7 +14734,7 @@ func testHoldInvoicePersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 
 		return nil
-	}, time.Second*15)
+	}, defaultTimeout)
 	if err != nil {
 		t.Fatalf("predicate not satisfied: %v", err)
 	}
