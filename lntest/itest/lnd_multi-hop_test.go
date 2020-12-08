@@ -278,7 +278,7 @@ func createThreeHopNetwork(t *harnessTest, net *lntest.NetworkHarness,
 		ctxt, _ = context.WithTimeout(context.Background(), defaultTimeout)
 		err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
 		if err != nil {
-			t.Fatalf("unable to send coins to Alice: %v", err)
+			t.Fatalf("unable to send coins to Carol: %v", err)
 		}
 	}
 
