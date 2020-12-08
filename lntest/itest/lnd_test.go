@@ -8228,18 +8228,12 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to restart carol's node: %v", err)
 	}
 
-	err = wait.Predicate(func() bool {
+	require.Eventually(t.t, func() bool {
 		return isConnected(net.Bob.PubKeyStr)
-	}, defaultTimeout)
-	if err != nil {
-		t.Fatalf("alice did not reconnect to bob")
-	}
-	err = wait.Predicate(func() bool {
+	}, defaultTimeout, 20*time.Millisecond)
+	require.Eventually(t.t, func() bool {
 		return isConnected(carol.PubKeyStr)
-	}, defaultTimeout)
-	if err != nil {
-		t.Fatalf("alice did not reconnect to carol")
-	}
+	}, defaultTimeout, 20*time.Millisecond)
 
 	// We'll also restart Alice to ensure she can reconnect to her peers
 	// with open channels.
@@ -8247,24 +8241,18 @@ func testGarbageCollectLinkNodes(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to restart alice's node: %v", err)
 	}
 
-	err = wait.Predicate(func() bool {
+	require.Eventually(t.t, func() bool {
 		return isConnected(net.Bob.PubKeyStr)
-	}, defaultTimeout)
-	if err != nil {
-		t.Fatalf("alice did not reconnect to bob")
-	}
-	err = wait.Predicate(func() bool {
+	}, defaultTimeout, 20*time.Millisecond)
+	require.Eventually(t.t, func() bool {
 		return isConnected(carol.PubKeyStr)
-	}, defaultTimeout)
-	if err != nil {
-		t.Fatalf("alice did not reconnect to carol")
-	}
+	}, defaultTimeout, 20*time.Millisecond)
+	require.Eventually(t.t, func() bool {
+		return isConnected(dave.PubKeyStr)
+	}, defaultTimeout, 20*time.Millisecond)
 	err = wait.Predicate(func() bool {
 		return isConnected(dave.PubKeyStr)
 	}, defaultTimeout)
-	if err != nil {
-		t.Fatalf("alice did not reconnect to dave")
-	}
 
 	// testReconnection is a helper closure that restarts the nodes at both
 	// ends of a channel to ensure they do not reconnect after restarting.
