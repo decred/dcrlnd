@@ -276,7 +276,7 @@ func (n *NetworkHarness) SetUp(testCase string, lndArgs []string) error {
 	// Now block until both wallets have fully synced up.
 	expectedBalance := int64(dcrutil.AtomsPerCoin * 10)
 	balReq := &lnrpc.WalletBalanceRequest{}
-	balanceTicker := time.NewTicker(time.Millisecond * 50)
+	balanceTicker := time.NewTicker(time.Millisecond * 200)
 	defer balanceTicker.Stop()
 	balanceTimeout := time.After(time.Second * 30)
 out:
