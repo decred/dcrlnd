@@ -46,6 +46,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing"
+	"github.com/decred/dcrlnd/sweep"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
@@ -499,7 +500,7 @@ func cleanupForceClose(t *harnessTest, net *lntest.NetworkHarness,
 	// txs within three seconds, we can proceed directly. Otherwise we'll
 	// wait for one tx and then proceed.
 	_, err = waitForNTxsInMempool(
-		net.Miner.Node, 2, time.Second*3,
+		net.Miner.Node, 2, sweep.DefaultBatchWindowDuration+time.Second,
 	)
 	if err != nil {
 		_, err = waitForNTxsInMempool(
@@ -539,7 +540,7 @@ func cleanupForceClose(t *harnessTest, net *lntest.NetworkHarness,
 		}
 
 		return true
-	}, time.Second*15)
+	}, time.Second*30)
 	if err != nil {
 		t.Fatalf("force-closed channel still not cleaned up after timeout: %v", err)
 	}
