@@ -132,6 +132,10 @@ func (h *harnessTest) Log(args ...interface{}) {
 	h.t.Log(args...)
 }
 
+func (h *harnessTest) Cleanup(f func()) {
+	h.t.Cleanup(f)
+}
+
 func (h *harnessTest) getLndBinary() string {
 	binary := itestLndBinary
 	lndExec := ""
