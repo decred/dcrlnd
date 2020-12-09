@@ -3,6 +3,7 @@ package contractcourt
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwallet"
+	"github.com/stretchr/testify/require"
 )
 
 type mockWitnessBeacon struct {
@@ -83,6 +85,7 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 		},
 	}
 	fakeTimeout := int32(5)
+	_ = fakeTimeout // XXX
 
 	templateTx := &wire.MsgTx{
 		TxIn: []*wire.TxIn{
@@ -135,6 +138,17 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 					return nil, err
 				}
 
+				// To avoid triggering the race detector by
+				// setting the witness the second time this
+				// method is called during tests, we return
+				// immediately if the witness is already set
+				// correctly.
+				if reflect.DeepEqual(
+					templateTx.TxIn[0].SignatureScript, sigScript,
+				) {
+					return templateTx, nil
+				}
+
 				templateTx.TxIn[0].SignatureScript = sigScript
 				return templateTx, nil
 			},
@@ -159,6 +173,17 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 				sigScript, err := input.WitnessStackToSigScript(witness)
 				if err != nil {
 					return nil, err
+				}
+
+				// To avoid triggering the race detector by
+				// setting the witness the second time this
+				// method is called during tests, we return
+				// immediately if the witness is already set
+				// correctly.
+				if reflect.DeepEqual(
+					templateTx.TxIn[0].SignatureScript, sigScript,
+				) {
+					return templateTx, nil
 				}
 
 				templateTx.TxIn[0].SignatureScript = sigScript
@@ -191,6 +216,18 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
+
+				// To avoid triggering the race detector by
+				// setting the witness the second time this
+				// method is called during tests, we return
+				// immediately if the witness is already set
+				// correctly.
+				if reflect.DeepEqual(
+					templateTx.TxIn[0].SignatureScript, sigScript,
+				) {
+					return templateTx, nil
+				}
+
 				templateTx.TxIn[0].SignatureScript = sigScript
 				return templateTx, nil
 			},
@@ -216,6 +253,17 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 				sigScript, err := input.WitnessStackToSigScript(witness)
 				if err != nil {
 					return nil, err
+				}
+
+				// To avoid triggering the race detector by
+				// setting the witness the second time this
+				// method is called during tests, we return
+				// immediately if the witness is already set
+				// correctly.
+				if reflect.DeepEqual(
+					templateTx.TxIn[0].SignatureScript, sigScript,
+				) {
+					return templateTx, nil
 				}
 
 				templateTx.TxIn[0].SignatureScript = sigScript
@@ -305,16 +353,19 @@ func TestHtlcTimeoutResolver(t *testing.T) {
 		// broadcast, then we'll set the timeout commit to a fake
 		// transaction to force the code path.
 		if !testCase.remoteCommit {
-			resolver.htlcResolution.SignedTimeoutTx = sweepTx
+			timeoutTx, err := testCase.txToBroadcast()
+			require.NoError(t, err)
+
+			resolver.htlcResolution.SignedTimeoutTx = timeoutTx
 
 			if testCase.timeout {
-				success := sweepTx.TxHash()
+				timeoutTxID := timeoutTx.TxHash()
 				reports = append(reports, &channeldb.ResolverReport{
-					OutPoint:        sweepTx.TxIn[0].PreviousOutPoint,
+					OutPoint:        timeoutTx.TxIn[0].PreviousOutPoint,
 					Amount:          testHtlcAmt.ToAtoms(),
 					ResolverType:    channeldb.ResolverTypeOutgoingHtlc,
 					ResolverOutcome: channeldb.ResolverOutcomeFirstStage,
-					SpendTxID:       &success,
+					SpendTxID:       &timeoutTxID,
 				})
 			}
 		}
