@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -79,10 +80,12 @@ func (c *commitSweepResolver) ResolverKey() []byte {
 
 // waitForHeight registers for block notifications and waits for the provided
 // block height to be reached.
-func (c *commitSweepResolver) waitForHeight(waitHeight uint32) error {
+func waitForHeight(waitHeight uint32, notifier chainntnfs.ChainNotifier,
+	quit <-chan struct{}) error {
+
 	// Register for block epochs. After registration, the current height
 	// will be sent on the channel immediately.
-	blockEpochs, err := c.Notifier.RegisterBlockEpochNtfn(nil)
+	blockEpochs, err := notifier.RegisterBlockEpochNtfn(nil)
 	if err != nil {
 		return err
 	}
@@ -99,7 +102,7 @@ func (c *commitSweepResolver) waitForHeight(waitHeight uint32) error {
 				return nil
 			}
 
-		case <-c.quit:
+		case <-quit:
 			return errResolverShuttingDown
 		}
 	}
@@ -169,7 +172,7 @@ func (c *commitSweepResolver) Resolve() (ContractResolver, error) {
 
 		// We only need to wait for the block before the block that
 		// unlocks the spend path.
-		err := c.waitForHeight(unlockHeight - 1)
+		err := waitForHeight(unlockHeight-1, c.Notifier, c.quit)
 		if err != nil {
 			return nil, err
 		}
