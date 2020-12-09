@@ -269,13 +269,13 @@ func assertResolversEqual(t *testing.T, originalResolver ContractResolver,
 	case *htlcOutgoingContestResolver:
 		diskRes := diskResolver.(*htlcOutgoingContestResolver)
 		assertTimeoutResEqual(
-			&ogRes.htlcTimeoutResolver, &diskRes.htlcTimeoutResolver,
+			ogRes.htlcTimeoutResolver, diskRes.htlcTimeoutResolver,
 		)
 
 	case *htlcIncomingContestResolver:
 		diskRes := diskResolver.(*htlcIncomingContestResolver)
 		assertSuccessResEqual(
-			&ogRes.htlcSuccessResolver, &diskRes.htlcSuccessResolver,
+			ogRes.htlcSuccessResolver, diskRes.htlcSuccessResolver,
 		)
 
 		if ogRes.htlcExpiry != diskRes.htlcExpiry {
@@ -373,13 +373,13 @@ func TestContractInsertionRetrieval(t *testing.T) {
 	contestTimeout := timeoutResolver
 	contestTimeout.htlcResolution.ClaimOutpoint = randOutPoint()
 	resolvers = append(resolvers, &htlcOutgoingContestResolver{
-		htlcTimeoutResolver: contestTimeout,
+		htlcTimeoutResolver: &contestTimeout,
 	})
 	contestSuccess := successResolver
 	contestSuccess.htlcResolution.ClaimOutpoint = randOutPoint()
 	resolvers = append(resolvers, &htlcIncomingContestResolver{
 		htlcExpiry:          100,
-		htlcSuccessResolver: contestSuccess,
+		htlcSuccessResolver: &contestSuccess,
 	})
 
 	// For quick lookup during the test, we'll create this map which allow
@@ -519,7 +519,7 @@ func TestContractSwapping(t *testing.T) {
 
 	// We'll create two resolvers, a regular timeout resolver, and the
 	// contest resolver that eventually turns into the timeout resolver.
-	timeoutResolver := htlcTimeoutResolver{
+	timeoutResolver := &htlcTimeoutResolver{
 		htlcResolution: lnwallet.OutgoingHtlcResolution{
 			Expiry:          99,
 			SignedTimeoutTx: nil,
@@ -547,7 +547,7 @@ func TestContractSwapping(t *testing.T) {
 
 	// With the resolver inserted, we'll now attempt to atomically swap it
 	// for its underlying timeout resolver.
-	err = testLog.SwapContract(contestResolver, &timeoutResolver)
+	err = testLog.SwapContract(contestResolver, timeoutResolver)
 	if err != nil {
 		t.Fatalf("unable to swap contracts: %v", err)
 	}
@@ -564,7 +564,7 @@ func TestContractSwapping(t *testing.T) {
 	}
 
 	// That single contract should be the underlying timeout resolver.
-	assertResolversEqual(t, &timeoutResolver, dbContracts[0])
+	assertResolversEqual(t, timeoutResolver, dbContracts[0])
 }
 
 // TestContractResolutionsStorage tests that we're able to properly store and

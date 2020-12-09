@@ -32,7 +32,7 @@ type htlcIncomingContestResolver struct {
 
 	// htlcSuccessResolver is the inner resolver that may be utilized if we
 	// learn of the preimage.
-	htlcSuccessResolver
+	*htlcSuccessResolver
 }
 
 // newIncomingContestResolver instantiates a new incoming htlc contest resolver.
@@ -46,7 +46,7 @@ func newIncomingContestResolver(
 
 	return &htlcIncomingContestResolver{
 		htlcExpiry:          htlc.RefundTimeout,
-		htlcSuccessResolver: *success,
+		htlcSuccessResolver: success,
 	}
 }
 
@@ -197,7 +197,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 				return nil, err
 			}
 
-			return &h.htlcSuccessResolver, nil
+			return h.htlcSuccessResolver, nil
 
 		// If the htlc was failed, mark the htlc as
 		// resolved.
@@ -301,7 +301,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 				return nil, err
 			}
 
-			return &h.htlcSuccessResolver, nil
+			return h.htlcSuccessResolver, nil
 		}
 
 		witnessUpdates = preimageSubscription.WitnessUpdates
@@ -323,7 +323,7 @@ func (h *htlcIncomingContestResolver) Resolve() (ContractResolver, error) {
 			// We've learned of the preimage and this information
 			// has been added to our inner resolver. We return it so
 			// it can continue contract resolution.
-			return &h.htlcSuccessResolver, nil
+			return h.htlcSuccessResolver, nil
 
 		case hodlItem := <-hodlChan:
 			htlcResolution := hodlItem.(invoices.HtlcResolution)
@@ -428,7 +428,7 @@ func newIncomingContestResolverFromReader(r io.Reader, resCfg ResolverConfig) (
 	if err != nil {
 		return nil, err
 	}
-	h.htlcSuccessResolver = *successResolver
+	h.htlcSuccessResolver = successResolver
 
 	return h, nil
 }
