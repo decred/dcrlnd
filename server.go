@@ -1176,6 +1176,8 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		NotifyPendingOpenChannelEvent: s.channelNotifier.NotifyPendingOpenChannelEvent,
 		EnableUpfrontShutdown:         cfg.EnableUpfrontShutdown,
 		RegisteredChains:              cfg.registeredChains,
+		MaxAnchorsCommitFeeRate: chainfee.AtomPerKByte(
+			s.cfg.MaxCommitFeeRateAnchors * 1000),
 	})
 	if err != nil {
 		return nil, err
@@ -3139,13 +3141,15 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 
 		FundingManager: s.fundingMgr,
 
+		ChainParams: s.cfg.ActiveNetParams.Params,
+
 		Hodl:                    s.cfg.Hodl,
 		UnsafeReplay:            s.cfg.UnsafeReplay,
 		MaxOutgoingCltvExpiry:   s.cfg.MaxOutgoingCltvExpiry,
 		MaxChannelFeeAllocation: s.cfg.MaxChannelFeeAllocation,
-		Quit:                    s.quit,
-
-		ChainParams: s.cfg.ActiveNetParams.Params,
+		MaxAnchorsCommitFeeRate: chainfee.AtomPerKByte(
+			s.cfg.MaxCommitFeeRateAnchors * 1000),
+		Quit: s.quit,
 	}
 
 	copy(pCfg.PubKeyBytes[:], peerAddr.IdentityKey.SerializeCompressed())

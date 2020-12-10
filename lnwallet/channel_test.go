@@ -8077,6 +8077,19 @@ func TestForceCloseBorkedState(t *testing.T) {
 func TestChannelMaxFeeRate(t *testing.T) {
 	t.Parallel()
 
+	assertMaxFeeRate := func(c *LightningChannel,
+		maxAlloc float64, anchorMax, expFeeRate chainfee.AtomPerKByte) {
+
+		t.Helper()
+
+		maxFeeRate := c.MaxFeeRate(maxAlloc, anchorMax)
+		if maxFeeRate != expFeeRate {
+			t.Fatalf("expected max fee rate of %v with max "+
+				"allocation of %v, got %v", expFeeRate,
+				maxAlloc, maxFeeRate)
+		}
+	}
+
 	aliceChannel, _, cleanUp, err := CreateTestChannels(
 		channeldb.SingleFunderTweaklessBit,
 	)
@@ -8085,36 +8098,32 @@ func TestChannelMaxFeeRate(t *testing.T) {
 	}
 	defer cleanUp()
 
-	assertMaxFeeRate := func(maxAlloc float64,
-		expFeeRate chainfee.AtomPerKByte) {
+	assertMaxFeeRate(aliceChannel, 1.0, 0, 1373626373)
+	assertMaxFeeRate(aliceChannel, 0.001, 0, 1373626)
+	assertMaxFeeRate(aliceChannel, 0.000001, 0, 10000)
+	assertMaxFeeRate(aliceChannel, 0.0000001, 0, chainfee.FeePerKBFloor)
 
-		maxFeeRate := aliceChannel.MaxFeeRate(maxAlloc)
-		if maxFeeRate != expFeeRate {
-			t.Fatalf("expected max fee rate of %v with max "+
-				"allocation of %v, got %v", expFeeRate,
-				maxAlloc, maxFeeRate)
-		}
+	// Check that anchor channels are capped at their max fee rate.
+	anchorChannel, _, cleanUp, err := CreateTestChannels(
+		channeldb.SingleFunderTweaklessBit | channeldb.AnchorOutputsBit,
+	)
+	if err != nil {
+		t.Fatalf("unable to create test channels: %v", err)
 	}
+	defer cleanUp()
 
-	// Calculate the estimated fee rate when attempting to use the full
-	// channel balance of the initiator as fee.
-	commitSize := input.EstimateCommitmentTxSize(0)
-	chanBalance := float64(dcrutil.Amount(5 * dcrutil.AtomsPerCoin))
-	fullMaxFee := chainfee.AtomPerKByte(chanBalance / (float64(commitSize) / 1000.0))
-
-	// Assert the estimation is the expected one. This helps ensure any
-	// changes to how the test balance, fee or commitment size are
-	// calculated breaks this test.
-	wantMaxFee := chainfee.AtomPerKByte(1373626373)
-	if fullMaxFee != wantMaxFee {
-		t.Fatalf("unexpected full max fee (want=%s got=%s)", wantMaxFee,
-			fullMaxFee)
-	}
-
-	assertMaxFeeRate(1.0, fullMaxFee)
-	assertMaxFeeRate(0.001, fullMaxFee/1000)
-	assertMaxFeeRate(0.00001, fullMaxFee/100000)
-	assertMaxFeeRate(0.0000001, chainfee.FeePerKBFloor)
+	// Anchor commitments are heavier, hence will the same allocation lead
+	// to slightly lower fee rates.
+	assertMaxFeeRate(
+		anchorChannel, 1.0, chainfee.FeePerKBFloor,
+		chainfee.FeePerKBFloor,
+	)
+	assertMaxFeeRate(anchorChannel, 0.001, 1000000, 1000000)
+	assertMaxFeeRate(anchorChannel, 0.001, 300000, 300000)
+	assertMaxFeeRate(anchorChannel, 0.000001, 700, 700)
+	assertMaxFeeRate(
+		anchorChannel, 0.0000001, 1000000, chainfee.FeePerKBFloor,
+	)
 }
 
 // TestChannelFeeRateFloor asserts that valid commitments can be proposed and

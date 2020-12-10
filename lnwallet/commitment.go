@@ -20,6 +20,11 @@ import (
 // TODO(decred) figure out the best value for this. Currently 2*dust.
 const anchorSize = dcrutil.Amount(12060)
 
+// DefaultAnchorsCommitMaxFeeRateAtomsPerByte is the default max fee rate in
+// atoms/byte the initiator will use for anchor channels. This should be enough
+// to ensure propagation before anchoring down the commitment transaction.
+const DefaultAnchorsCommitMaxFeeRateAtomsPerByte = 10
+
 // CommitmentKeyRing holds all derived keys needed to construct commitment and
 // HTLC transactions. The keys are derived differently depending whether the
 // commitment transaction is ours or the remote peer's. Private keys associated

@@ -296,6 +296,10 @@ type Config struct {
 	// commitment fee. This only applies for the initiator of the channel.
 	MaxChannelFeeAllocation float64
 
+	// MaxAnchorsCommitFeeRate is the maximum fee rate we'll use as an
+	// initiator for anchor channel commitments.
+	MaxAnchorsCommitFeeRate chainfee.AtomPerKByte
+
 	// ServerPubKey is the serialized, compressed public key of our lnd node.
 	// It is used to determine which policy (channel edge) to pass to the
 	// ChannelLink.
@@ -828,6 +832,7 @@ func (p *Brontide) addLink(chanPoint *wire.OutPoint,
 		TowerClient:             towerClient,
 		MaxOutgoingCltvExpiry:   p.cfg.MaxOutgoingCltvExpiry,
 		MaxFeeAllocation:        p.cfg.MaxChannelFeeAllocation,
+		MaxAnchorsCommitFeeRate: p.cfg.MaxAnchorsCommitFeeRate,
 		NotifyActiveLink:        p.cfg.ChannelNotifier.NotifyActiveLinkEvent,
 		NotifyActiveChannel:     p.cfg.ChannelNotifier.NotifyActiveChannelEvent,
 		NotifyInactiveChannel:   p.cfg.ChannelNotifier.NotifyInactiveChannelEvent,

@@ -270,6 +270,10 @@ type ChannelLinkConfig struct {
 	// initiator of the channel.
 	MaxFeeAllocation float64
 
+	// MaxAnchorsCommitFeeRate is the max commitment fee rate we'll use as
+	// the initiator for channels of the anchor type.
+	MaxAnchorsCommitFeeRate chainfee.AtomPerKByte
+
 	// NotifyActiveLink allows the link to tell the ChannelNotifier when a
 	// link is first started.
 	NotifyActiveLink func(wire.OutPoint)
@@ -1091,7 +1095,10 @@ func (l *channelLink) htlcManager() {
 			// based on our current set fee rate. We'll cap the new
 			// fee rate to our max fee allocation.
 			commitFee := l.channel.CommitFeeRate()
-			maxFee := l.channel.MaxFeeRate(l.cfg.MaxFeeAllocation)
+			maxFee := l.channel.MaxFeeRate(
+				l.cfg.MaxFeeAllocation,
+				l.cfg.MaxAnchorsCommitFeeRate,
+			)
 			newCommitFee := chainfee.AtomPerKByte(
 				math.Min(float64(netFee), float64(maxFee)),
 			)
