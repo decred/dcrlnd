@@ -1,4 +1,4 @@
-package lnwallettest_test
+package lnwallettest
 
 import (
 	"bytes"
@@ -19,6 +19,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
+	"golang.org/x/exp/slices"
 
 	_ "decred.org/dcrwallet/v3/wallet/drivers/bdb"
 
@@ -3175,122 +3176,99 @@ func testSingleFunderExternalFundingTx(miner *rpctest.Harness,
 // below needs to be added which properly initializes the interface.
 //
 // TODO(roasbeef): purge bobNode in favor of dual lnwallet's
-func TestLightningWallet(t *testing.T) {
-	var (
-		miningNode *rpctest.Harness
+func TestLightningWallet(t *testing.T, driverName, backEnd string) {
+	t.Parallel()
+
+	walletDriver := lnwallet.WalletDriverForName(driverName)
+	if walletDriver == nil {
+		t.Fatalf("wallet driver %s does not exist", driverName)
+	}
+
+	if !slices.Contains(walletDriver.BackEnds(), backEnd) {
+		t.Fatalf("wallet driver %s does not support backend %s",
+			walletDriver.WalletType, backEnd)
+	}
+
+	var miningNode *rpctest.Harness
+
+	// Initialize the harness around a dcrd node which will
+	// serve as our dedicated miner to generate blocks,
+	// cause re-orgs, etc. We'll set up this node with a
+	// chain length of 125, so we have plenty of DCR to
+	// play around with.
+	minerLogDir := fmt.Sprintf(".miner-logs-%s-%s",
+		walletDriver.WalletType, backEnd)
+	minerArgs := []string{"--txindex", "--debuglevel=debug",
+		"--logdir=" + minerLogDir}
+	miningNode, err := testutils.NewSetupRPCTest(
+		t, 5, netParams, nil, minerArgs, true, 0,
 	)
+	require.NoError(t, err)
+
 	defer func() {
-		if miningNode != nil {
-			miningNode.TearDown()
+		err := miningNode.TearDown()
+		if err != nil {
+			t.Errorf("unable to teardown rpc test harness: %v", err)
+		}
+
+		// Copy the node logs from the original log dir.
+		oldFileName := path.Join(minerLogDir, netParams.Name,
+			"dcrd.log")
+		newFileName := fmt.Sprintf("output-miner-%s-%s.log",
+			walletDriver.WalletType, backEnd)
+		err = os.Rename(oldFileName, newFileName)
+		if err != nil {
+			t.Logf("could not rename %s to %s: %v\n",
+				oldFileName, newFileName, err)
 		}
 	}()
 
-	for _, walletDriver := range lnwallet.RegisteredWallets() {
-		for _, backEnd := range walletDriver.BackEnds() {
-			// Initialize the harness around a dcrd node which will
-			// serve as our dedicated miner to generate blocks,
-			// cause re-orgs, etc. We'll set up this node with a
-			// chain length of 125, so we have plenty of DCR to
-			// play around with.
-			minerLogDir := fmt.Sprintf(".miner-logs-%s-%s",
-				walletDriver.WalletType, backEnd)
-			minerArgs := []string{"--txindex", "--debuglevel=debug",
-				"--logdir=" + minerLogDir}
-			miningNode, err := testutils.NewSetupRPCTest(
-				t, 5, netParams, nil, minerArgs, true, 0,
-			)
-			if err != nil {
-				t.Fatalf("unable to create mining node: %v", err)
-			}
+	// Generate the premine block.
+	_, err = miningNode.Node.Generate(context.TODO(), 1)
+	require.NoError(t, err)
 
-			// Generate the premine block.
-			_, err = miningNode.Node.Generate(context.TODO(), 1)
-			if err != nil {
-				t.Fatalf("unable to generate premine: %v", err)
-			}
+	// Generate enough blocks for the initial load of test and voting
+	// wallet but not so many that it would trigger a reorg after SVH
+	// during the testReorgWalletBalance test.
+	_, err = rpctest.AdjustedSimnetMiner(context.Background(), miningNode.Node, 40)
+	require.NoError(t, err)
 
-			// Generate enough blocks for the initial load of test and voting
-			// wallet but not so many that it would trigger a reorg after SVH
-			// during the testReorgWalletBalance test.
-			_, err = rpctest.AdjustedSimnetMiner(context.Background(), miningNode.Node, 40)
-			if err != nil {
-				t.Fatalf("unable to generate initial blocks: %v", err)
-			}
-
-			// Setup a voting wallet for when the chain passes SVH.
-			vwCtx, vwCancel := context.WithCancel(context.Background())
-			defer vwCancel()
-			votingWallet, err := rpctest.NewVotingWallet(vwCtx, miningNode)
-			if err != nil {
-				t.Fatalf("unable to create voting wallet: %v", err)
-			}
-			votingWallet.SetErrorReporting(func(err error) {
-				t.Logf("Voting wallet error: %v", err)
-			})
-			votingWallet.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
-				return rpctest.AdjustedSimnetMiner(ctx, miningNode.Node, nb)
-			})
-			if err = votingWallet.Start(vwCtx); err != nil {
-				t.Fatalf("unable to start voting wallet: %v", err)
-			}
-
-			rpcConfig := miningNode.RPCConfig()
-
-			tempDir, err := ioutil.TempDir("", "channeldb")
-			if err != nil {
-				t.Fatalf("unable to create temp dir: %v", err)
-			}
-			db, err := channeldb.Open(tempDir)
-			if err != nil {
-				t.Fatalf("unable to create db: %v", err)
-			}
-			hintCacheCfg := chainntnfs.CacheConfig{
-				QueryDisable: false,
-			}
-			hintCache, err := chainntnfs.NewHeightHintCache(hintCacheCfg, db)
-			if err != nil {
-				t.Fatalf("unable to create height hint cache: %v", err)
-			}
-			chainNotifier, err := dcrdnotify.New(
-				&rpcConfig, netParams, hintCache, hintCache,
-			)
-			if err != nil {
-				t.Fatalf("unable to create notifier: %v", err)
-			}
-			if err := chainNotifier.Start(); err != nil {
-				t.Fatalf("unable to start notifier: %v", err)
-			}
-
-			if !runTests(t, walletDriver, backEnd, miningNode,
-				rpcConfig, chainNotifier, votingWallet) {
-				return
-			}
-
-			// Tear down this mining node so it won't interfere
-			// with the next set of tests.
-			cleanUpNode := miningNode
-			miningNode = nil
-			teardownErr := cleanUpNode.TearDown()
-
-			// Copy the node logs from the original log dir.
-			oldFileName := path.Join(minerLogDir, netParams.Name,
-				"dcrd.log")
-			newFileName := fmt.Sprintf("output-miner-%s-%s.log",
-				walletDriver.WalletType, backEnd)
-			err = os.Rename(oldFileName, newFileName)
-			if err != nil {
-				t.Logf("could not rename %s to %s: %v\n",
-					oldFileName, newFileName, err)
-			}
-
-			if teardownErr != nil {
-				t.Fatalf("unable to teardown rpc test harness: %v", err)
-			}
-
-			// Give enough time for all processes to end.
-			time.Sleep(time.Second)
-		}
+	// Setup a voting wallet for when the chain passes SVH.
+	vwCtx, vwCancel := context.WithCancel(context.Background())
+	defer vwCancel()
+	votingWallet, err := rpctest.NewVotingWallet(vwCtx, miningNode)
+	require.NoError(t, err)
+	votingWallet.SetErrorReporting(func(err error) {
+		t.Logf("Voting wallet error: %v", err)
+	})
+	votingWallet.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
+		return rpctest.AdjustedSimnetMiner(ctx, miningNode.Node, nb)
+	})
+	if err = votingWallet.Start(vwCtx); err != nil {
+		t.Fatalf("unable to start voting wallet: %v", err)
 	}
+
+	rpcConfig := miningNode.RPCConfig()
+
+	tempDir, err := ioutil.TempDir("", "channeldb")
+	require.NoError(t, err)
+	db, err := channeldb.Open(tempDir)
+	require.NoError(t, err)
+	hintCacheCfg := chainntnfs.CacheConfig{
+		QueryDisable: false,
+	}
+	hintCache, err := chainntnfs.NewHeightHintCache(hintCacheCfg, db)
+	require.NoError(t, err)
+	chainNotifier, err := dcrdnotify.New(
+		&rpcConfig, netParams, hintCache, hintCache,
+	)
+	require.NoError(t, err)
+	if err := chainNotifier.Start(); err != nil {
+		t.Fatalf("unable to start notifier: %v", err)
+	}
+
+	runTests(t, walletDriver, backEnd, miningNode, rpcConfig, chainNotifier,
+		votingWallet)
 }
 
 // runTests runs all of the tests for a single interface implementation and

@@ -44,8 +44,7 @@ lntest/itest/.minerlogs
 lntest/itest/dcrlnd-itest
 lntest/itest/.logs-*
 lntest/itest/.tempminerlogs
-lnwallet/output*.log
-lnwallet/.miner-logs*
+lnwallet/**/*.log
 chainscan/csdrivers/.*
 chainscan/csdrivers/*.log
 chainntnfs/*.log

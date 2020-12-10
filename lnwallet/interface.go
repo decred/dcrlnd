@@ -526,3 +526,19 @@ func SupportedWallets() []string {
 
 	return supportedWallets
 }
+
+// WalletDriverForName returns the wallet driver for the given wallet type name.
+// Returns nil if the wallet driver does not exist.
+func WalletDriverForName(name string) *WalletDriver {
+	registerMtx.Lock()
+	defer registerMtx.Unlock()
+
+	for walletName, driver := range wallets {
+		if walletName == name {
+			return driver
+		}
+	}
+
+	return nil
+
+}
