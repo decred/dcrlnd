@@ -1,7 +1,7 @@
 //go:build dev
 // +build dev
 
-package chainntnfs_test
+package chainntnfstest
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/rpcclient/v8"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
@@ -28,6 +29,7 @@ import (
 )
 
 var ctxb = context.Background()
+var netParams = chaincfg.SimNetParams()
 
 func testSingleConfirmationNotification(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 	notifier chainntnfs.TestChainNotifier, scriptDispatch bool, t *testing.T) {
@@ -1085,7 +1087,7 @@ func testReorgConf(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Set up a new miner that we can use to cause a reorg.
 	miner2, err := testutils.NewSetupRPCTest(
-		t, 5, chainntnfs.NetParams, nil, []string{"--txindex"}, false, 0,
+		t, 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -1269,7 +1271,7 @@ func testReorgSpend(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Set up a new miner that we can use to cause a reorg.
 	miner2, err := testutils.NewSetupRPCTest(
-		t, 5, chainntnfs.NetParams, nil, []string{"--txindex"}, false, 0,
+		t, 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -1609,7 +1611,7 @@ func testCatchUpOnMissedBlocksWithReorg(miner1 *rpctest.Harness, vw *rpctest.Vot
 
 	// Set up a new miner that we can use to cause a reorg.
 	miner2, err := testutils.NewSetupRPCTest(
-		t, 5, chainntnfs.NetParams, nil, []string{"--txindex"}, false, 0,
+		t, 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -1907,7 +1909,8 @@ var blockCatchupTests = []blockCatchupTestCase{
 // import should trigger an init() method within the package which registers
 // the interface. Second, an additional case in the switch within the main loop
 // below needs to be added which properly initializes the interface.
-func TestInterfaces(t *testing.T) {
+func TestInterfaces(t *testing.T, targetBackEnd string) {
+	t.Parallel()
 
 	// newMiner initializes a new rpctest harness for testing and returns
 	// that.
@@ -1918,10 +1921,16 @@ func TestInterfaces(t *testing.T) {
 		// play around with.
 		minerLogDir := fmt.Sprintf(".miner-logs-%s", notifierType)
 		minerArgs := []string{"--debuglevel=debug", "--logdir=" + minerLogDir}
-		miner, tearDownMiner := chainntnfs.NewMiner(t, minerArgs, false, 0)
+
+		miner, err := testutils.NewSetupRPCTest(
+			t, 5, netParams, nil, minerArgs, false, 0,
+		)
+		if err != nil {
+			t.Fatalf("unable to create backend node: %v", err)
+		}
 
 		// Generate the premine block the usual way.
-		_, err := miner.Node.Generate(ctxb, 1)
+		_, err = miner.Node.Generate(ctxb, 1)
 		if err != nil {
 			t.Fatalf("unable to generate premine: %v", err)
 		}
@@ -1953,7 +1962,7 @@ func TestInterfaces(t *testing.T) {
 
 		tearDown := func() {
 			vwCancel()
-			tearDownMiner()
+			miner.TearDown()
 		}
 
 		return miner, vw, tearDown
@@ -1982,7 +1991,7 @@ func TestInterfaces(t *testing.T) {
 		switch notifierType {
 		case "dcrd":
 			notifier, err = dcrdnotify.New(
-				&backend, chainntnfs.NetParams, hintCache,
+				&backend, netParams, hintCache,
 				hintCache,
 			)
 			if err != nil {
@@ -1992,7 +2001,7 @@ func TestInterfaces(t *testing.T) {
 		case "dcrw":
 			w, teardown := testutils.NewSyncingTestWallet(t, &backend)
 			notifier, err = dcrwnotify.New(
-				w, chainntnfs.NetParams, hintCache, hintCache,
+				w, netParams, hintCache, hintCache,
 			)
 			if err != nil {
 				t.Fatalf("error initializing dcrw notifier: %v", err)
@@ -2002,7 +2011,7 @@ func TestInterfaces(t *testing.T) {
 		case "remotedcrw":
 			c, teardown := testutils.NewTestRemoteDcrwallet(t, &backend)
 			notifier, err = remotedcrwnotify.New(
-				c, chainntnfs.NetParams, hintCache, hintCache,
+				c, netParams, hintCache, hintCache,
 			)
 			if err != nil {
 				t.Fatalf("error initializing dcrw notifier: %v", err)
@@ -2037,6 +2046,9 @@ func TestInterfaces(t *testing.T) {
 	for _, notifierDriver := range chainntnfs.RegisteredNotifiers() {
 
 		notifierType := notifierDriver.NotifierType
+		if notifierType != targetBackEnd {
+			continue
+		}
 
 		success := t.Run(notifierType, func(t *testing.T) {
 			miner, vw, tearDownMiner := newMiner(t, notifierType)

@@ -10,13 +10,16 @@ import (
 	"testing"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/internal/testutils"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -31,6 +34,8 @@ var (
 		// OP_EQUAL
 		0x87,
 	}
+
+	netParams = chaincfg.SimNetParams()
 )
 
 func initHintCache(t *testing.T) *chainntnfs.HeightHintCache {
@@ -61,7 +66,7 @@ func setUpNotifier(t *testing.T, h *rpctest.Harness) *DcrdNotifier {
 	hintCache := initHintCache(t)
 
 	rpcConfig := h.RPCConfig()
-	notifier, err := New(&rpcConfig, chainntnfs.NetParams, hintCache, hintCache)
+	notifier, err := New(&rpcConfig, netParams, hintCache, hintCache)
 	if err != nil {
 		t.Fatalf("unable to create notifier: %v", err)
 	}
@@ -77,10 +82,11 @@ func setUpNotifier(t *testing.T, h *rpctest.Harness) *DcrdNotifier {
 func TestHistoricalConfDetailsTxIndex(t *testing.T) {
 	t.Parallel()
 
-	harness, tearDown := chainntnfs.NewMiner(
-		t, []string{"--txindex"}, true, 25,
+	harness, err := testutils.NewSetupRPCTest(
+		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
 	)
-	defer tearDown()
+	require.NoError(t, err)
+	defer harness.TearDown()
 
 	notifier := setUpNotifier(t, harness)
 	defer notifier.Stop()
@@ -169,8 +175,11 @@ func TestHistoricalConfDetailsTxIndex(t *testing.T) {
 func TestHistoricalConfDetailsNoTxIndex(t *testing.T) {
 	t.Parallel()
 
-	harness, tearDown := chainntnfs.NewMiner(t, nil, true, 25)
-	defer tearDown()
+	harness, err := testutils.NewSetupRPCTest(
+		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
+	)
+	require.NoError(t, err)
+	defer harness.TearDown()
 
 	notifier := setUpNotifier(t, harness)
 	defer notifier.Stop()
@@ -257,10 +266,11 @@ func TestHistoricalConfDetailsNoTxIndex(t *testing.T) {
 func TestInneficientRescan(t *testing.T) {
 	t.Parallel()
 
-	harness, tearDown := chainntnfs.NewMiner(
-		t, nil, true, 25,
+	harness, err := testutils.NewSetupRPCTest(
+		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
 	)
-	defer tearDown()
+	require.NoError(t, err)
+	defer harness.TearDown()
 
 	notifier := setUpNotifier(t, harness)
 	defer notifier.Stop()
@@ -273,7 +283,7 @@ func TestInneficientRescan(t *testing.T) {
 		t, outpoint, txout, privKey,
 	)
 	spenderTxHash := spenderTx.TxHash()
-	_, err := harness.Node.SendRawTransaction(context.TODO(), spenderTx, true)
+	_, err = harness.Node.SendRawTransaction(context.TODO(), spenderTx, true)
 	if err != nil {
 		t.Fatalf("unable to publish tx: %v", err)
 	}
@@ -317,7 +327,7 @@ func TestInneficientRescan(t *testing.T) {
 		t.Fatalf("unable to parse pkscript: %v", err)
 	}
 	_, addrs := stdscript.ExtractAddrs(
-		txout.Version, txout.PkScript, chainntnfs.NetParams,
+		txout.Version, txout.PkScript, netParams,
 	)
 	if len(addrs) != 1 {
 		t.Fatalf("wrong nb of addrs: %d", len(addrs))

@@ -21,7 +21,6 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
-	"github.com/decred/dcrlnd/internal/testutils"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
@@ -35,7 +34,7 @@ var (
 )
 
 var (
-	NetParams = chaincfg.SimNetParams()
+	netParams = chaincfg.SimNetParams()
 )
 
 // randPubKeyHashScript generates a P2PKH script that pays to the public key of
@@ -46,7 +45,7 @@ func randPubKeyHashScript() ([]byte, *secp256k1.PrivateKey, error) {
 		return nil, nil, err
 	}
 	addrPk, _ := stdaddr.NewAddressPubKeyEcdsaSecp256k1V0(
-		privKey.PubKey(), NetParams,
+		privKey.PubKey(), netParams,
 	)
 	testAddr := addrPk.AddressPubKeyHash()
 
@@ -171,28 +170,4 @@ func CreateSpendTx(t *testing.T, prevOutPoint *wire.OutPoint,
 	spendingTx.TxIn[0].SignatureScript = sigScript
 
 	return spendingTx
-}
-
-// NewMiner spawns a testing harness backed by a dcrd node that can serve as a
-// miner.
-func NewMiner(t *testing.T, extraArgs []string, createChain bool,
-	spendableOutputs uint32) (*rpctest.Harness, func()) {
-
-	t.Helper()
-
-	// TODO(decred): Test and either remove or add as needed.
-	//
-	// Add the trickle interval argument to the extra args.
-	trickle := fmt.Sprintf("--trickleinterval=%v", trickleInterval)
-	//extraArgs = append(extraArgs, trickle)
-	_ = trickle
-
-	node, err := testutils.NewSetupRPCTest(
-		t, 5, NetParams, nil, extraArgs, createChain, spendableOutputs,
-	)
-	if err != nil {
-		t.Fatalf("unable to create backend node: %v", err)
-	}
-
-	return node, func() { node.TearDown() }
 }

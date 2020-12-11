@@ -395,6 +395,21 @@ func SupportedNotifiers() []string {
 	return supportedNotifiers
 }
 
+// NotifierByName returns the notifier with the given name, or nil if it is not
+// registered.
+func NotifierByName(name string) *NotifierDriver {
+	registerMtx.Lock()
+	defer registerMtx.Unlock()
+
+	for driverName, driver := range notifiers {
+		if driverName == name {
+			return driver
+		}
+	}
+
+	return nil
+}
+
 // ChainConn enables notifiers to pass in their chain backend to interface
 // functions that require it.
 type ChainConn interface {
