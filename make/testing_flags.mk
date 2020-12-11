@@ -5,7 +5,7 @@ TEST_FLAGS =
 RACE_ENV = CGO_ENABLED=1 GORACE="history_size=7 halt_on_errors=1"
 ITEST_FLAGS =
 EXEC_SUFFIX =
-COVER_PKG = $$(go list -deps ./... | grep '$(PKG)' | grep -v lnrpc)
+COVER_PKG = $$(go list -deps -tags="$(DEV_TAGS)" ./... | grep '$(PKG)' | grep -v lnrpc)
 NUM_ITEST_TRANCHES = 4
 ITEST_PARALLELISM = $(NUM_ITEST_TRANCHES)
 
