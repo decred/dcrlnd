@@ -1134,7 +1134,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 	}
 	pwService := walletunlocker.New(
 		cfg.Decred.ChainDir, cfg.ActiveNetParams.Params,
-		!cfg.SyncFreelist, macaroonFiles,cfg.DB.Bolt.DBTimeout,
+		!cfg.SyncFreelist, macaroonFiles, cfg.DB.Bolt.DBTimeout,
 		chanDB, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
 		cfg.Dcrwallet.ClientKeyPath, cfg.Dcrwallet.ClientCertPath,
 		cfg.Dcrwallet.AccountNumber,
@@ -1448,4 +1448,3 @@ func initializeDatabases(ctx context.Context,
 
 	return localChanDB, remoteChanDB, cleanUp, nil
 }
-

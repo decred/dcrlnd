@@ -147,7 +147,7 @@ func TestGenSeed(t *testing.T) {
 	}()
 
 	service := walletunlocker.New(
-		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout, 
+		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
 		&channeldb.DB{}, "", "", "", "", 0,
 	)
 
@@ -375,7 +375,8 @@ func TestUnlockWallet(t *testing.T) {
 		_ = os.RemoveAll(testDir)
 	}()
 
-	// Create new UnlockerService.
+	// Create new UnlockerService that'll also drop the wallet's history on
+	// unlock.
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
 		&channeldb.DB{}, "", "", "", "", 0,
@@ -579,9 +580,10 @@ func TestChangeWalletPasswordStateless(t *testing.T) {
 	nonExistingFile := path.Join(testDir, "does-not-exist")
 
 	// Create a new UnlockerService with our temp files.
-	service := walletunlocker.New(testDir, testNetParams, true, []string{
-		tempMacFile, nonExistingFile,
-	}, kvdb.DefaultDBTimeout, nil, "", "", "", "", 0)
+	service := walletunlocker.New(
+		testDir, testNetParams, true, []string{
+			tempMacFile, nonExistingFile,
+		}, kvdb.DefaultDBTimeout, nil, "", "", "", "", 0)
 
 	// Create a wallet we can try to unlock. We use the default password
 	// so we can check that the unlocker service defaults to this when
