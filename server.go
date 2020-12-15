@@ -219,7 +219,7 @@ type server struct {
 
 	cc *chainreg.ChainControl
 
-	fundingMgr *fundingManager
+	fundingMgr *Manager
 
 	localChanDB *channeldb.DB
 
@@ -998,7 +998,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		return nil, err
 	}
 
-	s.fundingMgr, err = newFundingManager(fundingConfig{
+	s.fundingMgr, err = NewFundingManager(fundingConfig{
 		NoWumboChans:       !cfg.ProtocolOptions.Wumbo(),
 		IDKey:              nodeKeyECDH.PubKey(),
 		Wallet:             cc.Wallet,

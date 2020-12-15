@@ -217,7 +217,7 @@ type testNode struct {
 	msgChan         chan lnwire.Message
 	announceChan    chan lnwire.Message
 	publTxChan      chan *wire.MsgTx
-	fundingMgr      *fundingManager
+	fundingMgr      *Manager
 	newChannels     chan *newChannelMsg
 	mockNotifier    *mockNotifier
 	mockChanEvent   *mockChanEvent
@@ -484,7 +484,7 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 		op(&fundingCfg)
 	}
 
-	f, err := newFundingManager(fundingCfg)
+	f, err := NewFundingManager(fundingCfg)
 	if err != nil {
 		t.Fatalf("failed creating fundingManager: %v", err)
 	}
@@ -531,7 +531,7 @@ func recreateAliceFundingManager(t *testing.T, alice *testNode) {
 
 	chainedAcceptor := chanacceptor.NewChainedAcceptor()
 
-	f, err := newFundingManager(fundingConfig{
+	f, err := NewFundingManager(fundingConfig{
 		IDKey:        oldCfg.IDKey,
 		Wallet:       oldCfg.Wallet,
 		Notifier:     oldCfg.Notifier,
