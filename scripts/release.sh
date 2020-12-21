@@ -13,8 +13,65 @@ LND_VERSION_REGEX="lnd version (.+) commit"
 PKG="github.com/lightningnetwork/lnd"
 PACKAGE=lnd
 
-    # Build dcrlnd to extract version.
-    go build github.com/decred/dcrlnd/cmd/dcrlnd
+# Needed for setting file timestamps to get reproducible archives.
+BUILD_DATE="2020-01-01 00:00:00"
+BUILD_DATE_STAMP="202001010000.00"
+
+# reproducible_tar_gzip creates a reproducible tar.gz file of a directory. This
+# includes setting all file timestamps and ownership settings uniformly.
+function reproducible_tar_gzip() {
+  local dir=$1
+  local tar_cmd=tar
+
+  # MacOS has a version of BSD tar which doesn't support setting the --mtime
+  # flag. We need gnu-tar, or gtar for short to be installed for this script to
+  # work properly.
+  tar_version=$(tar --version)
+  if [[ ! "$tar_version" =~ "GNU tar" ]]; then
+    if ! command -v "gtar"; then
+      echo "GNU tar is required but cannot be found!"
+      echo "On MacOS please run 'brew install gnu-tar' to install gtar."
+      exit 1
+    fi
+
+    # We have gtar installed, use that instead.
+    tar_cmd=gtar
+  fi
+
+  # Pin down the timestamp time zone.
+  export TZ=UTC
+
+  find "${dir}" -print0 | LC_ALL=C sort -r -z | $tar_cmd \
+    "--mtime=${BUILD_DATE}" --no-recursion --null --mode=u+rw,go+r-w,a+X \
+    --owner=0 --group=0 --numeric-owner -c -T - | gzip -9n > "${dir}.tar.gz"
+
+  rm -r "${dir}"
+}
+
+# reproducible_zip creates a reproducible zip file of a directory. This
+# includes setting all file timestamps.
+function reproducible_zip() {
+  local dir=$1
+
+  # Pin down file name encoding and timestamp time zone.
+  export TZ=UTC
+
+  # Set the date of each file in the directory that's about to be packaged to
+  # the same timestamp and make sure the same permissions are used everywhere.
+  chmod -R 0755 "${dir}"
+  touch -t "${BUILD_DATE_STAMP}" "${dir}"
+  find "${dir}" -print0 | LC_ALL=C sort -r -z | xargs -0r touch \
+    -t "${BUILD_DATE_STAMP}"
+
+  find "${dir}" | LC_ALL=C sort -r | zip -o -X -r -@ "${dir}.zip"
+
+  rm -r "${dir}"
+}
+
+# green prints one line of green text (if the terminal supports it).
+function green() {
+  echo -e "\e[0;32m${1}\e[0m"
+}
 
     # Extract version command output.
     LND_VERSION_OUTPUT=`./dcrlnd --version`
@@ -48,53 +105,29 @@ MAINDIR=$PACKAGE-$TAG
 
 mkdir -p releases/$MAINDIR
 
-mv vendor.tar.gz releases/$MAINDIR/
-rm -r vendor
+  green " - Packaging vendor"
+  go mod vendor
+  reproducible_tar_gzip vendor
 
-PACKAGESRC="releases/$MAINDIR/$PACKAGE-source-$TAG.tar"
-git archive -o $PACKAGESRC HEAD
-gzip -f $PACKAGESRC > "$PACKAGESRC.gz"
+  maindir=$PACKAGE-$tag
+  mkdir -p $maindir
+  mv vendor.tar.gz "${maindir}/"
 
-cd releases/$MAINDIR
+  # Don't use tag in source directory, otherwise our file names get too long and
+  # tar starts to package them non-deterministically.
+  package_source="${PACKAGE}-source"
 
-# Enable exit on error.
-set -e
+  # The git archive command doesn't support setting timestamps and file
+  # permissions. That's why we unpack the tar again, then use our reproducible
+  # method to create the final archive.
+  git archive -o "${maindir}/${package_source}.tar" HEAD
 
-# If LNDBUILDSYS is set the default list is ignored. Useful to release
-# for a subset of systems/architectures.
-SYS=${LNDBUILDSYS:-"
-        darwin-386
-        darwin-amd64
-        dragonfly-amd64
-        freebsd-386
-        freebsd-amd64
-        freebsd-arm
-        illumos-amd64
-        linux-386
-        linux-amd64
-        linux-armv6
-        linux-armv7
-        linux-arm64
-        linux-ppc64
-        linux-ppc64le
-        linux-mips
-        linux-mipsle
-        linux-mips64
-        linux-mips64le
-        linux-s390x
-        netbsd-386
-        netbsd-amd64
-        netbsd-arm
-        netbsd-arm64
-        openbsd-386
-        openbsd-amd64
-        openbsd-arm
-        openbsd-arm64
-        solaris-amd64
-        windows-386
-        windows-amd64
-        windows-arm
-"}
+  cd "${maindir}"
+  mkdir -p ${package_source}
+  tar -xf "${package_source}.tar" -C ${package_source}
+  rm "${package_source}.tar"
+  reproducible_tar_gzip ${package_source}
+  mv "${package_source}.tar.gz" "${package_source}-$tag.tar.gz" 
 
 # Use the first element of $GOPATH in the case where GOPATH is a list
 # (something that is totally allowed).
@@ -125,15 +158,13 @@ for i in $SYS; do
     cd ..
 
     if [[ $os == "windows" ]]; then
-      zip -r "${dir}.zip" "${dir}"
+      reproducible_zip "${dir}"
     else
-      tar -cvzf "${dir}.tar.gz" "${dir}"
+      reproducible_tar_gzip "${dir}"
     fi
-
-    rm -r "${dir}"
   done
 
-  shasum -a 256 * >manifest-$tag.txt
+  sha256sum * >manifest-$tag.txt
 }
 
 # usage prints the usage of the whole script.
