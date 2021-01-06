@@ -957,10 +957,6 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 		t.Fatalf("can't generate announcements: %v", err)
 	}
 
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -970,9 +966,7 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localChanAnn, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -986,9 +980,7 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 	}
 
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.chanUpdAnn1, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1002,9 +994,7 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 	}
 
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.nodeAnn1, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.nodeAnn1):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1062,9 +1052,7 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 	// Pretending that we receive local channel announcement from funding
 	// manager, thereby kick off the announcement exchange process.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localProofAnn, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localProofAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process remote announcement")
 	}
@@ -1162,10 +1150,6 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 		t.Fatalf("can't generate announcements: %v", err)
 	}
 
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -1206,8 +1190,7 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn,
-		localKey):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1223,8 +1206,7 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 	}
 
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1,
-		localKey):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1239,9 +1221,7 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 	}
 
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.nodeAnn1, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.nodeAnn1):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1298,8 +1278,7 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 	// After that we process local announcement, and waiting to receive
 	// the channel announcement.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localProofAnn,
-		localKey):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localProofAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process remote announcement")
 	}
@@ -1361,10 +1340,6 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 		t.Fatalf("can't generate announcements: %v", err)
 	}
 
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -1387,9 +1362,7 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localChanAnn, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1406,7 +1379,7 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 	// manager, thereby kick off the announcement exchange process.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localProofAnn, localKey,
+		batch.localProofAnn,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process remote announcement")
@@ -1581,10 +1554,6 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 		t.Fatalf("can't generate announcements: %v", err)
 	}
 
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -1607,7 +1576,7 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 	// between two nodes.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localChanAnn, localKey,
+		batch.localChanAnn,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
@@ -1623,7 +1592,7 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.chanUpdAnn1, localKey,
+		batch.chanUpdAnn1,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
@@ -1646,7 +1615,7 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.nodeAnn1, localKey,
+		batch.nodeAnn1,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
@@ -1696,7 +1665,7 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 	// manager, thereby kick off the announcement exchange process.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localProofAnn, localKey,
+		batch.localProofAnn,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
@@ -2062,7 +2031,7 @@ func TestForwardPrivateNodeAnnouncement(t *testing.T) {
 	pubKey := nodeKeyPriv1.PubKey()
 
 	select {
-	case err := <-ctx.gossiper.ProcessLocalAnnouncement(chanAnn, pubKey):
+	case err := <-ctx.gossiper.ProcessLocalAnnouncement(chanAnn):
 		if err != nil {
 			t.Fatalf("unable to process local announcement: %v", err)
 		}
@@ -2084,7 +2053,7 @@ func TestForwardPrivateNodeAnnouncement(t *testing.T) {
 	}
 
 	select {
-	case err := <-ctx.gossiper.ProcessLocalAnnouncement(nodeAnn, pubKey):
+	case err := <-ctx.gossiper.ProcessLocalAnnouncement(nodeAnn):
 		if err != nil {
 			t.Fatalf("unable to process remote announcement: %v", err)
 		}
@@ -2418,10 +2387,6 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 		t.Fatalf("can't generate announcements: %v", err)
 	}
 
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -2482,7 +2447,7 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
-	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn, localKey)
+	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn)
 	if err != nil {
 		t.Fatalf("unable to process :%v", err)
 	}
@@ -2492,7 +2457,7 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 	case <-time.After(2 * trickleDelay):
 	}
 
-	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1, localKey)
+	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1)
 	if err != nil {
 		t.Fatalf("unable to process :%v", err)
 	}
@@ -2502,7 +2467,7 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 	case <-time.After(2 * trickleDelay):
 	}
 
-	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.nodeAnn1, localKey)
+	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.nodeAnn1)
 	if err != nil {
 		t.Fatalf("unable to process :%v", err)
 	}
@@ -2552,9 +2517,7 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 
 	// Pretending that we receive local channel announcement from funding
 	// manager, thereby kick off the announcement exchange process.
-	err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localProofAnn, localKey,
-	)
+	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localProofAnn)
 	if err != nil {
 		t.Fatalf("unable to process :%v", err)
 	}
@@ -2809,10 +2772,6 @@ func TestRetransmit(t *testing.T) {
 		t.Fatalf("can't generate announcements: %v", err)
 	}
 
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -2823,23 +2782,17 @@ func TestRetransmit(t *testing.T) {
 	// announcement. No messages should be broadcasted yet, since no proof
 	// has been exchanged.
 	assertProcessAnnouncement(
-		t, ctx.gossiper.ProcessLocalAnnouncement(
-			batch.localChanAnn, localKey,
-		),
+		t, ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn),
 	)
 	assertBroadcast(t, ctx, 0)
 
 	assertProcessAnnouncement(
-		t, ctx.gossiper.ProcessLocalAnnouncement(
-			batch.chanUpdAnn1, localKey,
-		),
+		t, ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1),
 	)
 	assertBroadcast(t, ctx, 0)
 
 	assertProcessAnnouncement(
-		t, ctx.gossiper.ProcessLocalAnnouncement(
-			batch.nodeAnn1, localKey,
-		),
+		t, ctx.gossiper.ProcessLocalAnnouncement(batch.nodeAnn1),
 	)
 	assertBroadcast(t, ctx, 0)
 
@@ -2855,9 +2808,7 @@ func TestRetransmit(t *testing.T) {
 	// Now add the local and remote proof to the gossiper, which should
 	// trigger a broadcast of the announcements.
 	assertProcessAnnouncement(
-		t, ctx.gossiper.ProcessLocalAnnouncement(
-			batch.localProofAnn, localKey,
-		),
+		t, ctx.gossiper.ProcessLocalAnnouncement(batch.localProofAnn),
 	)
 	assertBroadcast(t, ctx, 0)
 
@@ -3126,10 +3077,6 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 
 	// We'll also create two keys, one for ourselves and another for the
 	// remote party.
-	localKey, err := secp256k1.ParsePubKey(batch.nodeAnn1.NodeID[:])
-	if err != nil {
-		t.Fatalf("unable to parse pubkey: %v", err)
-	}
 	remoteKey, err := secp256k1.ParsePubKey(batch.nodeAnn2.NodeID[:])
 	if err != nil {
 		t.Fatalf("unable to parse pubkey: %v", err)
@@ -3176,9 +3123,7 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 	// Process the channel announcement for which we'll send a channel
 	// update for.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localChanAnn, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local channel announcement")
 	}
@@ -3195,9 +3140,7 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 
 	// Now, we'll process the channel update.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.chanUpdAnn1, localKey,
-	):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanUpdAnn1):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local channel update")
 	}
@@ -3258,7 +3201,7 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 	// With the new update created, we'll go ahead and process it.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.chanUpdAnn1, localKey,
+		batch.chanUpdAnn1,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local channel update")
@@ -3299,7 +3242,7 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 	// the channel.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localProofAnn, localKey,
+		batch.localProofAnn,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local channel proof")
@@ -3356,7 +3299,7 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 	// not announced.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		newChannelUpdate, localKey,
+		newChannelUpdate,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local channel update")
@@ -3429,14 +3372,14 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 }
 
 func sendLocalMsg(t *testing.T, ctx *testCtx, msg lnwire.Message,
-	localPub *secp256k1.PublicKey, optionalMsgFields ...OptionalMsgField) {
+	optionalMsgFields ...OptionalMsgField) {
 
 	t.Helper()
 
 	var err error
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		msg, localPub, optionalMsgFields...,
+		msg, optionalMsgFields...,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
@@ -3510,7 +3453,6 @@ func TestPropagateChanPolicyUpdate(t *testing.T) {
 		channelsToAnnounce = append(channelsToAnnounce, newChan)
 	}
 
-	localKey := nodeKeyPriv1.PubKey()
 	remoteKey := nodeKeyPriv2.PubKey()
 
 	sentMsgs := make(chan lnwire.Message, 10)
@@ -3546,9 +3488,9 @@ func TestPropagateChanPolicyUpdate(t *testing.T) {
 		// each channel has a unique channel point.
 		channelPoint := ChannelPoint(wire.OutPoint{Index: uint32(i)})
 
-		sendLocalMsg(t, ctx, batch.localChanAnn, localKey, channelPoint)
-		sendLocalMsg(t, ctx, batch.chanUpdAnn1, localKey)
-		sendLocalMsg(t, ctx, batch.nodeAnn1, localKey)
+		sendLocalMsg(t, ctx, batch.localChanAnn, channelPoint)
+		sendLocalMsg(t, ctx, batch.chanUpdAnn1)
+		sendLocalMsg(t, ctx, batch.nodeAnn1)
 
 		sendRemoteMsg(t, ctx, batch.chanUpdAnn2, remotePeer)
 		sendRemoteMsg(t, ctx, batch.nodeAnn2, remotePeer)
@@ -3559,7 +3501,7 @@ func TestPropagateChanPolicyUpdate(t *testing.T) {
 			continue
 		}
 
-		sendLocalMsg(t, ctx, batch.localProofAnn, localKey)
+		sendLocalMsg(t, ctx, batch.localProofAnn)
 		sendRemoteMsg(t, ctx, batch.remoteProofAnn, remotePeer)
 	}
 
@@ -3683,7 +3625,6 @@ func TestProcessChannelAnnouncementOptionalMsgFields(t *testing.T) {
 
 	chanAnn1 := createAnnouncementWithoutProof(100)
 	chanAnn2 := createAnnouncementWithoutProof(101)
-	localKey := nodeKeyPriv1.PubKey()
 
 	// assertOptionalMsgFields is a helper closure that ensures the optional
 	// message fields were set as intended.
@@ -3708,7 +3649,7 @@ func TestProcessChannelAnnouncementOptionalMsgFields(t *testing.T) {
 
 	// We'll process the first announcement without any optional fields. We
 	// should see the channel's capacity and outpoint have a zero value.
-	sendLocalMsg(t, ctx, chanAnn1, localKey)
+	sendLocalMsg(t, ctx, chanAnn1)
 	assertOptionalMsgFields(chanAnn1.ShortChannelID, 0, wire.OutPoint{})
 
 	// Providing the capacity and channel point as optional fields should
@@ -3716,7 +3657,7 @@ func TestProcessChannelAnnouncementOptionalMsgFields(t *testing.T) {
 	capacity := dcrutil.Amount(1000)
 	channelPoint := wire.OutPoint{Index: 1}
 	sendLocalMsg(
-		t, ctx, chanAnn2, localKey, ChannelCapacity(capacity),
+		t, ctx, chanAnn2, ChannelCapacity(capacity),
 		ChannelPoint(channelPoint),
 	)
 	assertOptionalMsgFields(chanAnn2.ShortChannelID, capacity, channelPoint)
@@ -3861,9 +3802,7 @@ func TestBroadcastAnnsAfterGraphSynced(t *testing.T) {
 				msg, nodePeer,
 			)
 		} else {
-			errChan = ctx.gossiper.ProcessLocalAnnouncement(
-				msg, nodePeer.pk,
-			)
+			errChan = ctx.gossiper.ProcessLocalAnnouncement(msg)
 		}
 
 		select {
