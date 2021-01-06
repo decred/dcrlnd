@@ -669,7 +669,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	// With the announcement generated, we'll sign it to properly
 	// authenticate the message on the network.
 	authSig, err := netann.SignAnnouncement(
-		s.nodeSigner, s.identityECDH.PubKey(), nodeAnn,
+		s.nodeSigner, nodeKeyECDH.PubKey(), nodeAnn,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate signature for "+
@@ -827,7 +827,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		IgnoreHistoricalFilters: cfg.IgnoreHistoricalGossipFilters,
 		PinnedSyncers:           cfg.Gossip.PinnedSyncers,
 	},
-		s.identityECDH.PubKey(),
+		nodeKeyECDH.PubKey(),
 	)
 
 	s.localChanMgr = &localchans.Manager{
@@ -1409,7 +1409,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		Listeners:     listeners,
 		OnAccept:      s.InboundPeerConnected,
 		RetryDuration: time.Second * 5,
-		DialAddr:      noiseDial(s.identityECDH, s.cfg.net, s.cfg.ConnectionTimeout),
+		DialAddr:      noiseDial(nodeKeyECDH, s.cfg.net, s.cfg.ConnectionTimeout),
 		OnConnection:  s.OutboundPeerConnected,
 	})
 	if err != nil {
