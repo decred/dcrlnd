@@ -30,6 +30,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/lntest/channels"
 	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -1687,7 +1688,7 @@ func createTestArbiter(t *testing.T, contractBreaches chan *ContractBreachEvent,
 		return newRetributionStore(db)
 	})
 
-	aliceKeyPriv := secp256k1.PrivKeyFromBytes(alicesPrivKey)
+	aliceKeyPriv := secp256k1.PrivKeyFromBytes(channels.AlicesPrivKey)
 	signer := &mock.SingleSigner{Privkey: aliceKeyPriv}
 
 	// Assemble our test arbiter.
@@ -1724,8 +1725,8 @@ func createInitChannels(revocationWindow int) (*lnwallet.LightningChannel, *lnwa
 
 	chainParams := chaincfg.RegNetParams()
 
-	aliceKeyPriv, aliceKeyPub := privKeyFromBytes(alicesPrivKey)
-	bobKeyPriv, bobKeyPub := privKeyFromBytes(bobsPrivKey)
+	aliceKeyPriv, aliceKeyPub := channels.PrivKeyFromBytes(channels.AlicesPrivKey)
+	bobKeyPriv, bobKeyPub := channels.PrivKeyFromBytes(channels.BobsPrivKey)
 
 	channelCapacity, err := dcrutil.NewAmount(10)
 	if err != nil {
@@ -1746,7 +1747,7 @@ func createInitChannels(revocationWindow int) (*lnwallet.LightningChannel, *lnwa
 	csvTimeoutBob := uint32(4)
 
 	prevOut := &wire.OutPoint{
-		Hash:  chainhash.Hash(testHdSeed),
+		Hash:  channels.TestHdSeed,
 		Index: 0,
 	}
 	fundingTxIn := wire.NewTxIn(prevOut, int64(channelCapacity), nil)
@@ -1896,7 +1897,7 @@ func createInitChannels(revocationWindow int) (*lnwallet.LightningChannel, *lnwa
 		RemoteCommitment:        aliceCommit,
 		Db:                      dbAlice,
 		Packager:                channeldb.NewChannelPackager(shortChanID),
-		FundingTxn:              testTx,
+		FundingTxn:              channels.TestFundingTx,
 	}
 	bobChannelState := &channeldb.OpenChannel{
 		LocalChanCfg:            bobCfg,
