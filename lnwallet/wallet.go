@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -18,6 +19,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4/txsort"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
@@ -34,6 +36,12 @@ const (
 	// The size of the buffered queue of requests to the wallet from the
 	// outside word.
 	msgBufferSize = 100
+
+	// anchorChanReservedValue is the amount we'll keep around in the
+	// wallet in case we have to fee bump anchor channels on force close.
+	// TODO(halseth): update constant to target a specific commit size at
+	// set fee rate.
+	anchorChanReservedValue = dcrutil.Amount(10_000)
 )
 
 var (
@@ -41,6 +49,12 @@ var (
 	// contribution handling process if the process should be paused for
 	// the construction of a PSBT outside of lnd's wallet.
 	ErrPsbtFundingRequired = errors.New("PSBT funding required")
+
+	// ErrReservedValueInvalidated is returned if we try to publish a
+	// transaction that would take the walletbalance below what we require
+	// to keep around to fee bump our open anchor channels.
+	ErrReservedValueInvalidated = errors.New("reserved wallet balance " +
+		"invalidated")
 )
 
 // PsbtFundingRequired is a type that implements the error interface and
@@ -775,6 +789,82 @@ func (l *LightningWallet) handleFundingReserveRequest(req *InitFundingReserveMsg
 	// completed, or canceled.
 	req.resp <- reservation
 	req.err <- nil
+}
+
+// CheckReservedValue checks whether publishing a transaction with the given
+// inputs and outputs would violate the value we reserve in the wallet for
+// bumping the fee of anchor channels. The numAnchorChans argument should be
+// set the the number of open anchor channels controlled by the wallet after
+// the transaction has been published.
+//
+// If the reserved value is violated, the returned error will be
+// ErrReservedValueInvalidated. The method will also return the current
+// reserved value, both in case of success and in case of
+// ErrReservedValueInvalidated.
+//
+// NOTE: This method should only be run with the CoinSelectLock held.
+func (l *LightningWallet) CheckReservedValue(in []wire.OutPoint,
+	out []*wire.TxOut, numAnchorChans int) (dcrutil.Amount, error) {
+
+	// Get all unspent coins in the wallet.
+	witnessOutputs, err := l.ListUnspentWitness(0, math.MaxInt32, "")
+	if err != nil {
+		return 0, err
+	}
+
+	ourInput := make(map[wire.OutPoint]struct{})
+	for _, op := range in {
+		ourInput[op] = struct{}{}
+	}
+
+	// When crafting a transaction with inputs from the wallet, these coins
+	// will usually be locked in the process, and not be returned when
+	// listing unspents. In this case they have already been deducted from
+	// the wallet balance. In case they haven't been properly locked, we
+	// check whether they are still listed among our unspents and deduct
+	// them.
+	var walletBalance dcrutil.Amount
+	for _, in := range witnessOutputs {
+		// Spending an unlocked wallet UTXO, don't add it to the
+		// balance.
+		if _, ok := ourInput[in.OutPoint]; ok {
+			continue
+		}
+
+		walletBalance += in.Value
+	}
+
+	// Now we go through the outputs of the transaction, if any of the
+	// outputs are paying into the wallet (likely a change output), we add
+	// it to our final balance.
+	for _, txOut := range out {
+		_, addrs := stdscript.ExtractAddrs(
+			txOut.Version, txOut.PkScript, &l.Cfg.NetParams,
+		)
+
+		for _, addr := range addrs {
+			if !l.IsOurAddress(addr) {
+				continue
+			}
+
+			walletBalance += dcrutil.Amount(txOut.Value)
+
+			// We break since we don't want to double count the output.
+			break
+		}
+	}
+
+	// We reserve a given amount for each anchor channel.
+	reserved := dcrutil.Amount(numAnchorChans) * anchorChanReservedValue
+
+	if walletBalance < reserved {
+		walletLog.Debugf("Reserved value=%v above final "+
+			"walletbalance=%v with %d anchor channels open",
+			reserved, walletBalance, numAnchorChans)
+		return reserved, ErrReservedValueInvalidated
+	}
+
+	return reserved, nil
 }
 
 // initOurContribution initializes the given ChannelReservation with our coins
