@@ -20,15 +20,19 @@ FROM alpine as final
 # Define a root volume for data persistence.
 VOLUME /root/.dcrlnd
 
-# Add bash, jq and ca-certs, for quality of life and SSL-related reasons.
+# Add utilities for quality of life and SSL-related reasons. We also require
+# curl and gpg for the signature verification script.
 RUN apk --no-cache add \
     bash \
     jq \
-    ca-certificates
+    ca-certificates \
+    gnupg \
+    curl
 
 # Copy the binaries from the builder image.
 COPY --from=builder /go/bin/dcrlncli /bin/
 COPY --from=builder /go/bin/dcrlnd /bin/
+COPY --from=builder /go/src/github.com/decred/dcrlnd/scripts/verify-install.sh /
 
 # Store the SHA256 hash of the binaries that were just produced for later
 # verification.
