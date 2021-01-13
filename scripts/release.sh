@@ -157,6 +157,10 @@ for i in $SYS; do
     env CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH GOARM=$ARM go build -v -trimpath -ldflags "-s -w -buildid= $COMMITFLAGS" github.com/decred/dcrlnd/cmd/dcrlncli
     cd ..
 
+    # Add the hashes for the individual binaries as well for easy verification
+    # of a single installed binary.
+    sha256sum "${dir}/"* >> "manifest-$tag.txt" 
+
     if [[ $os == "windows" ]]; then
       reproducible_zip "${dir}"
     else
@@ -164,7 +168,10 @@ for i in $SYS; do
     fi
   done
 
-  sha256sum * >manifest-$tag.txt
+  # Add the hash of the packages too, then sort by the second column (name).
+  sha256sum lnd-* vendor* >> "manifest-$tag.txt"
+  LC_ALL=C sort -k2 -o "manifest-$tag.txt" "manifest-$tag.txt"
+  cat "manifest-$tag.txt"
 }
 
 # usage prints the usage of the whole script.
