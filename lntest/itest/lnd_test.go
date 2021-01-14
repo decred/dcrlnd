@@ -6999,7 +6999,10 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Make sure all the channels have been opened.
-	nodeNames := []string{"bob", "carol", "bob->carol", "dave", "eve"}
+	chanNames := []string{
+		"alice-bob", "alice-carol", "bob-carol", "alice-dave",
+		"alice-eve",
+	}
 	aliceChans := []*lnrpc.ChannelPoint{
 		chanPointBob, chanPointCarol, chanPointBobCarol, chanPointDave,
 		chanPointEve,
@@ -7008,8 +7011,8 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		err = net.Alice.WaitForNetworkChannelOpen(ctxt, chanPoint)
 		if err != nil {
-			t.Fatalf("timed out waiting for channel open between "+
-				"alice and %s: %v", nodeNames[i], err)
+			t.Fatalf("timed out waiting for channel open %s: %v",
+				chanNames[i], err)
 		}
 	}
 
