@@ -154,13 +154,24 @@ type WalletSweepPackage struct {
 	CancelSweepAttempt func()
 }
 
+// DeliveryAddr is a pair of (address, amount) used to craft a transaction
+// paying to more than one specified address.
+type DeliveryAddr struct {
+	// Addr is the address to pay to.
+	Addr stdaddr.Address
+
+	// Amt is the amount to pay to the given address.
+	Amt dcrutil.Amount
+}
+
 // CraftSweepAllTx attempts to craft a WalletSweepPackage which will allow the
-// caller to sweep ALL outputs within the wallet to a single UTXO, as specified
-// by the delivery address. The sweep transaction will be crafted with the
-// target fee rate, and will use the utxoSource and outpointLocker as sources
-// for wallet funds.
+// caller to sweep ALL outputs within the wallet to a list of outputs. Any
+// leftover amount after these outputs and transaction fee, is sent to a single
+// output, as specified by the change address. The sweep transaction will be
+// crafted with the target fee rate, and will use the utxoSource and
+// outpointLocker as sources for wallet funds.
 func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
-	blockHeight uint32, deliveryAddr stdaddr.Address,
+	blockHeight uint32, deliveryAddrs []DeliveryAddr, changeAddr stdaddr.Address,
 	coinSelectLocker CoinSelectionLocker, utxoSource UtxoSource,
 	outpointLocker OutpointLocker, feeEstimator chainfee.Estimator,
 	signer input.Signer, netParams *chaincfg.Params) (*WalletSweepPackage, error) {
@@ -265,9 +276,21 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
 		inputsToSweep = append(inputsToSweep, &input)
 	}
 
-	// Next, we'll convert the delivery addr to a pkScript that we can use
+	// Create a list of TxOuts from the given delivery addresses.
+	var txOuts []*wire.TxOut
+	for _, d := range deliveryAddrs {
+		version, pkScript := d.Addr.PaymentScript()
+
+		txOuts = append(txOuts, &wire.TxOut{
+			Version:  version,
+			PkScript: pkScript,
+			Value:    int64(d.Amt),
+		})
+	}
+
+	// Next, we'll convert the change addr to a pkScript that we can use
 	// to create the sweep transaction.
-	deliveryPkScript, err := input.PayToAddrScript(deliveryAddr)
+	changePkScript, err := input.PayToAddrScript(changeAddr)
 	if err != nil {
 		unlockOutputs()
 
@@ -277,7 +300,7 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
 	// Finally, we'll ask the sweeper to craft a sweep transaction which
 	// respects our fee preference and targets all the UTXOs of the wallet.
 	sweepTx, err := createSweepTx(
-		inputsToSweep, deliveryPkScript, blockHeight, feeRate,
+		inputsToSweep, txOuts, changePkScript, blockHeight, feeRate,
 		dustLimit, signer, netParams,
 	)
 	if err != nil {

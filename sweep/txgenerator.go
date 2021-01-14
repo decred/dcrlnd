@@ -131,12 +131,14 @@ func generateInputPartitionings(sweepableInputs []txInput,
 	return sets, nil
 }
 
-// createSweepTx builds a signed tx spending the inputs to a the output script.
-func createSweepTx(inputs []input.Input, outputPkScript []byte,
-	currentBlockHeight uint32, feePerKB chainfee.AtomPerKByte,
-	dustLimit dcrutil.Amount, signer input.Signer, netParams *chaincfg.Params) (*wire.MsgTx, error) {
+// createSweepTx builds a signed tx spending the inputs to the given outputs,
+// sending any leftover change to the change script.
+func createSweepTx(inputs []input.Input, outputs []*wire.TxOut,
+	changePkScript []byte, currentBlockHeight uint32,
+	feePerKB chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
+	signer input.Signer, netParams *chaincfg.Params) (*wire.MsgTx, error) {
 
-	inputs, estimator := getSizeEstimate(inputs, feePerKB)
+	inputs, estimator := getSizeEstimate(inputs, outputs, feePerKB)
 	txFee := estimator.fee()
 
 	var (
@@ -213,6 +215,16 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 		totalInput += dcrutil.Amount(o.SignDesc().Output.Value)
 	}
 
+	// Add the outputs given, if any.
+	for _, o := range outputs {
+		sweepTx.AddTxOut(o)
+		requiredOutput += dcrutil.Amount(o.Value)
+	}
+
+	if requiredOutput+txFee > totalInput {
+		return nil, fmt.Errorf("insufficient input to create sweep tx")
+	}
+
 	// The value remaining after the required output and fees, go to
 	// change. Not that this fee is what we would have to pay in case the
 	// sweep tx has a change output.
@@ -222,7 +234,7 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	// above.
 	if changeAmt >= dustLimit {
 		sweepTx.AddTxOut(&wire.TxOut{
-			PkScript: outputPkScript,
+			PkScript: changePkScript,
 			Value:    int64(changeAmt),
 		})
 	} else {
@@ -289,8 +301,8 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 
 // getSizeEstimate returns a weight estimate for the given inputs.
 // Additionally, it returns counts for the number of csv and cltv inputs.
-func getSizeEstimate(inputs []input.Input, feeRate chainfee.AtomPerKByte) (
-	[]input.Input, *sizeEstimator) {
+func getSizeEstimate(inputs []input.Input, outputs []*wire.TxOut,
+	feeRate chainfee.AtomPerKByte) ([]input.Input, *sizeEstimator) {
 
 	// We initialize a weight estimator so we can accurately asses the
 	// amount of fees we need to pay for this sweep transaction.
@@ -299,13 +311,19 @@ func getSizeEstimate(inputs []input.Input, feeRate chainfee.AtomPerKByte) (
 	// be more efficient on-chain.
 	sizeEstimate := newSizeEstimator(feeRate)
 
-	// Our sweep transaction will pay to a single p2pkh address,
-	// ensure it contributes to our size estimate. If the inputs we add
-	// have required TxOuts, then this will be our change address. Note
-	// that if we have required TxOuts, we might end up creating a sweep tx
-	// without a change output. It is okay to add the change output to the
-	// size estimate regardless, since the estimated fee will just be
-	// subtracted from this already dust output, and trimmed.
+	// Our sweep transaction will always pay to the given set of outputs.
+	for _, o := range outputs {
+		sizeEstimate.addOutput(o)
+	}
+
+	// If there is any leftover change after paying to the given outputs
+	// and required outputs, it will go to a single p2pkh address.
+	// This will be our change address, so ensure it contributes to our
+	// size estimate. Note that if we have other outputs, we might end up
+	// creating a sweep tx without a change output. It is okay to add the
+	// change output to the size estimate regardless, since the estimated
+	// fee will just be subtracted from this already dust output, and
+	// trimmed.
 	sizeEstimate.addP2PKHOutput()
 
 	// For each output, use its witness type to determine the estimate

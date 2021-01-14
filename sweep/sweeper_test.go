@@ -359,7 +359,7 @@ func assertTxFeeRate(t *testing.T, tx *wire.MsgTx,
 	outputAmt := tx.TxOut[0].Value
 
 	fee := dcrutil.Amount(inputAmt - outputAmt)
-	_, estimator := getSizeEstimate(inputs, 0)
+	_, estimator := getSizeEstimate(inputs, nil, 0)
 	txSize := estimator.size()
 
 	expectedFee := expectedFeeRate.FeeForSize(int64(txSize))
