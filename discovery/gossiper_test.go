@@ -435,8 +435,7 @@ type annBatch struct {
 	nodeAnn1 *lnwire.NodeAnnouncement
 	nodeAnn2 *lnwire.NodeAnnouncement
 
-	localChanAnn  *lnwire.ChannelAnnouncement
-	remoteChanAnn *lnwire.ChannelAnnouncement
+	chanAnn *lnwire.ChannelAnnouncement
 
 	chanUpdAnn1 *lnwire.ChannelUpdate
 	chanUpdAnn2 *lnwire.ChannelUpdate
@@ -460,7 +459,7 @@ func createAnnouncements(blockHeight uint32) (*annBatch, error) {
 		return nil, err
 	}
 
-	batch.remoteChanAnn, err = createRemoteChannelAnnouncement(blockHeight)
+	batch.chanAnn, err = createRemoteChannelAnnouncement(blockHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -469,21 +468,16 @@ func createAnnouncements(blockHeight uint32) (*annBatch, error) {
 		ShortChannelID: lnwire.ShortChannelID{
 			BlockHeight: blockHeight,
 		},
-		NodeSignature:   batch.remoteChanAnn.NodeSig2,
-		DecredSignature: batch.remoteChanAnn.DecredSig2,
-	}
-
-	batch.localChanAnn, err = createRemoteChannelAnnouncement(blockHeight)
-	if err != nil {
-		return nil, err
+		NodeSignature:   batch.chanAnn.NodeSig2,
+		DecredSignature: batch.chanAnn.DecredSig2,
 	}
 
 	batch.localProofAnn = &lnwire.AnnounceSignatures{
 		ShortChannelID: lnwire.ShortChannelID{
 			BlockHeight: blockHeight,
 		},
-		NodeSignature:   batch.localChanAnn.NodeSig1,
-		DecredSignature: batch.localChanAnn.DecredSig1,
+		NodeSignature:   batch.chanAnn.NodeSig1,
+		DecredSignature: batch.chanAnn.DecredSig1,
 	}
 
 	batch.chanUpdAnn1, err = createUpdateAnnouncement(
@@ -966,7 +960,7 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1190,7 +1184,7 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1362,7 +1356,7 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
 	}
@@ -1576,7 +1570,7 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 	// between two nodes.
 	select {
 	case err = <-ctx.gossiper.ProcessLocalAnnouncement(
-		batch.localChanAnn,
+		batch.chanAnn,
 	):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local announcement")
@@ -2143,7 +2137,7 @@ func TestRejectZombieEdge(t *testing.T) {
 		t.Helper()
 
 		errChan := ctx.gossiper.ProcessRemoteAnnouncement(
-			batch.remoteChanAnn, remotePeer,
+			batch.chanAnn, remotePeer,
 		)
 		select {
 		case err := <-errChan:
@@ -2204,9 +2198,9 @@ func TestRejectZombieEdge(t *testing.T) {
 	// We'll mark the edge for which we'll process announcements for as a
 	// zombie within the router. This should reject any announcements for
 	// this edge while it remains as a zombie.
-	chanID := batch.remoteChanAnn.ShortChannelID
+	chanID := batch.chanAnn.ShortChannelID
 	err = ctx.router.MarkEdgeZombie(
-		chanID, batch.remoteChanAnn.NodeID1, batch.remoteChanAnn.NodeID2,
+		chanID, batch.chanAnn.NodeID1, batch.chanAnn.NodeID2,
 	)
 	if err != nil {
 		t.Fatalf("unable to mark channel %v as zombie: %v", chanID, err)
@@ -2298,9 +2292,9 @@ func TestProcessZombieEdgeNowLive(t *testing.T) {
 	}
 
 	// We'll also add the edge to our zombie index.
-	chanID := batch.remoteChanAnn.ShortChannelID
+	chanID := batch.chanAnn.ShortChannelID
 	err = ctx.router.MarkEdgeZombie(
-		chanID, batch.remoteChanAnn.NodeID1, batch.remoteChanAnn.NodeID2,
+		chanID, batch.chanAnn.NodeID1, batch.chanAnn.NodeID2,
 	)
 	if err != nil {
 		t.Fatalf("unable mark channel %v as zombie: %v", chanID, err)
@@ -2348,7 +2342,7 @@ func TestProcessZombieEdgeNowLive(t *testing.T) {
 
 	// We'll go ahead and process the channel announcement to ensure the
 	// channel update is processed thereafter.
-	processAnnouncement(batch.remoteChanAnn, false, false)
+	processAnnouncement(batch.chanAnn, false, false)
 
 	// After successfully processing the announcement, the channel update
 	// should have been processed and broadcast successfully as well.
@@ -2447,7 +2441,7 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 
 	// Recreate lightning network topology. Initialize router with channel
 	// between two nodes.
-	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn)
+	err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanAnn)
 	if err != nil {
 		t.Fatalf("unable to process :%v", err)
 	}
@@ -2782,7 +2776,7 @@ func TestRetransmit(t *testing.T) {
 	// announcement. No messages should be broadcasted yet, since no proof
 	// has been exchanged.
 	assertProcessAnnouncement(
-		t, ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn),
+		t, ctx.gossiper.ProcessLocalAnnouncement(batch.chanAnn),
 	)
 	assertBroadcast(t, ctx, 0)
 
@@ -2912,7 +2906,7 @@ func TestNodeAnnouncementNoChannels(t *testing.T) {
 	// Now add the node's channel to the graph by processing the channel
 	// announement and channel update.
 	select {
-	case err = <-ctx.gossiper.ProcessRemoteAnnouncement(batch.remoteChanAnn,
+	case err = <-ctx.gossiper.ProcessRemoteAnnouncement(batch.chanAnn,
 		remotePeer):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process remote announcement")
@@ -3123,7 +3117,7 @@ func TestSendChannelUpdateReliably(t *testing.T) {
 	// Process the channel announcement for which we'll send a channel
 	// update for.
 	select {
-	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.localChanAnn):
+	case err = <-ctx.gossiper.ProcessLocalAnnouncement(batch.chanAnn):
 	case <-time.After(2 * time.Second):
 		t.Fatal("did not process local channel announcement")
 	}
@@ -3480,7 +3474,7 @@ func TestPropagateChanPolicyUpdate(t *testing.T) {
 	// the gossiper in order for it to process. However, we'll hold back
 	// the channel ann proof from the first channel in order to have it be
 	// marked as private channel.
-	firstChanID := channelsToAnnounce[0].localChanAnn.ShortChannelID
+	firstChanID := channelsToAnnounce[0].chanAnn.ShortChannelID
 	for i, batch := range channelsToAnnounce {
 		// channelPoint ensures that each channel policy in the map
 		// returned by PropagateChanPolicyUpdate has a unique key. Since
@@ -3488,7 +3482,7 @@ func TestPropagateChanPolicyUpdate(t *testing.T) {
 		// each channel has a unique channel point.
 		channelPoint := ChannelPoint(wire.OutPoint{Index: uint32(i)})
 
-		sendLocalMsg(t, ctx, batch.localChanAnn, channelPoint)
+		sendLocalMsg(t, ctx, batch.chanAnn, channelPoint)
 		sendLocalMsg(t, ctx, batch.chanUpdAnn1)
 		sendLocalMsg(t, ctx, batch.nodeAnn1)
 
@@ -3497,7 +3491,7 @@ func TestPropagateChanPolicyUpdate(t *testing.T) {
 
 		// We'll skip sending the auth proofs from the first channel to
 		// ensure that it's seen as a private channel.
-		if batch.localChanAnn.ShortChannelID == firstChanID {
+		if batch.chanAnn.ShortChannelID == firstChanID {
 			continue
 		}
 
@@ -3883,7 +3877,7 @@ func TestRateLimitChannelUpdates(t *testing.T) {
 	nodePeer1 := &mockPeer{nodeKeyPriv1.PubKey(), nil, nil}
 	select {
 	case err := <-ctx.gossiper.ProcessRemoteAnnouncement(
-		batch.remoteChanAnn, nodePeer1,
+		batch.chanAnn, nodePeer1,
 	):
 		require.NoError(t, err)
 	case <-time.After(time.Second):
@@ -3918,7 +3912,7 @@ func TestRateLimitChannelUpdates(t *testing.T) {
 		}
 	}
 
-	shortChanID := batch.remoteChanAnn.ShortChannelID.ToUint64()
+	shortChanID := batch.chanAnn.ShortChannelID.ToUint64()
 	require.Contains(t, ctx.router.infos, shortChanID)
 	require.Contains(t, ctx.router.edges, shortChanID)
 
