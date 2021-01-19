@@ -217,6 +217,7 @@ func testQueryRoutes(t *testing.T, useMissionControl bool, useMAtoms bool) {
 }
 
 type mockMissionControl struct {
+	MissionControl
 }
 
 func (m *mockMissionControl) GetProbability(fromNode, toNode route.Vertex,
