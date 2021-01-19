@@ -94,9 +94,11 @@ func createTestCtxFromGraphInstanceAssumeValid(startingHeight uint32,
 	}
 
 	mcConfig := &MissionControlConfig{
-		PenaltyHalfLife:       time.Hour,
-		AprioriHopProbability: 0.9,
-		AprioriWeight:         0.5,
+		ProbabilityEstimatorCfg: ProbabilityEstimatorCfg{
+			PenaltyHalfLife:       time.Hour,
+			AprioriHopProbability: 0.9,
+			AprioriWeight:         0.5,
+		},
 	}
 
 	mc, err := NewMissionControl(
