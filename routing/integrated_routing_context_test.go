@@ -62,7 +62,6 @@ func newIntegratedRoutingContext(t *testing.T) *integratedRoutingContext {
 			PenaltyHalfLife:       30 * time.Minute,
 			AprioriHopProbability: 0.6,
 			AprioriWeight:         0.5,
-			SelfNode:              source.pubkey,
 		},
 
 		pathFindingCfg: PathFindingConfig{
@@ -124,7 +123,7 @@ func (c *integratedRoutingContext) testPayment(maxParts uint32,
 
 	// Instantiate a new mission control with the current configuration
 	// values.
-	mc, err := NewMissionControl(db, &c.mcCfg)
+	mc, err := NewMissionControl(db, c.source.pubkey, &c.mcCfg)
 	if err != nil {
 		c.t.Fatal(err)
 	}

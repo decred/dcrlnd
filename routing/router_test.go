@@ -100,7 +100,7 @@ func createTestCtxFromGraphInstanceAssumeValid(startingHeight uint32,
 	}
 
 	mc, err := NewMissionControl(
-		graphInstance.graph.Database(),
+		graphInstance.graph.Database(), route.Vertex{},
 		mcConfig,
 	)
 	if err != nil {
