@@ -64,6 +64,7 @@ PARAMS=$(echo $PARAMS \
     "--$BACKEND.rpcuser"="$RPCUSER" \
     "--$BACKEND.rpcpass"="$RPCPASS" \
     --rpclisten=0.0.0.0 \
+    "--rpclisten=localhost:10009" \
     --restlisten=0.0.0.0 \
     --listen=0.0.0.0 \
     --debuglevel="$DEBUG" \
