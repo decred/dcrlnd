@@ -6462,6 +6462,7 @@ func (r *rpcServer) ForwardingHistory(ctx context.Context,
 
 		resp.ForwardingEvents[i] = &lnrpc.ForwardingEvent{
 			Timestamp:    uint64(event.Timestamp.Unix()),
+			TimestampNs:  uint64(event.Timestamp.UnixNano()),
 			ChanIdIn:     event.IncomingChanID.ToUint64(),
 			ChanIdOut:    event.OutgoingChanID.ToUint64(),
 			AmtIn:        uint64(amtInMAtoms.ToAtoms()),
