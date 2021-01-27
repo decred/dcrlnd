@@ -14,6 +14,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"golang.org/x/time/rate"
 
+	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnpeer"
@@ -1474,7 +1475,9 @@ func (d *AuthenticatedGossiper) processRejectedEdge(
 
 // addNode processes the given node announcement, and adds it to our channel
 // graph.
-func (d *AuthenticatedGossiper) addNode(msg *lnwire.NodeAnnouncement) error {
+func (d *AuthenticatedGossiper) addNode(msg *lnwire.NodeAnnouncement,
+	op ...batch.SchedulerOption) error {
+
 	if err := routing.ValidateNodeAnn(msg); err != nil {
 		return fmt.Errorf("unable to validate node announcement: %v",
 			err)
@@ -1494,7 +1497,7 @@ func (d *AuthenticatedGossiper) addNode(msg *lnwire.NodeAnnouncement) error {
 		ExtraOpaqueData:      msg.ExtraOpaqueData,
 	}
 
-	return d.cfg.Router.AddNode(node)
+	return d.cfg.Router.AddNode(node, op...)
 }
 
 // processNetworkAnnouncement processes a new network relate authenticated
@@ -1509,6 +1512,13 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		// TODO(roasbeef) make height delta 6
 		//  * or configurable
 		return chanID.BlockHeight+delta > d.bestHeight
+	}
+
+	// If this is a remote update, we set the scheduler option to lazily
+	// add it to the graph.
+	var schedulerOp []batch.SchedulerOption
+	if nMsg.isRemote {
+		schedulerOp = append(schedulerOp, batch.LazyAdd())
 	}
 
 	var announcements []networkMsg
@@ -1529,7 +1539,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 			return nil
 		}
 
-		if err := d.addNode(msg); err != nil {
+		if err := d.addNode(msg, schedulerOp...); err != nil {
 			if routing.IsError(err, routing.ErrOutdated,
 				routing.ErrIgnored) {
 
@@ -1691,7 +1701,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		// writes to the DB.
 		d.channelMtx.Lock(msg.ShortChannelID.ToUint64())
 		defer d.channelMtx.Unlock(msg.ShortChannelID.ToUint64())
-		if err := d.cfg.Router.AddEdge(edge); err != nil {
+		if err := d.cfg.Router.AddEdge(edge, schedulerOp...); err != nil {
 			// If the edge was rejected due to already being known,
 			// then it may be that case that this new message has a
 			// fresh channel proof, so we'll check.
@@ -2041,7 +2051,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 			ExtraOpaqueData:           msg.ExtraOpaqueData,
 		}
 
-		if err := d.cfg.Router.UpdateEdge(update); err != nil {
+		if err := d.cfg.Router.UpdateEdge(update, schedulerOp...); err != nil {
 			if routing.IsError(err, routing.ErrOutdated,
 				routing.ErrIgnored) {
 				log.Debug(err)
