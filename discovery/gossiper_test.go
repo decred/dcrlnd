@@ -20,6 +20,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnpeer"
@@ -108,7 +109,9 @@ func newMockRouter(height uint32) *mockGraphSource {
 
 var _ routing.ChannelGraphSource = (*mockGraphSource)(nil)
 
-func (r *mockGraphSource) AddNode(node *channeldb.LightningNode) error {
+func (r *mockGraphSource) AddNode(node *channeldb.LightningNode,
+	_ ...batch.SchedulerOption) error {
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -116,7 +119,9 @@ func (r *mockGraphSource) AddNode(node *channeldb.LightningNode) error {
 	return nil
 }
 
-func (r *mockGraphSource) AddEdge(info *channeldb.ChannelEdgeInfo) error {
+func (r *mockGraphSource) AddEdge(info *channeldb.ChannelEdgeInfo,
+	_ ...batch.SchedulerOption) error {
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -128,7 +133,9 @@ func (r *mockGraphSource) AddEdge(info *channeldb.ChannelEdgeInfo) error {
 	return nil
 }
 
-func (r *mockGraphSource) UpdateEdge(edge *channeldb.ChannelEdgePolicy) error {
+func (r *mockGraphSource) UpdateEdge(edge *channeldb.ChannelEdgePolicy,
+	_ ...batch.SchedulerOption) error {
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
