@@ -96,6 +96,11 @@ type SyncManagerCfg struct {
 
 	// BestHeight returns the latest height known of the chain.
 	BestHeight func() uint32
+
+	// PinnedSyncers is a set of peers that will always transition to
+	// ActiveSync upon connection. These peers will never transition to
+	// PassiveSync.
+	PinnedSyncers PinnedSyncers
 }
 
 // SyncManager is a subsystem of the gossiper that manages the gossip syncers
@@ -144,6 +149,12 @@ type SyncManager struct {
 	// currently receiving new graph updates from.
 	inactiveSyncers map[route.Vertex]*GossipSyncer
 
+	// pinnedActiveSyncers is the set of all syncers which are pinned into
+	// an active sync. Pinned peers performan an initial historical sync on
+	// each connection and will continue to receive graph updates for the
+	// duration of the connection.
+	pinnedActiveSyncers map[route.Vertex]*GossipSyncer
+
 	wg   sync.WaitGroup
 	quit chan struct{}
 }
@@ -158,7 +169,10 @@ func newSyncManager(cfg *SyncManagerCfg) *SyncManager {
 			map[route.Vertex]*GossipSyncer, cfg.NumActiveSyncers,
 		),
 		inactiveSyncers: make(map[route.Vertex]*GossipSyncer),
-		quit:            make(chan struct{}),
+		pinnedActiveSyncers: make(
+			map[route.Vertex]*GossipSyncer, len(cfg.PinnedSyncers),
+		),
+		quit: make(chan struct{}),
 	}
 }
 
@@ -244,6 +258,8 @@ func (m *SyncManager) syncerHandler() {
 
 			s := m.createGossipSyncer(newSyncer.peer)
 
+			isPinnedSyncer := m.isPinnedSyncer(s)
+
 			// attemptHistoricalSync determines whether we should
 			// attempt an initial historical sync when a new peer
 			// connects.
@@ -251,6 +267,12 @@ func (m *SyncManager) syncerHandler() {
 
 			m.syncersMu.Lock()
 			switch {
+			// For pinned syncers, we will immediately transition
+			// the peer into an active (pinned) sync state.
+			case isPinnedSyncer:
+				s.setSyncType(PinnedSync)
+				m.pinnedActiveSyncers[s.cfg.peerPub] = s
+
 			// Regardless of whether the initial historical sync
 			// has completed, we'll re-trigger a historical sync if
 			// we no longer have any syncers. This might be
@@ -420,6 +442,13 @@ func (m *SyncManager) syncerHandler() {
 	}
 }
 
+// isPinnedSyncer returns true if the passed GossipSyncer is one of our pinned
+// sync peers.
+func (m *SyncManager) isPinnedSyncer(s *GossipSyncer) bool {
+	_, isPinnedSyncer := m.cfg.PinnedSyncers[s.cfg.peerPub]
+	return isPinnedSyncer
+}
+
 // createGossipSyncer creates the GossipSyncer for a newly connected peer.
 func (m *SyncManager) createGossipSyncer(peer lnpeer.Peer) *GossipSyncer {
 	nodeID := route.Vertex(peer.PubKey())
@@ -476,6 +505,13 @@ func (m *SyncManager) removeGossipSyncer(peer route.Vertex) {
 	// If it's a non-active syncer, then we can just exit now.
 	if _, ok := m.inactiveSyncers[peer]; ok {
 		delete(m.inactiveSyncers, peer)
+		return
+	}
+
+	// If it's a pinned syncer, then we can just exit as this doesn't
+	// affect our active syncer count.
+	if _, ok := m.pinnedActiveSyncers[peer]; ok {
+		delete(m.pinnedActiveSyncers, peer)
 		return
 	}
 
@@ -678,6 +714,10 @@ func (m *SyncManager) gossipSyncer(peer route.Vertex) (*GossipSyncer, bool) {
 		return syncer, true
 	}
 	syncer, ok = m.activeSyncers[peer]
+	if ok {
+		return syncer, true
+	}
+	syncer, ok = m.pinnedActiveSyncers[peer]
 	if ok {
 		return syncer, true
 	}
