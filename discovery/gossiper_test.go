@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -3826,6 +3827,12 @@ func TestCalculateCorrectSubBatchSizesDifferentDelay(t *testing.T) {
 
 		assertCorrectSubBatchSize(t, expectedBatchSize, actualSubBatchSize)
 	}
+}
+
+// markGraphSynced allows us to report that the initial historical sync has
+// completed.
+func (m *SyncManager) markGraphSyncing() {
+	atomic.StoreInt32(&m.initialHistoricalSyncCompleted, 0)
 }
 
 // TestBroadcastAnnsAfterGraphSynced ensures that we only broadcast
