@@ -297,6 +297,8 @@ type Config struct {
 
 	Routing *lncfg.Routing `group:"routing" namespace:"routing"`
 
+	Gossip *lncfg.Gossip `group:"gossip" namespace:"gossip"`
+
 	Workers *lncfg.Workers `group:"workers" namespace:"workers"`
 
 	Caches *lncfg.Caches `group:"caches" namespace:"caches"`
@@ -437,6 +439,7 @@ func DefaultConfig() Config {
 				Backoff:  defaultTLSBackoff,
 			},
 		},
+		Gossip:                  &lncfg.Gossip{},
 		MaxOutgoingCltvExpiry:   htlcswitch.DefaultMaxOutgoingCltvExpiry,
 		MaxChannelFeeAllocation: htlcswitch.DefaultMaxLinkFeeAllocation,
 		MaxCommitFeeRateAnchors: lnwallet.DefaultAnchorsCommitMaxFeeRateAtomsPerByte,
@@ -1160,6 +1163,10 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	// Enforce anchors are not used in mainnet.
 	if cfg.ActiveNetParams.Net == wire.MainNet && !cfg.ProtocolOptions.NoAnchorCommitments() {
 		return nil, fmt.Errorf("cannot use anchor commitments on mainnet")
+	}
+
+	if err := cfg.Gossip.Parse(); err != nil {
+		return nil, err
 	}
 
 	// Validate the subconfigs for workers, caches, and the tower client.

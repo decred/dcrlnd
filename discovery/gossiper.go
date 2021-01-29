@@ -242,6 +242,11 @@ type Config struct {
 	// gossip updates to once per RebroadcastInterval for any keep-alive
 	// updates, and once per block for other types of updates.
 	GossipUpdateThrottle bool
+
+	// PinnedSyncers is a set of peers that will always transition to
+	// ActiveSync upon connection. These peers will never transition to
+	// PassiveSync.
+	PinnedSyncers PinnedSyncers
 }
 
 // AuthenticatedGossiper is a subsystem which is responsible for receiving
@@ -352,6 +357,7 @@ func New(cfg Config, selfKey *secp256k1.PublicKey) *AuthenticatedGossiper {
 		NumActiveSyncers:        cfg.NumActiveSyncers,
 		IgnoreHistoricalFilters: cfg.IgnoreHistoricalFilters,
 		BestHeight:              gossiper.latestHeight,
+		PinnedSyncers:           cfg.PinnedSyncers,
 	})
 
 	gossiper.reliableSender = newReliableSender(&reliableSenderCfg{
