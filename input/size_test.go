@@ -3,13 +3,18 @@ package input_test
 import (
 	"testing"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/lnwallet"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -21,6 +26,8 @@ const (
 	// maxDERSignatureSize is the largest possible DER-encoded signature
 	// without the trailing sighash flag.
 	maxDERSignatureSize = 72
+
+	testAmt = dcrutil.MaxAmount
 )
 
 var (
@@ -33,6 +40,11 @@ var (
 	testPubkey  = testPrivkey.PubKey()
 
 	testTx = wire.NewMsgTx()
+
+	testOutPoint = wire.OutPoint{
+		Hash:  chainhash.Hash{},
+		Index: 1,
+	}
 )
 
 func init() {
@@ -696,6 +708,171 @@ func TestWitnessSizes(t *testing.T) {
 			}
 			size := int64(len(sigScript))
 			if size != test.expSize {
+				t.Fatalf("size mismatch, want: %v, got: %v",
+					test.expSize, size)
+			}
+		})
+	}
+}
+
+// genTimeoutTx creates a signed HTLC second level timeout tx.
+func genTimeoutTx(chanType channeldb.ChannelType) (*wire.MsgTx, error) {
+	// Create the unsigned timeout tx.
+	timeoutTx, err := lnwallet.CreateHtlcTimeoutTx(
+		chanType, testOutPoint, testAmt, testCLTVExpiry,
+		testCSVDelay, testPubkey, testPubkey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// In order to sign the transcation, generate the script for the output
+	// it spends.
+	witScript, err := input.SenderHTLCScript(
+		testPubkey, testPubkey, testPubkey, testHash160,
+		chanType.HasAnchors(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	signDesc := &input.SignDescriptor{
+		WitnessScript: witScript,
+		KeyDesc: keychain.KeyDescriptor{
+			PubKey: testPubkey,
+		},
+	}
+
+	// Sign the timeout tx and add the witness.
+	sigHashType := lnwallet.HtlcSigHashType(chanType)
+	timeoutWitness, err := input.SenderHtlcSpendTimeout(
+		&maxDERSignature{}, sigHashType, &dummySigner{},
+		signDesc, timeoutTx,
+	)
+	if err != nil {
+		return nil, err
+	}
+	sigScript, err := input.WitnessStackToSigScript(timeoutWitness)
+	if err != nil {
+		return nil, err
+	}
+	timeoutTx.TxIn[0].SignatureScript = sigScript
+
+	return timeoutTx, nil
+}
+
+// genSuccessTx creates a signed HTLC second level success tx.
+func genSuccessTx(chanType channeldb.ChannelType) (*wire.MsgTx, error) {
+	// Create the unisgned success tx.
+	successTx, err := lnwallet.CreateHtlcSuccessTx(
+		chanType, testOutPoint, testAmt, testCSVDelay,
+		testPubkey, testPubkey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// In order to sign the transcation, generate the script for the output
+	// it spends.
+	witScript, err := input.ReceiverHTLCScript(
+		testCLTVExpiry, testPubkey, testPubkey,
+		testPubkey, testHash160, chanType.HasAnchors(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	signDesc := &input.SignDescriptor{
+		WitnessScript: witScript,
+		KeyDesc: keychain.KeyDescriptor{
+			PubKey: testPubkey,
+		},
+	}
+
+	// Sign the success tx and add the witness.
+	sigHashType := lnwallet.HtlcSigHashType(channeldb.SingleFunderBit)
+	successWitness, err := input.ReceiverHtlcSpendRedeem(
+		&maxDERSignature{}, sigHashType, testPreimage,
+		&dummySigner{}, signDesc, successTx,
+	)
+	if err != nil {
+		return nil, err
+	}
+	sigScript, err := input.WitnessStackToSigScript(successWitness)
+	if err != nil {
+		return nil, err
+	}
+	successTx.TxIn[0].SignatureScript = sigScript
+
+	return successTx, nil
+
+}
+
+type txSizeTest struct {
+	name    string
+	expSize int64
+	genTx   func(t *testing.T) *wire.MsgTx
+}
+
+var txSizeTests = []txSizeTest{
+	{
+		name: "htlc timeout regular ",
+		// The size estimate from the spec is off by one.
+		expSize: input.HTLCTimeoutTxSize + 1,
+		genTx: func(t *testing.T) *wire.MsgTx {
+			tx, err := genTimeoutTx(channeldb.SingleFunderBit)
+			require.NoError(t, err)
+
+			return tx
+		},
+	},
+	{
+		name: "htlc timeout confirmed",
+		// The size estimate from the spec is off by one.
+		expSize: input.HTLCTimeoutConfirmedTxSize + 1,
+		genTx: func(t *testing.T) *wire.MsgTx {
+			tx, err := genTimeoutTx(channeldb.AnchorOutputsBit)
+			require.NoError(t, err)
+
+			return tx
+		},
+	},
+
+	{
+		name: "htlc success regular",
+		// The size estimate from the spec is off by one, but it's
+		// okay since we overestimate the size.
+		expSize: input.HTLCSuccessTxSize - 1,
+		genTx: func(t *testing.T) *wire.MsgTx {
+			tx, err := genSuccessTx(channeldb.SingleFunderBit)
+			require.NoError(t, err)
+
+			return tx
+		},
+	},
+	{
+		name: "htlc success confirmed",
+		// The size estimate from the spec is off by one, but it's
+		// okay since we overestimate the size.
+		expSize: input.HTLCSuccessConfirmedTxSize - 1,
+		genTx: func(t *testing.T) *wire.MsgTx {
+			tx, err := genSuccessTx(channeldb.AnchorOutputsBit)
+			require.NoError(t, err)
+
+			return tx
+		},
+	},
+}
+
+// TestWitnessSizes asserts the correctness of our magic tx size constants.
+func TestTxSizes(t *testing.T) {
+	for _, test := range txSizeTests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			tx := test.genTx(t)
+
+			size := tx.SerializeSize()
+			if size != int(test.expSize) {
 				t.Fatalf("size mismatch, want: %v, got: %v",
 					test.expSize, size)
 			}
