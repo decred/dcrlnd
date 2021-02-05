@@ -341,11 +341,18 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		}
 	}
 
-	// Create a new RPC interceptor chain that we'll add to the GRPC
-	// server. This will be used to log the API calls invoked on the GRPC
-	// server.
+	// We'll create the WalletUnlockerService and check whether the wallet
+	// already exists.
+	pwService := createWalletUnlockerService(cfg, remoteChanDB)
+	walletExists, err := pwService.WalletExists()
+	if err != nil {
+		return err
+	}
+
+	// Create a new RPC interceptor that we'll add to the GRPC server. This
+	// will be used to log the API calls invoked on the GRPC server.
 	interceptorChain := rpcperms.NewInterceptorChain(
-		rpcsLog, cfg.NoMacaroons,
+		rpcsLog, cfg.NoMacaroons, walletExists,
 	)
 	rpcServerOpts := interceptorChain.CreateServerOpts()
 	serverOpts = append(serverOpts, rpcServerOpts...)
@@ -353,9 +360,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	grpcServer := grpc.NewServer(serverOpts...)
 	defer grpcServer.Stop()
 
-	// We'll create the WalletUnlockerService and register this with the
-	// GRPC server.
-	pwService := createWalletUnlockerService(cfg, remoteChanDB)
+	// Register the WalletUnlockerService with the GRPC server.
 	lnrpc.RegisterWalletUnlockerServer(grpcServer, pwService)
 
 	// Initialize, and register our implementation of the gRPC interface
@@ -420,6 +425,10 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 				walletInitParams.RecoveryWindow)
 		}
 	}
+
+	// Now that the wallet password has been provided, transition the RPC
+	// state into Unlocked.
+	interceptorChain.SetWalletUnlocked()
 
 	var macaroonService *macaroons.Service
 	if !cfg.NoMacaroons {
@@ -779,6 +788,9 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		return err
 	}
 	defer rpcServer.Stop()
+
+	// We transition the RPC state to Active, as the RPC server is up.
+	interceptorChain.SetRPCActive()
 
 	// With all the relevant chains initialized, we can finally start the
 	// server itself.
