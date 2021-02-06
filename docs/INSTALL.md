@@ -85,7 +85,7 @@ go install ./cmd/dcrlncli
 The command above will install the current _master_ branch of `dcrlnd`. If you
 wish to install a tagged release of `dcrlnd` (as the master branch can at times be
 unstable), then [visit then release page to locate the latest
-release](https://github.com/dcrlnd/dcrlnd/releases). Assuming the name
+release](https://github.com/decred/dcrlnd/releases). Assuming the name
 of the release is `v0.x.x`, then you can compile this release from source with
 a small modification to the above command: 
 ```
