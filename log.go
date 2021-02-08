@@ -13,6 +13,7 @@ import (
 	"github.com/decred/dcrlnd/chanfitness"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channelnotifier"
+	"github.com/decred/dcrlnd/cluster"
 	"github.com/decred/dcrlnd/contractcourt"
 	"github.com/decred/dcrlnd/discovery"
 	"github.com/decred/dcrlnd/funding"
@@ -169,6 +170,7 @@ func SetupLoggers(root *build.RotatingLogWriter, interceptor signal.Interceptor)
 	AddSubLogger(root, chainreg.Subsystem, interceptor, chainreg.UseLogger)
 	AddSubLogger(root, chanacceptor.Subsystem, interceptor, chanacceptor.UseLogger)
 	AddSubLogger(root, funding.Subsystem, interceptor, funding.UseLogger)
+	AddSubLogger(root, cluster.Subsystem, interceptor, cluster.UseLogger)
 }
 
 // AddSubLogger is a helper method to conveniently create and register the
