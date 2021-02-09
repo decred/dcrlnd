@@ -4,7 +4,6 @@
 package kvdb
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
@@ -16,17 +15,9 @@ const TestBackend = BoltBackendName
 
 var errEtcdNotAvailable = fmt.Errorf("etcd backend not available")
 
-// GetEtcdBackend is a stub returning nil and errEtcdNotAvailable error.
-func GetEtcdBackend(ctx context.Context, etcdConfig *etcd.Config) (
-	Backend, error) {
-
-	return nil, errEtcdNotAvailable
-}
-
-// GetTestEtcdBackend  is a stub returning nil, an empty closure and an
-// errEtcdNotAvailable error.
-func GetEtcdTestBackend(path string, clientPort, peerPort uint16) (
-	Backend, func(), error) {
+// StartEtcdTestBackend  is a stub returning nil, and errEtcdNotAvailable error.
+func StartEtcdTestBackend(path string, clientPort, peerPort uint16) (
+	*etcd.Config, func(), error) {
 
 	return nil, func() {}, errEtcdNotAvailable
 }
