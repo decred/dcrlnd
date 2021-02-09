@@ -4,6 +4,7 @@
 package etcd
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -22,13 +23,16 @@ func TestPutToEmpty(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	txQueue := NewCommitQueue(f.config.Ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	txQueue := NewCommitQueue(ctx)
 	defer func() {
+		cancel()
 		f.Cleanup()
 		txQueue.Wait()
 	}()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(ctx, f.BackendConfig())
 	require.NoError(t, err)
 
 	apply := func(stm STM) error {
@@ -46,8 +50,11 @@ func TestGetPutDel(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	txQueue := NewCommitQueue(f.config.Ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	txQueue := NewCommitQueue(ctx)
 	defer func() {
+		cancel()
 		f.Cleanup()
 		txQueue.Wait()
 	}()
@@ -64,7 +71,7 @@ func TestGetPutDel(t *testing.T) {
 		f.Put(kv.key, kv.val)
 	}
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(ctx, f.BackendConfig())
 	require.NoError(t, err)
 
 	apply := func(stm STM) error {
@@ -129,8 +136,11 @@ func TestFirstLastNextPrev(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	txQueue := NewCommitQueue(f.config.Ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	txQueue := NewCommitQueue(ctx)
 	defer func() {
+		cancel()
 		f.Cleanup()
 		txQueue.Wait()
 	}()
@@ -146,7 +156,7 @@ func TestFirstLastNextPrev(t *testing.T) {
 		f.Put(kv.key, kv.val)
 	}
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(ctx, f.BackendConfig())
 	require.NoError(t, err)
 
 	apply := func(stm STM) error {
@@ -284,13 +294,16 @@ func TestCommitError(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	txQueue := NewCommitQueue(f.config.Ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	txQueue := NewCommitQueue(ctx)
 	defer func() {
+		cancel()
 		f.Cleanup()
 		txQueue.Wait()
 	}()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(ctx, f.BackendConfig())
 	require.NoError(t, err)
 
 	// Preset DB state.
@@ -329,13 +342,16 @@ func TestManualTxError(t *testing.T) {
 	t.Parallel()
 
 	f := NewEtcdTestFixture(t)
-	txQueue := NewCommitQueue(f.config.Ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	txQueue := NewCommitQueue(ctx)
 	defer func() {
+		cancel()
 		f.Cleanup()
 		txQueue.Wait()
 	}()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(ctx, f.BackendConfig())
 	require.NoError(t, err)
 
 	// Preset DB state.

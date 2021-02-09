@@ -4,6 +4,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -16,7 +17,7 @@ func TestTxManualCommit(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	tx, err := db.BeginReadWriteTx()
@@ -56,7 +57,7 @@ func TestTxRollback(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	tx, err := db.BeginReadWriteTx()
@@ -80,7 +81,7 @@ func TestChangeDuringManualTx(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	tx, err := db.BeginReadWriteTx()
@@ -109,7 +110,7 @@ func TestChangeDuringUpdate(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	count := 0

@@ -4,6 +4,7 @@
 package etcd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/btcsuite/btcwallet/walletdb/walletdbtest"
@@ -14,5 +15,6 @@ import (
 func TestWalletDBInterface(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
-	walletdbtest.TestInterface(t, dbType, f.BackendConfig())
+	cfg := f.BackendConfig()
+	walletdbtest.TestInterface(t, dbType, context.TODO(), &cfg)
 }
