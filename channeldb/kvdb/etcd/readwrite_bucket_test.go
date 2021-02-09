@@ -4,6 +4,7 @@
 package etcd
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"testing"
@@ -18,7 +19,7 @@ func TestBucketCreation(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {
@@ -99,7 +100,7 @@ func TestBucketDeletion(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {
@@ -209,7 +210,7 @@ func TestBucketForEach(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {
@@ -285,7 +286,7 @@ func TestBucketForEachWithError(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {
@@ -375,7 +376,7 @@ func TestBucketSequence(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {
@@ -414,7 +415,7 @@ func TestKeyClash(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	// First:
@@ -482,7 +483,7 @@ func TestBucketCreateDelete(t *testing.T) {
 	f := NewEtcdTestFixture(t)
 	defer f.Cleanup()
 
-	db, err := newEtcdBackend(f.BackendConfig())
+	db, err := newEtcdBackend(context.TODO(), f.BackendConfig())
 	require.NoError(t, err)
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {

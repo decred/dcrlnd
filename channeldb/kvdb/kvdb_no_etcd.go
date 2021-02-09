@@ -6,6 +6,8 @@ package kvdb
 import (
 	"context"
 	"fmt"
+
+	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
 )
 
 // TestBackend is conditionally set to bdb when the kvdb_etcd build tag is
@@ -15,7 +17,7 @@ const TestBackend = BoltBackendName
 var errEtcdNotAvailable = fmt.Errorf("etcd backend not available")
 
 // GetEtcdBackend is a stub returning nil and errEtcdNotAvailable error.
-func GetEtcdBackend(ctx context.Context, etcdConfig *EtcdConfig) (
+func GetEtcdBackend(ctx context.Context, etcdConfig *etcd.Config) (
 	Backend, error) {
 
 	return nil, errEtcdNotAvailable
