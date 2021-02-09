@@ -190,6 +190,17 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 	}
 }
 
+// WalletExists returns whether a wallet exists on the file path the
+// UnlockerService is using.
+func (u *UnlockerService) WalletExists() (bool, error) {
+	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
+	loader := walletloader.NewLoader(
+		u.netParams, netDir, wallet.DefaultGapLimit,
+	)
+
+	return loader.WalletExists()
+}
+
 // GenSeed is the first method that should be used to instantiate a new lnd
 // instance. This method allows a caller to generate a new aezeed cipher seed
 // given an optional passphrase. If provided, the passphrase will be necessary
