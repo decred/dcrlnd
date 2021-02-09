@@ -15,8 +15,8 @@ const TestBackend = EtcdBackendName
 
 // GetEtcdBackend returns an etcd backend configured according to the
 // passed etcdConfig.
-func GetEtcdBackend(ctx context.Context, prefix string,
-	etcdConfig *EtcdConfig) (Backend, error) {
+func GetEtcdBackend(ctx context.Context, etcdConfig *EtcdConfig) (
+	Backend, error) {
 
 	// Config translation is needed here in order to keep the
 	// etcd package fully independent from the rest of the source tree.
@@ -29,7 +29,6 @@ func GetEtcdBackend(ctx context.Context, prefix string,
 		CertFile:           etcdConfig.CertFile,
 		KeyFile:            etcdConfig.KeyFile,
 		InsecureSkipVerify: etcdConfig.InsecureSkipVerify,
-		Prefix:             prefix,
 		Namespace:          etcdConfig.Namespace,
 		CollectCommitStats: etcdConfig.CollectStats,
 	}
