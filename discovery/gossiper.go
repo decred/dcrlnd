@@ -12,6 +12,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
+	"golang.org/x/time/rate"
 
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
@@ -23,6 +24,18 @@ import (
 	"github.com/decred/dcrlnd/routing"
 	"github.com/decred/dcrlnd/routing/route"
 	"github.com/decred/dcrlnd/ticker"
+)
+
+const (
+	// DefaultMaxChannelUpdateBurst is the default maximum number of updates
+	// for a specific channel and direction that we'll accept over an
+	// interval.
+	DefaultMaxChannelUpdateBurst = 10
+
+	// DefaultChannelUpdateInterval is the default interval we'll use to
+	// determine how often we should allow a new update for a specific
+	// channel and direction.
+	DefaultChannelUpdateInterval = time.Minute
 )
 
 var (
@@ -242,6 +255,15 @@ type Config struct {
 	// ActiveSync upon connection. These peers will never transition to
 	// PassiveSync.
 	PinnedSyncers PinnedSyncers
+
+	// MaxChannelUpdateBurst specifies the maximum number of updates for a
+	// specific channel and direction that we'll accept over an interval.
+	MaxChannelUpdateBurst int
+
+	// ChannelUpdateInterval specifies the interval we'll use to determine
+	// how often we should allow a new update for a specific channel and
+	// direction.
+	ChannelUpdateInterval time.Duration
 }
 
 // AuthenticatedGossiper is a subsystem which is responsible for receiving
@@ -318,12 +340,14 @@ type AuthenticatedGossiper struct {
 	// network.
 	reliableSender *reliableSender
 
-	// heightForLastChanUpdate keeps track of the height at which we
-	// processed the latest channel update for a specific direction.
+	// chanUpdateRateLimiter contains rate limiters for each direction of
+	// a channel update we've processed. We'll use these to determine
+	// whether we should accept a new update for a specific channel and
+	// direction.
 	//
 	// NOTE: This map must be synchronized with the main
 	// AuthenticatedGossiper lock.
-	heightForLastChanUpdate map[uint64][2]uint32
+	chanUpdateRateLimiter map[uint64][2]*rate.Limiter
 
 	sync.Mutex
 }
@@ -340,7 +364,7 @@ func New(cfg Config, selfKey *secp256k1.PublicKey) *AuthenticatedGossiper {
 		prematureChannelUpdates: make(map[uint64][]*networkMsg),
 		channelMtx:              multimutex.NewMutex(),
 		recentRejects:           make(map[uint64]struct{}),
-		heightForLastChanUpdate: make(map[uint64][2]uint32),
+		chanUpdateRateLimiter:   make(map[uint64][2]*rate.Limiter),
 	}
 
 	gossiper.syncMgr = newSyncManager(&SyncManagerCfg{
@@ -1960,21 +1984,32 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 					return nil
 				}
 			} else {
-				// If it's not, we'll only allow a single update
-				// for this channel per block.
+				// If it's not, we'll allow an update per minute
+				// with a maximum burst of 10. If we haven't
+				// seen an update for this channel before, we'll
+				// need to initialize a rate limiter for each
+				// direction.
 				d.Lock()
-				lastUpdateHeight := d.heightForLastChanUpdate[shortChanID.ToUint64()]
-				if lastUpdateHeight[direction] == d.bestHeight {
-					log.Debugf("Ignoring update for "+
-						"channel %s due to previous "+
-						"update occurring within the "+
-						"same block %v", shortChanID,
-						d.bestHeight)
-					d.Unlock()
+				rateLimiters, ok := d.chanUpdateRateLimiter[shortChanID.ToUint64()]
+				if !ok {
+					r := rate.Every(d.cfg.ChannelUpdateInterval)
+					b := d.cfg.MaxChannelUpdateBurst
+					rateLimiters = [2]*rate.Limiter{
+						rate.NewLimiter(r, b),
+						rate.NewLimiter(r, b),
+					}
+					d.chanUpdateRateLimiter[shortChanID.ToUint64()] = rateLimiters
+				}
+				d.Unlock()
+
+				if !rateLimiters[direction].Allow() {
+					log.Debugf("Rate limiting update for "+
+						"channel %v from direction %x",
+						shortChanID,
+						pubKey.SerializeCompressed())
 					nMsg.err <- nil
 					return nil
 				}
-				d.Unlock()
 			}
 		}
 
@@ -2020,15 +2055,6 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 			nMsg.err <- err
 			return nil
 		}
-
-		// With the edge successfully updated on disk, we'll note the
-		// current height so that we're able to rate limit any future
-		// updates for the same channel.
-		d.Lock()
-		lastUpdateHeight := d.heightForLastChanUpdate[shortChanID.ToUint64()]
-		lastUpdateHeight[direction] = d.bestHeight
-		d.heightForLastChanUpdate[shortChanID.ToUint64()] = lastUpdateHeight
-		d.Unlock()
 
 		// If this is a local ChannelUpdate without an AuthProof, it
 		// means it is an update to a channel that is not (yet)
