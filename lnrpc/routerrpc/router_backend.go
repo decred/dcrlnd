@@ -579,6 +579,14 @@ func (r *RouterBackend) extractIntentFromSendRequest(
 	}
 	payIntent.MaxParts = maxParts
 
+	// If this payment had a max shard amount specified, then we'll apply
+	// that now, which'll force us to always make payment splits smaller
+	// than this.
+	if rpcPayReq.MaxShardSizeMatoms > 0 {
+		shardAmtMAtoms := lnwire.MilliAtom(rpcPayReq.MaxShardSizeMatoms)
+		payIntent.MaxShardAmt = &shardAmtMAtoms
+	}
+
 	// Take fee limit from request.
 	payIntent.FeeLimit, err = lnrpc.UnmarshallAmt(
 		rpcPayReq.FeeLimitAtoms, rpcPayReq.FeeLimitMAtoms,
