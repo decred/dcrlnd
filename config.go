@@ -597,6 +597,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	cfg.Dcrwallet.CertPath = CleanAndExpandPath(cfg.Dcrwallet.CertPath)
 	cfg.Dcrwallet.ClientKeyPath = CleanAndExpandPath(cfg.Dcrwallet.ClientKeyPath)
 	cfg.Dcrwallet.ClientCertPath = CleanAndExpandPath(cfg.Dcrwallet.ClientCertPath)
+	cfg.BackupFilePath = CleanAndExpandPath(cfg.BackupFilePath)
 
 	// Create the lnd directory and all other sub directories if they don't
 	// already exist. This makes sure that directory trees are also created
