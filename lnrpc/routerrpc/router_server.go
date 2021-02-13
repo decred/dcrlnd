@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntypes"
@@ -113,6 +114,10 @@ var (
 			Action: "read",
 		}},
 		"/routerrpc.Router/HtlcInterceptor": {{
+			Entity: "offchain",
+			Action: "write",
+		}},
+		"/routerrpc.Router/UpdateChanStatus": {{
 			Entity: "offchain",
 			Action: "write",
 		}},
@@ -699,9 +704,43 @@ func (s *Server) HtlcInterceptor(stream Router_HtlcInterceptorServer) error {
 	return newForwardInterceptor(s, stream).run()
 }
 
+func extractOutPoint(req *UpdateChanStatusRequest) (*wire.OutPoint, error) {
+	chanPoint := req.GetChanPoint()
+	txid, err := lnrpc.GetChanPointFundingTxid(chanPoint)
+	if err != nil {
+		return nil, err
+	}
+	index := chanPoint.OutputIndex
+	return wire.NewOutPoint(txid, index, wire.TxTreeRegular), nil
+}
+
 // UpdateChanStatus allows channel state to be set manually.
 func (s *Server) UpdateChanStatus(ctx context.Context,
 	req *UpdateChanStatusRequest) (*UpdateChanStatusResponse, error) {
 
-	return nil, fmt.Errorf("unimplemented")
+	outPoint, err := extractOutPoint(req)
+	if err != nil {
+		return nil, err
+	}
+
+	action := req.GetAction()
+
+	log.Debugf("UpdateChanStatus called for channel(%v) with "+
+		"action %v", outPoint, action)
+
+	switch action {
+	case ChanStatusAction_ENABLE:
+		err = s.cfg.RouterBackend.SetChannelEnabled(*outPoint)
+	case ChanStatusAction_DISABLE:
+		err = s.cfg.RouterBackend.SetChannelDisabled(*outPoint)
+	case ChanStatusAction_AUTO:
+		err = s.cfg.RouterBackend.SetChannelAuto(*outPoint)
+	default:
+		err = fmt.Errorf("unrecognized ChannelStatusAction %v", action)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return &UpdateChanStatusResponse{}, nil
 }
