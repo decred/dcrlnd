@@ -7,7 +7,6 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
@@ -109,7 +108,7 @@ func testMultiHopHtlcLocalTimeout(net *lntest.NetworkHarness, t *harnessTest,
 		expectedTxes = 2
 	}
 
-	bobFundingTxid, err := dcrlnd.GetChanPointFundingTxid(bobChanPoint)
+	bobFundingTxid, err := lnrpc.GetChanPointFundingTxid(bobChanPoint)
 	require.NoError(t.t, err)
 	_, err = waitForNTxsInMempool(
 		net.Miner.Node, expectedTxes, minerMempoolTimeout,

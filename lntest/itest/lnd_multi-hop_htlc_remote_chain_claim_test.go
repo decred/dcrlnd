@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/invoicesrpc"
@@ -159,7 +158,7 @@ func testMultiHopHtlcRemoteChainClaim(net *lntest.NetworkHarness, t *harnessTest
 		net.Miner.Node, expectedTxes, minerMempoolTimeout,
 	)
 	require.NoError(t.t, err)
-	bobFundingTxid, err := dcrlnd.GetChanPointFundingTxid(bobChanPoint)
+	bobFundingTxid, err := lnrpc.GetChanPointFundingTxid(bobChanPoint)
 	require.NoError(t.t, err)
 	carolFundingPoint := wire.OutPoint{
 		Hash:  *bobFundingTxid,
