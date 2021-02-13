@@ -621,6 +621,13 @@ func newRPCServer(cfg *Config, s *server, macService *macaroons.Service,
 		DefaultFinalCltvDelta:  uint16(cfg.Decred.TimeLockDelta),
 		SubscribeHtlcEvents:    s.htlcNotifier.SubscribeHtlcEvents,
 		InterceptableForwarder: s.interceptableSwitch,
+		SetChannelEnabled: func(outpoint wire.OutPoint) error {
+			return s.chanStatusMgr.RequestEnable(outpoint, true)
+		},
+		SetChannelDisabled: func(outpoint wire.OutPoint) error {
+			return s.chanStatusMgr.RequestDisable(outpoint, true)
+		},
+		SetChannelAuto: s.chanStatusMgr.RequestAuto,
 	}
 
 	genInvoiceFeatures := func() *lnwire.FeatureVector {
