@@ -1106,13 +1106,8 @@ func newHopNetwork() *hopNetwork {
 	}
 	obfuscator := NewMockObfuscator()
 
-	feeEstimator := &mockFeeEstimator{
-		byteFeeIn: make(chan chainfee.AtomPerKByte),
-		quit:      make(chan struct{}),
-	}
-
 	return &hopNetwork{
-		feeEstimator: feeEstimator,
+		feeEstimator: newMockFeeEstimator(),
 		globalPolicy: globalPolicy,
 		obfuscator:   obfuscator,
 		defaultDelta: defaultDelta,

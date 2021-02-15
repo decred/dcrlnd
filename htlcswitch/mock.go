@@ -74,6 +74,13 @@ type mockFeeEstimator struct {
 	quit chan struct{}
 }
 
+func newMockFeeEstimator() *mockFeeEstimator {
+	return &mockFeeEstimator{
+		byteFeeIn: make(chan chainfee.AtomPerKByte),
+		quit:      make(chan struct{}),
+	}
+}
+
 func (m *mockFeeEstimator) EstimateFeePerKB(
 	numBlocks uint32) (chainfee.AtomPerKByte, error) {
 
