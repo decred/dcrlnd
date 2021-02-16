@@ -2306,7 +2306,7 @@ func (p *Brontide) reenableActiveChannels() {
 	// disabled bit to false and send out a new ChannelUpdate. If this
 	// channel is already active, the update won't be sent.
 	for _, chanPoint := range activePublicChans {
-		err := p.cfg.ChanStatusMgr.RequestEnable(chanPoint)
+		err := p.cfg.ChanStatusMgr.RequestEnable(chanPoint, false)
 		if err != nil {
 			peerLog.Errorf("Unable to enable channel %v: %v",
 				chanPoint, err)
@@ -2385,7 +2385,9 @@ func (p *Brontide) fetchActiveChanCloser(chanID lnwire.ChannelID) (
 				Channel:           channel,
 				UnregisterChannel: p.cfg.Switch.RemoveLink,
 				BroadcastTx:       p.cfg.Wallet.PublishTransaction,
-				DisableChannel:    p.cfg.ChanStatusMgr.RequestDisable,
+				DisableChannel: func(chanPoint wire.OutPoint) error {
+					return p.cfg.ChanStatusMgr.RequestDisable(chanPoint, false)
+				},
 				Disconnect: func() error {
 					return p.cfg.DisconnectPeer(p.IdentityKey())
 				},
@@ -2501,7 +2503,9 @@ func (p *Brontide) handleLocalCloseReq(req *htlcswitch.ChanClose) {
 				Channel:           channel,
 				UnregisterChannel: p.cfg.Switch.RemoveLink,
 				BroadcastTx:       p.cfg.Wallet.PublishTransaction,
-				DisableChannel:    p.cfg.ChanStatusMgr.RequestDisable,
+				DisableChannel: func(chanPoint wire.OutPoint) error {
+					return p.cfg.ChanStatusMgr.RequestDisable(chanPoint, false)
+				},
 				Disconnect: func() error {
 					return p.cfg.DisconnectPeer(p.IdentityKey())
 				},
