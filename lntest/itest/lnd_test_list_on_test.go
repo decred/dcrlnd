@@ -93,6 +93,10 @@ var allTestCases = []*testCase{
 		test: testListChannels,
 	},
 	{
+		name: "update channel status",
+		test: testUpdateChanStatus,
+	},
+	{
 		name: "list outgoing payments",
 		test: testListPayments,
 	},
