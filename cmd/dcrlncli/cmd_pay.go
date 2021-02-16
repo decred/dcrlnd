@@ -14,9 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lntypes"
+	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
 	"github.com/decred/dcrlnd/routing/route"
 	"github.com/jedib0t/go-pretty/table"
@@ -62,7 +64,7 @@ var (
 		Name: "max_parts",
 		Usage: "the maximum number of partial payments that may be " +
 			"used",
-		Value: 1,
+		Value: routerrpc.DefaultMaxParts,
 	}
 
 	jsonFlag = cli.BoolFlag{
@@ -70,6 +72,20 @@ var (
 		Usage: "if set, payment updates are printed as json " +
 			"messages. Set by default on Windows because table " +
 			"formatting is unsupported.",
+	}
+
+	maxShardSizeAtomsFlag = cli.UintFlag{
+		Name: "max_shard_size_atoms",
+		Usage: "the largest payment split that should be attempted if " +
+			"payment splitting is required to attempt a payment, " +
+			"specified in atoms",
+	}
+
+	maxShardSizeMatomsFlag = cli.UintFlag{
+		Name: "max_shard_size_matoms",
+		Usage: "the largest payment split that should be attempted if " +
+			"payment splitting is required to attempt a payment, " +
+			"specified in milli-atoms",
 	}
 )
 
@@ -115,6 +131,7 @@ func paymentFlags() []cli.Flag {
 			Usage: "Allow sending a circular payment to self",
 		},
 		dataFlag, inflightUpdatesFlag, maxPartsFlag, jsonFlag,
+		maxShardSizeAtomsFlag, maxShardSizeMatomsFlag,
 	}
 }
 
@@ -357,6 +374,23 @@ func sendPaymentRequest(ctx *cli.Context,
 	req.AllowSelfPayment = ctx.Bool("allow_self_payment")
 
 	req.MaxParts = uint32(ctx.Uint(maxPartsFlag.Name))
+
+	switch {
+	// If the max shard size is specified, then it should either be in sat
+	// or msat, but not both.
+	case ctx.Uint64(maxShardSizeMatomsFlag.Name) != 0 &&
+		ctx.Uint64(maxShardSizeAtomsFlag.Name) != 0:
+		return fmt.Errorf("only --max_split_size_matoms or " +
+			"--max_split_size_atoms should be set, but not both")
+
+	case ctx.Uint64(maxShardSizeMatomsFlag.Name) != 0:
+		req.MaxShardSizeMatoms = ctx.Uint64(maxShardSizeMatomsFlag.Name)
+
+	case ctx.Uint64(maxShardSizeAtomsFlag.Name) != 0:
+		req.MaxShardSizeMatoms = uint64(lnwire.NewMAtomsFromAtoms(
+			dcrutil.Amount(ctx.Uint64(maxShardSizeAtomsFlag.Name)),
+		))
+	}
 
 	// Parse custom data records.
 	data := ctx.String(dataFlag.Name)
