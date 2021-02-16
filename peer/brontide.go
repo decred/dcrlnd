@@ -2307,7 +2307,10 @@ func (p *Brontide) reenableActiveChannels() {
 	// channel is already active, the update won't be sent.
 	for _, chanPoint := range activePublicChans {
 		err := p.cfg.ChanStatusMgr.RequestEnable(chanPoint, false)
-		if err != nil {
+		if err == netann.ErrEnableManuallyDisabledChan {
+			peerLog.Debugf("Channel(%v) was manually disabled, ignoring "+
+				"automatic enable request", chanPoint)
+		} else if err != nil {
 			peerLog.Errorf("Unable to enable channel %v: %v",
 				chanPoint, err)
 		}
