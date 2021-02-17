@@ -207,6 +207,10 @@ unit-only:
 
 unit: dcrd dcrwallet unit-only
 
+unit-debug: dcrd
+	@$(call print, "Running debug unit tests.")
+	$(UNIT_DEBUG)
+
 unit-cover: $(GOACC_BIN)
 	@$(call print, "Running unit coverage tests.")
 	$(GOACC_BIN) $(COVER_PKG) -- -test.tags="$(DEV_TAGS) $(LOG_TAGS)"
@@ -342,6 +346,7 @@ clean-mobile:
 	itest-only \
 	itest \
 	unit \
+	unit-debug \
 	unit-cover \
 	unit-race \
 	falafel \
