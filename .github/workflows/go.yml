@@ -6,18 +6,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [1.14, 1.15]
+        go: [1.15, 1.16]
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
 
       - name: Check out source
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Install Linters
-        run: "curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.8"
+        run: "curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.0"
 
       - name: Check golangci-lint version
         run: $(go env GOPATH)/bin/golangci-lint --version
@@ -31,7 +31,6 @@ jobs:
         env:
           GO111MODULE: "on"
         run: |
-          export PATH=${PATH}:$(go env GOPATH)/bin
           golangci-lint run --disable-all --deadline=10m --skip-files="mobile\\/.*generated\\.go" --enable=gofmt --enable=vet --enable=gosimple --enable=unconvert --enable=ineffassign --enable=unused
 
       - name: Package test binaries
@@ -52,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [1.14]
+        go: [1.16]
         testsuite: ["unit-race", "itest-only", "itest-only walletimpl=remotewallet", "itest-only walletimpl=embeddedwallet_dcrw", "itest-only walletimpl=remotewallet backend=spv"]
     steps:
       - name: Set up Go
