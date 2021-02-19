@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/dcrec/secp256k1/v2"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
@@ -323,7 +323,7 @@ func ReadElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		priv, _ := secp256k1.PrivKeyFromBytes(b[:])
+		priv := secp256k1.PrivKeyFromBytes(b[:])
 		*e = priv
 
 	case **secp256k1.PublicKey:
