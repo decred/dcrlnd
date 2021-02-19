@@ -17,6 +17,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/migration13"
 	"github.com/decred/dcrlnd/channeldb/migration16"
 	"github.com/decred/dcrlnd/channeldb/migration20"
+	"github.com/decred/dcrlnd/channeldb/migration21"
 	"github.com/decred/dcrlnd/channeldb/migration_01_to_11"
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/lnwire"
@@ -181,6 +182,12 @@ var (
 			// Migrate some data to the outpoint index.
 			number:    20,
 			migration: migration20.MigrateOutpointIndex,
+		},
+		{
+			// Migrate to length prefixed wire messages everywhere
+			// in the database.
+			number:    21,
+			migration: migration21.MigrateDatabaseWireMessages,
 		},
 	}
 
