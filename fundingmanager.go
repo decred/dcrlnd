@@ -1374,7 +1374,10 @@ func (f *fundingManager) handleFundingOpen(fmsg *fundingOpenMsg) {
 	shutdown, err := getUpfrontShutdownScript(
 		f.cfg.EnableUpfrontShutdown, fmsg.peer, nil,
 		func() (lnwire.DeliveryAddress, error) {
-			addr, err := f.cfg.Wallet.NewAddress(lnwallet.WitnessPubKey, false)
+			addr, err := f.cfg.Wallet.NewAddress(
+				lnwallet.WitnessPubKey, false,
+				lnwallet.DefaultAccountName,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -3158,6 +3161,7 @@ func (f *fundingManager) handleInitFundingMsg(msg *initFundingMsg) {
 		func() (lnwire.DeliveryAddress, error) {
 			addr, err := f.cfg.Wallet.NewAddress(
 				lnwallet.PubKeyHash, false,
+				lnwallet.DefaultAccountName,
 			)
 			if err != nil {
 				return nil, err

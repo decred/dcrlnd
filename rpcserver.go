@@ -1378,14 +1378,14 @@ func (r *rpcServer) NewAddress(ctx context.Context,
 	switch in.Type {
 	case lnrpc.AddressType_PUBKEY_HASH:
 		addr, err = r.server.cc.wallet.NewAddress(
-			lnwallet.PubKeyHash, false,
+			lnwallet.PubKeyHash, false, lnwallet.DefaultAccountName,
 		)
 		if err != nil {
 			return nil, err
 		}
 	case lnrpc.AddressType_UNUSED_PUBKEY_HASH:
 		addr, err = r.server.cc.wallet.LastUnusedAddress(
-			lnwallet.PubKeyHash,
+			lnwallet.PubKeyHash, lnwallet.DefaultAccountName,
 		)
 		if err != nil {
 			return nil, err

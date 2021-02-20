@@ -15,7 +15,7 @@ import (
 type onchainAddrSourcer interface {
 	// NewAddress must return the next usable onchain address for the
 	// wallet.
-	NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Address, error)
+	NewAddress(t lnwallet.AddressType, change bool, accountName string) (stdaddr.Address, error)
 
 	// Bip44AddressInfo returns the respective account, branch and index
 	// for the given wallet address.
@@ -139,7 +139,7 @@ func (kr *remoteWalletKeyRing) nextIndex(keyFam keychain.KeyFamily) (uint32, err
 		// lightning wallet.
 		branchInternal := keyFam == keychain.KeyFamilyPaymentBase
 		addr, err := kr.onchainAddrs.NewAddress(
-			lnwallet.PubKeyHash, branchInternal,
+			lnwallet.PubKeyHash, branchInternal, lnwallet.DefaultAccountName,
 		)
 		if err != nil {
 			return 0, err

@@ -235,7 +235,7 @@ func (b *DcrWallet) ConfirmedBalance(confs int32) (dcrutil.Amount, error) {
 // returned.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Address, error) {
+func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool, accountName string) (stdaddr.Address, error) {
 
 	switch t {
 	case lnwallet.PubKeyHash:
@@ -244,13 +244,22 @@ func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Add
 		return nil, fmt.Errorf("unknown address type")
 	}
 
+	var acctNb = b.account
+	if accountName != lnwallet.DefaultAccountName {
+		res, err := b.wallet.AccountNumber(context.Background(), &pb.AccountNumberRequest{AccountName: accountName})
+		if err != nil {
+			return nil, fmt.Errorf("unknown account named %s: %v", accountName, err)
+		}
+		acctNb = res.AccountNumber
+	}
+
 	kind := pb.NextAddressRequest_BIP0044_EXTERNAL
 	if change {
 		kind = pb.NextAddressRequest_BIP0044_INTERNAL
 	}
 	req := &pb.NextAddressRequest{
 		Kind:      kind,
-		Account:   b.account,
+		Account:   acctNb,
 		GapPolicy: pb.NextAddressRequest_GAP_POLICY_WRAP,
 	}
 	resp, err := b.wallet.NextAddress(context.Background(), req)
@@ -271,7 +280,7 @@ func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Add
 // worry about "address inflation" caused by continual refreshing. Similar to
 // NewAddress it can derive a specified address type, and also optionally a
 // change address.
-func (b *DcrWallet) LastUnusedAddress(addrType lnwallet.AddressType) (
+func (b *DcrWallet) LastUnusedAddress(addrType lnwallet.AddressType, accountName string) (
 	stdaddr.Address, error) {
 
 	switch addrType {
