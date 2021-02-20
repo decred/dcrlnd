@@ -268,7 +268,7 @@ func (w *WalletKit) ListUnspent(ctx context.Context,
 	var utxos []*lnwallet.Utxo
 	err = w.cfg.CoinSelectionLocker.WithCoinSelectLock(func() error {
 		utxos, err = w.cfg.Wallet.ListUnspentWitness(
-			minConfs, maxConfs, "",
+			minConfs, maxConfs, req.Account,
 		)
 		return err
 	})
@@ -407,8 +407,13 @@ func (w *WalletKit) DeriveKey(ctx context.Context,
 func (w *WalletKit) NextAddr(ctx context.Context,
 	req *AddrRequest) (*AddrResponse, error) {
 
+	account := lnwallet.DefaultAccountName
+	if req.Account != "" {
+		account = req.Account
+	}
+
 	addr, err := w.cfg.Wallet.NewAddress(
-		lnwallet.PubKeyHash, false, lnwallet.DefaultAccountName,
+		lnwallet.PubKeyHash, false, account,
 	)
 	if err != nil {
 		return nil, err
