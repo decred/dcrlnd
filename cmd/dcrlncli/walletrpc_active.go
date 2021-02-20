@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -13,6 +14,20 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/walletrpc"
 	"github.com/urfave/cli"
+)
+
+var (
+	// accountsCommand is a wallet subcommand that is responsible for
+	// account management operations.
+	accountsCommand = cli.Command{
+		Name:  "accounts",
+		Usage: "Interact with wallet accounts.",
+		Subcommands: []cli.Command{
+			listAccountsCommand,
+			importAccountCommand,
+			importPubKeyCommand,
+		},
+	}
 )
 
 // walletCommands will return the set of commands to enable for walletrpc
@@ -30,8 +45,25 @@ func walletCommands() []cli.Command {
 				bumpCloseFeeCommand,
 				listSweepsCommand,
 				labelTxCommand,
+				accountsCommand,
 			},
 		},
+	}
+}
+
+func parseAddrType(addrTypeStr string) (walletrpc.AddressType, error) {
+	switch addrTypeStr {
+	case "":
+		return walletrpc.AddressType_UNKNOWN, nil
+	case "p2wkh":
+		return walletrpc.AddressType_WITNESS_PUBKEY_HASH, nil
+	case "np2wkh":
+		return walletrpc.AddressType_NESTED_WITNESS_PUBKEY_HASH, nil
+	case "np2wkh-p2wkh":
+		return walletrpc.AddressType_HYBRID_NESTED_WITNESS_PUBKEY_HASH, nil
+	default:
+		return 0, errors.New("invalid address type, supported address " +
+			"types are: p2wkh, np2wkh, and np2wkh-p2wkh")
 	}
 }
 
@@ -395,5 +427,139 @@ func labelTransaction(ctx *cli.Context) error {
 
 	fmt.Printf("Transaction: %v labelled with: %v\n", txid, label)
 
+	return nil
+}
+
+var listAccountsCommand = cli.Command{
+	Name:  "list",
+	Usage: "Retrieve information of existing on-chain wallet accounts.",
+	Description: `
+	ListAccounts retrieves all accounts belonging to the wallet by default.
+	A name scope filter can be provided to filter through all of the wallet
+	accounts and return only those matching.
+	`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name: "name",
+			Usage: "(optional) only accounts matching this name " +
+				"are returned",
+		},
+	},
+	Action: actionDecorator(listAccounts),
+}
+
+func listAccounts(ctx *cli.Context) error {
+	ctxb := context.Background()
+
+	// Display the command's help message if we do not have the expected
+	// number of arguments/flags.
+	if ctx.NArg() > 0 || ctx.NumFlags() > 2 {
+		return cli.ShowCommandHelp(ctx, "list")
+	}
+
+	walletClient, cleanUp := getWalletClient(ctx)
+	defer cleanUp()
+
+	req := &walletrpc.ListAccountsRequest{
+		Name: ctx.String("name"),
+	}
+	resp, err := walletClient.ListAccounts(ctxb, req)
+	if err != nil {
+		return err
+	}
+
+	printRespJSON(resp)
+
+	return nil
+}
+
+var importAccountCommand = cli.Command{
+	Name: "import",
+	Usage: "Import an on-chain account into the wallet through its " +
+		"extended public key.",
+	ArgsUsage: "extended_public_key name",
+	Description: `
+	Imports an account backed by an account extended public key.
+
+	NOTE: Events (deposits/spends) for keys derived from an account will
+	only be detected by lnd if they happen after the import. Rescans to
+	detect past events will be supported later on.
+	`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name: "master_key_fingerprint",
+			Usage: "(optional) the fingerprint of the root key " +
+				"(derivation path m/) corresponding to the " +
+				"account public key",
+		},
+	},
+	Action: actionDecorator(importAccount),
+}
+
+func importAccount(ctx *cli.Context) error {
+	ctxb := context.Background()
+
+	// Display the command's help message if we do not have the expected
+	// number of arguments/flags.
+	if ctx.NArg() != 2 || ctx.NumFlags() > 2 {
+		return cli.ShowCommandHelp(ctx, "import")
+	}
+
+	walletClient, cleanUp := getWalletClient(ctx)
+	defer cleanUp()
+
+	req := &walletrpc.ImportAccountRequest{
+		Name:              ctx.Args().Get(1),
+		ExtendedPublicKey: ctx.Args().Get(0),
+	}
+	resp, err := walletClient.ImportAccount(ctxb, req)
+	if err != nil {
+		return err
+	}
+
+	printRespJSON(resp)
+	return nil
+}
+
+var importPubKeyCommand = cli.Command{
+	Name:      "import-pubkey",
+	Usage:     "Import a public key as watch-only into the wallet.",
+	ArgsUsage: "public_key",
+	Description: `
+	Imports a public key represented in hex as watch-only into the wallet.
+
+	NOTE: Events (deposits/spends) for a key will only be detected by lnd if
+	they happen after the import. Rescans to detect past events will be
+	supported later on.
+	`,
+	Action: actionDecorator(importPubKey),
+}
+
+func importPubKey(ctx *cli.Context) error {
+	ctxb := context.Background()
+
+	// Display the command's help message if we do not have the expected
+	// number of arguments/flags.
+	if ctx.NArg() != 2 || ctx.NumFlags() > 0 {
+		return cli.ShowCommandHelp(ctx, "import-pubkey")
+	}
+
+	pubKeyBytes, err := hex.DecodeString(ctx.Args().Get(0))
+	if err != nil {
+		return err
+	}
+
+	walletClient, cleanUp := getWalletClient(ctx)
+	defer cleanUp()
+
+	req := &walletrpc.ImportPublicKeyRequest{
+		PublicKey: pubKeyBytes,
+	}
+	resp, err := walletClient.ImportPublicKey(ctxb, req)
+	if err != nil {
+		return err
+	}
+
+	printRespJSON(resp)
 	return nil
 }
