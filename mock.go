@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"decred.org/dcrwallet/v2/wallet"
 	"decred.org/dcrwallet/v2/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -14,6 +15,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4/sign"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
@@ -377,6 +379,16 @@ func (*mockWalletController) Start() error {
 	return nil
 }
 func (*mockWalletController) Stop() error {
+	return nil
+}
+func (*mockWalletController) ListAccounts(accountName string) ([]wallet.AccountProperties, error) {
+	return nil, nil
+}
+func (*mockWalletController) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error {
+	return nil
+}
+
+func (*mockWalletController) ImportPublicKey(pubKey *secp256k1.PublicKey) error {
 	return nil
 }
 
