@@ -107,6 +107,13 @@ var newAddressCommand = cli.Command{
 	Category:  "Wallet",
 	Usage:     "Generates a new address.",
 	ArgsUsage: "address-type",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name: "account",
+			Usage: "(optional) the name of the account to " +
+				"generate a new address for",
+		},
+	},
 	Description: `
 	Generate a wallet new address. Address-types has to be:
 	    - p2pkh: Pay to public key hash(default)`,
@@ -117,10 +124,15 @@ func newAddress(ctx *cli.Context) error {
 	client, cleanUp := getClient(ctx)
 	defer cleanUp()
 
-	stringAddrType := ctx.Args().First()
+	// Display the command's help message if we do not have the expected
+	// number of arguments/flags.
+	if ctx.NArg() != 1 || ctx.NumFlags() > 1 {
+		return cli.ShowCommandHelp(ctx, "newaddress")
+	}
 
 	// Map the string encoded address type, to the concrete typed address
 	// type enum. An unrecognized address type will result in an error.
+	stringAddrType := ctx.Args().First()
 	var addrType lnrpc.AddressType
 	switch stringAddrType { // TODO(roasbeef): make them ints on the cli?
 	case "p2pkh":
@@ -134,7 +146,8 @@ func newAddress(ctx *cli.Context) error {
 
 	ctxb := context.Background()
 	addr, err := client.NewAddress(ctxb, &lnrpc.NewAddressRequest{
-		Type: addrType,
+		Type:    addrType,
+		Account: ctx.String("account"),
 	})
 	if err != nil {
 		return err
