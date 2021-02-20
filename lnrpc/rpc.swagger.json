@@ -1533,7 +1533,7 @@
         "parameters": [
           {
             "name": "type",
-            "description": "The address type.",
+            "description": "The type of address to generate.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -1545,6 +1545,13 @@
               "UNUSED_PUBKEY_HASH"
             ],
             "default": "WITNESS_PUBKEY_HASH"
+          },
+          {
+            "name": "account",
+            "description": "The name of the account to generate a new address for. If empty, the\ndefault wallet account is used.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1924,6 +1931,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "account",
+            "description": "An optional filter to only include transactions relevant to an account.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2072,6 +2086,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "account",
+            "description": "An optional filter to only include transactions relevant to an account.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2114,6 +2135,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "account",
+            "description": "An optional filter to only include outputs belonging to an account.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

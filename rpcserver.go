@@ -1109,7 +1109,7 @@ func (r *rpcServer) ListUnspent(ctx context.Context,
 	var utxos []*lnwallet.Utxo
 	err = r.server.cc.wallet.WithCoinSelectLock(func() error {
 		utxos, err = r.server.cc.wallet.ListUnspentWitness(
-			minConfs, maxConfs, "",
+			minConfs, maxConfs, in.Account,
 		)
 		return err
 	})
@@ -1369,6 +1369,12 @@ func (r *rpcServer) SendMany(ctx context.Context,
 func (r *rpcServer) NewAddress(ctx context.Context,
 	in *lnrpc.NewAddressRequest) (*lnrpc.NewAddressResponse, error) {
 
+	// Always use the default wallet account unless one was specified.
+	account := lnwallet.DefaultAccountName
+	if in.Account != "" {
+		account = in.Account
+	}
+
 	// Translate the gRPC proto address type to the wallet controller's
 	// available address types.
 	var (
@@ -1378,14 +1384,14 @@ func (r *rpcServer) NewAddress(ctx context.Context,
 	switch in.Type {
 	case lnrpc.AddressType_PUBKEY_HASH:
 		addr, err = r.server.cc.wallet.NewAddress(
-			lnwallet.PubKeyHash, false, lnwallet.DefaultAccountName,
+			lnwallet.PubKeyHash, false, account,
 		)
 		if err != nil {
 			return nil, err
 		}
 	case lnrpc.AddressType_UNUSED_PUBKEY_HASH:
 		addr, err = r.server.cc.wallet.LastUnusedAddress(
-			lnwallet.PubKeyHash, lnwallet.DefaultAccountName,
+			lnwallet.PubKeyHash, account,
 		)
 		if err != nil {
 			return nil, err
@@ -1395,7 +1401,8 @@ func (r *rpcServer) NewAddress(ctx context.Context,
 		return nil, fmt.Errorf("unsupported address type %s", in.Type)
 	}
 
-	rpcsLog.Debugf("[newaddress] type=%v addr=%v", in.Type, addr.String())
+	rpcsLog.Debugf("[newaddress] account=%v type=%v addr=%v", account,
+		in.Type, addr.String())
 	return &lnrpc.NewAddressResponse{Address: addr.String()}, nil
 }
 
@@ -5117,7 +5124,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 	}
 
 	transactions, err := r.server.cc.wallet.ListTransactionDetails(
-		req.StartHeight, endHeight, "",
+		req.StartHeight, endHeight, req.Account,
 	)
 	if err != nil {
 		return nil, err
