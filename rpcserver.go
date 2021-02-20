@@ -2792,34 +2792,75 @@ func (r *rpcServer) SubscribePeerEvents(req *lnrpc.PeerEventSubscription,
 func (r *rpcServer) WalletBalance(ctx context.Context,
 	in *lnrpc.WalletBalanceRequest) (*lnrpc.WalletBalanceResponse, error) {
 
-	// Get total balance, from txs that have >= 0 confirmations.
-	totalBal, err := r.server.cc.wallet.ConfirmedBalance(
-		0, lnwallet.DefaultAccountName,
-	)
+	// Retrieve all existing wallet accounts. We'll compute the confirmed
+	// and unconfirmed balance for each and tally them up.
+	accounts, err := r.server.cc.wallet.ListAccounts("")
 	if err != nil {
 		return nil, err
 	}
 
-	// Get confirmed balance, from txs that have >= 1 confirmations.
-	// TODO(halseth): get both unconfirmed and confirmed balance in one
-	// call, as this is racy.
-	confirmedBal, err := r.server.cc.wallet.ConfirmedBalance(
-		1, lnwallet.DefaultAccountName,
+	var totalBalance, confirmedBalance, unconfirmedBalance dcrutil.Amount
+	rpcAccountBalances := make(
+		map[string]*lnrpc.WalletAccountBalance, len(accounts),
 	)
-	if err != nil {
-		return nil, err
-	}
+	for _, account := range accounts {
+		switch account.AccountName {
+		case "imported":
+			// Omit the imported account from the response unless we
+			// actually have any keys imported.
+			if account.ImportedKeyCount == 0 {
+				continue
+			}
 
-	// Get unconfirmed balance, from txs with 0 confirmations.
-	unconfirmedBal := totalBal - confirmedBal
+			fallthrough
+
+		case lnwallet.DefaultAccountName:
+			if _, ok := rpcAccountBalances[account.AccountName]; ok {
+				continue
+			}
+
+		default:
+		}
+
+		// Get total balance, from txs that have >= 0 confirmations.
+		totalBal, err := r.server.cc.wallet.ConfirmedBalance(
+			0, account.AccountName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		totalBalance += totalBal
+
+		// Get confirmed balance, from txs that have >= 1 confirmations.
+		// TODO(halseth): get both unconfirmed and confirmed balance in
+		// one call, as this is racy.
+		confirmedBal, err := r.server.cc.wallet.ConfirmedBalance(
+			1, account.AccountName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		confirmedBalance += confirmedBal
+
+		// Get unconfirmed balance, from txs with 0 confirmations.
+		unconfirmedBal := totalBal - confirmedBal
+		unconfirmedBalance += unconfirmedBal
+
+		rpcAccountBalances[account.AccountName] = &lnrpc.WalletAccountBalance{
+			ConfirmedBalance:   int64(confirmedBal),
+			UnconfirmedBalance: int64(unconfirmedBal),
+		}
+	}
 
 	rpcsLog.Debugf("[walletbalance] Total balance=%v (confirmed=%v, "+
-		"unconfirmed=%v)", totalBal, confirmedBal, unconfirmedBal)
+		"unconfirmed=%v)", totalBalance, confirmedBalance,
+		unconfirmedBalance)
 
 	return &lnrpc.WalletBalanceResponse{
-		TotalBalance:       int64(totalBal),
-		ConfirmedBalance:   int64(confirmedBal),
-		UnconfirmedBalance: int64(unconfirmedBal),
+		TotalBalance:       int64(totalBalance),
+		ConfirmedBalance:   int64(confirmedBalance),
+		UnconfirmedBalance: int64(unconfirmedBalance),
+		AccountBalance:     rpcAccountBalances,
 	}, nil
 }
 
