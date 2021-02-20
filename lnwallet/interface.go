@@ -6,10 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"decred.org/dcrwallet/v2/wallet"
 	"decred.org/dcrwallet/v2/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
@@ -198,6 +200,24 @@ type WalletController interface {
 
 	// IsOurAddress checks if the passed address belongs to this wallet
 	IsOurAddress(a stdaddr.Address) bool
+
+	// ListAccounts retrieves all accounts belonging to the wallet by
+	// default. A name  filter can be provided to filter through all of the
+	// wallet accounts and return only those matching.
+	ListAccounts(string) ([]wallet.AccountProperties, error)
+
+	// ImportAccount imports an account backed by an account extended public
+	// key. The master key fingerprint denotes the fingerprint of the root
+	// key corresponding to the account public key (also known as the key
+	// with derivation path m/). This may be required by some hardware
+	// wallets for proper identification and signing.
+	//
+	// The address type can usually be inferred from the key's version, but
+	// may be required for certain keys to map them into the proper scope.
+	ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error
+
+	// ImportPublicKey imports a single derived public key into the wallet.
+	ImportPublicKey(pubKey *secp256k1.PublicKey) error
 
 	// SendOutputs funds, signs, and broadcasts a Decred transaction paying
 	// out to the specified outputs. In the case the wallet has insufficient

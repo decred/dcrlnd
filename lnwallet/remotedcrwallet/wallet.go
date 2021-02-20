@@ -12,12 +12,14 @@ import (
 	"time"
 
 	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
+	base "decred.org/dcrwallet/v2/wallet"
 	"google.golang.org/grpc"
 
 	"decred.org/dcrwallet/v2/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4"
@@ -1197,4 +1199,60 @@ func (b *DcrWallet) ReleaseOutput(lnwallet.LockID, wire.OutPoint) error {
 // This is a part of the WalletController interface.
 func (b *DcrWallet) GetRecoveryInfo() (bool, float64, error) {
 	return false, 0, fmt.Errorf("unimplemented")
+}
+
+// ListAccount lists existing wallet accounts.
+//
+// This is a part of the WalletController interface.
+func (b *DcrWallet) ListAccounts(accountName string) ([]base.AccountProperties, error) {
+	accounts, err := b.wallet.Accounts(context.Background(), &pb.AccountsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	szHint := len(accounts.Accounts)
+	if accountName != "" {
+		szHint = 1
+	}
+	res := make([]base.AccountProperties, 0, szHint)
+	for _, acct := range accounts.Accounts {
+		if accountName != "" && acct.AccountName != accountName {
+			continue
+		}
+		res = append(res, base.AccountProperties{
+			AccountNumber:             acct.AccountNumber,
+			AccountName:               acct.AccountName,
+			LastReturnedExternalIndex: acct.ExternalKeyCount - 1,
+			LastReturnedInternalIndex: acct.InternalKeyCount - 1,
+			ImportedKeyCount:          acct.ImportedKeyCount,
+			AccountEncrypted:          acct.AccountEncrypted,
+			AccountUnlocked:           acct.AccountUnlocked,
+
+			// The following are not exposed via gRPC currently.
+			//AccountType:               acct.AccountType,
+			//LastUsedExternalIndex: acct.ExternalKeyCount,
+			//LastUsedInternalIndex: acct.InternalKeyCount,
+		})
+	}
+
+	return res, nil
+}
+
+// ImportAccount imports the specified xpub into the wallet.
+//
+// This is a part of the WalletController interface.
+func (b *DcrWallet) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error {
+	req := &pb.ImportExtendedPublicKeyRequest{
+		AccountName: name,
+		Xpub:        accountPubKey.String(),
+	}
+	_, err := b.wallet.ImportExtendedPublicKey(context.Background(), req)
+	return err
+}
+
+// ImportPublicKey imports the specified public key into the wallet.
+//
+// This is a part of the WalletController interface.
+func (b *DcrWallet) ImportPublicKey(pubKey *secp256k1.PublicKey) error {
+	return fmt.Errorf("unimplemented in gRPC")
 }
