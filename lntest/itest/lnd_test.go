@@ -15405,6 +15405,14 @@ var testsCases = []*testCase{
 		name: "maximum channel size",
 		test: testMaxChannelSize,
 	},
+	{
+		name: "wallet import account",
+		test: testWalletImportAccount,
+	},
+	{
+		name: "wallet import pubkey",
+		test: testWalletImportPubKey,
+	},
 }
 
 // TestLightningNetworkDaemon performs a series of integration tests amongst a

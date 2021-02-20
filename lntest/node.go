@@ -57,6 +57,10 @@ const (
 	// trickleDelay is the amount of time in milliseconds between each
 	// release of announcements by AuthenticatedGossiper to the network.
 	trickleDelay = 50
+
+	// listenerFormat is the format string that is used to generate local
+	// listener addresses.
+	listenerFormat = "127.0.0.1:%d"
 )
 
 var (
