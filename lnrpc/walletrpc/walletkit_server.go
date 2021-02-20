@@ -13,7 +13,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"decred.org/dcrwallet/v2/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
@@ -36,6 +39,10 @@ const (
 	// to register ourselves, and we also require that the main
 	// SubServerConfigDispatcher instance recognize as the name of our
 	subServerName = "WalletKitRPC"
+
+	// importedAddrsAccountName is the name of the account with imported
+	// scripts/pubkeys.
+	importedAddrsAccountName = "imported"
 )
 
 var (
@@ -113,6 +120,18 @@ var (
 		"/walletrpc.WalletKit/ListUnspent": {{
 			Entity: "onchain",
 			Action: "read",
+		}},
+		"/walletrpc.WalletKit/ListAccounts": {{
+			Entity: "onchain",
+			Action: "read",
+		}},
+		"/walletrpc.WalletKit/ImportAccount": {{
+			Entity: "onchain",
+			Action: "write",
+		}},
+		"/walletrpc.WalletKit/ImportPublicKey": {{
+			Entity: "onchain",
+			Action: "write",
 		}},
 	}
 
@@ -833,4 +852,82 @@ func (w *WalletKit) LabelTransaction(ctx context.Context,
 
 	err = w.cfg.Wallet.LabelTransaction(*hash, req.Label, req.Overwrite)
 	return &LabelTransactionResponse{}, err
+}
+
+// marshalWalletAccount converts the properties of an account into its RPC
+// representation.
+func marshalWalletAccount(account *wallet.AccountProperties) (*Account, error) {
+	rpcAccount := &Account{
+		Name:             account.AccountName,
+		ExternalKeyCount: account.LastReturnedExternalIndex + 1,
+		InternalKeyCount: account.LastReturnedInternalIndex + 1,
+		// WatchOnly:        account.IsWatchOnly,
+	}
+
+	return rpcAccount, nil
+}
+
+// ListAccounts retrieves all accounts belonging to the wallet by default. A
+// name and key scope filter can be provided to filter through all of the wallet
+// accounts and return only those matching.
+func (w *WalletKit) ListAccounts(ctx context.Context,
+	req *ListAccountsRequest) (*ListAccountsResponse, error) {
+
+	accounts, err := w.cfg.Wallet.ListAccounts(req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	rpcAccounts := make([]*Account, 0, len(accounts))
+	for _, account := range accounts {
+		// Don't include the default imported accounts created by the
+		// wallet in the response if they don't have any keys imported.
+		if account.AccountName == importedAddrsAccountName &&
+			account.ImportedKeyCount == 0 {
+			continue
+		}
+
+		rpcAccount, err := marshalWalletAccount(&account)
+		if err != nil {
+			return nil, err
+		}
+		rpcAccounts = append(rpcAccounts, rpcAccount)
+	}
+
+	return &ListAccountsResponse{Accounts: rpcAccounts}, nil
+}
+
+// ImportAccount imports an account backed by an account extended public key.
+func (w *WalletKit) ImportAccount(ctx context.Context,
+	req *ImportAccountRequest) (*ImportAccountResponse, error) {
+
+	accountPubKey, err := hdkeychain.NewKeyFromString(req.ExtendedPublicKey,
+		w.cfg.ChainParams)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.cfg.Wallet.ImportAccount(
+		req.Name, accountPubKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ImportAccountResponse{}, nil
+}
+
+// ImportPublicKey imports a single derived public key into the wallet.
+func (w *WalletKit) ImportPublicKey(ctx context.Context,
+	req *ImportPublicKeyRequest) (*ImportPublicKeyResponse, error) {
+
+	pubKey, err := secp256k1.ParsePubKey(req.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := w.cfg.Wallet.ImportPublicKey(pubKey); err != nil {
+		return nil, err
+	}
+
+	return &ImportPublicKeyResponse{}, nil
 }
