@@ -212,7 +212,7 @@ func (*mockWalletController) FetchInputInfo(prevOut *wire.OutPoint) (
 	return nil, nil
 }
 
-func (*mockWalletController) ConfirmedBalance(confs int32) (dcrutil.Amount,
+func (*mockWalletController) ConfirmedBalance(confs int32, accountName string) (dcrutil.Amount,
 	error) {
 
 	return 0, nil
@@ -249,13 +249,13 @@ func (*mockWalletController) CreateSimpleTx(outputs []*wire.TxOut,
 }
 
 func (*mockWalletController) ListUnspentWitness(minconfirms,
-	maxconfirms int32) ([]*lnwallet.Utxo, error) {
+	maxconfirms int32, accountName string) ([]*lnwallet.Utxo, error) {
 
 	return nil, nil
 }
 
 func (*mockWalletController) ListTransactionDetails(startHeight,
-	endHeight int32) ([]*lnwallet.TransactionDetail, error) {
+	endHeight int32, accountName string) ([]*lnwallet.TransactionDetail, error) {
 
 	return nil, nil
 }

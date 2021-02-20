@@ -43,7 +43,7 @@ func (p FeePreference) String() string {
 	return p.FeeRate.String()
 }
 
-// DetermineFeePerKw will determine the fee in atom/KB that should be paid
+// DetermineFeePerKB will determine the fee in atom/KB that should be paid
 // given an estimator, a confirmation target, and a manual value for sat/byte.
 // A value is chosen based on the two free parameters as one, or both of them
 // can be zero.
@@ -60,7 +60,7 @@ func DetermineFeePerKB(feeEstimator chainfee.Estimator,
 	// If the target number of confirmations is set, then we'll use that to
 	// consult our fee estimator for an adequate fee.
 	case feePref.ConfTarget != 0:
-		feePerKw, err := feeEstimator.EstimateFeePerKB(
+		feePerKB, err := feeEstimator.EstimateFeePerKB(
 			feePref.ConfTarget,
 		)
 		if err != nil {
@@ -68,7 +68,7 @@ func DetermineFeePerKB(feeEstimator chainfee.Estimator,
 				"estimator: %v", err)
 		}
 
-		return feePerKw, nil
+		return feePerKB, nil
 
 	// If a manual sat/byte fee rate is set, then we'll use that directly.
 	// We'll need to convert it to atom/KB as this is what we use
@@ -103,9 +103,10 @@ func DetermineFeePerKB(feeEstimator chainfee.Estimator,
 // UtxoSource is an interface that allows a caller to access a source of UTXOs
 // to use when crafting sweep transactions.
 type UtxoSource interface {
-	// ListUnspentWitness returns all UTXOs from the source that have
-	// between minConfs and maxConfs number of confirmations.
-	ListUnspentWitness(minConfs, maxConfs int32) ([]*lnwallet.Utxo, error)
+	// ListUnspentWitness returns all UTXOs from the default wallet account
+	// that have between minConfs and maxConfs number of confirmations.
+	ListUnspentWitnessFromDefaultAccount(minConfs, maxConfs int32) (
+		[]*lnwallet.Utxo, error)
 }
 
 // CoinSelectionLocker is an interface that allows the caller to perform an
@@ -185,7 +186,7 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, blockHeight uint32,
 		// Now that we can be sure that no other coin selection
 		// operations are going on, we can grab a clean snapshot of the
 		// current UTXO state of the wallet.
-		utxos, err := utxoSource.ListUnspentWitness(
+		utxos, err := utxoSource.ListUnspentWitnessFromDefaultAccount(
 			1, math.MaxInt32,
 		)
 		if err != nil {

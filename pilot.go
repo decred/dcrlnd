@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/lncfg"
+	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/tor"
 )
@@ -183,7 +184,9 @@ func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
 			chanMinHtlcIn: c.MinHTLCIn,
 		},
 		WalletBalance: func() (dcrutil.Amount, error) {
-			return svr.cc.wallet.ConfirmedBalance(cfg.MinConfs)
+			return svr.cc.wallet.ConfirmedBalance(
+				cfg.MinConfs, lnwallet.DefaultAccountName,
+			)
 		},
 		Graph:       autopilot.ChannelGraphFromDatabase(svr.localChanDB.ChannelGraph()),
 		Constraints: atplConstraints,

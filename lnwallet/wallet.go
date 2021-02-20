@@ -376,14 +376,33 @@ func (l *LightningWallet) Shutdown() error {
 	return nil
 }
 
-// ConfirmedBalance returns the current confirmed balance of the wallet. This
-// methods wraps the interal WalletController method so we're able to properly
-// hold the coin select mutex while we compute the balance.
-func (l *LightningWallet) ConfirmedBalance(confs int32) (dcrutil.Amount, error) {
+// ConfirmedBalance returns the current confirmed balance of a wallet account.
+// This methods wraps the internal WalletController method so we're able to
+// properly hold the coin select mutex while we compute the balance.
+func (l *LightningWallet) ConfirmedBalance(confs int32,
+	account string) (dcrutil.Amount, error) {
+
 	l.coinSelectMtx.Lock()
 	defer l.coinSelectMtx.Unlock()
 
-	return l.WalletController.ConfirmedBalance(confs)
+	return l.WalletController.ConfirmedBalance(confs, account)
+}
+
+// ListUnspentWitnessFromDefaultAccount returns all unspent outputs from the
+// default wallet account which are version 0 witness programs. The 'minConfs'
+// and 'maxConfs' parameters indicate the minimum and maximum number of
+// confirmations an output needs in order to be returned by this method. Passing
+// -1 as 'minConfs' indicates that even unconfirmed outputs should be returned.
+// Using MaxInt32 as 'maxConfs' implies returning all outputs with at least
+// 'minConfs'.
+//
+// NOTE: This method requires the global coin selection lock to be held.
+func (l *LightningWallet) ListUnspentWitnessFromDefaultAccount(
+	minConfs, maxConfs int32) ([]*Utxo, error) {
+
+	return l.WalletController.ListUnspentWitness(
+		minConfs, maxConfs, DefaultAccountName,
+	)
 }
 
 // LockedOutpoints returns a list of all currently locked outpoint.
@@ -1789,7 +1808,9 @@ func NewCoinSource(w *LightningWallet) *CoinSource {
 func (c *CoinSource) ListCoins(minConfs int32,
 	maxConfs int32) ([]chanfunding.Coin, error) {
 
-	utxos, err := c.wallet.ListUnspentWitness(minConfs, maxConfs)
+	utxos, err := c.wallet.ListUnspentWitnessFromDefaultAccount(
+		minConfs, maxConfs,
+	)
 	if err != nil {
 		return nil, err
 	}

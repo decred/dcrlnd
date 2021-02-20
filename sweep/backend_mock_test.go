@@ -90,7 +90,7 @@ func (b *mockBackend) AbandonDoubleSpends(spentOutpoints ...*wire.OutPoint) erro
 	return nil
 }
 
-func (b *mockBackend) ListUnspentWitness(minconfirms, maxconfirms int32) (
+func (b *mockBackend) ListUnspentWitnessFromDefaultAccount(minconfirms, maxconfirms int32) (
 	[]*lnwallet.Utxo, error) {
 
 	return b.walletUtxos, nil
