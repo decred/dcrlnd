@@ -659,7 +659,9 @@ func (l *LightningWallet) handleFundingReserveRequest(req *InitFundingReserveMsg
 			SubtractFees: req.SubtractFees,
 			FeeRate:      req.FundingFeePerKB,
 			ChangeAddr: func() (stdaddr.Address, error) {
-				return l.NewAddress(PubKeyHash, true)
+				return l.NewAddress(
+					PubKeyHash, true, DefaultAccountName,
+				)
 			},
 		}
 		fundingIntent, err = req.ChanFunder.ProvisionChannel(

@@ -162,7 +162,7 @@ func newPkScript(t *testing.T, w *lnwallet.LightningWallet,
 
 	t.Helper()
 
-	addr, err := w.NewAddress(addrType, false)
+	addr, err := w.NewAddress(addrType, false, lnwallet.DefaultAccountName)
 	if err != nil {
 		t.Fatalf("unable to create new address: %v", err)
 	}
@@ -263,7 +263,10 @@ func loadTestCredits(miner *rpctest.Harness, w *lnwallet.LightningWallet,
 	addrs := make([]stdaddr.Address, numOutputs)
 	for i := 0; i < numOutputs; i++ {
 		// Grab a fresh address from the wallet to house this output.
-		addrs[i], err = w.NewAddress(lnwallet.PubKeyHash, false)
+		addrs[i], err = w.NewAddress(
+			lnwallet.PubKeyHash, false,
+			lnwallet.DefaultAccountName,
+		)
 		if err != nil {
 			return err
 		}
@@ -1160,7 +1163,10 @@ func testListTransactionDetails(miner *rpctest.Harness,
 	var err error
 	addrs := make([]stdaddr.Address, numTxns)
 	for i := 0; i < numTxns; i++ {
-		addrs[i], err = alice.NewAddress(lnwallet.PubKeyHash, false)
+		addrs[i], err = alice.NewAddress(
+			lnwallet.PubKeyHash, false,
+			lnwallet.DefaultAccountName,
+		)
 		if err != nil {
 			t.Fatalf("unable to create new address: %v", err)
 		}
@@ -1493,7 +1499,10 @@ func testTransactionSubscriptions(miner *rpctest.Harness,
 	// with the pkScript.
 	addrs := make([]stdaddr.Address, numTxns)
 	for i := 0; i < numTxns; i++ {
-		addrs[i], err = alice.NewAddress(lnwallet.PubKeyHash, false)
+		addrs[i], err = alice.NewAddress(
+			lnwallet.PubKeyHash, false,
+			lnwallet.DefaultAccountName,
+		)
 		if err != nil {
 			t.Fatalf("unable to create new address: %v", err)
 		}
@@ -2470,11 +2479,15 @@ func testLastUnusedAddr(miner *rpctest.Harness,
 		lnwallet.PubKeyHash,
 	}
 	for _, addrType := range addrTypes {
-		addr1, err := alice.LastUnusedAddress(addrType)
+		addr1, err := alice.LastUnusedAddress(
+			addrType, lnwallet.DefaultAccountName,
+		)
 		if err != nil {
 			t.Fatalf("unable to get addr: %v", err)
 		}
-		addr2, err := alice.LastUnusedAddress(addrType)
+		addr2, err := alice.LastUnusedAddress(
+			addrType, lnwallet.DefaultAccountName,
+		)
 		if err != nil {
 			t.Fatalf("unable to get addr: %v", err)
 		}
@@ -2500,7 +2513,9 @@ func testLastUnusedAddr(miner *rpctest.Harness,
 
 		// If we make a new address, then it should be brand new, as
 		// the prior address has been used.
-		addr3, err := alice.LastUnusedAddress(addrType)
+		addr3, err := alice.LastUnusedAddress(
+			addrType, lnwallet.DefaultAccountName,
+		)
 		if err != nil {
 			t.Fatalf("unable to get addr: %v", err)
 		}
@@ -2517,7 +2532,7 @@ func testManyNewAddresses(r *rpctest.Harness, vw *rpctest.VotingWallet,
 	w, _ *lnwallet.LightningWallet, t *testing.T) {
 	const maxAddrs = 40
 	for i := 0; i < maxAddrs; i++ {
-		_, err := w.NewAddress(lnwallet.PubKeyHash, false)
+		_, err := w.NewAddress(lnwallet.PubKeyHash, false, lnwallet.DefaultAccountName)
 		if err != nil {
 			t.Fatalf("unable to generate new address %d: %v", i, err)
 		}
@@ -2941,7 +2956,10 @@ func testSingleFunderExternalFundingTx(miner *rpctest.Harness,
 		MinConfs: 1,
 		FeeRate:  1e4,
 		ChangeAddr: func() (stdaddr.Address, error) {
-			return alice.NewAddress(lnwallet.PubKeyHash, true)
+			return alice.NewAddress(
+				lnwallet.PubKeyHash, true,
+				lnwallet.DefaultAccountName,
+			)
 		},
 	})
 	if err != nil {
@@ -2986,7 +3004,10 @@ func testSingleFunderExternalFundingTx(miner *rpctest.Harness,
 		MinConfs: 1,
 		FeeRate:  1e4,
 		ChangeAddr: func() (stdaddr.Address, error) {
-			return bob.NewAddress(lnwallet.PubKeyHash, true)
+			return bob.NewAddress(
+				lnwallet.PubKeyHash, true,
+				lnwallet.DefaultAccountName,
+			)
 		},
 	})
 	if err != nil {

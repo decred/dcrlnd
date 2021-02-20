@@ -595,6 +595,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 			NewAddress: func() (stdaddr.Address, error) {
 				return activeChainControl.wallet.NewAddress(
 					lnwallet.WitnessPubKey, false,
+					lnwallet.DefaultAccountName,
 				)
 			},
 			NodeKeyECDH: keychain.NewPubKeyECDH(

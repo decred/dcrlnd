@@ -33,7 +33,8 @@ type mockOnchainAddrSourcer struct {
 	w *base.Wallet
 }
 
-func (mas *mockOnchainAddrSourcer) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Address, error) {
+func (mas *mockOnchainAddrSourcer) NewAddress(t lnwallet.AddressType, change bool,
+	accountName string) (stdaddr.Address, error) {
 	var addr stdaddr.Address
 	var err error
 	if change {

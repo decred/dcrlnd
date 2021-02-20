@@ -226,7 +226,7 @@ func (b *DcrWallet) ConfirmedBalance(confs int32) (dcrutil.Amount, error) {
 // returned.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Address, error) {
+func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool, accountName string) (stdaddr.Address, error) {
 
 	switch t {
 	case lnwallet.PubKeyHash:
@@ -235,14 +235,18 @@ func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Add
 		return nil, fmt.Errorf("unknown address type")
 	}
 
+	acctNb, err := b.wallet.AccountNumber(context.TODO(), accountName)
+	if err != nil {
+		return nil, fmt.Errorf("unknown account named %s: %v", accountName, err)
+	}
+
 	var addr stdaddr.Address
-	var err error
 	if change {
 		addr, err = b.wallet.NewInternalAddress(context.TODO(),
-			defaultAccount, base.WithGapPolicyWrap())
+			acctNb, base.WithGapPolicyWrap())
 	} else {
 		addr, err = b.wallet.NewExternalAddress(context.TODO(),
-			defaultAccount, base.WithGapPolicyWrap())
+			acctNb, base.WithGapPolicyWrap())
 	}
 
 	if err != nil {
@@ -261,8 +265,13 @@ func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Add
 // worry about "address inflation" caused by continual refreshing. Similar to
 // NewAddress it can derive a specified address type, and also optionally a
 // change address.
-func (b *DcrWallet) LastUnusedAddress(addrType lnwallet.AddressType) (
+func (b *DcrWallet) LastUnusedAddress(addrType lnwallet.AddressType, accountName string) (
 	stdaddr.Address, error) {
+
+	acctNb, err := b.wallet.AccountNumber(context.TODO(), accountName)
+	if err != nil {
+		return nil, fmt.Errorf("unknown account named %s: %v", accountName, err)
+	}
 
 	switch addrType {
 	case lnwallet.PubKeyHash:
@@ -270,7 +279,7 @@ func (b *DcrWallet) LastUnusedAddress(addrType lnwallet.AddressType) (
 	default:
 		return nil, fmt.Errorf("unknown address type")
 	}
-	a, err := b.wallet.CurrentAddress(defaultAccount)
+	a, err := b.wallet.CurrentAddress(acctNb)
 	if err != nil {
 		return nil, err
 	}

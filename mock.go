@@ -278,13 +278,14 @@ func (*mockWalletController) ConfirmedBalance(confs int32) (dcrutil.Amount, erro
 
 // NewAddress is called to get new addresses for delivery, change etc.
 func (m *mockWalletController) NewAddress(addrType lnwallet.AddressType,
-	change bool) (stdaddr.Address, error) {
+	change bool, accountName string) (stdaddr.Address, error) {
 	addr, _ := stdaddr.NewAddressPubKeyEcdsaSecp256k1V0(
 		m.rootKey.PubKey(), chaincfg.RegNetParams())
 	return addr, nil
 }
 
-func (*mockWalletController) LastUnusedAddress(addrType lnwallet.AddressType) (
+func (*mockWalletController) LastUnusedAddress(addrType lnwallet.AddressType,
+	accountName string) (
 	stdaddr.Address, error) {
 	return nil, nil
 }

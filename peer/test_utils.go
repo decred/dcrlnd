@@ -219,13 +219,14 @@ func (*mockWalletController) ConfirmedBalance(confs int32) (dcrutil.Amount,
 }
 
 func (m *mockWalletController) NewAddress(addrType lnwallet.AddressType,
-	change bool) (stdaddr.Address, error) {
+	change bool, accountName string) (stdaddr.Address, error) {
 
 	return stdaddr.NewAddressPubKeyEcdsaSecp256k1V0(
 		m.rootKey.PubKey(), chaincfg.RegNetParams())
 }
 
-func (*mockWalletController) LastUnusedAddress(addrType lnwallet.AddressType) (
+func (*mockWalletController) LastUnusedAddress(addrType lnwallet.AddressType,
+	accountName string) (
 	stdaddr.Address, error) {
 
 	return nil, nil

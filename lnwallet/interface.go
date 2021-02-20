@@ -16,6 +16,12 @@ import (
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
 
+const (
+	// DefaultAccountName is the name for the default account used to manage
+	// on-chain funds within the wallet.
+	DefaultAccountName = "default"
+)
+
 // AddressType is an enum-like type which denotes the possible address types
 // WalletController supports.
 type AddressType uint8
@@ -171,9 +177,11 @@ type WalletController interface {
 	// wallet dictated by the value of the `change` parameter. If change is
 	// true, then an internal address should be used, otherwise an external
 	// address should be returned. The type of address returned is dictated
-	// by the wallet's capabilities, and may be of type: p2sh, p2pkh,
-	// etc.
-	NewAddress(addrType AddressType, change bool) (stdaddr.Address, error)
+	// by the wallet's capabilities, and may be of type: p2sh, p2wkh,
+	// p2wsh, etc. The account parameter must be non-empty as it determines
+	// which account the address should be generated from.
+	NewAddress(addrType AddressType, change bool,
+		account string) (stdaddr.Address, error)
 
 	// LastUnusedAddress returns the last *unused* address known by the
 	// wallet. An address is unused if it hasn't received any payments.
@@ -181,7 +189,10 @@ type WalletController interface {
 	// "freshest" address without having to worry about "address inflation"
 	// caused by continual refreshing. Similar to NewAddress it can derive
 	// a specified address type. By default, this is a non-change address.
-	LastUnusedAddress(addrType AddressType) (stdaddr.Address, error)
+	// The account parameter must be non-empty as it determines which
+	// account the address should be generated from.
+	LastUnusedAddress(addrType AddressType,
+		account string) (stdaddr.Address, error)
 
 	// IsOurAddress checks if the passed address belongs to this wallet
 	IsOurAddress(a stdaddr.Address) bool

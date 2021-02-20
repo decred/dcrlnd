@@ -405,7 +405,9 @@ func (w *WalletKit) DeriveKey(ctx context.Context,
 func (w *WalletKit) NextAddr(ctx context.Context,
 	req *AddrRequest) (*AddrResponse, error) {
 
-	addr, err := w.cfg.Wallet.NewAddress(lnwallet.PubKeyHash, false)
+	addr, err := w.cfg.Wallet.NewAddress(
+		lnwallet.PubKeyHash, false, lnwallet.DefaultAccountName,
+	)
 	if err != nil {
 		return nil, err
 	}
