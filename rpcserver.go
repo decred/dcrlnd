@@ -1109,7 +1109,7 @@ func (r *rpcServer) ListUnspent(ctx context.Context,
 	var utxos []*lnwallet.Utxo
 	err = r.server.cc.wallet.WithCoinSelectLock(func() error {
 		utxos, err = r.server.cc.wallet.ListUnspentWitness(
-			minConfs, maxConfs,
+			minConfs, maxConfs, "",
 		)
 		return err
 	})
@@ -1258,7 +1258,7 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 		// safe manner, so no need to worry about locking.
 		sweepTxPkg, err := sweep.CraftSweepAllTx(
 			feePerKB, uint32(bestHeight), targetAddr, wallet,
-			wallet.WalletController, wallet.WalletController,
+			wallet, wallet.WalletController,
 			r.server.cc.feeEstimator, r.server.cc.signer,
 			activeNetParams.Params,
 		)
@@ -2786,7 +2786,9 @@ func (r *rpcServer) WalletBalance(ctx context.Context,
 	in *lnrpc.WalletBalanceRequest) (*lnrpc.WalletBalanceResponse, error) {
 
 	// Get total balance, from txs that have >= 0 confirmations.
-	totalBal, err := r.server.cc.wallet.ConfirmedBalance(0)
+	totalBal, err := r.server.cc.wallet.ConfirmedBalance(
+		0, lnwallet.DefaultAccountName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -2794,7 +2796,9 @@ func (r *rpcServer) WalletBalance(ctx context.Context,
 	// Get confirmed balance, from txs that have >= 1 confirmations.
 	// TODO(halseth): get both unconfirmed and confirmed balance in one
 	// call, as this is racy.
-	confirmedBal, err := r.server.cc.wallet.ConfirmedBalance(1)
+	confirmedBal, err := r.server.cc.wallet.ConfirmedBalance(
+		1, lnwallet.DefaultAccountName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -5113,7 +5117,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 	}
 
 	transactions, err := r.server.cc.wallet.ListTransactionDetails(
-		req.StartHeight, endHeight,
+		req.StartHeight, endHeight, "",
 	)
 	if err != nil {
 		return nil, err

@@ -210,9 +210,17 @@ func (b *DcrWallet) Stop() error {
 // This is a part of the WalletController interface.
 //
 // TODO(matheusd) Remove witness argument, given that's not applicable to decred
-func (b *DcrWallet) ConfirmedBalance(confs int32) (dcrutil.Amount, error) {
+func (b *DcrWallet) ConfirmedBalance(confs int32, accountName string) (dcrutil.Amount, error) {
+	acctNb := defaultAccount
+	if accountName != "" && accountName != lnwallet.DefaultAccountName {
+		var err error
+		acctNb, err = b.wallet.AccountNumber(context.TODO(), accountName)
+		if err != nil {
+			return 0, fmt.Errorf("unknown account named %s: %v", accountName, err)
+		}
+	}
 
-	balances, err := b.wallet.AccountBalance(context.TODO(), defaultAccount, confs)
+	balances, err := b.wallet.AccountBalance(context.TODO(), acctNb, confs)
 	if err != nil {
 		return 0, err
 	}
@@ -375,8 +383,9 @@ func (b *DcrWallet) UnlockOutpoint(o wire.OutPoint) {
 // controls which pay to witness programs either directly or indirectly.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) ListUnspentWitness(minConfs, maxConfs int32) (
+func (b *DcrWallet) ListUnspentWitness(minConfs, maxConfs int32, accountName string) (
 	[]*lnwallet.Utxo, error) {
+
 	// First, grab all the unfiltered currently unspent outputs.
 	unspentOutputs, err := b.wallet.ListUnspent(context.TODO(), minConfs,
 		maxConfs, nil, "")
@@ -387,6 +396,10 @@ func (b *DcrWallet) ListUnspentWitness(minConfs, maxConfs int32) (
 	// Convert the dcrjson formatted unspents into lnwallet.Utxo's
 	witnessOutputs := make([]*lnwallet.Utxo, 0, len(unspentOutputs))
 	for _, output := range unspentOutputs {
+		if accountName != "" && accountName != output.Account {
+			continue
+		}
+
 		pkScript, err := hex.DecodeString(output.ScriptPubKey)
 		if err != nil {
 			return nil, err
@@ -674,7 +687,16 @@ func unminedTransactionsToDetail(
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) ListTransactionDetails(startHeight,
-	endHeight int32) ([]*lnwallet.TransactionDetail, error) {
+	endHeight int32, accountName string) ([]*lnwallet.TransactionDetail, error) {
+
+	var acctNb uint32
+	if accountName != "" {
+		var err error
+		acctNb, err = b.wallet.AccountNumber(context.TODO(), accountName)
+		if err != nil {
+			return nil, fmt.Errorf("unknown account named %s: %v", accountName, err)
+		}
+	}
 
 	// Grab the best block the wallet knows of, we'll use this to calculate
 	// # of confirmations shortly below.
@@ -689,6 +711,25 @@ func (b *DcrWallet) ListTransactionDetails(startHeight,
 	rangeFn := func(block *base.Block) (bool, error) {
 		isMined := block.Header != nil
 		for _, tx := range block.Transactions {
+			if accountName != "" {
+				fromTargetAcct := false
+				for _, in := range tx.MyInputs {
+					if in.PreviousAccount == acctNb {
+						fromTargetAcct = true
+						break
+					}
+				}
+				for _, out := range tx.MyOutputs {
+					if out.Account == acctNb {
+						fromTargetAcct = true
+						break
+					}
+				}
+				if !fromTargetAcct {
+					continue
+				}
+			}
+
 			if isMined {
 				details, err := minedTransactionsToDetails(currentHeight, block,
 					b.netParams)

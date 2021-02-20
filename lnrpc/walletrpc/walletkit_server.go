@@ -267,7 +267,9 @@ func (w *WalletKit) ListUnspent(ctx context.Context,
 	// be shown available to us.
 	var utxos []*lnwallet.Utxo
 	err = w.cfg.CoinSelectionLocker.WithCoinSelectLock(func() error {
-		utxos, err = w.cfg.Wallet.ListUnspentWitness(minConfs, maxConfs)
+		utxos, err = w.cfg.Wallet.ListUnspentWitness(
+			minConfs, maxConfs, "",
+		)
 		return err
 	})
 	if err != nil {
@@ -773,7 +775,7 @@ func (w *WalletKit) ListSweeps(ctx context.Context,
 	// If the caller does want full transaction lookups, query our wallet
 	// for all transactions, including unconfirmed transactions.
 	transactions, err := w.cfg.Wallet.ListTransactionDetails(
-		0, dcrwallet.UnconfirmedHeight,
+		0, dcrwallet.UnconfirmedHeight, lnwallet.DefaultAccountName,
 	)
 	if err != nil {
 		return nil, err

@@ -272,7 +272,7 @@ func (*mockWalletController) FetchInputInfo(
 	}
 	return utxo, nil
 }
-func (*mockWalletController) ConfirmedBalance(confs int32) (dcrutil.Amount, error) {
+func (*mockWalletController) ConfirmedBalance(confs int32, accountName string) (dcrutil.Amount, error) {
 	return 0, nil
 }
 
@@ -309,7 +309,7 @@ func (*mockWalletController) CreateSimpleTx(outputs []*wire.TxOut,
 // ListUnspentWitness is called by the wallet when doing coin selection. We just
 // need one unspent for the funding transaction.
 func (m *mockWalletController) ListUnspentWitness(minconfirms,
-	maxconfirms int32) ([]*lnwallet.Utxo, error) {
+	maxconfirms int32, accountName string) ([]*lnwallet.Utxo, error) {
 
 	// If the mock already has a list of utxos, return it.
 	if m.utxos != nil {
@@ -331,7 +331,7 @@ func (m *mockWalletController) ListUnspentWitness(minconfirms,
 	ret = append(ret, utxo)
 	return ret, nil
 }
-func (*mockWalletController) ListTransactionDetails(_, _ int32) ([]*lnwallet.TransactionDetail, error) {
+func (*mockWalletController) ListTransactionDetails(_, _ int32, _ string) ([]*lnwallet.TransactionDetail, error) {
 	return nil, nil
 }
 func (*mockWalletController) LockOutpoint(o wire.OutPoint)   {}

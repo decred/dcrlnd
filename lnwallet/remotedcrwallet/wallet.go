@@ -217,9 +217,18 @@ func (b *DcrWallet) Stop() error {
 // final sum.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) ConfirmedBalance(confs int32) (dcrutil.Amount, error) {
+func (b *DcrWallet) ConfirmedBalance(confs int32, accountName string) (dcrutil.Amount, error) {
+	var acctNb = b.account
+	if accountName != "" && accountName != lnwallet.DefaultAccountName {
+		res, err := b.wallet.AccountNumber(context.Background(), &pb.AccountNumberRequest{AccountName: accountName})
+		if err != nil {
+			return 0, fmt.Errorf("unknown account named %s: %v", accountName, err)
+		}
+		acctNb = res.AccountNumber
+	}
+
 	req := &pb.BalanceRequest{
-		AccountNumber:         b.account,
+		AccountNumber:         acctNb,
 		RequiredConfirmations: confs,
 	}
 	resp, err := b.wallet.Balance(context.Background(), req)
@@ -477,15 +486,24 @@ func (b *DcrWallet) UnlockOutpoint(o wire.OutPoint) {
 // controls which pay to witness programs either directly or indirectly.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) ListUnspentWitness(minConfs, maxConfs int32) (
+func (b *DcrWallet) ListUnspentWitness(minConfs, maxConfs int32, accountName string) (
 	[]*lnwallet.Utxo, error) {
+
+	var acctNb = b.account
+	if accountName != "" && accountName != lnwallet.DefaultAccountName {
+		res, err := b.wallet.AccountNumber(context.Background(), &pb.AccountNumberRequest{AccountName: accountName})
+		if err != nil {
+			return nil, fmt.Errorf("unknown account named %s: %v", accountName, err)
+		}
+		acctNb = res.AccountNumber
+	}
 
 	if maxConfs != 0 && maxConfs != math.MaxInt32 {
 		return nil, fmt.Errorf("maxconfs is not supported")
 	}
 
 	req := &pb.UnspentOutputsRequest{
-		Account:               b.account,
+		Account:               acctNb,
 		RequiredConfirmations: minConfs,
 	}
 	stream, err := b.wallet.UnspentOutputs(context.Background(), req)
@@ -723,6 +741,7 @@ func minedTransactionsToDetails(
 	currentHeight int32,
 	block *pb.BlockDetails,
 	chainParams *chaincfg.Params,
+	acctNb uint32,
 ) ([]*lnwallet.TransactionDetail, error) {
 
 	headerHeight := block.Height
@@ -734,6 +753,18 @@ func minedTransactionsToDetails(
 
 	details := make([]*lnwallet.TransactionDetail, 0, len(block.Transactions))
 	for _, tx := range block.Transactions {
+		if acctNb < math.MaxUint32 {
+			fromTargetAcct := false
+			for _, in := range tx.Debits {
+				fromTargetAcct = fromTargetAcct || in.PreviousAccount == acctNb
+			}
+			for _, out := range tx.Credits {
+				fromTargetAcct = fromTargetAcct || out.Account == acctNb
+			}
+			if !fromTargetAcct {
+				continue
+			}
+		}
 		wireTx := &wire.MsgTx{}
 		txReader := bytes.NewReader(tx.Transaction)
 
@@ -815,7 +846,7 @@ func unminedTransactionsToDetail(
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) ListTransactionDetails(startHeight,
-	endHeight int32) ([]*lnwallet.TransactionDetail, error) {
+	endHeight int32, accountName string) ([]*lnwallet.TransactionDetail, error) {
 
 	// Grab the best block the wallet knows of, we'll use this to calculate
 	// # of confirmations shortly below.
@@ -824,6 +855,17 @@ func (b *DcrWallet) ListTransactionDetails(startHeight,
 		return nil, err
 	}
 	currentHeight := int32(bestBlockRes.Height)
+
+	var acctNb = b.account
+	if accountName == "" {
+		acctNb = math.MaxUint32
+	} else if accountName != lnwallet.DefaultAccountName {
+		res, err := b.wallet.AccountNumber(context.Background(), &pb.AccountNumberRequest{AccountName: accountName})
+		if err != nil {
+			return nil, fmt.Errorf("unknown account named %s: %v", accountName, err)
+		}
+		acctNb = res.AccountNumber
+	}
 
 	req := &pb.GetTransactionsRequest{
 		StartingBlockHeight: startHeight,
@@ -846,7 +888,7 @@ func (b *DcrWallet) ListTransactionDetails(startHeight,
 
 		if msg.MinedTransactions != nil {
 			minedTxs, err := minedTransactionsToDetails(currentHeight,
-				msg.MinedTransactions, b.chainParams)
+				msg.MinedTransactions, b.chainParams, acctNb)
 			if err != nil {
 				return nil, err
 			}
@@ -854,6 +896,19 @@ func (b *DcrWallet) ListTransactionDetails(startHeight,
 		}
 
 		for _, tx := range msg.UnminedTransactions {
+			if acctNb < math.MaxUint32 {
+				fromTargetAcct := false
+				for _, in := range tx.Debits {
+					fromTargetAcct = fromTargetAcct || in.PreviousAccount == acctNb
+				}
+				for _, out := range tx.Credits {
+					fromTargetAcct = fromTargetAcct || out.Account == acctNb
+				}
+				if !fromTargetAcct {
+					continue
+				}
+			}
+
 			unminedTx, err := unminedTransactionsToDetail(tx, b.chainParams)
 			if err != nil {
 				return nil, err
@@ -935,6 +990,7 @@ func (t *txSubscriptionClient) notificationProxier() {
 			for _, block := range msg.AttachedBlocks {
 				details, err := minedTransactionsToDetails(
 					currentHeight, block, t.chainParams,
+					math.MaxUint32,
 				)
 				if err != nil {
 					continue

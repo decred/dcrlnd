@@ -15,7 +15,7 @@ import (
 
 // TestDetermineFeePerKB tests that given a fee preference, the
 // DetermineFeePerKB will properly map it to a concrete fee in atom/KB.
-func TestDetermineFeePerKw(t *testing.T) {
+func TestDetermineFeePerKB(t *testing.T) {
 	t.Parallel()
 
 	defaultFee := chainfee.AtomPerKByte(99999)
@@ -118,7 +118,7 @@ func newMockUtxoSource(utxos []*lnwallet.Utxo) *mockUtxoSource {
 	}
 }
 
-func (m *mockUtxoSource) ListUnspentWitness(minConfs int32,
+func (m *mockUtxoSource) ListUnspentWitnessFromDefaultAccount(minConfs int32,
 	maxConfs int32) ([]*lnwallet.Utxo, error) {
 
 	return m.outputs, nil
