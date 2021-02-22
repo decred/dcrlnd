@@ -1852,10 +1852,12 @@ func createInitChannels(revocationWindow int) (*lnwallet.LightningChannel, *lnwa
 		return nil, nil, nil, err
 	}
 
+	commitFee := initiatorFee
+
 	// TODO(roasbeef): need to factor in commit fee?
 	aliceCommit := channeldb.ChannelCommitment{
 		CommitHeight:  0,
-		LocalBalance:  lnwire.NewMAtomsFromAtoms(channelBal - initiatorFee),
+		LocalBalance:  lnwire.NewMAtomsFromAtoms(channelBal - commitFee),
 		RemoteBalance: lnwire.NewMAtomsFromAtoms(channelBal),
 		FeePerKB:      dcrutil.Amount(feePerKB),
 		CommitFee:     3640,
@@ -1865,7 +1867,7 @@ func createInitChannels(revocationWindow int) (*lnwallet.LightningChannel, *lnwa
 	bobCommit := channeldb.ChannelCommitment{
 		CommitHeight:  0,
 		LocalBalance:  lnwire.NewMAtomsFromAtoms(channelBal),
-		RemoteBalance: lnwire.NewMAtomsFromAtoms(channelBal - initiatorFee),
+		RemoteBalance: lnwire.NewMAtomsFromAtoms(channelBal - commitFee),
 		FeePerKB:      dcrutil.Amount(feePerKB),
 		CommitFee:     3640,
 		CommitTx:      bobCommitTx,
