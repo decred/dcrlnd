@@ -3159,6 +3159,7 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 		UnsafeReplay:            s.cfg.UnsafeReplay,
 		MaxOutgoingCltvExpiry:   s.cfg.MaxOutgoingCltvExpiry,
 		MaxChannelFeeAllocation: s.cfg.MaxChannelFeeAllocation,
+		CoopCloseTargetConfs:    s.cfg.CoopCloseTargetConfs,
 		MaxAnchorsCommitFeeRate: chainfee.AtomPerKByte(
 			s.cfg.MaxCommitFeeRateAnchors * 1000),
 		Quit: s.quit,
