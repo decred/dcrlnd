@@ -89,6 +89,13 @@ const (
 	defaultAlias = ""
 	defaultColor = "#3399FF"
 
+	// defaultCoopCloseTargetConfs is the default confirmation target
+	// that will be used to estimate a fee rate to use during a
+	// cooperative channel closure initiated by a remote peer. By default
+	// we'll set this to a lax value since we weren't the ones that
+	// initiated the channel closure.
+	defaultCoopCloseTargetConfs = 6
+
 	// defaultHostSampleInterval is the default amount of time that the
 	// HostAnnouncer will wait between DNS resolutions to check if the
 	// backing IP of a host has changed.
@@ -255,12 +262,12 @@ type Config struct {
 	ChanEnableTimeout             time.Duration `long:"chan-enable-timeout" description:"The duration that a peer connection must be stable before attempting to send a channel update to reenable or cancel a pending disables of the peer's channels on the network."`
 	ChanDisableTimeout            time.Duration `long:"chan-disable-timeout" description:"The duration that must elapse after first detecting that an already active channel is actually inactive and sending channel update disabling it to the network. The pending disable can be canceled if the peer reconnects and becomes stable for chan-enable-timeout before the disable update is sent."`
 	ChanStatusSampleInterval      time.Duration `long:"chan-status-sample-interval" description:"The polling interval between attempts to detect if an active channel has become inactive due to its peer going offline."`
-
-	HeightHintCacheQueryDisable bool   `long:"height-hint-cache-query-disable" description:"Disable queries from the height-hint cache to try to recover channels stuck in the pending close state. Disabling height hint queries may cause longer chain rescans, resulting in a performance hit. Unset this after channels are unstuck so you can get better performance again."`
-	Alias                       string `long:"alias" description:"The node alias. Used as a moniker by peers and intelligence services"`
-	Color                       string `long:"color" description:"The color of the node in hex format (i.e. '#3399FF'). Used to customize node appearance in intelligence services"`
-	MinChanSize                 int64  `long:"minchansize" description:"The smallest channel size (in atoms) that we should accept. Incoming channels smaller than this will be rejected"`
-	MaxChanSize                 int64  `long:"maxchansize" description:"The largest channel size (in atoms) that we should accept. Incoming channels larger than this will be rejected"`
+	HeightHintCacheQueryDisable   bool          `long:"height-hint-cache-query-disable" description:"Disable queries from the height-hint cache to try to recover channels stuck in the pending close state. Disabling height hint queries may cause longer chain rescans, resulting in a performance hit. Unset this after channels are unstuck so you can get better performance again."`
+	Alias                         string        `long:"alias" description:"The node alias. Used as a moniker by peers and intelligence services"`
+	Color                         string        `long:"color" description:"The color of the node in hex format (i.e. '#3399FF'). Used to customize node appearance in intelligence services"`
+	MinChanSize                   int64         `long:"minchansize" description:"The smallest channel size (in atoms) that we should accept. Incoming channels smaller than this will be rejected"`
+	MaxChanSize                   int64         `long:"maxchansize" description:"The largest channel size (in atoms) that we should accept. Incoming channels larger than this will be rejected"`
+	CoopCloseTargetConfs          uint32        `long:"coop-close-target-confs" description:"The target number of blocks that a cooperative channel close transaction should confirm in. This is used to estimate the fee to use as the lower bound during fee negotiation for the channel closure."`
 
 	DefaultRemoteMaxHtlcs uint16 `long:"default-remote-max-htlcs" description:"The default max_htlc applied when opening or accepting channels. This value limits the number of concurrent HTLCs that the remote party can add to the commitment. The maximum possible value is 300."`
 
@@ -394,6 +401,7 @@ func DefaultConfig() Config {
 		Color:                         defaultColor,
 		MinChanSize:                   int64(funding.MinChanFundingSize),
 		MaxChanSize:                   int64(0),
+		CoopCloseTargetConfs:          defaultCoopCloseTargetConfs,
 		DefaultRemoteMaxHtlcs:         defaultRemoteMaxHtlcs,
 		NumGraphSyncPeers:             defaultMinPeers,
 		HistoricalSyncInterval:        discovery.DefaultHistoricalSyncInterval,
