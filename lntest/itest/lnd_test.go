@@ -2010,6 +2010,13 @@ out:
 		select {
 		case graphUpdate := <-subscription.updateChan:
 			for _, update := range graphUpdate.ChannelUpdates {
+				if len(expUpdates) == 0 {
+					t.Fatalf("received unexpected channel "+
+						"update from %v for channel %v",
+						update.AdvertisingNode,
+						update.ChanId)
+				}
+
 				// For each expected update, check if it matches
 				// the update we just received.
 				for i, exp := range expUpdates {
@@ -2059,6 +2066,9 @@ out:
 		case err := <-subscription.errChan:
 			t.Fatalf("unable to recv graph update: %v", err)
 		case <-time.After(defaultTimeout):
+			if len(expUpdates) == 0 {
+				return
+			}
 			t.Fatalf("did not receive channel update")
 		}
 	}
@@ -2262,8 +2272,14 @@ func testUpdateChannelPolicy(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("bob didn't report channel: %v", err)
 	}
 
-	// Create Carol and a new channel Bob->Carol.
-	carol, err := net.NewNode("Carol", nil)
+	// Create Carol with options to rate limit channel updates up to 2 per
+	// day, and create a new channel Bob->Carol.
+	carol, err := net.NewNode(
+		"Carol", []string{
+			"--gossip.max-channel-update-burst=2",
+			"--gossip.channel-update-interval=24h",
+		},
+	)
 	if err != nil {
 		t.Fatalf("unable to create new nodes: %v", err)
 	}
@@ -2310,7 +2326,6 @@ func testUpdateChannelPolicy(net *lntest.NetworkHarness, t *harnessTest) {
 		MinHtlc:            customMinHtlc,
 		MaxHtlcMAtoms:      defaultMaxHtlc,
 	}
-
 	expectedPolicyCarol := &lnrpc.RoutingPolicy{
 		FeeBaseMAtoms:      defaultFeeBase,
 		FeeRateMilliMAtoms: defaultFeeRate,
@@ -2632,6 +2647,57 @@ func testUpdateChannelPolicy(net *lntest.NetworkHarness, t *harnessTest) {
 			t, node, net.Alice.PubKeyStr, expectedPolicy,
 			chanPoint, chanPoint3,
 		)
+	}
+
+	// Now, to test that Carol is properly rate limiting incoming updates,
+	// we'll send two more update from Alice. Carol should accept the first,
+	// but not the second, as she only allows two updates per day and a day
+	// has yet to elapse from the previous update.
+	const numUpdatesTilRateLimit = 2
+	for i := 0; i < numUpdatesTilRateLimit; i++ {
+		prevAlicePolicy := *expectedPolicy
+		baseFee *= 2
+		expectedPolicy.FeeBaseMAtoms = baseFee
+		req.BaseFeeMAtoms = baseFee
+
+		ctxt, cancel := context.WithTimeout(ctxb, defaultTimeout)
+		defer cancel()
+		_, err = net.Alice.UpdateChannelPolicy(ctxt, req)
+		if err != nil {
+			t.Fatalf("unable to update alice's channel policy: %v", err)
+		}
+
+		// Wait for all nodes to have seen the policy updates for both
+		// of Alice's channels. Carol will not see the last update as
+		// the limit has been reached.
+		for idx, graphSub := range graphSubs {
+			expUpdates := []expectedChanUpdate{
+				{net.Alice.PubKeyStr, expectedPolicy, chanPoint},
+				{net.Alice.PubKeyStr, expectedPolicy, chanPoint3},
+			}
+			// Carol was added last, which is why we check the last
+			// index.
+			if i == numUpdatesTilRateLimit-1 && idx == len(graphSubs)-1 {
+				expUpdates = nil
+			}
+			waitForChannelUpdate(t, graphSub, expUpdates)
+		}
+
+		// And finally check that all nodes remembers the policy update
+		// they received. Since Carol didn't receive the last update,
+		// she still has Alice's old policy.
+		for idx, node := range nodes {
+			policy := expectedPolicy
+			// Carol was added last, which is why we check the last
+			// index.
+			if i == numUpdatesTilRateLimit-1 && idx == len(nodes)-1 {
+				policy = &prevAlicePolicy
+			}
+			assertChannelPolicy(
+				t, node, net.Alice.PubKeyStr, policy, chanPoint,
+				chanPoint3,
+			)
+		}
 	}
 
 	// Close the channels.
