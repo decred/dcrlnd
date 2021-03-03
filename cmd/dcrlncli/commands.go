@@ -679,7 +679,9 @@ var closeChannelCommand = cli.Command{
 			Name: "conf_target",
 			Usage: "The number of blocks that the " +
 				"transaction *should* confirm in, will be " +
-				"used for fee estimation (optional)",
+				"used for fee estimation. If not set, " +
+				"then the conf-target value set in the main " +
+				"lnd config will be used.",
 		},
 		cli.Int64Flag{
 			Name: "atoms_per_byte",
