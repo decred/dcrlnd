@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
+	"github.com/stretchr/testify/require"
 )
 
 func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
@@ -161,6 +162,21 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	// Assert that the invoice has the proper AMP fields set, since the
+	// legacy keysend payment should have been promoted into an AMP payment
+	// internally.
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	keysendInvoice, err := net.Bob.LookupInvoice(
+		ctxt, &lnrpc.PaymentHash{
+			RHash: keySendHash[:],
+		},
+	)
+	require.NoError(t.t, err)
+	require.Equal(t.t, 1, len(keysendInvoice.Htlcs))
+	htlc := keysendInvoice.Htlcs[0]
+	require.Equal(t.t, uint64(0), htlc.MppTotalAmtMAtoms)
+	require.Nil(t.t, htlc.Amp)
 
 	// Now create an invoice and specify routing hints.
 	// We will test that the routing hints are encoded properly.
