@@ -447,7 +447,10 @@ func DefaultConfig() Config {
 				Backoff:  defaultTLSBackoff,
 			},
 		},
-		Gossip:                  &lncfg.Gossip{},
+		Gossip: &lncfg.Gossip{
+			MaxChannelUpdateBurst: discovery.DefaultMaxChannelUpdateBurst,
+			ChannelUpdateInterval: discovery.DefaultChannelUpdateInterval,
+		},
 		MaxOutgoingCltvExpiry:   htlcswitch.DefaultMaxOutgoingCltvExpiry,
 		MaxChannelFeeAllocation: htlcswitch.DefaultMaxLinkFeeAllocation,
 		MaxCommitFeeRateAnchors: lnwallet.DefaultAnchorsCommitMaxFeeRateAtomsPerByte,
