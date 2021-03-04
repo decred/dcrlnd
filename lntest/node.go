@@ -90,10 +90,10 @@ var (
 		"write goroutine dump from node n to file pprof-n.log")
 )
 
-// nextAvailablePort returns the first port that is available for listening by
+// NextAvailablePort returns the first port that is available for listening by
 // a new node. It panics if no port is found and the maximum available TCP port
 // is reached.
-func nextAvailablePort() int {
+func NextAvailablePort() int {
 	port := atomic.AddUint32(&lastPort, 1)
 	for port < 65535 {
 		// If there are no errors while attempting to listen on this
@@ -138,11 +138,11 @@ func GetLogDir() string {
 // designated for the current lightning network test. This returns the next
 // available ports for the p2p, rpc, rest, profiling and wallet services.
 func generateListeningPorts() (int, int, int, int, int) {
-	p2p := nextAvailablePort()
-	rpc := nextAvailablePort()
-	rest := nextAvailablePort()
-	profile := nextAvailablePort()
-	wallet := nextAvailablePort()
+	p2p := NextAvailablePort()
+	rpc := NextAvailablePort()
+	rest := NextAvailablePort()
+	profile := NextAvailablePort()
+	wallet := NextAvailablePort()
 
 	return p2p, rpc, rest, profile, wallet
 }
@@ -301,16 +301,15 @@ func (cfg NodeConfig) genArgs() []string {
 		args = append(
 			args, fmt.Sprintf(
 				"--db.etcd.embedded_client_port=%v",
-				nextAvailablePort(),
+				NextAvailablePort(),
 			),
 		)
 		args = append(
 			args, fmt.Sprintf(
 				"--db.etcd.embedded_peer_port=%v",
-				nextAvailablePort(),
+				NextAvailablePort(),
 			),
 		)
-		args = append(args, "--db.etcd.embedded")
 	}
 
 	if cfg.FeeURL != "" {
@@ -571,7 +570,9 @@ func (hn *HarnessNode) InvoiceMacPath() string {
 //
 // This may not clean up properly if an error is returned, so the caller should
 // call shutdown() regardless of the return value.
-func (hn *HarnessNode) start(lndBinary string, lndError chan<- error) error {
+func (hn *HarnessNode) start(lndBinary string, lndError chan<- error,
+	wait bool) error {
+
 	hn.quit = make(chan struct{})
 
 	args := hn.Cfg.genArgs()
@@ -696,8 +697,14 @@ func (hn *HarnessNode) start(lndBinary string, lndError chan<- error) error {
 		return err
 	}
 
-	// Since Stop uses the LightningClient to stop the node, if we fail to
-	// get a connected client, we have to kill the process.
+	// We may want to skip waiting for the node to come up (eg. the node
+	// is waiting to become the leader).
+	if !wait {
+		return nil
+	}
+
+	// Since Stop uses the LightningClient to stop the node, if we fail to get a
+	// connected client, we have to kill the process.
 	useMacaroons := !hn.Cfg.HasSeed && !hn.Cfg.RemoteWallet
 	conn, err := hn.ConnectRPC(useMacaroons)
 	if err != nil {
@@ -962,29 +969,53 @@ func (hn *HarnessNode) waitUntilStarted(conn grpc.ClientConnInterface,
 	return err
 }
 
+// WaitUntilLeader attempts to finish the start procedure by initiating an RPC
+// connection and setting up the wallet unlocker client. This is needed when
+// a node that has recently been started was waiting to become the leader and
+// we're at the point when we expect that it is the leader now (awaiting unlock).
+func (hn *HarnessNode) WaitUntilLeader(timeout time.Duration) error {
+	var (
+		conn    *grpc.ClientConn
+		connErr error
+	)
+
+	startTs := time.Now()
+	if err := wait.NoError(func() error {
+		conn, connErr = hn.ConnectRPC(!hn.Cfg.HasSeed)
+		return connErr
+	}, timeout); err != nil {
+		return err
+	}
+	timeout -= time.Since(startTs)
+
+	if err := hn.waitUntilStarted(conn, timeout); err != nil {
+		return err
+	}
+
+	// If the node was created with a seed, we will need to perform an
+	// additional step to unlock the wallet. The connection returned will
+	// only use the TLS certs, and can only perform operations necessary to
+	// unlock the daemon.
+	if hn.Cfg.HasSeed {
+		hn.WalletUnlockerClient = lnrpc.NewWalletUnlockerClient(conn)
+		return nil
+	}
+
+	return hn.initLightningClient(conn)
+}
+
 // initClientWhenReady waits until the main gRPC server is detected as active,
 // then complete the normal HarnessNode gRPC connection creation. This can be
 // used it a node has just been unlocked, or has its wallet state initialized.
-func (hn *HarnessNode) initClientWhenReady() error {
+func (hn *HarnessNode) initClientWhenReady(timeout time.Duration) error {
 	var (
 		conn    *grpc.ClientConn
 		connErr error
 	)
 	if err := wait.NoError(func() error {
 		conn, connErr = hn.ConnectRPC(true)
-		if connErr != nil {
-			return connErr
-		}
-
-		// Ensure we've connected to the gRPC server that has the
-		// lightning service (vs the one with the WalletUnlocker
-		// service).
-		lnClient := lnrpc.NewLightningClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		_, infoErr := lnClient.GetInfo(ctx, &lnrpc.GetInfoRequest{})
-		return infoErr
-	}, DefaultTimeout); err != nil {
+		return connErr
+	}, timeout); err != nil {
 		return err
 	}
 
@@ -1158,7 +1189,7 @@ func (hn *HarnessNode) Unlock(ctx context.Context,
 
 	// Now that the wallet has been unlocked, we'll wait for the RPC client
 	// to be ready, then establish the normal gRPC connection.
-	return hn.initClientWhenReady()
+	return hn.initClientWhenReady(DefaultTimeout)
 }
 
 // initLightningClient constructs the grpc LightningClient from the given client
