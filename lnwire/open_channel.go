@@ -7,6 +7,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrlnd/tlv"
 )
 
 // FundingFlag represents the possible bit mask values for the ChannelFlags
@@ -130,6 +131,10 @@ type OpenChannel struct {
 	// and its length followed by the script will be written if it is set.
 	UpfrontShutdownScript DeliveryAddress
 
+	// ChannelType is the explicit channel type the initiator wishes to
+	// open.
+	ChannelType *ChannelType
+
 	// ExtraData is the set of data that was appended to this message to
 	// fill out the full maximum transport message size. These fields can
 	// be used to specify optional data such as custom TLV fields.
@@ -149,14 +154,12 @@ var _ Message = (*OpenChannel)(nil)
 // Encode serializes the target OpenChannel into the passed io.Writer
 // implementation. Serialization will observe the rules defined by the passed
 // protocol version.
-//
-// This is part of the lnwire.Message interface.
 func (o *OpenChannel) Encode(w *bytes.Buffer, pver uint32) error {
-	// Since the upfront script is encoded as a TLV record, concatenate it
-	// with the ExtraData, and write them as one.
-	tlvRecords, err := packShutdownScript(
-		o.UpfrontShutdownScript, o.ExtraData,
-	)
+	recordProducers := []tlv.RecordProducer{&o.UpfrontShutdownScript}
+	if o.ChannelType != nil {
+		recordProducers = append(recordProducers, o.ChannelType)
+	}
+	err := EncodeMessageExtraData(&o.ExtraData, recordProducers...)
 	if err != nil {
 		return err
 	}
@@ -234,7 +237,7 @@ func (o *OpenChannel) Encode(w *bytes.Buffer, pver uint32) error {
 		return err
 	}
 
-	return WriteBytes(w, tlvRecords)
+	return WriteBytes(w, o.ExtraData)
 }
 
 // Decode deserializes the serialized OpenChannel stored in the passed
@@ -276,12 +279,22 @@ func (o *OpenChannel) Decode(r io.Reader, pver uint32) error {
 		return err
 	}
 
-	o.UpfrontShutdownScript, o.ExtraData, err = parseShutdownScript(
-		tlvRecords,
+	// Next we'll parse out the set of known records, keeping the raw tlv
+	// bytes untouched to ensure we don't drop any bytes erroneously.
+	var chanType ChannelType
+	typeMap, err := tlvRecords.ExtractRecords(
+		&o.UpfrontShutdownScript, &chanType,
 	)
 	if err != nil {
 		return err
 	}
+
+	// Set the corresponding TLV types if they were included in the stream.
+	if val, ok := typeMap[ChannelTypeRecordType]; ok && val == nil {
+		o.ChannelType = &chanType
+	}
+
+	o.ExtraData = tlvRecords
 
 	return nil
 }
