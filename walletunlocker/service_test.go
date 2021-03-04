@@ -583,7 +583,8 @@ func TestChangeWalletPasswordStateless(t *testing.T) {
 	service := walletunlocker.New(
 		testDir, testNetParams, true, []string{
 			tempMacFile, nonExistingFile,
-		}, kvdb.DefaultDBTimeout, nil, "", "", "", "", 0)
+		}, kvdb.DefaultDBTimeout, nil, "", "", "", "", 0,
+	)
 
 	// Create a wallet we can try to unlock. We use the default password
 	// so we can check that the unlocker service defaults to this when
