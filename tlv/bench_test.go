@@ -50,7 +50,8 @@ func DBlobType(r io.Reader, val interface{}, buf *[8]byte, l uint64) error {
 // EAtomsPerKB is an encoder for chainfee.AtomPerKByte.
 func EAtomsPerKB(w io.Writer, val interface{}, buf *[8]byte) error {
 	if v, ok := val.(*chainfee.AtomPerKByte); ok {
-		return tlv.EUint64(w, uint64(*v), buf)
+		v64 := uint64(*v)
+		return tlv.EUint64(w, &v64, buf)
 	}
 	return tlv.NewTypeForEncodingErr(val, "chainfee.AtomPerKByte")
 }
