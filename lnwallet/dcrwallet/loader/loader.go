@@ -17,12 +17,21 @@ import (
 	"decred.org/dcrwallet/v3/wallet/txrules"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrlnd/channeldb/kvdb"
 )
 
 const (
 	walletDbName = "wallet.db"
 	driver       = "bdb"
 )
+
+// LoaderOption is similar to the upstream btcwallet.LoaderOption type, but not
+// yet used.
+type LoaderOption func()
+
+func LoaderWithExternalWalletDB(backend kvdb.Backend) LoaderOption {
+	panic("unimplemented")
+}
 
 // Loader implements the creating of new and opening of existing wallets, while
 // providing a callback system for other subsystems to handle the loading of a

@@ -101,14 +101,13 @@ type Config struct {
 	// optional.
 	FeeURL string
 
-	// DBTimeOut specifies the timeout value to use when opening the wallet
-	// database.
-	DBTimeOut time.Duration
-
 	// Dialer is a function closure that will be used to establish outbound
 	// TCP connections to chain network peers in the event of a pruned block being
 	// requested.
 	Dialer func(string) (net.Conn, error)
+
+	// LoaderOptions holds functional wallet db loader options.
+	LoaderOptions []walletloader.LoaderOption
 }
 
 const (

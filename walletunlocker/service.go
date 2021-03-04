@@ -160,6 +160,9 @@ type UnlockerService struct {
 	// resetWalletTransactions indicates that the wallet state should be
 	// reset on unlock to force a full chain rescan.
 	resetWalletTransactions bool
+
+	// LoaderOpts holds the functional options for the wallet loader.
+	loaderOpts []walletloader.LoaderOption
 }
 
 // New creates and returns a new UnlockerService.
@@ -171,7 +174,6 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 	return &UnlockerService{
 		InitMsgs:       make(chan *WalletInitMsg, 1),
 		UnlockMsgs:     make(chan *WalletUnlockMsg, 1),
-		noFreelistSync: noFreelistSync,
 		db:             db,
 		dcrwHost:       dcrwHost,
 		dcrwCert:       dcrwCert,
@@ -186,6 +188,7 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 		netParams:               params,
 		macaroonFiles:           macaroonFiles,
 		dbTimeout:               dbTimeout,
+		noFreelistSync:          noFreelistSync,
 		resetWalletTransactions: false,
 	}
 }

@@ -378,9 +378,22 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 
 	defer cleanUp()
 
+	var loaderOpts []walletloader.LoaderOption
+	if cfg.Cluster.EnableLeaderElection {
+		// The wallet loader will attempt to use/create the wallet in
+		// the replicated remote DB if we're running in a clustered
+		// environment. This will ensure that all members of the cluster
+		// have access to the same wallet state.
+		loaderOpts = append(loaderOpts, walletloader.LoaderWithExternalWalletDB(
+			remoteChanDB.Backend,
+		))
+	} else {
+		// Nothing to do.
+	}
+
 	// We'll create the WalletUnlockerService and check whether the wallet
 	// already exists.
-	pwService := createWalletUnlockerService(cfg, remoteChanDB)
+	pwService := createWalletUnlockerService(cfg, remoteChanDB, loaderOpts)
 	walletExists, err := pwService.WalletExists()
 	if err != nil {
 		return err
@@ -455,7 +468,10 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// started with the --noseedbackup flag, we use the default password
 	// for wallet encryption.
 	if !cfg.NoSeedBackup || isRemoteWallet {
-		params, err := waitForWalletPassword(cfg, pwService, interceptor.ShutdownChannel())
+		params, err := waitForWalletPassword(
+			cfg, pwService, loaderOpts,
+			interceptor.ShutdownChannel(),
+		)
 		if err != nil {
 			err := fmt.Errorf("unable to set up wallet password "+
 				"listeners: %v", err)
@@ -602,7 +618,6 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		RecoveryWindow:              walletInitParams.RecoveryWindow,
 		WalletLoader:                walletInitParams.Loader,
 		Wallet:                      walletInitParams.Wallet,
-		DBTimeOut:                   cfg.DB.Bolt.DBTimeout,
 		WalletConn:                  walletInitParams.Conn,
 		WalletAccountNb:             cfg.Dcrwallet.AccountNumber,
 		ActiveNetParams:             cfg.ActiveNetParams,
@@ -611,6 +626,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 			return cfg.net.Dial("tcp", addr, cfg.ConnectionTimeout)
 		},
 		BlockCacheSize: cfg.BlockCacheSize,
+		LoaderOptions:  loaderOpts,
 	}
 
 	activeChainControl, cleanup, err := chainreg.NewChainControl(chainControlCfg)
@@ -1193,7 +1209,9 @@ type WalletUnlockParams struct {
 
 // createWalletUnlockerService creates a WalletUnlockerService from the passed
 // config.
-func createWalletUnlockerService(cfg *Config, chanDB *channeldb.DB) *walletunlocker.UnlockerService {
+func createWalletUnlockerService(cfg *Config, chanDB *channeldb.DB,
+	loaderOpts []walletloader.LoaderOption) *walletunlocker.UnlockerService {
+
 	chainConfig := cfg.Decred
 
 	// The macaroonFiles are passed to the wallet unlocker so they can be
@@ -1202,6 +1220,7 @@ func createWalletUnlockerService(cfg *Config, chanDB *channeldb.DB) *walletunloc
 	macaroonFiles := []string{
 		cfg.AdminMacPath, cfg.ReadMacPath, cfg.InvoiceMacPath,
 	}
+
 	return walletunlocker.New(
 		chainConfig.ChainDir, cfg.ActiveNetParams.Params,
 		!cfg.SyncFreelist, macaroonFiles, cfg.DB.Bolt.DBTimeout,
@@ -1386,7 +1405,8 @@ func startRestProxy(cfg *Config, rpcServer *rpcServer, restDialOpts []grpc.DialO
 // this RPC server.
 func waitForWalletPassword(cfg *Config,
 	pwService *walletunlocker.UnlockerService,
-	shutdownChan <-chan struct{}) (*WalletUnlockParams, error) {
+	loaderOpts []walletloader.LoaderOption, shutdownChan <-chan struct{}) (
+	*WalletUnlockParams, error) {
 
 	// Wait for user to provide the password.
 	ltndLog.Infof("Waiting for wallet encryption password. Use `dcrlncli " +
