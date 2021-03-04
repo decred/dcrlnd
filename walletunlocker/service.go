@@ -190,14 +190,22 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 	}
 }
 
+func (u *UnlockerService) newLoader(recoveryWindow uint32) (*walletloader.Loader,
+	error) {
+
+	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
+	return walletloader.NewLoader(
+		u.netParams, netDir, recoveryWindow,
+	), nil
+}
+
 // WalletExists returns whether a wallet exists on the file path the
 // UnlockerService is using.
 func (u *UnlockerService) WalletExists() (bool, error) {
-	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
-	loader := walletloader.NewLoader(
-		u.netParams, netDir, wallet.DefaultGapLimit,
-	)
-
+	loader, err := u.newLoader(wallet.DefaultGapLimit)
+	if err != nil {
+		return false, err
+	}
 	return loader.WalletExists()
 }
 
@@ -214,8 +222,11 @@ func (u *UnlockerService) GenSeed(_ context.Context,
 
 	// Before we start, we'll ensure that the wallet hasn't already created
 	// so we don't show a *new* seed to the user if one already exists.
-	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
-	loader := walletloader.NewLoader(u.netParams, netDir, wallet.DefaultGapLimit)
+	loader, err := u.newLoader(wallet.DefaultGapLimit)
+	if err != nil {
+		return nil, err
+	}
+
 	walletExists, err := loader.WalletExists()
 	if err != nil {
 		return nil, err
@@ -347,11 +358,11 @@ func (u *UnlockerService) InitWallet(ctx context.Context,
 	}
 
 	// We'll then open up the directory that will be used to store the
-	// wallet's files so we can check if the wallet already exists. This
-	// loader is only used for this check and should not leak to the
-	// outside.
-	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
-	loader := walletloader.NewLoader(u.netParams, netDir, gapLimit)
+	// wallet's files so we can check if the wallet already exists.
+	loader, err := u.newLoader(gapLimit)
+	if err != nil {
+		return nil, err
+	}
 
 	walletExists, err := loader.WalletExists()
 	if err != nil {
@@ -588,8 +599,10 @@ func (u *UnlockerService) UnlockWallet(ctx context.Context,
 		gapLimit = uint32(in.RecoveryWindow)
 	}
 
-	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
-	loader := walletloader.NewLoader(u.netParams, netDir, gapLimit)
+	loader, err := u.newLoader(gapLimit)
+	if err != nil {
+		return nil, err
+	}
 
 	// Check if wallet already exists.
 	walletExists, err := loader.WalletExists()
@@ -663,8 +676,10 @@ func (u *UnlockerService) UnlockWallet(ctx context.Context,
 func (u *UnlockerService) ChangePassword(ctx context.Context,
 	in *lnrpc.ChangePasswordRequest) (*lnrpc.ChangePasswordResponse, error) {
 
-	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
-	loader := walletloader.NewLoader(u.netParams, netDir, wallet.DefaultGapLimit)
+	loader, err := u.newLoader(wallet.DefaultGapLimit)
+	if err != nil {
+		return nil, err
+	}
 
 	// First, we'll make sure the wallet exists for the specific chain and
 	// network.
@@ -747,6 +762,7 @@ func (u *UnlockerService) ChangePassword(ctx context.Context,
 	// then close it again.
 	// Attempt to open the macaroon DB, unlock it and then change
 	// the passphrase.
+	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
 	macaroonService, err := macaroons.NewService(
 		netDir, "lnd", in.StatelessInit, u.dbTimeout,
 	)
