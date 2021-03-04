@@ -337,15 +337,23 @@ var allTestCases = []*testCase{
 		test: testMaxChannelSize,
 	},
 	{
-		name: "wallet import account",
-		test: testWalletImportAccount,
-	},
-	{
 		name: "connection timeout",
 		test: testNetworkConnectionTimeout,
 	},
 	{
 		name: "stateless init",
 		test: testStatelessInit,
+	},
+	{
+		name: "wallet import account",
+		test: testWalletImportAccount,
+	},
+	{
+		name: "wallet import pubkey",
+		test: testWalletImportPubKey,
+	},
+	{
+		name: "etcd_failover",
+		test: testEtcdFailover,
 	},
 }
