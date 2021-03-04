@@ -138,6 +138,38 @@ const (
 	// of a payment supports accepts spontaneous payments, i.e.
 	// sender-generated preimages according to BOLT XX.
 	AMPOptional FeatureBit = 31
+
+	// ExplicitChannelTypeRequired is a required bit that denotes that a
+	// connection established with this node is to use explicit channel
+	// commitment types for negotiation instead of the existing implicit
+	// negotiation methods. With this bit, there is no longer a "default"
+	// implicit channel commitment type, allowing a connection to
+	// open/maintain types of several channels over its lifetime.
+	//
+	// TODO: Decide on actual feature bit value.
+	ExplicitChannelTypeRequired = 2020
+
+	// ExplicitChannelTypeOptional is an optional bit that denotes that a
+	// connection established with this node is to use explicit channel
+	// commitment types for negotiation instead of the existing implicit
+	// negotiation methods. With this bit, there is no longer a "default"
+	// implicit channel commitment type, allowing a connection to
+	// open/maintain types of several channels over its lifetime.
+	//
+	// TODO: Decide on actual feature bit value.
+	ExplicitChannelTypeOptional = 2021
+
+	// maxAllowedSize is a maximum allowed size of feature vector.
+	//
+	// NOTE: Within the protocol, the maximum allowed message size is 65535
+	// bytes for all messages. Accounting for the overhead within the feature
+	// message to signal the type of message, that leaves us with 65533 bytes
+	// for the init message itself.  Next, we reserve 4 bytes to encode the
+	// lengths of both the local and global feature vectors, so 65529 bytes
+	// for the local and global features. Knocking off one byte for the sake
+	// of the calculation, that leads us to 32764 bytes for each feature
+	// vector, or 131056 different features.
+	maxAllowedSize = 32764
 )
 
 // IsRequired returns true if the feature bit is even, and false otherwise.
@@ -172,6 +204,8 @@ var Features = map[FeatureBit]string{
 	WumboChannelsOptional:         "wumbo-channels",
 	AMPRequired:                   "amp",
 	AMPOptional:                   "amp",
+	ExplicitChannelTypeOptional:   "explicit-commitment-type",
+	ExplicitChannelTypeRequired:   "explicit-commitment-type",
 }
 
 // RawFeatureVector represents a set of feature bits as defined in BOLT-09.  A
