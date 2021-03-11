@@ -1465,6 +1465,11 @@ func (hn *HarnessNode) shutdown() error {
 	return nil
 }
 
+// kill kills the lnd process
+func (hn *HarnessNode) kill() error {
+	return hn.cmd.Process.Kill()
+}
+
 // P2PAddr returns the configured P2P address for the node.
 func (hn *HarnessNode) P2PAddr() string {
 	return hn.Cfg.P2PAddr()
