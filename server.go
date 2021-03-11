@@ -768,19 +768,20 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	s.controlTower = routing.NewControlTower(paymentControl)
 
 	routingCfg := routing.Config{
-		Graph:              chanGraph,
-		Chain:              cc.ChainIO,
-		ChainView:          cc.ChainView,
-		Payer:              s.htlcSwitch,
-		Control:            s.controlTower,
-		MissionControl:     s.missionControl,
-		SessionSource:      paymentSessionSource,
-		ChannelPruneExpiry: routing.DefaultChannelPruneExpiry,
-		GraphPruneInterval: time.Hour,
-		QueryBandwidth:     queryBandwidth,
-		NextPaymentID:      sequencer.NextID,
-		PathFindingConfig:  pathFindingConfig,
-		Clock:              clock.NewDefaultClock(),
+		Graph:               chanGraph,
+		Chain:               cc.ChainIO,
+		ChainView:           cc.ChainView,
+		Payer:               s.htlcSwitch,
+		Control:             s.controlTower,
+		MissionControl:      s.missionControl,
+		SessionSource:       paymentSessionSource,
+		ChannelPruneExpiry:  routing.DefaultChannelPruneExpiry,
+		GraphPruneInterval:  time.Hour,
+		FirstTimePruneDelay: routing.DefaultFirstTimePruneDelay,
+		QueryBandwidth:      queryBandwidth,
+		NextPaymentID:       sequencer.NextID,
+		PathFindingConfig:   pathFindingConfig,
+		Clock:               clock.NewDefaultClock(),
 	}
 	if cfg.Routing != nil {
 		routingCfg.AssumeChannelValid = cfg.Routing.AssumeChannelValid
