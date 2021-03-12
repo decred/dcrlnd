@@ -302,7 +302,8 @@ type WalletController interface {
 	// wtxmgr.ErrOutputAlreadyLocked is returned.
 	//
 	// NOTE: This method requires the global coin selection lock to be held.
-	LeaseOutput(id LockID, op wire.OutPoint) (time.Time, error)
+	LeaseOutput(id LockID, op wire.OutPoint,
+		duration time.Duration) (time.Time, error)
 
 	// ReleaseOutput unlocks an output, allowing it to be available for coin
 	// selection if it remains unspent. The ID should match the one used to

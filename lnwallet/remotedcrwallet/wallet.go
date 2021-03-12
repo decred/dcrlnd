@@ -1193,7 +1193,7 @@ func (b *DcrWallet) LabelTransaction(hash chainhash.Hash, label string, overwrit
 // LeaseOutput markes the output as used for some time.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) LeaseOutput(lnwallet.LockID, wire.OutPoint) (time.Time, error) {
+func (b *DcrWallet) LeaseOutput(lnwallet.LockID, wire.OutPoint, time.Duration) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unimplemented")
 }
 

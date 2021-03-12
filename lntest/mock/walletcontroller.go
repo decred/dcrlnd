@@ -149,9 +149,8 @@ func (w *WalletController) LockOutpoint(o wire.OutPoint) {}
 func (w *WalletController) UnlockOutpoint(o wire.OutPoint) {}
 
 // LeaseOutput returns the current time and a nil error.
-func (w *WalletController) LeaseOutput(lnwallet.LockID, wire.OutPoint) (time.Time,
-	error) {
-
+func (w *WalletController) LeaseOutput(lnwallet.LockID, wire.OutPoint,
+	time.Duration) (time.Time, error) {
 	return time.Now(), nil
 }
 
