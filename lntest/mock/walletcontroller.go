@@ -159,6 +159,10 @@ func (w *WalletController) ReleaseOutput(lnwallet.LockID, wire.OutPoint) error {
 	return nil
 }
 
+func (w *WalletController) ListLeasedOutputs() ([]*lnwallet.LockedOutput, error) {
+	return nil, nil
+}
+
 // FundPsbt currently does nothing.
 func (w *WalletController) FundPsbt(_ *psbt.Packet,
 	_ chainfee.AtomPerKByte) (int32, error) {

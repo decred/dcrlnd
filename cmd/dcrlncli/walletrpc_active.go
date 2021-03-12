@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -60,6 +59,7 @@ func walletCommands() []cli.Command {
 				listSweepsCommand,
 				labelTxCommand,
 				releaseOutputCommand,
+				listLeasesCommand,
 				psbtCommand,
 				accountsCommand,
 			},
@@ -620,14 +620,7 @@ func fundPsbt(ctx *cli.Context) error {
 		return err
 	}
 
-	jsonLocks := make([]*utxoLease, len(response.LockedUtxos))
-	for idx, lock := range response.LockedUtxos {
-		jsonLocks[idx] = &utxoLease{
-			ID:         hex.EncodeToString(lock.Id),
-			OutPoint:   NewOutPointFromProto(lock.Outpoint),
-			Expiration: lock.Expiration,
-		}
-	}
+	jsonLocks := marshallLocks(response.LockedUtxos)
 
 	printJSON(&fundPsbtResponse{
 		Psbt: base64.StdEncoding.EncodeToString(
@@ -638,6 +631,21 @@ func fundPsbt(ctx *cli.Context) error {
 	})
 
 	return nil
+}
+
+// marshallLocks converts the rpc lease information to a more json-friendly
+// format.
+func marshallLocks(lockedUtxos []*walletrpc.UtxoLease) []*utxoLease {
+	jsonLocks := make([]*utxoLease, len(lockedUtxos))
+	for idx, lock := range lockedUtxos {
+		jsonLocks[idx] = &utxoLease{
+			ID:         hex.EncodeToString(lock.Id),
+			OutPoint:   NewOutPointFromProto(lock.Outpoint),
+			Expiration: lock.Expiration,
+		}
+	}
+
+	return jsonLocks
 }
 
 // finalizePsbtResponse is a struct that contains JSON annotations for nice
@@ -783,6 +791,28 @@ func releaseOutput(ctx *cli.Context) error {
 	return nil
 }
 
+var listLeasesCommand = cli.Command{
+	Name:   "listleases",
+	Usage:  "Return a list of currently held leases.",
+	Action: actionDecorator(listLeases),
+}
+
+func listLeases(ctx *cli.Context) error {
+	ctxc := getContext()
+
+	walletClient, cleanUp := getWalletClient(ctx)
+	defer cleanUp()
+
+	req := &walletrpc.ListLeasesRequest{}
+	response, err := walletClient.ListLeases(ctxc, req)
+	if err != nil {
+		return err
+	}
+	printJSON(marshallLocks(response.LockedUtxos))
+
+	return nil
+}
+
 var listAccountsCommand = cli.Command{
 	Name:  "list",
 	Usage: "Retrieve information of existing on-chain wallet accounts.",
@@ -802,7 +832,7 @@ var listAccountsCommand = cli.Command{
 }
 
 func listAccounts(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
@@ -817,7 +847,7 @@ func listAccounts(ctx *cli.Context) error {
 	req := &walletrpc.ListAccountsRequest{
 		Name: ctx.String("name"),
 	}
-	resp, err := walletClient.ListAccounts(ctxb, req)
+	resp, err := walletClient.ListAccounts(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -851,7 +881,7 @@ var importAccountCommand = cli.Command{
 }
 
 func importAccount(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
@@ -866,7 +896,7 @@ func importAccount(ctx *cli.Context) error {
 		Name:              ctx.Args().Get(1),
 		ExtendedPublicKey: ctx.Args().Get(0),
 	}
-	resp, err := walletClient.ImportAccount(ctxb, req)
+	resp, err := walletClient.ImportAccount(ctxc, req)
 	if err != nil {
 		return err
 	}
@@ -890,7 +920,7 @@ var importPubKeyCommand = cli.Command{
 }
 
 func importPubKey(ctx *cli.Context) error {
-	ctxb := context.Background()
+	ctxc := getContext()
 
 	// Display the command's help message if we do not have the expected
 	// number of arguments/flags.
@@ -909,7 +939,7 @@ func importPubKey(ctx *cli.Context) error {
 	req := &walletrpc.ImportPublicKeyRequest{
 		PublicKey: pubKeyBytes,
 	}
-	resp, err := walletClient.ImportPublicKey(ctxb, req)
+	resp, err := walletClient.ImportPublicKey(ctxc, req)
 	if err != nil {
 		return err
 	}
