@@ -312,6 +312,9 @@ type WalletController interface {
 	// NOTE: This method requires the global coin selection lock to be held.
 	ReleaseOutput(id LockID, op wire.OutPoint) error
 
+	// ListLeasedOutputs returns a list of all currently locked outputs.
+	ListLeasedOutputs() ([]*LockedOutput, error)
+
 	// PublishTransaction performs cursory validation (dust checks, etc),
 	// then finally broadcasts the passed transaction to the Decred network.
 	// If the transaction is rejected because it is conflicting with an
