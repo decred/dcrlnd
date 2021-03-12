@@ -1370,6 +1370,17 @@ func (w *WalletKit) FundPsbt(_ context.Context,
 	}
 
 	// Convert the lock leases to the RPC format.
+	rpcLocks := marshallLeases(locks)
+
+	return &FundPsbtResponse{
+		FundedPsbt:        rawPsbt.Bytes(),
+		ChangeOutputIndex: changeIndex,
+		LockedUtxos:       rpcLocks,
+	}, nil
+}
+
+// marshallLeases converts the lock leases to the RPC format.
+func marshallLeases(locks []*utxoLock) []*UtxoLease {
 	rpcLocks := make([]*UtxoLease, len(locks))
 	for idx, lock := range locks {
 		rpcLocks[idx] = &UtxoLease{
@@ -1383,11 +1394,7 @@ func (w *WalletKit) FundPsbt(_ context.Context,
 		}
 	}
 
-	return &FundPsbtResponse{
-		FundedPsbt:        rawPsbt.Bytes(),
-		ChangeOutputIndex: changeIndex,
-		LockedUtxos:       rpcLocks,
-	}, nil
+	return rpcLocks
 }
 
 // FinalizePsbt expects a partial transaction with all inputs and outputs fully
