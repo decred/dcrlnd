@@ -1,6 +1,7 @@
 package blockcache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	cache "github.com/decred/dcrlnd/neutrinocache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 type mockChainBackend struct {
@@ -28,7 +30,7 @@ func (m *mockChainBackend) addBlock(block *wire.MsgBlock, nonce uint32) {
 	hash := block.Header.BlockHash()
 	m.blocks[hash] = block
 }
-func (m *mockChainBackend) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
+func (m *mockChainBackend) GetBlock(ctx context.Context, blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
 	m.RLock()
 	defer m.RUnlock()
 	m.chainCallCount++
@@ -59,6 +61,7 @@ func (m *mockChainBackend) resetChainCallCount() {
 func TestBlockCacheGetBlock(t *testing.T) {
 	mc := newMockChain()
 	getBlockImpl := mc.GetBlock
+	ctx := testctx.New(t)
 
 	block1 := &wire.MsgBlock{Header: wire.BlockHeader{Nonce: 1}}
 	block2 := &wire.MsgBlock{Header: wire.BlockHeader{Nonce: 2}}
@@ -88,7 +91,7 @@ func TestBlockCacheGetBlock(t *testing.T) {
 	// After calling getBlock for block1, it is expected that the Cache
 	// will have a size of 1 and will contain block1. One chain backends
 	// call is expected to fetch the block.
-	_, err := bc.GetBlock(&blockhash1, getBlockImpl)
+	_, err := bc.GetBlock(ctx, &blockhash1, getBlockImpl)
 	require.NoError(t, err)
 	require.Equal(t, 1, bc.Cache.Len())
 	require.Equal(t, 1, mc.chainCallCount)
@@ -100,7 +103,7 @@ func TestBlockCacheGetBlock(t *testing.T) {
 	// After calling getBlock for block2, it is expected that the Cache
 	// will have a size of 2 and will contain both block1 and block2.
 	// One chain backends call is expected to fetch the block.
-	_, err = bc.GetBlock(&blockhash2, getBlockImpl)
+	_, err = bc.GetBlock(ctx, &blockhash2, getBlockImpl)
 	require.NoError(t, err)
 	require.Equal(t, 2, bc.Cache.Len())
 	require.Equal(t, 1, mc.chainCallCount)
@@ -115,7 +118,7 @@ func TestBlockCacheGetBlock(t *testing.T) {
 	// getBlock is called again for block1 to make block2 the LFU block.
 	// No call to the chain backend is expected since block 1 is already
 	// in the Cache.
-	_, err = bc.GetBlock(&blockhash1, getBlockImpl)
+	_, err = bc.GetBlock(ctx, &blockhash1, getBlockImpl)
 	require.NoError(t, err)
 	require.Equal(t, 2, bc.Cache.Len())
 	require.Equal(t, 0, mc.chainCallCount)
@@ -126,7 +129,7 @@ func TestBlockCacheGetBlock(t *testing.T) {
 	// evicted. It is expected that block2 will be evicted. After calling
 	// Getblock for block3, it is expected that the Cache will have a
 	// length of 2 and will contain block 1 and 3.
-	_, err = bc.GetBlock(&blockhash3, getBlockImpl)
+	_, err = bc.GetBlock(ctx, &blockhash3, getBlockImpl)
 	require.NoError(t, err)
 	require.Equal(t, 2, bc.Cache.Len())
 	require.Equal(t, 1, mc.chainCallCount)
@@ -148,6 +151,7 @@ func TestBlockCacheGetBlock(t *testing.T) {
 func TestBlockCacheMutexes(t *testing.T) {
 	mc := newMockChain()
 	getBlockImpl := mc.GetBlock
+	ctx := testctx.New(t)
 
 	block1 := &wire.MsgBlock{Header: wire.BlockHeader{Nonce: 1}}
 	block2 := &wire.MsgBlock{Header: wire.BlockHeader{Nonce: 2}}
@@ -172,10 +176,10 @@ func TestBlockCacheMutexes(t *testing.T) {
 		wg.Add(1)
 		go func(e int) {
 			if e%2 == 0 {
-				_, err := bc.GetBlock(&blockhash1, getBlockImpl)
+				_, err := bc.GetBlock(ctx, &blockhash1, getBlockImpl)
 				assert.NoError(t, err)
 			} else {
-				_, err := bc.GetBlock(&blockhash2, getBlockImpl)
+				_, err := bc.GetBlock(ctx, &blockhash2, getBlockImpl)
 				assert.NoError(t, err)
 			}
 

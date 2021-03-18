@@ -2002,7 +2002,7 @@ func TestInterfaces(t *testing.T, notifierType, syncerType string) {
 			backend := miner.RPCConfig()
 			notifier, err = dcrdnotify.New(
 				&backend, netParams, hintCache,
-				hintCache,
+				hintCache, nil,
 			)
 			if err != nil {
 				t.Fatalf("error initializing dcrd notifier: %v", err)
@@ -2022,7 +2022,7 @@ func TestInterfaces(t *testing.T, notifierType, syncerType string) {
 			}
 
 			notifier, err = dcrwnotify.New(
-				w, netParams, hintCache, hintCache,
+				w, netParams, hintCache, hintCache, nil,
 			)
 			if err != nil {
 				t.Fatalf("error initializing dcrw notifier: %v", err)
@@ -2042,7 +2042,7 @@ func TestInterfaces(t *testing.T, notifierType, syncerType string) {
 				t.Fatalf("unknown syncer type %s", syncerType)
 			}
 			notifier, err = remotedcrwnotify.New(
-				c, netParams, hintCache, hintCache,
+				c, netParams, hintCache, hintCache, nil,
 			)
 			if err != nil {
 				t.Fatalf("error initializing dcrw notifier: %v", err)

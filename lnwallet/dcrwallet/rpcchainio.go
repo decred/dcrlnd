@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/wire"
 
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/lnwallet"
 
 	"decred.org/dcrwallet/v3/errors"
@@ -31,7 +32,8 @@ var (
 
 // RPCChainIO implements the required methods for performing chain io services.
 type RPCChainIO struct {
-	net *chaincfg.Params
+	net        *chaincfg.Params
+	blockCache *blockcache.BlockCache
 
 	// mu is a mutex that protects the chain field.
 	mu    sync.Mutex
@@ -44,7 +46,8 @@ var _ lnwallet.BlockChainIO = (*RPCChainIO)(nil)
 // NewRPCChainIO initializes a new blockchain IO implementation backed by a
 // full dcrd node.  It requires the config for reaching the dcrd instance and
 // the corresponding network this instance should be in.
-func NewRPCChainIO(rpcConfig rpcclient.ConnConfig, net *chaincfg.Params) (*RPCChainIO, error) {
+func NewRPCChainIO(rpcConfig rpcclient.ConnConfig, net *chaincfg.Params,
+	blockCache *blockcache.BlockCache) (*RPCChainIO, error) {
 	// TODO: bring back this. rpcclient/v6 changed the semantics of the
 	// context passed to Connect().
 	/*
@@ -67,8 +70,9 @@ func NewRPCChainIO(rpcConfig rpcclient.ConnConfig, net *chaincfg.Params) (*RPCCh
 	}
 
 	return &RPCChainIO{
-		net:   net,
-		chain: chain,
+		net:        net,
+		chain:      chain,
+		blockCache: blockCache,
 	}, nil
 }
 
@@ -127,6 +131,10 @@ func (s *RPCChainIO) GetUtxo(op *wire.OutPoint, pkScript []byte,
 //
 // This method is a part of the lnwallet.BlockChainIO interface.
 func (s *RPCChainIO) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
+	return s.blockCache.GetBlock(context.TODO(), blockHash, s.getBlock)
+}
+
+func (s *RPCChainIO) getBlock(ctx context.Context, blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.chain == nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/gcs/v4"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainscan"
 )
 
@@ -32,6 +33,8 @@ type eventReader struct {
 type DcrwalletCSDriver struct {
 	w *wallet.Wallet
 
+	blockCache *blockcache.BlockCache
+
 	mtx      sync.Mutex
 	ereaders []*eventReader
 
@@ -48,10 +51,11 @@ var _ chainscan.TipChainSource = (*DcrwalletCSDriver)(nil)
 // Hint for the capacity of the cache size. Value is arbitrary at this point.
 var cacheCapHint = 200
 
-func NewDcrwalletCSDriver(w *wallet.Wallet) *DcrwalletCSDriver {
+func NewDcrwalletCSDriver(w *wallet.Wallet, bCache *blockcache.BlockCache) *DcrwalletCSDriver {
 	return &DcrwalletCSDriver{
-		w:     w,
-		cache: make([]cfilter, 0, cacheCapHint),
+		w:          w,
+		blockCache: bCache,
+		cache:      make([]cfilter, 0, cacheCapHint),
 	}
 }
 
@@ -135,6 +139,13 @@ func (d *DcrwalletCSDriver) ChainEvents(ctx context.Context) <-chan chainscan.Ch
 // wallets running in SPV mode this blocks until the wallet is connected to a
 // peer and it correctly returns a full block.
 func (d *DcrwalletCSDriver) GetBlock(ctx context.Context, bh *chainhash.Hash) (*wire.MsgBlock, error) {
+	return d.blockCache.GetBlock(ctx, bh, d.getBlock)
+}
+
+// getBlock returns the given block for the given blockhash. Note that for
+// wallets running in SPV mode this blocks until the wallet is connected to a
+// peer and it correctly returns a full block.
+func (d *DcrwalletCSDriver) getBlock(ctx context.Context, bh *chainhash.Hash) (*wire.MsgBlock, error) {
 getblock:
 	for {
 		// Keep trying to get the network backend until the context is

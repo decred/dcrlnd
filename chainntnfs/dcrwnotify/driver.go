@@ -6,6 +6,7 @@ import (
 
 	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs"
 )
 
@@ -18,9 +19,9 @@ const (
 // createNewNotifier creates a new instance of the ChainNotifier interface
 // implemented by DcrdNotifier.
 func createNewNotifier(args ...interface{}) (chainntnfs.ChainNotifier, error) {
-	if len(args) != 4 {
+	if len(args) != 5 {
 		return nil, fmt.Errorf("incorrect number of arguments to "+
-			".New(...), expected 4, instead passed %v", len(args))
+			".New(...), expected 5, instead passed %v", len(args))
 	}
 
 	w, ok := args[0].(*wallet.Wallet)
@@ -47,7 +48,13 @@ func createNewNotifier(args ...interface{}) (chainntnfs.ChainNotifier, error) {
 			"is incorrect, expected a chainntnfs.ConfirmHintCache")
 	}
 
-	return New(w, chainParams, spendHintCache, confirmHintCache)
+	blockCache, ok := args[4].(*blockcache.BlockCache)
+	if !ok {
+		return nil, errors.New("third argument to dcrdnotifier.New " +
+			"is incorrect, expected a *blockcache.BlockCache")
+	}
+
+	return New(w, chainParams, spendHintCache, confirmHintCache, blockCache)
 }
 
 // init registers a driver for the DcrdNotifier concrete implementation of the

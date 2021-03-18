@@ -2,6 +2,7 @@ package remotedcrwallet
 
 import (
 	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -53,6 +54,9 @@ type Config struct {
 	// but not all operations needed by the drivers are currently
 	// implemented in the wallet.
 	ChainIO lnwallet.BlockChainIO
+
+	// BlockCache is an optional in-memory block cacher.
+	BlockCache *blockcache.BlockCache
 
 	DB *channeldb.DB
 }

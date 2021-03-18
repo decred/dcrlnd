@@ -7,6 +7,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs"
 	csnotify "github.com/decred/dcrlnd/chainntnfs/chainscannotify"
 	"github.com/decred/dcrlnd/chainscan/csdrivers"
@@ -47,8 +48,8 @@ func (s *DcrwChainSource) StoresReorgedHeaders() bool {
 	return true
 }
 
-func NewDcrwChainSource(w *wallet.Wallet) *DcrwChainSource {
-	cs := csdrivers.NewDcrwalletCSDriver(w)
+func NewDcrwChainSource(w *wallet.Wallet, bCache *blockcache.BlockCache) *DcrwChainSource {
+	cs := csdrivers.NewDcrwalletCSDriver(w, bCache)
 	return &DcrwChainSource{
 		w:                 w,
 		DcrwalletCSDriver: cs,
@@ -62,8 +63,9 @@ var _ csnotify.ChainSource = (*DcrwChainSource)(nil)
 // accept new websockets clients.
 func New(w *wallet.Wallet, chainParams *chaincfg.Params,
 	spendHintCache chainntnfs.SpendHintCache,
-	confirmHintCache chainntnfs.ConfirmHintCache) (*csnotify.ChainscanNotifier, error) {
+	confirmHintCache chainntnfs.ConfirmHintCache,
+	bCache *blockcache.BlockCache) (*csnotify.ChainscanNotifier, error) {
 
-	src := NewDcrwChainSource(w)
+	src := NewDcrwChainSource(w, bCache)
 	return csnotify.New(src, chainParams, spendHintCache, confirmHintCache)
 }

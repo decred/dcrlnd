@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 	"golang.org/x/exp/slices"
 
@@ -3317,6 +3318,7 @@ func TestLightningWallet(t *testing.T, driverName, backEnd string) {
 	require.NoError(t, err)
 	chainNotifier, err := dcrdnotify.New(
 		&rpcConfig, netParams, hintCache, hintCache,
+		nil,
 	)
 	require.NoError(t, err)
 	if err := chainNotifier.Start(); err != nil {
@@ -3392,6 +3394,8 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 	bobSeedBytes := bobSeed.Sum(nil)
 	bobPrivatePass := []byte("bob-pass")
 
+	blockCache := blockcache.NewBlockCache(10000)
+
 	walletType := walletDriver.WalletType
 	switch walletType {
 	case "dcrwallet":
@@ -3409,12 +3413,12 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 				t.Fatalf("unable to make chain rpc: %v", err)
 			}
 
-			aliceBio, err = dcrwallet.NewRPCChainIO(rpcConfig, netParams)
+			aliceBio, err = dcrwallet.NewRPCChainIO(rpcConfig, netParams, blockCache)
 			if err != nil {
 				t.Fatalf("unable to make alice chain IO: %v", err)
 			}
 
-			bobBio, err = dcrwallet.NewRPCChainIO(rpcConfig, netParams)
+			bobBio, err = dcrwallet.NewRPCChainIO(rpcConfig, netParams, blockCache)
 			if err != nil {
 				t.Fatalf("unable to make bob chain IO: %v", err)
 			}
@@ -3446,7 +3450,9 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 			ChainIO:     aliceBio,
 			DB:          aliceCDB,
 		}
-		aliceWalletController, err = walletDriver.New(aliceWalletConfig)
+		aliceWalletController, err = walletDriver.New(
+			aliceWalletConfig, blockCache,
+		)
 		if err != nil {
 			t.Fatalf("unable to create alice wallet: %v", err)
 		}
@@ -3462,7 +3468,9 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 			ChainIO:     bobBio,
 			DB:          bobCDB,
 		}
-		bobWalletController, err = walletDriver.New(bobWalletConfig)
+		bobWalletController, err = walletDriver.New(
+			bobWalletConfig, blockCache,
+		)
 		if err != nil {
 			t.Fatalf("unable to create bob wallet: %v", err)
 		}
@@ -3480,12 +3488,12 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 		switch backEnd {
 		case "dcrd":
 			aliceBio, err = dcrwallet.NewRPCChainIO(rpcConfig,
-				netParams)
+				netParams, blockCache)
 			if err != nil {
 				t.Fatalf("unable to make chain rpc: %v", err)
 			}
 			bobBio, err = dcrwallet.NewRPCChainIO(rpcConfig,
-				netParams)
+				netParams, blockCache)
 			if err != nil {
 				t.Fatalf("unable to make chain rpc: %v", err)
 			}

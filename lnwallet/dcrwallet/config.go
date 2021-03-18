@@ -6,6 +6,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -98,6 +99,9 @@ type Config struct {
 	// Loader is the loader used to initialize the Wallet field. If Wallet
 	// is specified, then Loader MUST be specified as well.
 	Loader *walletloader.Loader
+
+	// BlockCache is an optional in-memory block cache.
+	BlockCache *blockcache.BlockCache
 
 	DB *channeldb.DB
 }
