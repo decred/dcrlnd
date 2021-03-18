@@ -1,13 +1,15 @@
 package blockcache
 
 import (
+	"context"
+
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrlnd/neutrinocache"
-	"github.com/decred/dcrlnd/neutrinocache/lru"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/multimutex"
+	cache "github.com/decred/dcrlnd/neutrinocache"
+	"github.com/decred/dcrlnd/neutrinocache/lru"
 )
 
 // BlockCache is an lru cache for blocks.
@@ -28,9 +30,14 @@ func NewBlockCache(capacity uint64) *BlockCache {
 // with the given hash. If it does then the block is fetched from the cache and
 // returned. Otherwise the getBlockImpl function is used in order to fetch the
 // new block and then it is stored in the block cache and returned.
-func (bc *BlockCache) GetBlock(hash *chainhash.Hash,
-	getBlockImpl func(hash *chainhash.Hash) (*wire.MsgBlock,
+func (bc *BlockCache) GetBlock(ctx context.Context, hash *chainhash.Hash,
+	getBlockImpl func(ctx context.Context, hash *chainhash.Hash) (*wire.MsgBlock,
 		error)) (*wire.MsgBlock, error) {
+
+	// A nil BlockCache performs no caching.
+	if bc == nil {
+		return getBlockImpl(ctx, hash)
+	}
 
 	bc.HashMutex.Lock(lntypes.Hash(*hash))
 	defer bc.HashMutex.Unlock(lntypes.Hash(*hash))
@@ -49,7 +56,7 @@ func (bc *BlockCache) GetBlock(hash *chainhash.Hash,
 	}
 
 	// Fetch the block from the chain backends.
-	block, err := getBlockImpl(hash)
+	block, err := getBlockImpl(ctx, hash)
 	if err != nil {
 		return nil, err
 	}

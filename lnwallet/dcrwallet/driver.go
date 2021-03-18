@@ -19,9 +19,9 @@ var (
 // properly create an instance of the lnwallet.WalletDriver struct for
 // DcrWallet.
 func createNewWallet(args ...interface{}) (lnwallet.WalletController, error) {
-	if len(args) != 1 {
+	if len(args) != 2 {
 		return nil, fmt.Errorf("incorrect number of arguments to .New(...), "+
-			"expected 1, instead passed %v", len(args))
+			"expected 2, instead passed %v", len(args))
 	}
 
 	config, ok := args[0].(*Config)

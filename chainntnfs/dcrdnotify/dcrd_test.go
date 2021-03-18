@@ -66,7 +66,7 @@ func setUpNotifier(t *testing.T, h *rpctest.Harness) *DcrdNotifier {
 	hintCache := initHintCache(t)
 
 	rpcConfig := h.RPCConfig()
-	notifier, err := New(&rpcConfig, netParams, hintCache, hintCache)
+	notifier, err := New(&rpcConfig, netParams, hintCache, hintCache, nil)
 	if err != nil {
 		t.Fatalf("unable to create notifier: %v", err)
 	}

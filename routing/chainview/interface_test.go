@@ -791,7 +791,7 @@ var interfaceImpls = []struct {
 		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
 			config := miner.RPCConfig()
 			w, teardown := testutils.NewRPCSyncingTestWallet(t, &config)
-			chainView, err := NewDcrwalletFilteredChainView(w)
+			chainView, err := NewDcrwalletFilteredChainView(w, nil)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -803,7 +803,7 @@ var interfaceImpls = []struct {
 		name: "dcrw_embedded_spv",
 		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
 			w, teardown := testutils.NewSPVSyncingTestWallet(t, miner.P2PAddress())
-			chainView, err := NewDcrwalletFilteredChainView(w)
+			chainView, err := NewDcrwalletFilteredChainView(w, nil)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -829,7 +829,7 @@ var interfaceImpls = []struct {
 		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
 			config := miner.RPCConfig()
 			conn, teardown := testutils.NewRPCSyncingTestRemoteDcrwallet(t, &config)
-			chainView, err := NewRemoteWalletFilteredChainView(conn)
+			chainView, err := NewRemoteWalletFilteredChainView(conn, nil)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -841,7 +841,7 @@ var interfaceImpls = []struct {
 		name: "dcrw_remote_spv",
 		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
 			conn, teardown := testutils.NewSPVSyncingTestRemoteDcrwallet(t, miner.P2PAddress())
-			chainView, err := NewRemoteWalletFilteredChainView(conn)
+			chainView, err := NewRemoteWalletFilteredChainView(conn, nil)
 			if err != nil {
 				return nil, nil, err
 			}

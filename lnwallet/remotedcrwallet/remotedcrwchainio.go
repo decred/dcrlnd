@@ -70,7 +70,7 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 		}
 	}()
 
-	src := csdrivers.NewRemoteWalletCSDriver(b.wallet, b.network)
+	src := csdrivers.NewRemoteWalletCSDriver(b.wallet, b.network, b.cfg.BlockCache)
 	historical := chainscan.NewHistorical(src)
 	runAndLogOnError(ctx, src.Run, "GetUtxo.RemoteWalletCSDriver")
 	runAndLogOnError(ctx, historical.Run, "GetUtxo.Historical")
@@ -82,6 +82,10 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 //
 // This method is a part of the lnwallet.BlockChainIO interface.
 func (b *DcrWallet) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
+	return b.cfg.BlockCache.GetBlock(b.ctx, blockHash, b.getBlock)
+}
+
+func (b *DcrWallet) getBlock(ctx context.Context, blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
 	// TODO: unify with the driver on chainscan.
 	var (
 		resp *walletrpc.GetRawBlockResponse
@@ -96,7 +100,7 @@ func (b *DcrWallet) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) 
 	// isn't connected to any peers while in SPV mode. In that case, wait a
 	// bit and try again.
 	for stop := false; !stop; {
-		resp, err = b.network.GetRawBlock(b.ctx, req)
+		resp, err = b.network.GetRawBlock(ctx, req)
 		switch {
 		case status.Code(err) == codes.Unavailable:
 			dcrwLog.Warnf("Network unavailable from wallet; will try again in 5 seconds")

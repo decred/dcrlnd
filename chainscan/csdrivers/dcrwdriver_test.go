@@ -519,7 +519,7 @@ func TestDcrwalletCSDriver(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		succ := t.Run(tc.name, func(t *testing.T) {
-			d := NewDcrwalletCSDriver(w)
+			d := NewDcrwalletCSDriver(w, nil)
 
 			// Lower the cache size so we're sure to trigger cases
 			// where the cache is both used and filled.
@@ -552,7 +552,7 @@ func TestRemoteDcrwalletCSDriver(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		succ := t.Run(tc.name, func(t *testing.T) {
-			d := NewRemoteWalletCSDriver(wsvc, nsvc)
+			d := NewRemoteWalletCSDriver(wsvc, nsvc, nil)
 
 			// Lower the cache size so we're sure to trigger cases
 			// where the cache is both used and filled.
@@ -585,7 +585,7 @@ func BenchmarkDcrwalletCSDriver(b *testing.B) {
 	w, tearDownWallet := testutils.NewRPCSyncingTestWallet(b, &rpcConfig)
 	defer tearDownWallet()
 
-	d := NewDcrwalletCSDriver(w)
+	d := NewDcrwalletCSDriver(w, nil)
 	th := &testHarness{
 		d:     d,
 		TB:    b,

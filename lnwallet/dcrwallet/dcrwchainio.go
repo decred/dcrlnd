@@ -156,7 +156,7 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 		}
 	}()
 
-	src := csdrivers.NewDcrwalletCSDriver(b.wallet)
+	src := csdrivers.NewDcrwalletCSDriver(b.wallet, b.cfg.BlockCache)
 	historical := chainscan.NewHistorical(src)
 	runAndLogOnError(ctx, src.Run, "GetUtxo.DcrwalletCSDriver")
 	runAndLogOnError(ctx, historical.Run, "GetUtxo.Historical")

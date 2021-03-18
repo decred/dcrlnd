@@ -144,7 +144,7 @@ func main() {
 	completeChan := make(chan struct{})
 	targets[0].Options = append(targets[0].Options, chainscan.WithCompleteChan(completeChan))
 
-	chainSrc := csdrivers.NewRemoteWalletCSDriver(w, n)
+	chainSrc := csdrivers.NewRemoteWalletCSDriver(w, n, nil)
 	hist := chainscan.NewHistorical(chainSrc)
 	histCtx, cancel := context.WithCancel(context.Background())
 	go func() {

@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 	"github.com/decred/dcrlnd/chainntnfs/dcrwnotify"
@@ -281,6 +282,9 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			"cache: %v", err)
 	}
 
+	// Initialize a new block cache.
+	blockCache := blockcache.NewBlockCache(cfg.BlockCacheSize)
+
 	// When running in remote wallet mode, we only support running in dcrw
 	// mode (using the wallet for chain operations).
 	if cfg.WalletConn != nil && cfg.Decred.Node != "dcrw" {
@@ -376,6 +380,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			Conn:          cfg.WalletConn,
 			AccountNumber: cfg.WalletAccountNb,
 			ChainIO:       cc.ChainIO,
+			BlockCache:    blockCache,
 		}
 
 		wc, err := remotedcrwallet.New(*dcrwConfig)
@@ -387,13 +392,15 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		// Remote wallet mode currently always use the wallet for chain
 		// notifications and chain IO.
 		cc.ChainNotifier, err = remotedcrwnotify.New(
-			cfg.WalletConn, cfg.ActiveNetParams.Params, hintCache, hintCache,
+			cfg.WalletConn, cfg.ActiveNetParams.Params, hintCache,
+			hintCache, blockCache,
 		)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		cc.ChainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn)
+		cc.ChainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn,
+			blockCache)
 		if err != nil {
 			log.Errorf("unable to create chain view: %v", err)
 			return nil, nil, err
@@ -438,6 +445,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			NetParams:      cfg.ActiveNetParams.Params,
 			Wallet:         cfg.Wallet,
 			Loader:         cfg.WalletLoader,
+			BlockCache:     blockCache,
 			DB:             cfg.RemoteChanDB,
 		}
 
@@ -455,13 +463,15 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			log.Info("Using the wallet for chain operations")
 
 			cc.ChainNotifier, err = dcrwnotify.New(
-				wc.InternalWallet(), cfg.ActiveNetParams.Params, hintCache, hintCache,
+				wc.InternalWallet(), cfg.ActiveNetParams.Params,
+				hintCache, hintCache, blockCache,
 			)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			cc.ChainView, err = chainview.NewDcrwalletFilteredChainView(wc.InternalWallet())
+			cc.ChainView, err = chainview.NewDcrwalletFilteredChainView(wc.InternalWallet(),
+				blockCache)
 			if err != nil {
 				log.Errorf("unable to create chain view: %v", err)
 				return nil, nil, err
@@ -474,7 +484,8 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			log.Info("Using dcrd for chain operations")
 
 			cc.ChainNotifier, err = dcrdnotify.New(
-				rpcConfig, cfg.ActiveNetParams.Params, hintCache, hintCache,
+				rpcConfig, cfg.ActiveNetParams.Params, hintCache,
+				hintCache, blockCache,
 			)
 			if err != nil {
 				return nil, nil, err
@@ -488,7 +499,8 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 				return nil, nil, err
 			}
 
-			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig, cfg.ActiveNetParams.Params)
+			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig,
+				cfg.ActiveNetParams.Params, blockCache)
 			if err != nil {
 				return nil, nil, err
 			}

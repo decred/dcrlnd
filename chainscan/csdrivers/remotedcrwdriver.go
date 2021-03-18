@@ -12,6 +12,7 @@ import (
 	"github.com/decred/dcrd/gcs/v3/blockcf2"
 	"github.com/decred/dcrd/gcs/v4"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainscan"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,6 +21,8 @@ import (
 type RemoteWalletCSDriver struct {
 	wsvc walletrpc.WalletServiceClient
 	nsvc walletrpc.NetworkServiceClient
+
+	blockCache *blockcache.BlockCache
 
 	mtx      sync.Mutex
 	ereaders []*eventReader
@@ -34,11 +37,13 @@ type RemoteWalletCSDriver struct {
 var _ chainscan.HistoricalChainSource = (*RemoteWalletCSDriver)(nil)
 var _ chainscan.TipChainSource = (*RemoteWalletCSDriver)(nil)
 
-func NewRemoteWalletCSDriver(wsvc walletrpc.WalletServiceClient, nsvc walletrpc.NetworkServiceClient) *RemoteWalletCSDriver {
+func NewRemoteWalletCSDriver(wsvc walletrpc.WalletServiceClient,
+	nsvc walletrpc.NetworkServiceClient, bcache *blockcache.BlockCache) *RemoteWalletCSDriver {
 	return &RemoteWalletCSDriver{
-		wsvc:  wsvc,
-		nsvc:  nsvc,
-		cache: make([]cfilter, 0, cacheCapHint),
+		wsvc:       wsvc,
+		nsvc:       nsvc,
+		cache:      make([]cfilter, 0, cacheCapHint),
+		blockCache: bcache,
 	}
 }
 
@@ -171,6 +176,10 @@ func (d *RemoteWalletCSDriver) ChainEvents(ctx context.Context) <-chan chainscan
 }
 
 func (d *RemoteWalletCSDriver) GetBlock(ctx context.Context, bh *chainhash.Hash) (*wire.MsgBlock, error) {
+	return d.blockCache.GetBlock(ctx, bh, d.getBlock)
+}
+
+func (d *RemoteWalletCSDriver) getBlock(ctx context.Context, bh *chainhash.Hash) (*wire.MsgBlock, error) {
 	var (
 		resp *walletrpc.GetRawBlockResponse
 		err  error

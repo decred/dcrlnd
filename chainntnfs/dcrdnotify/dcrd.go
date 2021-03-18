@@ -17,6 +17,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/queue"
@@ -77,6 +78,7 @@ type DcrdNotifier struct {
 	chainConn   *rpcclient.Client
 	cca         *chainConnAdaptor
 	chainParams *chaincfg.Params
+	blockCache  *blockcache.BlockCache
 
 	notificationCancels  chan interface{}
 	notificationRegistry chan interface{}
@@ -111,10 +113,12 @@ var _ chainntnfs.ChainNotifier = (*DcrdNotifier)(nil)
 // accept new websockets clients.
 func New(config *rpcclient.ConnConfig, chainParams *chaincfg.Params,
 	spendHintCache chainntnfs.SpendHintCache,
-	confirmHintCache chainntnfs.ConfirmHintCache) (*DcrdNotifier, error) {
+	confirmHintCache chainntnfs.ConfirmHintCache,
+	blockCache *blockcache.BlockCache) (*DcrdNotifier, error) {
 
 	notifier := &DcrdNotifier{
 		chainParams: chainParams,
+		blockCache:  blockCache,
 
 		notificationCancels:  make(chan interface{}),
 		notificationRegistry: make(chan interface{}),
@@ -234,6 +238,10 @@ func (n *DcrdNotifier) Stop() error {
 	n.txNotifier.TearDown()
 
 	return nil
+}
+
+func (n *DcrdNotifier) getBlock(ctx context.Context, bh *chainhash.Hash) (*wire.MsgBlock, error) {
+	return n.blockCache.GetBlock(ctx, bh, n.chainConn.GetBlock)
 }
 
 // filteredBlock represents a new block which has been connected to the main
@@ -586,7 +594,7 @@ func (n *DcrdNotifier) confDetailsManually(confRequest chainntnfs.ConfRequest,
 		}
 
 		// TODO: fetch the neutrino filters instead.
-		block, err := n.chainConn.GetBlock(context.TODO(), blockHash)
+		block, err := n.getBlock(context.TODO(), blockHash)
 		if err != nil {
 			return nil, chainntnfs.TxNotFoundManually,
 				fmt.Errorf("unable to get block with hash "+
@@ -656,7 +664,7 @@ func (n *DcrdNotifier) fetchFilteredBlock(epoch chainntnfs.BlockEpoch) (*filtere
 // block (including _all_ transactions, not just the watched ones) for the
 // block identified by the provided block hash.
 func (n *DcrdNotifier) fetchFilteredBlockForBlockHash(bh *chainhash.Hash) (*filteredBlock, error) {
-	rawBlock, err := n.chainConn.GetBlock(context.TODO(), bh)
+	rawBlock, err := n.getBlock(context.TODO(), bh)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get block: %v", err)
 	}
