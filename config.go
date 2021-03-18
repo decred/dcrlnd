@@ -102,6 +102,10 @@ const (
 	// initiated the channel closure.
 	defaultCoopCloseTargetConfs = 6
 
+	// defaultBlockCacheSize is the size (in bytes) of blocks that will be
+	// keep in memory if no size is specified.
+	defaultBlockCacheSize uint64 = 20 * 1024 * 1024 // 20 MB
+
 	// defaultHostSampleInterval is the default amount of time that the
 	// HostAnnouncer will wait between DNS resolutions to check if the
 	// backing IP of a host has changed.
@@ -261,6 +265,8 @@ type Config struct {
 	DcrdMode  *lncfg.DcrdConfig      `group:"dcrd" namespace:"dcrd"`
 	Dcrwallet *lncfg.DcrwalletConfig `group:"dcrwallet" namespace:"dcrwallet"`
 
+	BlockCacheSize uint64 `long:"blockcachesize" description:"The maximum capacity of the block cache"`
+
 	Autopilot *lncfg.AutoPilot `group:"Autopilot" namespace:"autopilot"`
 
 	Tor *lncfg.Tor `group:"Tor" namespace:"tor"`
@@ -390,6 +396,7 @@ func DefaultConfig() Config {
 			RPCCert: defaultDcrdRPCCertFile,
 		},
 		Dcrwallet:          &lncfg.DcrwalletConfig{},
+		BlockCacheSize:     defaultBlockCacheSize,
 		UnsafeDisconnect:   true,
 		MaxPendingChannels: lncfg.DefaultMaxPendingChannels,
 		NoSeedBackup:       defaultNoSeedBackup,
