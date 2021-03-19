@@ -201,6 +201,12 @@ func (u *UnlockerService) SetDB(db *channeldb.DB) {
 	u.db.Store(db)
 }
 
+// SetLoaderOpts can be used to inject wallet loader options after the unlocker
+// service has been hooked to the main RPC server.
+func (u *UnlockerService) SetLoaderOpts(loaderOpts []walletloader.LoaderOption) {
+	u.loaderOpts = loaderOpts
+}
+
 func (u *UnlockerService) newLoader(recoveryWindow uint32) (*walletloader.Loader,
 	error) {
 
