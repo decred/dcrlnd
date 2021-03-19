@@ -202,7 +202,7 @@
     "/v1/channels/acceptor": {
       "post": {
         "summary": "ChannelAcceptor dispatches a bi-directional streaming RPC in which\nOpenChannel requests are sent to the client and the client responds with\na boolean that tells LND whether or not to accept the channel. This allows\nnode operators to specify their own criteria for accepting inbound channels\nthrough a single persistent connection.",
-        "operationId": "ChannelAcceptor",
+        "operationId": "Lightning_ChannelAcceptor",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -220,7 +220,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -572,7 +572,7 @@
     "/v1/channels/transaction-stream": {
       "post": {
         "summary": "lncli: `sendpayment`\nDeprecated, use routerrpc.SendPaymentV2. SendPayment dispatches a\nbi-directional streaming RPC for sending payments through the Lightning\nNetwork. A single RPC invocation creates a persistent bi-directional\nstream allowing clients to rapidly send payments through the Lightning\nNetwork with a single persistent connection.",
-        "operationId": "SendPayment",
+        "operationId": "Lightning_SendPayment",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -590,7 +590,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -2987,7 +2987,6 @@
       "properties": {
         "accept": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether or not the client accepts the channel."
         },
         "pending_chan_id": {
@@ -3008,15 +3007,15 @@
           "format": "int64",
           "description": "The csv delay (in blocks) that we require for the remote party."
         },
-        "reserve_sat": {
+        "reserve_atoms": {
           "type": "string",
           "format": "uint64",
-          "description": "The reserve amount in satoshis that we require the remote peer to adhere to.\nWe require that the remote peer always have some reserve amount allocated to\nthem so that there is always a disincentive to broadcast old state (if they\nhold 0 sats on their side of the channel, there is nothing to lose)."
+          "description": "The reserve amount in atoms that we require the remote peer to adhere to.\nWe require that the remote peer always have some reserve amount allocated to\nthem so that there is always a disincentive to broadcast old state (if they\nhold 0 sats on their side of the channel, there is nothing to lose)."
         },
-        "in_flight_max_msat": {
+        "in_flight_max_matoms": {
           "type": "string",
           "format": "uint64",
-          "description": "The maximum amount of funds in millisatoshis that we allow the remote peer\nto have in outstanding htlcs."
+          "description": "The maximum amount of funds in milliatoms that we allow the remote peer\nto have in outstanding htlcs."
         },
         "max_htlc_count": {
           "type": "integer",
@@ -3026,7 +3025,7 @@
         "min_htlc_in": {
           "type": "string",
           "format": "uint64",
-          "description": "The minimum value in millisatoshis for incoming htlcs on the channel."
+          "description": "The minimum value in milliatoms for incoming htlcs on the channel."
         },
         "min_accept_depth": {
           "type": "integer",
