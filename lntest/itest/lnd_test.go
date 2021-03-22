@@ -1379,6 +1379,7 @@ func basicChannelFundingTest(t *harnessTest, net *lntest.NetworkHarness,
 
 	chanAmt := defaultChanAmt
 	pushAmt := dcrutil.Amount(100000)
+	atomsPerByte := dcrutil.Amount(1)
 
 	// Record nodes' channel balance before testing.
 	aliceChannelBalance := getChannelBalance(t, alice)
@@ -1416,9 +1417,10 @@ func basicChannelFundingTest(t *harnessTest, net *lntest.NetworkHarness,
 	chanPoint := openChannelAndAssert(
 		ctxt, t, net, alice, bob,
 		lntest.OpenChannelParams{
-			Amt:         chanAmt,
-			PushAmt:     pushAmt,
-			FundingShim: fundingShim,
+			Amt:          chanAmt,
+			PushAmt:      pushAmt,
+			FundingShim:  fundingShim,
+			AtomsPerByte: atomsPerByte,
 		},
 	)
 
