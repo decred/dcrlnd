@@ -1622,8 +1622,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		}
 
 		// If the advertised inclusionary block is beyond our knowledge
-		// of the chain tip, then we'll put the announcement in limbo
-		// to be fully verified once we advance forward in the chain.
+		// of the chain tip, then we'll ignore for it now.
 		d.Lock()
 		if nMsg.isRemote && isPremature(msg.ShortChannelID, 0) {
 			log.Infof("Announcement for chan_id=(%v), is "+
@@ -1633,6 +1632,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 				msg.ShortChannelID.BlockHeight,
 				d.bestHeight)
 			d.Unlock()
+			nMsg.err <- nil
 			return nil
 		}
 		d.Unlock()
@@ -2146,16 +2146,14 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		// By the specification, channel announcement proofs should be
 		// sent after some number of confirmations after channel was
 		// registered in decred blockchain. Therefore, we check if the
-		// proof is premature.  If so we'll halt processing until the
-		// expected announcement height.  This allows us to be tolerant
-		// to other clients if this constraint was changed.
+		// proof is premature.
 		d.Lock()
 		if isPremature(msg.ShortChannelID, d.cfg.ProofMatureDelta) {
-			log.Infof("Premature proof announcement, "+
-				"current block height lower than needed: %v <"+
-				" %v, add announcement to reprocessing batch",
+			log.Infof("Premature proof announcement, current "+
+				"block height lower than needed: %v < %v",
 				d.bestHeight, needBlockHeight)
 			d.Unlock()
+			nMsg.err <- nil
 			return nil
 		}
 		d.Unlock()
