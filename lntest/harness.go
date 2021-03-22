@@ -904,6 +904,10 @@ type OpenChannelParams struct {
 	// FundingShim is an optional funding shim that the caller can specify
 	// in order to modify the channel funding workflow.
 	FundingShim *lnrpc.FundingShim
+
+	// AtomsPerByte is the amount of atoms to spend in chain fees per byte
+	// of the transaction.
+	AtomsPerByte dcrutil.Amount
 }
 
 // OpenChannel attempts to open a channel between srcNode and destNode with the
@@ -941,6 +945,7 @@ func (n *NetworkHarness) OpenChannel(ctx context.Context,
 		MinHtlcMAtoms:      int64(p.MinHtlc),
 		RemoteMaxHtlcs:     uint32(p.RemoteMaxHtlcs),
 		FundingShim:        p.FundingShim,
+		AtomsPerByte:       int64(p.AtomsPerByte),
 	}
 
 	respStream, err := srcNode.OpenChannel(ctx, openReq)
