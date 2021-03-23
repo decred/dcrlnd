@@ -1945,8 +1945,8 @@ func TestPruneChannelGraphStaleEdges(t *testing.T) {
 	freshTimestamp := time.Now()
 	staleTimestamp := time.Unix(0, 0)
 
-	// We'll create the following test graph so that only the last channel
-	// is pruned.
+	// We'll create the following test graph so that two of the channels
+	// are pruned.
 	testChannels := []*testChannel{
 		// No edges.
 		{
@@ -2036,8 +2036,10 @@ func TestPruneChannelGraphStaleEdges(t *testing.T) {
 		t.Fatalf("unable to prune zombie channels: %v", err)
 	}
 
-	prunedChannel := testChannels[len(testChannels)-1].ChannelID
-	assertChannelsPruned(t, ctx.graph, testChannels, prunedChannel)
+	// We expect channels that have either both edges stale, or one edge
+	// stale with both known.
+	prunedChannels := []uint64{4, 6}
+	assertChannelsPruned(t, ctx.graph, testChannels, prunedChannels...)
 }
 
 // TestPruneChannelGraphDoubleDisabled test that we can properly prune channels
