@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrlnd/clock"
+	"github.com/decred/dcrlnd/feature"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
@@ -1657,4 +1658,31 @@ func TestDeleteInvoices(t *testing.T) {
 	require.NoError(t, db.DeleteInvoice(invoicesToDelete))
 	assertInvoiceCount(0)
 
+}
+
+// TestAddInvoiceInvalidFeatureDeps asserts that inserting an invoice with
+// invalid transitive feature dependencies fails with the appropriate error.
+func TestAddInvoiceInvalidFeatureDeps(t *testing.T) {
+	t.Parallel()
+
+	db, cleanup, err := MakeTestDB()
+	require.NoError(t, err, "unable to make test db")
+	defer cleanup()
+
+	invoice, err := randInvoice(500)
+	require.NoError(t, err)
+
+	invoice.Terms.Features = lnwire.NewFeatureVector(
+		lnwire.NewRawFeatureVector(
+			lnwire.TLVOnionPayloadOptional,
+			lnwire.MPPOptional,
+		),
+		lnwire.Features,
+	)
+
+	hash := invoice.Terms.PaymentPreimage.Hash()
+	_, err = db.AddInvoice(invoice, hash)
+	require.Error(t, err, feature.NewErrMissingFeatureDep(
+		lnwire.PaymentAddrOptional,
+	))
 }
