@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/feature"
 	"github.com/decred/dcrlnd/htlcswitch/hop"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwire"
@@ -672,6 +673,11 @@ func validateInvoice(i *Invoice, paymentHash lntypes.Hash) error {
 	}
 	if i.Terms.Features == nil {
 		return errors.New("invoice must have a feature vector")
+	}
+
+	err := feature.ValidateDeps(i.Terms.Features)
+	if err != nil {
+		return err
 	}
 
 	if i.Terms.PaymentPreimage == nil && !i.HodlInvoice {
