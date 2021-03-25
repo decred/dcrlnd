@@ -29,9 +29,7 @@ func TestSettleInvoice(t *testing.T) {
 	}
 	defer subscription.Cancel()
 
-	if subscription.invoiceRef.PayHash() != testInvoicePaymentHash {
-		t.Fatalf("expected subscription for provided hash")
-	}
+	require.Equal(t, subscription.invoiceRef.PayHash(), &testInvoicePaymentHash)
 
 	// Give enough time for the invoice ntnf goroutine to complete
 	time.Sleep(time.Millisecond * 5)
@@ -247,9 +245,7 @@ func testCancelInvoice(t *testing.T, gc bool) {
 	}
 	defer subscription.Cancel()
 
-	if subscription.invoiceRef.PayHash() != testInvoicePaymentHash {
-		t.Fatalf("expected subscription for provided hash")
-	}
+	require.Equal(t, subscription.invoiceRef.PayHash(), &testInvoicePaymentHash)
 
 	// Give enough time for the invoice ntnf goroutine to complete
 	time.Sleep(time.Millisecond * 5)
@@ -410,9 +406,7 @@ func TestSettleHoldInvoice(t *testing.T) {
 	}
 	defer subscription.Cancel()
 
-	if subscription.invoiceRef.PayHash() != testInvoicePaymentHash {
-		t.Fatalf("expected subscription for provided hash")
-	}
+	require.Equal(t, subscription.invoiceRef.PayHash(), &testInvoicePaymentHash)
 
 	// Give some time for the subscription to be processed.
 	time.Sleep(time.Millisecond * 5)
@@ -1220,7 +1214,7 @@ func TestSettleInvoicePaymentAddrRequired(t *testing.T) {
 	defer subscription.Cancel()
 
 	require.Equal(
-		t, subscription.invoiceRef.PayHash(), testInvoicePaymentHash,
+		t, subscription.invoiceRef.PayHash(), &testInvoicePaymentHash,
 	)
 
 	// Add the invoice, which requires the MPP payload to always be
@@ -1296,7 +1290,7 @@ func TestSettleInvoicePaymentAddrRequiredOptionalGrace(t *testing.T) {
 	defer subscription.Cancel()
 
 	require.Equal(
-		t, subscription.invoiceRef.PayHash(), testInvoicePaymentHash,
+		t, subscription.invoiceRef.PayHash(), &testInvoicePaymentHash,
 	)
 
 	// Add the invoice, which requires the MPP payload to always be
