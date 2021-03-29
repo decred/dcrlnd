@@ -155,6 +155,10 @@ const (
 	// channel state updates that is accumulated before signing a new
 	// commitment.
 	defaultChannelCommitBatchSize = 10
+
+	// defaultCoinSelectionStrategy is the coin selection strategy that is
+	// used by default to fund transactions.
+	defaultCoinSelectionStrategy = "random"
 )
 
 var (
@@ -282,6 +286,8 @@ type Config struct {
 
 	NoSeedBackup             bool   `long:"noseedbackup" description:"If true, NO SEED WILL BE EXPOSED -- EVER, AND THE WALLET WILL BE ENCRYPTED USING THE DEFAULT PASSPHRASE. THIS FLAG IS ONLY FOR TESTING AND SHOULD NEVER BE USED ON MAINNET."`
 	WalletUnlockPasswordFile string `long:"wallet-unlock-password-file" description:"The full path to a file (or pipe/device) that contains the password for unlocking the wallet; if set, no unlocking through RPC is possible and lnd will exit if no wallet exists or the password is incorrect"`
+
+	CoinSelectionStrategy string `long:"coin-selection-strategy" description:"The strategy to use for selecting coins for wallet transactions." choice:"random"`
 
 	PaymentsExpirationGracePeriod time.Duration `long:"payments-expiration-grace-period" description:"A period to wait before force closing channels with outgoing htlcs that have timed-out and are a result of this node initiated payments."`
 	TrickleDelay                  int           `long:"trickledelay" description:"Time in milliseconds between each release of announcements to the network"`
@@ -506,6 +512,7 @@ func DefaultConfig() Config {
 		ActiveNetParams:         chainreg.DecredTestNetParams,
 		ChannelCommitInterval:   defaultChannelCommitInterval,
 		ChannelCommitBatchSize:  defaultChannelCommitBatchSize,
+		CoinSelectionStrategy:   defaultCoinSelectionStrategy,
 	}
 }
 

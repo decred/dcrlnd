@@ -697,6 +697,16 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		LoaderOptions:  loaderOpts,
 	}
 
+	// Parse coin selection strategy.
+	switch cfg.CoinSelectionStrategy {
+	case "random":
+		chainControlCfg.CoinSelectionStrategy = lnwallet.CoinSelectionRandom
+
+	default:
+		return fmt.Errorf("unknown coin selection strategy %v",
+			cfg.CoinSelectionStrategy)
+	}
+
 	activeChainControl, cleanup, err := chainreg.NewChainControl(chainControlCfg)
 	if cleanup != nil {
 		defer cleanup()
