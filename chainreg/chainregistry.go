@@ -108,6 +108,10 @@ type Config struct {
 
 	// LoaderOptions holds functional wallet db loader options.
 	LoaderOptions []walletloader.LoaderOption
+
+	// CoinSelectionStrategy is the strategy that is used for selecting
+	// coins when funding a transaction.
+	CoinSelectionStrategy lnwallet.CoinSelectionStrategy
 }
 
 const (
