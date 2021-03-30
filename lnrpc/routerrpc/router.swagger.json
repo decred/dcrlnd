@@ -1489,6 +1489,10 @@
           "type": "string",
           "format": "uint64",
           "description": "The largest payment split that should be attempted when making a payment if\nsplitting is necessary. Setting this value will effectively cause lnd to\nsplit more aggressively, vs only when it thinks it needs to. Note that this\nvalue is in milli-atoms."
+        },
+        "amp": {
+          "type": "boolean",
+          "description": "If set, an AMP-payment will be attempted."
         }
       }
     },

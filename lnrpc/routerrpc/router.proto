@@ -279,6 +279,11 @@ message SendPaymentRequest {
     value is in milli-atoms.
     */
     uint64 max_shard_size_matoms = 21;
+
+    /*
+    If set, an AMP-payment will be attempted.
+    */
+    bool amp = 22;
 }
 
 message TrackPaymentRequest {
