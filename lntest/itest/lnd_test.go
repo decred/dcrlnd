@@ -1566,7 +1566,8 @@ func testPaymentFollowingChannelOpen(net *lntest.NetworkHarness, t *harnessTest)
 
 	// Send payment to Bob so that a channel update to disk will be
 	// executed.
-	sendAndAssertSuccess(t, net.Alice, &routerrpc.SendPaymentRequest{
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	sendAndAssertSuccess(ctxt, t, net.Alice, &routerrpc.SendPaymentRequest{
 		PaymentRequest: bobPayReqs[0],
 		TimeoutSeconds: 60,
 		FeeLimitAtoms:  1000000,
@@ -5488,8 +5489,9 @@ func testListPayments(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// With the invoice for Bob added, send a payment towards Alice paying
 	// to the above generated invoice.
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	sendAndAssertSuccess(
-		t, net.Alice,
+		ctxt, t, net.Alice,
 		&routerrpc.SendPaymentRequest{
 			PaymentRequest: invoiceResp.PaymentRequest,
 			TimeoutSeconds: 60,
@@ -14126,7 +14128,8 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 			sendReq.FeeLimitMAtoms = 1000 * paymentAmt * limit.Percent / 100
 		}
 
-		result := sendAndAssertSuccess(t, net.Alice, sendReq)
+		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		result := sendAndAssertSuccess(ctxt, t, net.Alice, sendReq)
 
 		checkRoute(result.Htlcs[0].Route)
 	}
@@ -14927,11 +14930,8 @@ func deriveFundingShim(net *lntest.NetworkHarness, t *harnessTest,
 
 // sendAndAssertSuccess sends the given payment requests and asserts that the
 // payment completes successfully.
-func sendAndAssertSuccess(t *harnessTest, node *lntest.HarnessNode,
+func sendAndAssertSuccess(ctx context.Context, t *harnessTest, node *lntest.HarnessNode,
 	req *routerrpc.SendPaymentRequest) *lnrpc.Payment {
-
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 
 	var result *lnrpc.Payment
 	err := wait.NoError(func() error {
