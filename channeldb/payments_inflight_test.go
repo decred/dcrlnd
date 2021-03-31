@@ -13,7 +13,7 @@ func assertFetchesInflight(t *testing.T, pControl *PaymentControl, info *Payment
 	inFlight, err := pControl.FetchInFlightPayments()
 	require.Nil(t, err)
 	require.Len(t, inFlight, 1)
-	require.Equal(t, inFlight[0].Info.PaymentHash, info.PaymentHash)
+	require.Equal(t, inFlight[0].Info.PaymentIdentifier, info.PaymentIdentifier)
 }
 
 // testPaymentInflightIndexCase is a test case for fetching inflight payments.
@@ -41,12 +41,12 @@ func testPaymentInflightIndexCase(t *testing.T, noIndex, recreateIndex bool) {
 	// Init and settle a sample payment.
 	settledInfo, settledAttempt, settlePreimage, err := genInfo()
 	require.Nil(t, err)
-	err = pControl.InitPayment(settledInfo.PaymentHash, settledInfo)
+	err = pControl.InitPayment(settledInfo.PaymentIdentifier, settledInfo)
 	require.Nil(t, err)
-	_, err = pControl.RegisterAttempt(settledInfo.PaymentHash, settledAttempt)
+	_, err = pControl.RegisterAttempt(settledInfo.PaymentIdentifier, settledAttempt)
 	require.Nil(t, err)
 	_, err = pControl.SettleAttempt(
-		settledInfo.PaymentHash, settledAttempt.AttemptID,
+		settledInfo.PaymentIdentifier, settledAttempt.AttemptID,
 		&HTLCSettleInfo{
 			Preimage: settlePreimage,
 		},
@@ -56,14 +56,14 @@ func testPaymentInflightIndexCase(t *testing.T, noIndex, recreateIndex bool) {
 	// Init and fail a sample payment.
 	failedInfo, failedAttempt, _, err := genInfo()
 	require.Nil(t, err)
-	err = pControl.InitPayment(failedInfo.PaymentHash, failedInfo)
+	err = pControl.InitPayment(failedInfo.PaymentIdentifier, failedInfo)
 	require.Nil(t, err)
-	_, err = pControl.RegisterAttempt(failedInfo.PaymentHash, failedAttempt)
+	_, err = pControl.RegisterAttempt(failedInfo.PaymentIdentifier, failedAttempt)
 	require.Nil(t, err)
-	_, err = pControl.FailAttempt(failedInfo.PaymentHash, failedAttempt.AttemptID,
+	_, err = pControl.FailAttempt(failedInfo.PaymentIdentifier, failedAttempt.AttemptID,
 		&HTLCFailInfo{Reason: HTLCFailUnreadable})
 	require.Nil(t, err)
-	_, err = pControl.Fail(failedInfo.PaymentHash, FailureReasonNoRoute)
+	_, err = pControl.Fail(failedInfo.PaymentIdentifier, FailureReasonNoRoute)
 	require.Nil(t, err)
 
 	// Setup the test inflight payment.
@@ -71,26 +71,26 @@ func testPaymentInflightIndexCase(t *testing.T, noIndex, recreateIndex bool) {
 	require.Nil(t, err)
 
 	// Init the payment.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	require.Nil(t, err)
 
 	// We should find one payment inflight.
 	assertFetchesInflight(t, pControl, info)
 
 	// Register an attempt. Still inflight.
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	require.Nil(t, err)
 	assertFetchesInflight(t, pControl, info)
 
 	// Fail the attempt. Still inflight.
-	_, err = pControl.FailAttempt(info.PaymentHash, attempt.AttemptID,
+	_, err = pControl.FailAttempt(info.PaymentIdentifier, attempt.AttemptID,
 		&HTLCFailInfo{Reason: HTLCFailUnreadable})
 	require.Nil(t, err)
 	assertFetchesInflight(t, pControl, info)
 
 	// Make a second attempt.
 	attempt.AttemptID += 1
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	require.Nil(t, err)
 	assertFetchesInflight(t, pControl, info)
 
@@ -106,7 +106,7 @@ func testPaymentInflightIndexCase(t *testing.T, noIndex, recreateIndex bool) {
 
 	// Settle. No more inflight.
 	_, err = pControl.SettleAttempt(
-		info.PaymentHash, attempt.AttemptID,
+		info.PaymentIdentifier, attempt.AttemptID,
 		&HTLCSettleInfo{
 			Preimage: preimg,
 		},

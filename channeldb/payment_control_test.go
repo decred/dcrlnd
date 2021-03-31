@@ -37,10 +37,10 @@ func genInfo() (*PaymentCreationInfo, *HTLCAttemptInfo,
 
 	rhash := preimage.Hash()
 	return &PaymentCreationInfo{
-			PaymentHash:    rhash,
-			Value:          testRoute.ReceiverAmt(),
-			CreationTime:   time.Unix(time.Now().Unix(), 0),
-			PaymentRequest: []byte("hola"),
+			PaymentIdentifier: rhash,
+			Value:             testRoute.ReceiverAmt(),
+			CreationTime:      time.Unix(time.Now().Unix(), 0),
+			PaymentRequest:    []byte("hola"),
 		},
 		&HTLCAttemptInfo{
 			AttemptID:  0,
@@ -69,63 +69,63 @@ func TestPaymentControlSwitchFail(t *testing.T) {
 	}
 
 	// Sends base htlc message which initiate StatusInFlight.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
 
-	assertPaymentIndex(t, pControl, info.PaymentHash)
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+	assertPaymentIndex(t, pControl, info.PaymentIdentifier)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, nil, nil,
+		t, pControl, info.PaymentIdentifier, info, nil, nil,
 	)
 
 	// Fail the payment, which should moved it to Failed.
 	failReason := FailureReasonNoRoute
-	_, err = pControl.Fail(info.PaymentHash, failReason)
+	_, err = pControl.Fail(info.PaymentIdentifier, failReason)
 	if err != nil {
 		t.Fatalf("unable to fail payment hash: %v", err)
 	}
 
 	// Verify the status is indeed Failed.
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusFailed)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusFailed)
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, &failReason, nil,
+		t, pControl, info.PaymentIdentifier, info, &failReason, nil,
 	)
 
 	// Lookup the payment so we can get its old sequence number before it is
 	// overwritten.
-	payment, err := pControl.FetchPayment(info.PaymentHash)
+	payment, err := pControl.FetchPayment(info.PaymentIdentifier)
 	assert.NoError(t, err)
 
 	// Sends the htlc again, which should succeed since the prior payment
 	// failed.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
 
 	// Check that our index has been updated, and the old index has been
 	// removed.
-	assertPaymentIndex(t, pControl, info.PaymentHash)
+	assertPaymentIndex(t, pControl, info.PaymentIdentifier)
 	assertNoIndex(t, pControl, payment.SequenceNum)
 
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, nil, nil,
+		t, pControl, info.PaymentIdentifier, info, nil, nil,
 	)
 
 	// Record a new attempt. In this test scenario, the attempt fails.
 	// However, this is not communicated to control tower in the current
 	// implementation. It only registers the initiation of the attempt.
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	if err != nil {
 		t.Fatalf("unable to register attempt: %v", err)
 	}
 
 	htlcReason := HTLCFailUnreadable
 	_, err = pControl.FailAttempt(
-		info.PaymentHash, attempt.AttemptID,
+		info.PaymentIdentifier, attempt.AttemptID,
 		&HTLCFailInfo{
 			Reason: htlcReason,
 		},
@@ -133,35 +133,35 @@ func TestPaymentControlSwitchFail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 
 	htlc := &htlcStatus{
 		HTLCAttemptInfo: attempt,
 		failure:         &htlcReason,
 	}
 
-	assertPaymentInfo(t, pControl, info.PaymentHash, info, nil, htlc)
+	assertPaymentInfo(t, pControl, info.PaymentIdentifier, info, nil, htlc)
 
 	// Record another attempt.
 	attempt.AttemptID = 1
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 
 	htlc = &htlcStatus{
 		HTLCAttemptInfo: attempt,
 	}
 
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, nil, htlc,
+		t, pControl, info.PaymentIdentifier, info, nil, htlc,
 	)
 
 	// Settle the attempt and verify that status was changed to
 	// StatusSucceeded.
 	payment, err = pControl.SettleAttempt(
-		info.PaymentHash, attempt.AttemptID,
+		info.PaymentIdentifier, attempt.AttemptID,
 		&HTLCSettleInfo{
 			Preimage: preimg,
 		},
@@ -182,16 +182,16 @@ func TestPaymentControlSwitchFail(t *testing.T) {
 			spew.Sdump(payment.HTLCs[0].Route), err)
 	}
 
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusSucceeded)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusSucceeded)
 
 	htlc.settle = &preimg
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, nil, htlc,
+		t, pControl, info.PaymentIdentifier, info, nil, htlc,
 	)
 
 	// Attempt a final payment, which should now fail since the prior
 	// payment succeed.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != ErrAlreadyPaid {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
@@ -218,42 +218,42 @@ func TestPaymentControlSwitchDoubleSend(t *testing.T) {
 
 	// Sends base htlc message which initiate base status and move it to
 	// StatusInFlight and verifies that it was changed.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
 
-	assertPaymentIndex(t, pControl, info.PaymentHash)
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+	assertPaymentIndex(t, pControl, info.PaymentIdentifier)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, nil, nil,
+		t, pControl, info.PaymentIdentifier, info, nil, nil,
 	)
 
 	// Try to initiate double sending of htlc message with the same
 	// payment hash, should result in error indicating that payment has
 	// already been sent.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != ErrPaymentInFlight {
 		t.Fatalf("payment control wrong behaviour: " +
 			"double sending must trigger ErrPaymentInFlight error")
 	}
 
 	// Record an attempt.
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 
 	htlc := &htlcStatus{
 		HTLCAttemptInfo: attempt,
 	}
 	assertPaymentInfo(
-		t, pControl, info.PaymentHash, info, nil, htlc,
+		t, pControl, info.PaymentIdentifier, info, nil, htlc,
 	)
 
 	// Sends base htlc message which initiate StatusInFlight.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != ErrPaymentInFlight {
 		t.Fatalf("payment control wrong behaviour: " +
 			"double sending must trigger ErrPaymentInFlight error")
@@ -261,7 +261,7 @@ func TestPaymentControlSwitchDoubleSend(t *testing.T) {
 
 	// After settling, the error should be ErrAlreadyPaid.
 	_, err = pControl.SettleAttempt(
-		info.PaymentHash, attempt.AttemptID,
+		info.PaymentIdentifier, attempt.AttemptID,
 		&HTLCSettleInfo{
 			Preimage: preimg,
 		},
@@ -269,12 +269,12 @@ func TestPaymentControlSwitchDoubleSend(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error shouldn't have been received, got: %v", err)
 	}
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusSucceeded)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusSucceeded)
 
 	htlc.settle = &preimg
-	assertPaymentInfo(t, pControl, info.PaymentHash, info, nil, htlc)
+	assertPaymentInfo(t, pControl, info.PaymentIdentifier, info, nil, htlc)
 
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != ErrAlreadyPaid {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
@@ -301,7 +301,7 @@ func TestPaymentControlSuccessesWithoutInFlight(t *testing.T) {
 
 	// Attempt to complete the payment should fail.
 	_, err = pControl.SettleAttempt(
-		info.PaymentHash, 0,
+		info.PaymentIdentifier, 0,
 		&HTLCSettleInfo{
 			Preimage: preimg,
 		},
@@ -310,7 +310,7 @@ func TestPaymentControlSuccessesWithoutInFlight(t *testing.T) {
 		t.Fatalf("expected ErrPaymentNotInitiated, got %v", err)
 	}
 
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusUnknown)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusUnknown)
 }
 
 // TestPaymentControlFailsWithoutInFlight checks that a strict payment
@@ -333,12 +333,12 @@ func TestPaymentControlFailsWithoutInFlight(t *testing.T) {
 	}
 
 	// Calling Fail should return an error.
-	_, err = pControl.Fail(info.PaymentHash, FailureReasonNoRoute)
+	_, err = pControl.Fail(info.PaymentIdentifier, FailureReasonNoRoute)
 	if err != ErrPaymentNotInitiated {
 		t.Fatalf("expected ErrPaymentNotInitiated, got %v", err)
 	}
 
-	assertPaymentStatus(t, pControl, info.PaymentHash, StatusUnknown)
+	assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusUnknown)
 }
 
 // TestPaymentControlDeleteNonInFlight checks that calling DeletePayments only
@@ -396,11 +396,11 @@ func TestPaymentControlDeleteNonInFligt(t *testing.T) {
 		}
 
 		// Sends base htlc message which initiate StatusInFlight.
-		err = pControl.InitPayment(info.PaymentHash, info)
+		err = pControl.InitPayment(info.PaymentIdentifier, info)
 		if err != nil {
 			t.Fatalf("unable to send htlc message: %v", err)
 		}
-		_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+		_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 		if err != nil {
 			t.Fatalf("unable to send htlc message: %v", err)
 		}
@@ -413,7 +413,7 @@ func TestPaymentControlDeleteNonInFligt(t *testing.T) {
 			// Fail the payment attempt.
 			htlcFailure := HTLCFailUnreadable
 			_, err := pControl.FailAttempt(
-				info.PaymentHash, attempt.AttemptID,
+				info.PaymentIdentifier, attempt.AttemptID,
 				&HTLCFailInfo{
 					Reason: htlcFailure,
 				},
@@ -424,23 +424,23 @@ func TestPaymentControlDeleteNonInFligt(t *testing.T) {
 
 			// Fail the payment, which should moved it to Failed.
 			failReason := FailureReasonNoRoute
-			_, err = pControl.Fail(info.PaymentHash, failReason)
+			_, err = pControl.Fail(info.PaymentIdentifier, failReason)
 			if err != nil {
 				t.Fatalf("unable to fail payment hash: %v", err)
 			}
 
 			// Verify the status is indeed Failed.
-			assertPaymentStatus(t, pControl, info.PaymentHash, StatusFailed)
+			assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusFailed)
 
 			htlc.failure = &htlcFailure
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info,
+				t, pControl, info.PaymentIdentifier, info,
 				&failReason, htlc,
 			)
 		} else if p.success {
 			// Verifies that status was changed to StatusSucceeded.
 			_, err := pControl.SettleAttempt(
-				info.PaymentHash, attempt.AttemptID,
+				info.PaymentIdentifier, attempt.AttemptID,
 				&HTLCSettleInfo{
 					Preimage: preimg,
 				},
@@ -449,18 +449,18 @@ func TestPaymentControlDeleteNonInFligt(t *testing.T) {
 				t.Fatalf("error shouldn't have been received, got: %v", err)
 			}
 
-			assertPaymentStatus(t, pControl, info.PaymentHash, StatusSucceeded)
+			assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusSucceeded)
 
 			htlc.settle = &preimg
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info, nil, htlc,
+				t, pControl, info.PaymentIdentifier, info, nil, htlc,
 			)
 
 			numSuccess++
 		} else {
-			assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+			assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info, nil, htlc,
+				t, pControl, info.PaymentIdentifier, info, nil, htlc,
 			)
 
 			numInflight++
@@ -470,7 +470,7 @@ func TestPaymentControlDeleteNonInFligt(t *testing.T) {
 		// add one.
 		if p.hasDuplicate {
 			appendDuplicatePayment(
-				t, pControl.db, info.PaymentHash,
+				t, pControl.db, info.PaymentIdentifier,
 				uint64(duplicateSeqNr), preimg,
 			)
 			duplicateSeqNr++
@@ -581,20 +581,20 @@ func TestPaymentControlDeletePayments(t *testing.T) {
 		attemptID++
 
 		// Init the payment.
-		err = pControl.InitPayment(info.PaymentHash, info)
+		err = pControl.InitPayment(info.PaymentIdentifier, info)
 		if err != nil {
 			t.Fatalf("unable to send htlc message: %v", err)
 		}
 
 		// Register and fail the first attempt for all three payments.
-		_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+		_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 		if err != nil {
 			t.Fatalf("unable to send htlc message: %v", err)
 		}
 
 		htlcFailure := HTLCFailUnreadable
 		_, err = pControl.FailAttempt(
-			info.PaymentHash, attempt.AttemptID,
+			info.PaymentIdentifier, attempt.AttemptID,
 			&HTLCFailInfo{
 				Reason: htlcFailure,
 			},
@@ -608,7 +608,7 @@ func TestPaymentControlDeletePayments(t *testing.T) {
 		attempt.AttemptID = attemptID
 		attemptID++
 
-		_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+		_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 		if err != nil {
 			t.Fatalf("unable to send htlc message: %v", err)
 		}
@@ -619,7 +619,7 @@ func TestPaymentControlDeletePayments(t *testing.T) {
 		case 0:
 			htlcFailure := HTLCFailUnreadable
 			_, err = pControl.FailAttempt(
-				info.PaymentHash, attempt.AttemptID,
+				info.PaymentIdentifier, attempt.AttemptID,
 				&HTLCFailInfo{
 					Reason: htlcFailure,
 				},
@@ -629,7 +629,7 @@ func TestPaymentControlDeletePayments(t *testing.T) {
 			}
 
 			failReason := FailureReasonNoRoute
-			_, err = pControl.Fail(info.PaymentHash, failReason)
+			_, err = pControl.Fail(info.PaymentIdentifier, failReason)
 			if err != nil {
 				t.Fatalf("unable to fail payment hash: %v", err)
 			}
@@ -637,7 +637,7 @@ func TestPaymentControlDeletePayments(t *testing.T) {
 		// Settle the attempt
 		case 1:
 			_, err := pControl.SettleAttempt(
-				info.PaymentHash, attempt.AttemptID,
+				info.PaymentIdentifier, attempt.AttemptID,
 				&HTLCSettleInfo{
 					Preimage: preimg,
 				},
@@ -806,15 +806,15 @@ func TestPaymentControlMultiShard(t *testing.T) {
 		}
 
 		// Init the payment, moving it to the StatusInFlight state.
-		err = pControl.InitPayment(info.PaymentHash, info)
+		err = pControl.InitPayment(info.PaymentIdentifier, info)
 		if err != nil {
 			t.Fatalf("unable to send htlc message: %v", err)
 		}
 
-		assertPaymentIndex(t, pControl, info.PaymentHash)
-		assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+		assertPaymentIndex(t, pControl, info.PaymentIdentifier)
+		assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 		assertPaymentInfo(
-			t, pControl, info.PaymentHash, info, nil, nil,
+			t, pControl, info.PaymentIdentifier, info, nil, nil,
 		)
 
 		// Create three unique attempts we'll use for the test, and
@@ -833,19 +833,19 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			a.AttemptID = i
 			attempts = append(attempts, &a)
 
-			_, err = pControl.RegisterAttempt(info.PaymentHash, &a)
+			_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &a)
 			if err != nil {
 				t.Fatalf("unable to send htlc message: %v", err)
 			}
 			assertPaymentStatus(
-				t, pControl, info.PaymentHash, StatusInFlight,
+				t, pControl, info.PaymentIdentifier, StatusInFlight,
 			)
 
 			htlc := &htlcStatus{
 				HTLCAttemptInfo: &a,
 			}
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info, nil, htlc,
+				t, pControl, info.PaymentIdentifier, info, nil, htlc,
 			)
 		}
 
@@ -854,7 +854,7 @@ func TestPaymentControlMultiShard(t *testing.T) {
 		// will be too large.
 		b := *attempt
 		b.AttemptID = 3
-		_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+		_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 		if err != ErrValueExceedsAmt {
 			t.Fatalf("expected ErrValueExceedsAmt, got: %v",
 				err)
@@ -864,7 +864,7 @@ func TestPaymentControlMultiShard(t *testing.T) {
 		a := attempts[1]
 		htlcFail := HTLCFailUnreadable
 		_, err = pControl.FailAttempt(
-			info.PaymentHash, a.AttemptID,
+			info.PaymentIdentifier, a.AttemptID,
 			&HTLCFailInfo{
 				Reason: htlcFail,
 			},
@@ -878,11 +878,11 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			failure:         &htlcFail,
 		}
 		assertPaymentInfo(
-			t, pControl, info.PaymentHash, info, nil, htlc,
+			t, pControl, info.PaymentIdentifier, info, nil, htlc,
 		)
 
 		// Payment should still be in-flight.
-		assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+		assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 
 		// Depending on the test case, settle or fail the first attempt.
 		a = attempts[0]
@@ -893,7 +893,7 @@ func TestPaymentControlMultiShard(t *testing.T) {
 		var firstFailReason *FailureReason
 		if test.settleFirst {
 			_, err := pControl.SettleAttempt(
-				info.PaymentHash, a.AttemptID,
+				info.PaymentIdentifier, a.AttemptID,
 				&HTLCSettleInfo{
 					Preimage: preimg,
 				},
@@ -906,11 +906,11 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			// Assert that the HTLC has had the preimage recorded.
 			htlc.settle = &preimg
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info, nil, htlc,
+				t, pControl, info.PaymentIdentifier, info, nil, htlc,
 			)
 		} else {
 			_, err := pControl.FailAttempt(
-				info.PaymentHash, a.AttemptID,
+				info.PaymentIdentifier, a.AttemptID,
 				&HTLCFailInfo{
 					Reason: htlcFail,
 				},
@@ -923,13 +923,13 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			// Assert the failure was recorded.
 			htlc.failure = &htlcFail
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info, nil, htlc,
+				t, pControl, info.PaymentIdentifier, info, nil, htlc,
 			)
 
 			// We also record a payment level fail, to move it into
 			// a terminal state.
 			failReason := FailureReasonNoRoute
-			_, err = pControl.Fail(info.PaymentHash, failReason)
+			_, err = pControl.Fail(info.PaymentIdentifier, failReason)
 			if err != nil {
 				t.Fatalf("unable to fail payment hash: %v", err)
 			}
@@ -941,18 +941,18 @@ func TestPaymentControlMultiShard(t *testing.T) {
 
 		// The payment should still be considered in-flight, since there
 		// is still an active HTLC.
-		assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+		assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 
 		// Try to register yet another attempt. This should fail now
 		// that the payment has reached a terminal condition.
 		b = *attempt
 		b.AttemptID = 3
-		_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+		_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 		if err != ErrPaymentTerminal {
 			t.Fatalf("expected ErrPaymentTerminal, got: %v", err)
 		}
 
-		assertPaymentStatus(t, pControl, info.PaymentHash, StatusInFlight)
+		assertPaymentStatus(t, pControl, info.PaymentIdentifier, StatusInFlight)
 
 		// Settle or fail the remaining attempt based on the testcase.
 		a = attempts[2]
@@ -962,7 +962,7 @@ func TestPaymentControlMultiShard(t *testing.T) {
 		if test.settleLast {
 			// Settle the last outstanding attempt.
 			_, err = pControl.SettleAttempt(
-				info.PaymentHash, a.AttemptID,
+				info.PaymentIdentifier, a.AttemptID,
 				&HTLCSettleInfo{
 					Preimage: preimg,
 				},
@@ -974,13 +974,13 @@ func TestPaymentControlMultiShard(t *testing.T) {
 
 			htlc.settle = &preimg
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info,
+				t, pControl, info.PaymentIdentifier, info,
 				firstFailReason, htlc,
 			)
 		} else {
 			// Fail the attempt.
 			_, err := pControl.FailAttempt(
-				info.PaymentHash, a.AttemptID,
+				info.PaymentIdentifier, a.AttemptID,
 				&HTLCFailInfo{
 					Reason: htlcFail,
 				},
@@ -993,7 +993,7 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			// Assert the failure was recorded.
 			htlc.failure = &htlcFail
 			assertPaymentInfo(
-				t, pControl, info.PaymentHash, info,
+				t, pControl, info.PaymentIdentifier, info,
 				firstFailReason, htlc,
 			)
 
@@ -1002,7 +1002,7 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			// write a terminal failure to the database without
 			// syncing.
 			failReason := FailureReasonPaymentDetails
-			_, err = pControl.Fail(info.PaymentHash, failReason)
+			_, err = pControl.Fail(info.PaymentIdentifier, failReason)
 			if err != nil {
 				t.Fatalf("unable to fail payment hash: %v", err)
 			}
@@ -1016,10 +1016,10 @@ func TestPaymentControlMultiShard(t *testing.T) {
 			finalStatus = StatusSucceeded
 		}
 
-		assertPaymentStatus(t, pControl, info.PaymentHash, finalStatus)
+		assertPaymentStatus(t, pControl, info.PaymentIdentifier, finalStatus)
 
 		// Finally assert we cannot register more attempts.
-		_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+		_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 		require.Equal(t, ErrPaymentTerminal, err)
 	}
 
@@ -1052,7 +1052,7 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 	}
 
 	// Init the payment.
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
@@ -1067,7 +1067,7 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 		info.Value, [32]byte{1},
 	)
 
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
@@ -1076,7 +1076,7 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 	b := *attempt
 	b.AttemptID = 1
 	b.Route.FinalHop().MPP = nil
-	_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 	if err != ErrMPPayment {
 		t.Fatalf("expected ErrMPPayment, got: %v", err)
 	}
@@ -1085,7 +1085,7 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 	b.Route.FinalHop().MPP = record.NewMPP(
 		info.Value, [32]byte{2},
 	)
-	_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 	if err != ErrMPPPaymentAddrMismatch {
 		t.Fatalf("expected ErrMPPPaymentAddrMismatch, got: %v", err)
 	}
@@ -1094,7 +1094,7 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 	b.Route.FinalHop().MPP = record.NewMPP(
 		info.Value/2, [32]byte{1},
 	)
-	_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 	if err != ErrMPPTotalAmountMismatch {
 		t.Fatalf("expected ErrMPPTotalAmountMismatch, got: %v", err)
 	}
@@ -1106,13 +1106,13 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 		t.Fatalf("unable to generate htlc message: %v", err)
 	}
 
-	err = pControl.InitPayment(info.PaymentHash, info)
+	err = pControl.InitPayment(info.PaymentIdentifier, info)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
 
 	attempt.Route.FinalHop().MPP = nil
-	_, err = pControl.RegisterAttempt(info.PaymentHash, attempt)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, attempt)
 	if err != nil {
 		t.Fatalf("unable to send htlc message: %v", err)
 	}
@@ -1124,7 +1124,7 @@ func TestPaymentControlMPPRecordValidation(t *testing.T) {
 		info.Value, [32]byte{1},
 	)
 
-	_, err = pControl.RegisterAttempt(info.PaymentHash, &b)
+	_, err = pControl.RegisterAttempt(info.PaymentIdentifier, &b)
 	if err != ErrNonMPPayment {
 		t.Fatalf("expected ErrNonMPPayment, got: %v", err)
 	}
