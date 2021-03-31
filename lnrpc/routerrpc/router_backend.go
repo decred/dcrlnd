@@ -14,6 +14,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/feature"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntypes"
@@ -770,6 +771,14 @@ func (r *RouterBackend) extractIntentFromSendRequest(
 		features, err := UnmarshalFeatures(rpcPayReq.DestFeatures)
 		if err != nil {
 			return nil, err
+		}
+
+		// Validate the features if any was specified.
+		if features != nil {
+			err = feature.ValidateDeps(features)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// If the payment addresses is specified, then we'll also
