@@ -189,6 +189,7 @@ type ChannelGraph struct {
 // returned instance has its own unique reject cache and channel cache.
 func newChannelGraph(db *DB, rejectCacheSize, chanCacheSize int,
 	batchCommitInterval time.Duration) *ChannelGraph {
+
 	g := &ChannelGraph{
 		db:          db,
 		rejectCache: newRejectCache(rejectCacheSize),
@@ -200,6 +201,7 @@ func newChannelGraph(db *DB, rejectCacheSize, chanCacheSize int,
 	g.nodeScheduler = batch.NewTimeScheduler(
 		db.Backend, nil, batchCommitInterval,
 	)
+
 	return g
 }
 
@@ -954,7 +956,7 @@ func (c *ChannelGraph) PruneGraph(spentOutputs []*wire.OutPoint,
 			// was successfully pruned.
 			err = delChannelEdge(
 				edges, edgeIndex, chanIndex, zombieIndex, nodes,
-				chanID, false,
+				chanID, false, false,
 			)
 			if err != nil && err != ErrEdgeNotFound {
 				return err
@@ -1203,7 +1205,7 @@ func (c *ChannelGraph) DisconnectBlockAtHeight(height uint32) ([]*ChannelEdgeInf
 		for _, k := range keys {
 			err = delChannelEdge(
 				edges, edgeIndex, chanIndex, zombieIndex, nodes,
-				k, false,
+				k, false, false,
 			)
 			if err != nil && err != ErrEdgeNotFound {
 				return err
@@ -1302,11 +1304,14 @@ func (c *ChannelGraph) PruneTip() (*chainhash.Hash, uint32, error) {
 	return &tipHash, tipHeight, nil
 }
 
-// DeleteChannelEdges removes edges with the given channel IDs from the database
-// and marks them as zombies. This ensures that we're unable to re-add it to our
-// database once again. If an edge does not exist within the database, then
-// ErrEdgeNotFound will be returned.
-func (c *ChannelGraph) DeleteChannelEdges(chanIDs ...uint64) error {
+// DeleteChannelEdges removes edges with the given channel IDs from the
+// database and marks them as zombies. This ensures that we're unable to re-add
+// it to our database once again. If an edge does not exist within the
+// database, then ErrEdgeNotFound will be returned. If strictZombiePruning is
+// true, then when we mark these edges as zombies, we'll set up the keys such
+// that we require the node that failed to send the fresh update to be the one
+// that resurrects the channel from its zombie state.
+func (c *ChannelGraph) DeleteChannelEdges(strictZombiePruning bool, chanIDs ...uint64) error {
 	// TODO(roasbeef): possibly delete from node bucket if node has no more
 	// channels
 	// TODO(roasbeef): don't delete both edges?
@@ -1341,7 +1346,7 @@ func (c *ChannelGraph) DeleteChannelEdges(chanIDs ...uint64) error {
 			byteOrder.PutUint64(rawChanID[:], chanID)
 			err := delChannelEdge(
 				edges, edgeIndex, chanIndex, zombieIndex, nodes,
-				rawChanID[:], true,
+				rawChanID[:], true, strictZombiePruning,
 			)
 			if err != nil {
 				return err
@@ -1930,7 +1935,7 @@ func delEdgeUpdateIndexEntry(edgesBucket kvdb.RwBucket, chanID uint64,
 }
 
 func delChannelEdge(edges, edgeIndex, chanIndex, zombieIndex,
-	nodes kvdb.RwBucket, chanID []byte, isZombie bool) error {
+	nodes kvdb.RwBucket, chanID []byte, isZombie, strictZombie bool) error {
 
 	edgeInfo, err := fetchChanEdgeInfo(edgeIndex, chanID)
 	if err != nil {
@@ -1998,7 +2003,10 @@ func delChannelEdge(edges, edgeIndex, chanIndex, zombieIndex,
 		return nil
 	}
 
-	nodeKey1, nodeKey2 := makeZombiePubkeys(&edgeInfo, edge1, edge2)
+	nodeKey1, nodeKey2 := edgeInfo.NodeKey1Bytes, edgeInfo.NodeKey2Bytes
+	if strictZombie {
+		nodeKey1, nodeKey2 = makeZombiePubkeys(&edgeInfo, edge1, edge2)
+	}
 
 	return markEdgeZombie(
 		zombieIndex, byteOrder.Uint64(chanID), nodeKey1, nodeKey2,
