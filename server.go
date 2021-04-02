@@ -767,6 +767,8 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 
 	s.controlTower = routing.NewControlTower(paymentControl)
 
+	strictPruning := (cfg.Dcrwallet.SPV ||
+		cfg.Routing.StrictZombiePruning)
 	s.chanRouter, err = routing.New(routing.Config{
 		Graph:               chanGraph,
 		Chain:               cc.ChainIO,
@@ -783,6 +785,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		NextPaymentID:       sequencer.NextID,
 		PathFindingConfig:   pathFindingConfig,
 		Clock:               clock.NewDefaultClock(),
+		StrictZombiePruning: strictPruning,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("can't create router: %v", err)
