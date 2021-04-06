@@ -306,9 +306,9 @@ sample-conf-check:
 	@$(call print, "Making sure every flag has an example in the sample-dcrlnd.conf file")
 	for flag in $$(GO_FLAGS_COMPLETION=1 go run -tags="$(RELEASE_TAGS)" $(PKG)/cmd/dcrlnd -- | grep -v help | cut -c3-); do if ! grep -q $$flag sample-dcrlnd.conf; then echo "Command line flag --$$flag not added to sample-dcrlnd.conf"; exit 1; fi; done
 
-mobile-rpc: falafel goimports
-	@$(call print, "Creating mobile RPC from protos.")
-	cd ./mobile; ./gen_bindings.sh $(FALAFEL_COMMIT)
+mobile-rpc:
+	@$(call print, "Creating mobile RPC from protos (prefix=$(prefix)).")
+	cd ./lnrpc; COMPILE_MOBILE=1 SUBSERVER_PREFIX=$(prefix) ./gen_protos_docker.sh
 
 vendor:
 	@$(call print, "Re-creating vendor directory.")
