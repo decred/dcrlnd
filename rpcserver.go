@@ -4315,6 +4315,10 @@ func (r *rpcServer) extractPaymentIntent(rpcPayReq *rpcPaymentRequest) (rpcPayme
 	if len(rpcPayReq.PaymentAddr) != 0 && len(rpcPayReq.PaymentAddr) != 32 {
 		return payIntent, errors.New("invalid payment address length")
 	}
+
+	if payIntent.paymentAddr == nil {
+		payIntent.paymentAddr = &[32]byte{}
+	}
 	copy(payIntent.paymentAddr[:], rpcPayReq.PaymentAddr)
 
 	// Otherwise, If the payment request field was not specified
