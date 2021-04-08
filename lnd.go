@@ -533,7 +533,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// When we create the chain control, we need storage for the height
 	// hints and also the wallet itself, for these two we want them to be
 	// replicated, so we'll pass in the remote channel DB instance.
-	ChainControlConfig := &chainreg.Config{
+	chainControlCfg := &chainreg.Config{
 		Decred:                      cfg.Decred,
 		PrimaryChain:                cfg.registeredChains.PrimaryChain,
 		HeightHintCacheQueryDisable: cfg.HeightHintCacheQueryDisable,
@@ -556,7 +556,11 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 			return cfg.net.Dial("tcp", addr, cfg.ConnectionTimeout)
 		},
 	}
-	activeChainControl, err := chainreg.NewChainControl(ChainControlConfig)
+
+	activeChainControl, cleanup, err := chainreg.NewChainControl(chainControlCfg)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		err := fmt.Errorf("unable to create chain control: %v", err)
 		ltndLog.Error(err)

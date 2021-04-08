@@ -230,7 +230,7 @@ type ChainControl struct {
 
 // NewChainControl attempts to create a ChainControl instance according to the
 // parameters in the passed configuration.
-func NewChainControl(cfg *Config) (*ChainControl, error) {
+func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 
 	// Set the RPC config from the "home" chain. Multi-chain isn't yet
 	// active, so we'll restrict usage to a particular chain for now.
@@ -253,7 +253,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 			DefaultDecredStaticMinRelayFeeRate,
 		)
 	default:
-		return nil, fmt.Errorf("default routing policy for chain %v is "+
+		return nil, nil, fmt.Errorf("default routing policy for chain %v is "+
 			"unknown", cfg.PrimaryChain())
 	}
 
@@ -274,21 +274,21 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		heightHintCacheConfig, cfg.LocalChanDB,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("unable to initialize height hint "+
+		return nil, nil, fmt.Errorf("unable to initialize height hint "+
 			"cache: %v", err)
 	}
 
 	// When running in remote wallet mode, we only support running in dcrw
 	// mode (using the wallet for chain operations).
 	if cfg.WalletConn != nil && cfg.Decred.Node != "dcrw" {
-		return nil, fmt.Errorf("remote wallet mode only supports " +
+		return nil, nil, fmt.Errorf("remote wallet mode only supports " +
 			"'node=dcrw' config")
 	}
 
 	// When running in embedded wallet mode with spv on, we only support
 	// running in dcrw mode.
 	if cfg.WalletConn == nil && cfg.DcrwMode.SPV && cfg.Decred.Node != "dcrw" {
-		return nil, fmt.Errorf("embedded wallet in SPV mode only " +
+		return nil, nil, fmt.Errorf("embedded wallet in SPV mode only " +
 			"supports 'node=dcrw' config")
 	}
 
@@ -305,19 +305,19 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		if dcrdMode.RawRPCCert != "" {
 			rpcCert, err = hex.DecodeString(dcrdMode.RawRPCCert)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		} else {
 			certFile, err := os.Open(dcrdMode.RPCCert)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			rpcCert, err = ioutil.ReadAll(certFile)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			if err := certFile.Close(); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 
@@ -352,7 +352,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		if err = checkDcrdNode(cfg.ActiveNetParams.Net, *rpcConfig); err != nil {
 			log.Errorf("unable to use specified dcrd node: %v",
 				err)
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -378,7 +378,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		wc, err := remotedcrwallet.New(*dcrwConfig)
 		if err != nil {
 			fmt.Printf("unable to create remote wallet controller: %v\n", err)
-			return nil, err
+			return nil, nil, err
 		}
 
 		// Remote wallet mode currently always use the wallet for chain
@@ -387,13 +387,13 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 			cfg.WalletConn, cfg.ActiveNetParams.Params, hintCache, hintCache,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		cc.ChainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn)
 		if err != nil {
 			log.Errorf("unable to create chain view: %v", err)
-			return nil, err
+			return nil, nil, err
 		}
 
 		secretKeyRing = wc
@@ -421,7 +421,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		dcrwConfig := &dcrwallet.Config{
@@ -441,7 +441,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		wc, err := dcrwallet.New(*dcrwConfig)
 		if err != nil {
 			fmt.Printf("unable to create wallet controller: %v\n", err)
-			return nil, err
+			return nil, nil, err
 		}
 
 		// When running with an embedded wallet we can run in either
@@ -455,13 +455,13 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 				wc.InternalWallet(), cfg.ActiveNetParams.Params, hintCache, hintCache,
 			)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			cc.ChainView, err = chainview.NewDcrwalletFilteredChainView(wc.InternalWallet())
 			if err != nil {
 				log.Errorf("unable to create chain view: %v", err)
-				return nil, err
+				return nil, nil, err
 			}
 
 			cc.ChainIO = wc
@@ -474,7 +474,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 				rpcConfig, cfg.ActiveNetParams.Params, hintCache, hintCache,
 			)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// Finally, we'll create an instance of the default
@@ -482,12 +482,12 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 			cc.ChainView, err = chainview.NewDcrdFilteredChainView(*rpcConfig)
 			if err != nil {
 				log.Errorf("unable to create chain view: %v", err)
-				return nil, err
+				return nil, nil, err
 			}
 
 			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig, cfg.ActiveNetParams.Params)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// If we're not in simnet or regtest mode, then we'll
@@ -507,7 +507,7 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 					*rpcConfig, fallBackFeeRate,
 				)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
 		}
@@ -536,9 +536,23 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		)
 	}
 
-	// Start the fee estimator.
+	ccCleanup := func() {
+		if cc.Wallet != nil {
+			if err := cc.Wallet.Shutdown(); err != nil {
+				log.Errorf("Failed to shutdown wallet: %v", err)
+			}
+		}
+
+		if cc.FeeEstimator != nil {
+			if err := cc.FeeEstimator.Stop(); err != nil {
+				log.Errorf("Failed to stop feeEstimator: %v", err)
+			}
+		}
+	}
+
+	// Start fee estimator.
 	if err := cc.FeeEstimator.Start(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Select the default channel constraints for the primary chain.
@@ -566,18 +580,17 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 	lnWallet, err := lnwallet.NewLightningWallet(walletCfg)
 	if err != nil {
 		fmt.Printf("unable to create wallet: %v\n", err)
-		return nil, err
+		return nil, ccCleanup, err
 	}
 	if err := lnWallet.Startup(); err != nil {
 		fmt.Printf("unable to start wallet: %v\n", err)
-		return nil, err
+		return nil, ccCleanup, err
 	}
 
 	log.Info("LightningWallet opened")
-
 	cc.Wallet = lnWallet
 
-	return cc, nil
+	return cc, ccCleanup, nil
 }
 
 var (
