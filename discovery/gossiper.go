@@ -1751,6 +1751,10 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 			} else {
 				log.Tracef("Router rejected channel "+
 					"edge: %v", err)
+
+				d.rejectMtx.Lock()
+				d.recentRejects[msg.ShortChannelID.ToUint64()] = struct{}{}
+				d.rejectMtx.Unlock()
 			}
 
 			nMsg.err <- err
