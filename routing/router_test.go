@@ -39,9 +39,27 @@ type testCtx struct {
 
 	privKeys map[string]*secp256k1.PrivateKey
 
+	channelIDs map[route.Vertex]map[route.Vertex]uint64
+
 	chain *mockChain
 
 	chainView *mockChainView
+}
+
+func (c *testCtx) getChannelIDFromAlias(t *testing.T, a, b string) uint64 {
+	vertexA, ok := c.aliases[a]
+	require.True(t, ok, "cannot find aliases for %s", a)
+
+	vertexB, ok := c.aliases[b]
+	require.True(t, ok, "cannot find aliases for %s", b)
+
+	channelIDMap, ok := c.channelIDs[vertexA]
+	require.True(t, ok, "cannot find channelID map %s(%s)", vertexA, a)
+
+	channelID, ok := channelIDMap[vertexB]
+	require.True(t, ok, "cannot find channelID using %s(%s)", vertexB, b)
+
+	return channelID
 }
 
 func (c *testCtx) RestartRouter() error {
@@ -152,12 +170,13 @@ func createTestCtxFromGraphInstanceAssumeValid(startingHeight uint32,
 	}
 
 	ctx := &testCtx{
-		router:    router,
-		graph:     graphInstance.graph,
-		aliases:   graphInstance.aliasMap,
-		privKeys:  graphInstance.privKeyMap,
-		chain:     chain,
-		chainView: chainView,
+		router:     router,
+		graph:      graphInstance.graph,
+		aliases:    graphInstance.aliasMap,
+		privKeys:   graphInstance.privKeyMap,
+		channelIDs: graphInstance.channelIDs,
+		chain:      chain,
+		chainView:  chainView,
 	}
 
 	cleanUp := func() {
