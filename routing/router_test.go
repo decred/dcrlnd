@@ -332,6 +332,11 @@ func TestSendPaymentRouteFailureFallback(t *testing.T) {
 	var preImage [32]byte
 	copy(preImage[:], bytes.Repeat([]byte{9}, 32))
 
+	// Get the channel ID.
+	roasbeefSongoku := lnwire.NewShortChanIDFromInt(
+		ctx.getChannelIDFromAlias(t, "roasbeef", "songoku"),
+	)
+
 	// We'll modify the SendToSwitch method that's been set within the
 	// router's configuration to ignore the path that has son goku as the
 	// first hop. This should force the router to instead take the
@@ -339,7 +344,6 @@ func TestSendPaymentRouteFailureFallback(t *testing.T) {
 	ctx.router.cfg.Payer.(*mockPaymentAttemptDispatcher).setPaymentResult(
 		func(firstHop lnwire.ShortChannelID) ([32]byte, error) {
 
-			roasbeefSongoku := lnwire.NewShortChanIDFromInt(12345)
 			if firstHop == roasbeefSongoku {
 				return [32]byte{}, htlcswitch.NewForwardingError(
 					// TODO(roasbeef): temp node failure
@@ -543,11 +547,6 @@ func TestChannelUpdateValidation(t *testing.T) {
 func TestSendPaymentErrorRepeatedFeeInsufficient(t *testing.T) {
 	t.Parallel()
 
-	var (
-		roasbeefSongokuChanID = uint64(12345)
-		songokuSophonChanID   = uint64(3495345)
-	)
-
 	const startingBlockHeight = 101
 	ctx, cleanUp, err := createTestCtxFromFile(
 		startingBlockHeight, basicGraphFilePath,
@@ -556,6 +555,14 @@ func TestSendPaymentErrorRepeatedFeeInsufficient(t *testing.T) {
 		t.Fatalf("unable to create router: %v", err)
 	}
 	defer cleanUp()
+
+	// Get the channel ID.
+	roasbeefSongokuChanID := ctx.getChannelIDFromAlias(
+		t, "roasbeef", "songoku",
+	)
+	songokuSophonChanID := ctx.getChannelIDFromAlias(
+		t, "songoku", "sophon",
+	)
 
 	// Craft a LightningPayment struct that'll send a payment from roasbeef
 	// to sophon for 1000 atoms.
@@ -668,6 +675,11 @@ func TestSendPaymentErrorFeeInsufficientPrivateEdge(t *testing.T) {
 	require.NoError(t, err, "unable to create router")
 	defer cleanUp()
 
+	// Get the channel ID.
+	roasbeefSongoku := lnwire.NewShortChanIDFromInt(
+		ctx.getChannelIDFromAlias(t, "roasbeef", "songoku"),
+	)
+
 	// Craft a LightningPayment struct that'll send a payment from roasbeef
 	// to elst, through a private channel between son goku and elst for
 	// 1000 satoshis. This route has lower fees compared with the route
@@ -724,7 +736,7 @@ func TestSendPaymentErrorFeeInsufficientPrivateEdge(t *testing.T) {
 	ctx.router.cfg.Payer.(*mockPaymentAttemptDispatcher).setPaymentResult(
 		func(firstHop lnwire.ShortChannelID) ([32]byte, error) {
 
-			if errorReturned {
+			if firstHop != roasbeefSongoku || errorReturned {
 				return preImage, nil
 			}
 
@@ -813,8 +825,9 @@ func TestSendPaymentErrorNonFinalTimeLockErrors(t *testing.T) {
 	// son goku. This edge will be included in the time lock related expiry
 	// errors that we'll get back due to disagrements in what the current
 	// block height is.
-	chanID := uint64(12345)
+	chanID := ctx.getChannelIDFromAlias(t, "roasbeef", "songoku")
 	roasbeefSongoku := lnwire.NewShortChanIDFromInt(chanID)
+
 	_, _, edgeUpdateToFail, err := ctx.graph.FetchChannelEdgesByID(chanID)
 	if err != nil {
 		t.Fatalf("unable to fetch chan id: %v", err)
@@ -942,8 +955,12 @@ func TestSendPaymentErrorPathPruning(t *testing.T) {
 	var preImage [32]byte
 	copy(preImage[:], bytes.Repeat([]byte{9}, 32))
 
-	roasbeefSongoku := lnwire.NewShortChanIDFromInt(12345)
-	roasbeefPhanNuwen := lnwire.NewShortChanIDFromInt(999991)
+	roasbeefSongoku := lnwire.NewShortChanIDFromInt(
+		ctx.getChannelIDFromAlias(t, "roasbeef", "songoku"),
+	)
+	roasbeefPhanNuwen := lnwire.NewShortChanIDFromInt(
+		ctx.getChannelIDFromAlias(t, "roasbeef", "phamnuwen"),
+	)
 
 	// First, we'll modify the SendToSwitch method to return an error
 	// indicating that the channel from roasbeef to son goku is not operable
