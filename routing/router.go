@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
@@ -491,6 +492,7 @@ func (r *ChannelRouter) Start() error {
 	if err != nil {
 		return err
 	}
+	r.bestHeight = uint32(bestHeight)
 
 	// If the graph has never been pruned, or hasn't fully been created yet,
 	// then we don't treat this as an explicit error.
@@ -567,7 +569,7 @@ func (r *ChannelRouter) Start() error {
 		// Before we begin normal operation of the router, we first need
 		// to synchronize the channel graph to the latest state of the
 		// UTXO set.
-		if err := r.syncGraphWithChain(); err != nil {
+		if err := r.syncGraphWithChain(bestHash, bestHeight); err != nil {
 			return err
 		}
 
@@ -709,15 +711,11 @@ func (r *ChannelRouter) StartupPruneProgress() (uint32, uint32) {
 // the latest UTXO set state. This process involves pruning from the channel
 // graph any channels which have been closed by spending their funding output
 // since we've been down.
-func (r *ChannelRouter) syncGraphWithChain() error {
+func (r *ChannelRouter) syncGraphWithChain(bestHash *chainhash.Hash,
+	bestHeight int32) error {
+
 	// First, we'll need to check to see if we're already in sync with the
 	// latest state of the UTXO set.
-	bestHash, bestHeight, err := r.cfg.Chain.GetBestBlock()
-	if err != nil {
-		return err
-	}
-	r.bestHeight = uint32(bestHeight)
-
 	pruneHash, pruneHeight, err := r.cfg.Graph.PruneTip()
 	if err != nil {
 		switch {
@@ -2189,10 +2187,7 @@ func (r *ChannelRouter) sendPayment(
 
 	// We'll also fetch the current block height so we can properly
 	// calculate the required HTLC time locks within the route.
-	_, currentHeight, err := r.cfg.Chain.GetBestBlock()
-	if err != nil {
-		return [32]byte{}, nil, err
-	}
+	currentHeight := int32(atomic.LoadUint32(&r.bestHeight))
 
 	// Now set up a paymentLifecycle struct with these params, such that we
 	// can resume the payment from the current state.
