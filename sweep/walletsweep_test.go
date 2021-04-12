@@ -284,8 +284,8 @@ func TestCraftSweepAllTxCoinSelectFail(t *testing.T) {
 	utxoLocker := newMockOutpointLocker()
 
 	_, err := CraftSweepAllTx(
-		0, 100, 10, nil, nil, coinSelectLocker, utxoSource, utxoLocker, nil, nil,
-		chaincfg.TestNet3Params(),
+		0, 100, 10, nil, nil, coinSelectLocker, utxoSource,
+		utxoLocker, nil, nil, chaincfg.TestNet3Params(), 0,
 	)
 
 	// Since we instructed the coin select locker to fail above, we should
@@ -310,8 +310,8 @@ func TestCraftSweepAllTxUnknownWitnessType(t *testing.T) {
 	utxoLocker := newMockOutpointLocker()
 
 	_, err := CraftSweepAllTx(
-		0, 100, 10, nil, nil, coinSelectLocker, utxoSource, utxoLocker, nil, nil,
-		chaincfg.TestNet3Params(),
+		0, 100, 10, nil, nil, coinSelectLocker, utxoSource,
+		utxoLocker, nil, nil, chaincfg.TestNet3Params(), 0,
 	)
 
 	// Since passed in a p2wsh output, which is unknown, we should fail to
@@ -345,8 +345,8 @@ func TestCraftSweepAllTx(t *testing.T) {
 	utxoLocker := newMockOutpointLocker()
 
 	sweepPkg, err := CraftSweepAllTx(
-		0, 100, 10, nil, deliveryAddr, coinSelectLocker, utxoSource, utxoLocker,
-		feeEstimator, signer, chaincfg.TestNet3Params(),
+		0, 100, 10, nil, deliveryAddr, coinSelectLocker, utxoSource,
+		utxoLocker, feeEstimator, signer, chaincfg.TestNet3Params(), 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to make sweep tx: %v", err)
