@@ -174,7 +174,7 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
 	blockHeight uint32, deliveryAddrs []DeliveryAddr, changeAddr stdaddr.Address,
 	coinSelectLocker CoinSelectionLocker, utxoSource UtxoSource,
 	outpointLocker OutpointLocker, feeEstimator chainfee.Estimator,
-	signer input.Signer, netParams *chaincfg.Params) (*WalletSweepPackage, error) {
+	signer input.Signer, netParams *chaincfg.Params, minConfs int32) (*WalletSweepPackage, error) {
 
 	// TODO(roasbeef): turn off ATPL as well when available?
 
@@ -199,7 +199,7 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, dustLimit dcrutil.Amount,
 		// operations are going on, we can grab a clean snapshot of the
 		// current UTXO state of the wallet.
 		utxos, err := utxoSource.ListUnspentWitnessFromDefaultAccount(
-			1, math.MaxInt32,
+			minConfs, math.MaxInt32,
 		)
 		if err != nil {
 			return err
