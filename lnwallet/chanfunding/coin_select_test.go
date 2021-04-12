@@ -9,11 +9,16 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
+	"github.com/stretchr/testify/require"
 )
 
 var (
 	p2pkhScript, _ = hex.DecodeString(
 		"76a914000000000000000000000000000000000000000088ac",
+	)
+
+	unknownScript, _ = hex.DecodeString(
+		"a91411034bdcb6ccb7744fdfdeea958a6fb0b415a03288ac",
 	)
 )
 
@@ -40,6 +45,72 @@ func fundingFee(feeRate chainfee.AtomPerKByte, numInput int,
 
 	totalSize := sizeEstimate.Size()
 	return feeRate.FeeForSize(totalSize)
+}
+
+// TestCalculateFees tests that the helper function to calculate the fees
+// both with and without applying a change output is done correctly for
+// (N)P2WKH inputs, and should raise an error otherwise.
+func TestCalculateFees(t *testing.T) {
+	t.Parallel()
+
+	const feeRate = chainfee.AtomPerKByte(1000)
+
+	type testCase struct {
+		name  string
+		utxos []Coin
+
+		expectedFeeNoChange   dcrutil.Amount
+		expectedFeeWithChange dcrutil.Amount
+		expectedErr           error
+	}
+
+	testCases := []testCase{
+		{
+			name: "one P2PKH input",
+			utxos: []Coin{
+				{
+					TxOut: wire.TxOut{
+						PkScript: p2pkhScript,
+						Value:    1,
+					},
+				},
+			},
+
+			expectedFeeNoChange:   215,
+			expectedFeeWithChange: 251,
+			expectedErr:           nil,
+		},
+
+		{
+			name: "not supported P2KH input",
+			utxos: []Coin{
+				{
+					TxOut: wire.TxOut{
+						PkScript: unknownScript,
+						Value:    1,
+					},
+				},
+			},
+
+			expectedErr: &errUnsupportedInput{unknownScript},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			feeNoChange, feeWithChange, err := calculateFees(
+				test.utxos, feeRate,
+			)
+			require.Equal(t, test.expectedErr, err)
+
+			// Note: The error-case will have zero values returned
+			// for fees and therefore anyway pass the following
+			// requirements.
+			require.Equal(t, test.expectedFeeNoChange, feeNoChange)
+			require.Equal(t, test.expectedFeeWithChange, feeWithChange)
+		})
+	}
 }
 
 // TestCoinSelect tests that we pick coins adding up to the expected amount
