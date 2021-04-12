@@ -25,6 +25,18 @@ func (e *ErrInsufficientFunds) Error() string {
 		e.amountAvailable, e.amountSelected)
 }
 
+// errUnsupportedInput is a type matching the error interface, which is returned
+// when trying to calculate the fee of a transaction that references an
+// unsupported script in the outpoint of a transaction input.
+type errUnsupportedInput struct {
+	PkScript []byte
+}
+
+// Error returns a human readable string describing the error.
+func (e *errUnsupportedInput) Error() string {
+	return fmt.Sprintf("unsupported address type: %x", e.PkScript)
+}
+
 // Coin represents a spendable UTXO which is available for channel funding.
 // This UTXO need not reside in our internal wallet as an example, and instead
 // may be derived from an existing watch-only wallet. It wraps both the output
@@ -52,6 +64,58 @@ func selectInputs(amt dcrutil.Amount, coins []Coin) (dcrutil.Amount, []Coin, err
 	return 0, nil, &ErrInsufficientFunds{amt, atomSelected}
 }
 
+// calculateFees returns for the specified utxos and fee rate two fee
+// estimates, one calculated using a change output and one without. The weight
+// added to the estimator from a change output is for a P2WKH output.
+func calculateFees(utxos []Coin, feeRate chainfee.AtomPerKByte) (dcrutil.Amount,
+	dcrutil.Amount, error) {
+
+	var sizeEstimate input.TxSizeEstimator
+	for _, utxo := range utxos {
+		scriptClass := stdscript.DetermineScriptType(utxo.Version,
+			utxo.PkScript)
+
+		switch scriptClass {
+		case stdscript.STPubKeyHashEcdsaSecp256k1:
+			sizeEstimate.AddP2PKHInput()
+		default:
+			return 0, 0, &errUnsupportedInput{utxo.PkScript}
+		}
+	}
+
+	// Channel funding multisig output is P2SH.
+	sizeEstimate.AddP2SHOutput()
+
+	// Estimate the fee required for a transaction without a change
+	// output.
+	totalSize := sizeEstimate.Size()
+	requiredFeeNoChange := feeRate.FeeForSize(totalSize)
+
+	// Estimate the fee required for a transaction with a change output.
+	// Assume that change output is a P2PKH output.
+	sizeEstimate.AddP2PKHOutput()
+
+	// Now that we have added the change output, redo the fee
+	// estimate.
+	totalSize = sizeEstimate.Size()
+	requiredFeeWithChange := feeRate.FeeForSize(totalSize)
+
+	return requiredFeeNoChange, requiredFeeWithChange, nil
+}
+
+// sanityCheckFee checks if the specified fee amounts to over 20% of the total
+// output amount and raises an error.
+func sanityCheckFee(totalOut, fee dcrutil.Amount) error {
+	// Fail if more than 20% goes to fees.
+	// TODO(halseth): smarter fee limit. Make configurable or dynamic wrt
+	// total funding size?
+	if fee > totalOut/5 {
+		return fmt.Errorf("fee %v on total output value %v", fee,
+			totalOut)
+	}
+	return nil
+}
+
 // CoinSelect attempts to select a sufficient amount of coins, including a
 // change output to fund amt satoshis, adhering to the specified fee rate. The
 // specified fee rate should be expressed in sat/kw for coin selection to
@@ -68,31 +132,14 @@ func CoinSelect(feeRate chainfee.AtomPerKByte, amt dcrutil.Amount,
 			return nil, 0, err
 		}
 
-		var sizeEstimate input.TxSizeEstimator
-
-		for _, utxo := range selectedUtxos {
-			scriptClass := stdscript.DetermineScriptType(utxo.Version,
-				utxo.PkScript)
-
-			switch scriptClass {
-			case stdscript.STPubKeyHashEcdsaSecp256k1:
-				sizeEstimate.AddP2PKHInput()
-			default:
-				return nil, 0, fmt.Errorf("unsupported address type: %v",
-					scriptClass)
-			}
+		// Obtain fee estimates both with and without using a change
+		// output.
+		_, requiredFeeWithChange, err := calculateFees(
+			selectedUtxos, feeRate,
+		)
+		if err != nil {
+			return nil, 0, err
 		}
-
-		// Channel funding multisig output is P2SH.
-		sizeEstimate.AddP2SHOutput()
-
-		// Assume that change output is a P2PKH output.
-		//
-		// TODO: Handle wallets that generate non-witness change
-		// addresses.
-		// TODO(halseth): make coinSelect not estimate change output
-		// for dust change.
-		sizeEstimate.AddP2PKHOutput()
 
 		// The difference between the selected amount and the amount
 		// requested will be used to pay fees, and generate a change
@@ -103,16 +150,14 @@ func CoinSelect(feeRate chainfee.AtomPerKByte, amt dcrutil.Amount,
 		// amount isn't enough to pay fees, then increase the requested
 		// coin amount by the estimate required fee, performing another
 		// round of coin selection.
-		totalSize := sizeEstimate.Size()
-		requiredFee := feeRate.FeeForSize(totalSize)
-		if overShootAmt < requiredFee {
-			amtNeeded = amt + requiredFee
+		if overShootAmt < requiredFeeWithChange {
+			amtNeeded = amt + requiredFeeWithChange
 			continue
 		}
 
 		// If the fee is sufficient, then calculate the size of the
 		// change output.
-		changeAmt := overShootAmt - requiredFee
+		changeAmt := overShootAmt - requiredFeeWithChange
 
 		return selectedUtxos, changeAmt, nil
 	}
@@ -132,35 +177,17 @@ func CoinSelectSubtractFees(feeRate chainfee.AtomPerKByte, amt,
 		return nil, 0, 0, err
 	}
 
-	var sizeEstimate input.TxSizeEstimator
-	for _, utxo := range selectedUtxos {
-		scriptClass := stdscript.DetermineScriptType(utxo.Version,
-			utxo.PkScript)
-
-		switch scriptClass {
-		case stdscript.STPubKeyHashEcdsaSecp256k1:
-			sizeEstimate.AddP2PKHInput()
-		default:
-			return nil, 0, 0, fmt.Errorf("unsupported address type: %v",
-				scriptClass)
-		}
-	}
-
-	// Channel funding multisig output is P2SH.
-	sizeEstimate.AddP2SHOutput()
-
-	// At this point we've got two possibilities, either create a
-	// change output, or not. We'll first try without creating a
-	// change output.
-	//
-	// Estimate the fee required for a transaction without a change
+	// Obtain fee estimates both with and without using a change
 	// output.
-	totalSize := sizeEstimate.Size()
-	requiredFee := feeRate.FeeForSize(totalSize)
+	requiredFeeNoChange, requiredFeeWithChange, err := calculateFees(
+		selectedUtxos, feeRate)
+	if err != nil {
+		return nil, 0, 0, err
+	}
 
 	// For a transaction without a change output, we'll let everything go
 	// to our multi-sig output after subtracting fees.
-	outputAmt := totalAtoms - requiredFee
+	outputAmt := totalAtoms - requiredFeeNoChange
 	changeAmt := dcrutil.Amount(0)
 
 	// If the the output is too small after subtracting the fee, the coin
@@ -168,24 +195,13 @@ func CoinSelectSubtractFees(feeRate chainfee.AtomPerKByte, amt,
 	if outputAmt <= dustLimit {
 		return nil, 0, 0, fmt.Errorf("output amount(%v) after "+
 			"subtracting fees(%v) below dust limit(%v)", outputAmt,
-			requiredFee, dustLimit)
+			requiredFeeNoChange, dustLimit)
 	}
-
-	// We were able to create a transaction with no change from the
-	// selected inputs. We'll remember the resulting values for
-	// now, while we try to add a change output. Assume that change output
-	// is a P2WKH output.
-	sizeEstimate.AddP2PKHOutput()
-
-	// Now that we have added the change output, redo the fee
-	// estimate.
-	totalSize = sizeEstimate.Size()
-	requiredFee = feeRate.FeeForSize(totalSize)
 
 	// For a transaction with a change output, everything we don't spend
 	// will go to change.
+	newOutput := amt - requiredFeeWithChange
 	newChange := totalAtoms - amt
-	newOutput := amt - requiredFee
 
 	// If adding a change output leads to both outputs being above
 	// the dust limit, we'll add the change output. Otherwise we'll
@@ -198,14 +214,9 @@ func CoinSelectSubtractFees(feeRate chainfee.AtomPerKByte, amt,
 	// Sanity check the resulting output values to make sure we
 	// don't burn a great part to fees.
 	totalOut := outputAmt + changeAmt
-	fee := totalAtoms - totalOut
-
-	// Fail if more than 20% goes to fees.
-	// TODO(halseth): smarter fee limit. Make configurable or dynamic wrt
-	// total funding size?
-	if fee > totalOut/5 {
-		return nil, 0, 0, fmt.Errorf("fee %v on total output "+
-			"value %v", fee, totalOut)
+	err = sanityCheckFee(totalOut, totalAtoms-totalOut)
+	if err != nil {
+		return nil, 0, 0, err
 	}
 
 	return selectedUtxos, outputAmt, changeAmt, nil
