@@ -15,6 +15,7 @@ import (
 	sphinx "github.com/decred/lightning-onion/v4"
 	"github.com/go-errors/errors"
 
+	"github.com/decred/dcrlnd/amp"
 	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
@@ -1778,6 +1779,10 @@ type LightningPayment struct {
 	// the first hop.
 	PaymentHash [32]byte
 
+	// amp is an optional field that is set if and only if this is am AMP
+	// payment.
+	amp *AMPOptions
+
 	// FinalCLTVDelta is the CTLV expiry delta to use for the _final_ hop
 	// in the route. This means that the final hop will have a CLTV delta
 	// of at least: currentHeight + FinalCLTVDelta.
@@ -1843,6 +1848,13 @@ type LightningPayment struct {
 	//
 	// NOTE: This field is _optional_.
 	MaxShardAmt *lnwire.MilliAtom
+}
+
+// AMPOptions houses information that must be known in order to send an AMP
+// payment.
+type AMPOptions struct {
+	SetID     [32]byte
+	RootShare [32]byte
 }
 
 // SendPayment attempts to send a payment as described within the passed
@@ -1948,9 +1960,23 @@ func (r *ChannelRouter) preparePayment(payment *LightningPayment) (
 
 	// Create a new ShardTracker that we'll use during the life cycle of
 	// this payment.
-	shardTracker := shards.NewSimpleShardTracker(
-		payment.PaymentHash, nil,
-	)
+	var shardTracker shards.ShardTracker
+	switch {
+
+	// If this is an AMP payment, we'll use the AMP shard tracker.
+	case payment.amp != nil:
+		shardTracker = amp.NewShardTracker(
+			payment.amp.RootShare, payment.amp.SetID,
+			*payment.PaymentAddr, payment.Amount,
+		)
+
+	// Otherwise we'll use the simple tracker that will map each attempt to
+	// the same payment hash.
+	default:
+		shardTracker = shards.NewSimpleShardTracker(
+			payment.PaymentHash, nil,
+		)
+	}
 
 	err = r.cfg.Control.InitPayment(payment.PaymentHash, info)
 	if err != nil {
