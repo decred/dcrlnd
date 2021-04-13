@@ -120,7 +120,7 @@ func sanityCheckFee(totalOut, fee dcrutil.Amount) error {
 // change output to fund amt satoshis, adhering to the specified fee rate. The
 // specified fee rate should be expressed in sat/kw for coin selection to
 // function properly.
-func CoinSelect(feeRate chainfee.AtomPerKByte, amt dcrutil.Amount,
+func CoinSelect(feeRate chainfee.AtomPerKByte, amt, dustLimit dcrutil.Amount,
 	coins []Coin) ([]Coin, dcrutil.Amount, error) {
 
 	amtNeeded := amt
@@ -134,7 +134,7 @@ func CoinSelect(feeRate chainfee.AtomPerKByte, amt dcrutil.Amount,
 
 		// Obtain fee estimates both with and without using a change
 		// output.
-		_, requiredFeeWithChange, err := calculateFees(
+		requiredFeeNoChange, requiredFeeWithChange, err := calculateFees(
 			selectedUtxos, feeRate,
 		)
 		if err != nil {
@@ -146,18 +146,43 @@ func CoinSelect(feeRate chainfee.AtomPerKByte, amt dcrutil.Amount,
 		// output with the remaining.
 		overShootAmt := totalAtoms - amt
 
-		// Based on the estimated size and fee rate, if the excess
-		// amount isn't enough to pay fees, then increase the requested
-		// coin amount by the estimate required fee, performing another
-		// round of coin selection.
-		if overShootAmt < requiredFeeWithChange {
-			amtNeeded = amt + requiredFeeWithChange
+		var changeAmt dcrutil.Amount
+
+		switch {
+
+		// If the excess amount isn't enough to pay for fees based on
+		// fee rate and estimated size without using a change output,
+		// then increase the requested coin amount by the estimate
+		// required fee without using change, performing another round
+		// of coin selection.
+		case overShootAmt < requiredFeeNoChange:
+			amtNeeded = amt + requiredFeeNoChange
 			continue
+
+		// If sufficient funds were selected to cover the fee required
+		// to include a change output, the remainder will be our change
+		// amount.
+		case overShootAmt > requiredFeeWithChange:
+			changeAmt = overShootAmt - requiredFeeWithChange
+
+		// Otherwise we have selected enough to pay for a tx without a
+		// change output.
+		default:
+			changeAmt = 0
+
 		}
 
-		// If the fee is sufficient, then calculate the size of the
-		// change output.
-		changeAmt := overShootAmt - requiredFeeWithChange
+		if changeAmt < dustLimit {
+			changeAmt = 0
+		}
+
+		// Sanity check the resulting output values to make sure we
+		// don't burn a great part to fees.
+		totalOut := amt + changeAmt
+		err = sanityCheckFee(totalOut, totalAtoms-totalOut)
+		if err != nil {
+			return nil, 0, err
+		}
 
 		return selectedUtxos, changeAmt, nil
 	}
