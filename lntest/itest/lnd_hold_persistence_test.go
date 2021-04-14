@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"io"
 	"sync"
 	"time"
 
@@ -404,7 +405,13 @@ func testHoldInvoicePersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 	}
 
+	// Check that all of our invoice streams are terminated by the server
+	// since the invoices have completed.
+	for _, stream := range invoiceStreams {
+		_, err = stream.Recv()
+		require.Equal(t.t, io.EOF, err)
+	}
+
 	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
 	closeChannelAndAssert(ctxt, t, net, carol, chanPointAlice, false)
-
 }
