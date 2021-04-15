@@ -3,6 +3,8 @@ package routing
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnwire"
@@ -381,4 +383,54 @@ func (p *paymentSession) RequestRoute(maxAmt, feeLimit lnwire.MilliAtom,
 
 		return route, err
 	}
+}
+
+// UpdateAdditionalEdge updates the channel edge policy for a private edge. It
+// validates the message signature and checks it's up to date, then applies the
+// updates to the supplied policy. It returns a boolean to indicate whether
+// there's an error when applying the updates.
+func (p *paymentSession) UpdateAdditionalEdge(msg *lnwire.ChannelUpdate,
+	pubKey *secp256k1.PublicKey, policy *channeldb.ChannelEdgePolicy) bool {
+
+	// Validate the message signature.
+	if err := VerifyChannelUpdateSignature(msg, pubKey); err != nil {
+		log.Errorf(
+			"Unable to validate channel update signature: %v", err,
+		)
+		return false
+	}
+
+	// Update channel policy for the additional edge.
+	policy.TimeLockDelta = msg.TimeLockDelta
+	policy.FeeBaseMAtoms = lnwire.MilliAtom(msg.BaseFee)
+	policy.FeeProportionalMillionths = lnwire.MilliAtom(msg.FeeRate)
+
+	log.Debugf("New private channel update applied: %v",
+		newLogClosure(func() string { return spew.Sdump(msg) }))
+
+	return true
+}
+
+// GetAdditionalEdgePolicy uses the public key and channel ID to query the
+// ephemeral channel edge policy for additional edges. Returns a nil if nothing
+// found.
+func (p *paymentSession) GetAdditionalEdgePolicy(pubKey *secp256k1.PublicKey,
+	channelID uint64) *channeldb.ChannelEdgePolicy {
+
+	target := route.NewVertex(pubKey)
+
+	edges, ok := p.additionalEdges[target]
+	if !ok {
+		return nil
+	}
+
+	for _, edge := range edges {
+		if edge.ChannelID != channelID {
+			continue
+		}
+
+		return edge
+	}
+
+	return nil
 }
