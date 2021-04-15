@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/lntypes"
@@ -165,6 +166,18 @@ func (m *mockPaymentSession) RequestRoute(_, _ lnwire.MilliAtom,
 	m.routes = m.routes[1:]
 
 	return r, nil
+}
+
+func (m *mockPaymentSession) UpdateAdditionalEdge(_ *lnwire.ChannelUpdate,
+	_ *secp256k1.PublicKey, _ *channeldb.ChannelEdgePolicy) bool {
+
+	return false
+}
+
+func (m *mockPaymentSession) GetAdditionalEdgePolicy(_ *secp256k1.PublicKey,
+	_ uint64) *channeldb.ChannelEdgePolicy {
+
+	return nil
 }
 
 type mockPayer struct {
