@@ -437,37 +437,27 @@ func (u *UnlockerService) InitWallet(ctx context.Context,
 	}
 }
 
-// UnlockWallet sends the password provided by the incoming UnlockWalletRequest
-// over the UnlockMsgs channel in case it successfully decrypts an existing
-// wallet found in the chain's wallet database directory.
-func (u *UnlockerService) UnlockWallet(ctx context.Context,
-	in *lnrpc.UnlockWalletRequest) (*lnrpc.UnlockWalletResponse, error) {
+// LoadAndUnlock creates a loader for the wallet and tries to unlock the wallet
+// with the given password and recovery window. If the drop wallet transactions
+// flag is set, the history state drop is performed before unlocking the wallet
+// yet again.
+func (u *UnlockerService) LoadAndUnlock(ctx context.Context, password []byte,
+	recoveryWindow uint32) (*wallet.Wallet, func() error, error) {
 
-	password := in.WalletPassword
-	if u.dcrwHost != "" && u.dcrwCert != "" {
-		// Using a remote wallet.
-		return u.unlockRemoteWallet(ctx, in)
-	}
-
-	gapLimit := wallet.DefaultGapLimit
-	if in.RecoveryWindow > int32(gapLimit) {
-		gapLimit = uint32(in.RecoveryWindow)
-	}
-
-	loader, err := u.newLoader(gapLimit)
+	loader, err := u.newLoader(recoveryWindow)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Check if wallet already exists.
 	walletExists, err := loader.WalletExists()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !walletExists {
 		// Cannot unlock a wallet that does not exist!
-		return nil, fmt.Errorf("wallet not found")
+		return nil, nil, fmt.Errorf("wallet not found")
 	}
 
 	// Try opening the existing wallet with the provided password.
@@ -475,7 +465,7 @@ func (u *UnlockerService) UnlockWallet(ctx context.Context,
 	if err != nil {
 		// Could not open wallet, most likely this means that provided
 		// password was incorrect.
-		return nil, err
+		return nil, nil, err
 	}
 
 	// The user requested to drop their whole wallet transaction state to
@@ -483,17 +473,43 @@ func (u *UnlockerService) UnlockWallet(ctx context.Context,
 	// only properly takes effect after opening the wallet. That's why we
 	// start, drop, stop and start again.
 	if u.resetWalletTransactions {
-		return nil, fmt.Errorf("dropping wallet txs is not supported in dcrlnd")
+		return nil, nil, fmt.Errorf("dropping wallet txs is not supported in dcrlnd")
+	}
+
+	return unlockedWallet, loader.UnloadWallet, nil
+}
+
+// UnlockWallet sends the password provided by the incoming UnlockWalletRequest
+// over the UnlockMsgs channel in case it successfully decrypts an existing
+// wallet found in the chain's wallet database directory.
+func (u *UnlockerService) UnlockWallet(ctx context.Context,
+	in *lnrpc.UnlockWalletRequest) (*lnrpc.UnlockWalletResponse, error) {
+
+	if u.dcrwHost != "" && u.dcrwCert != "" {
+		// Using a remote wallet.
+		return u.unlockRemoteWallet(ctx, in)
+	}
+
+	password := in.WalletPassword
+	recoveryWindow := uint32(in.RecoveryWindow)
+	if recoveryWindow < wallet.DefaultGapLimit {
+		recoveryWindow = wallet.DefaultGapLimit
+	}
+
+	unlockedWallet, unloadFn, err := u.LoadAndUnlock(
+		ctx, password, recoveryWindow,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	// We successfully opened the wallet and pass the instance back to
 	// avoid it needing to be unlocked again.
 	walletUnlockMsg := &WalletUnlockMsg{
 		Passphrase:     password,
-		RecoveryWindow: gapLimit,
+		RecoveryWindow: recoveryWindow,
 		Wallet:         unlockedWallet,
-		Loader:         loader,
-		UnloadWallet:   loader.UnloadWallet,
+		UnloadWallet:   unloadFn,
 		StatelessInit:  in.StatelessInit,
 	}
 
