@@ -1446,7 +1446,7 @@ func (r *ChannelRouter) processUpdate(msg interface{},
 						channelID)
 				}
 			}
-			return fmt.Errorf("unable to fetch utxo "+
+			return newErrf(ErrChannelSpent, "unable to fetch utxo "+
 				"for chan_id=%v, chan_point=%v: %v",
 				msg.ChannelID, fundingPoint, err)
 		}
