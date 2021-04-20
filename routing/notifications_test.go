@@ -172,8 +172,8 @@ func (m *mockChain) GetBlockHash(blockHeight int64) (*chainhash.Hash, error) {
 
 	hash, ok := m.blockIndex[uint32(blockHeight)]
 	if !ok {
-		return nil, fmt.Errorf("can't find block hash, for "+
-			"height %v", blockHeight)
+		return nil, fmt.Errorf("block number out of range: %v",
+			blockHeight)
 	}
 
 	return &hash, nil
@@ -184,6 +184,13 @@ func (m *mockChain) addUtxo(op wire.OutPoint, out *wire.TxOut) {
 	m.utxos[op] = *out
 	m.Unlock()
 }
+
+func (m *mockChain) delUtxo(op wire.OutPoint) {
+	m.Lock()
+	delete(m.utxos, op)
+	m.Unlock()
+}
+
 func (m *mockChain) GetUtxo(op *wire.OutPoint, _ []byte, _ uint32,
 	_ <-chan struct{}) (*wire.TxOut, error) {
 	m.RLock()
@@ -191,7 +198,7 @@ func (m *mockChain) GetUtxo(op *wire.OutPoint, _ []byte, _ uint32,
 
 	utxo, ok := m.utxos[*op]
 	if !ok {
-		return nil, fmt.Errorf("utxo not found")
+		return nil, lnwallet.ErrUtxoAlreadySpent{}
 	}
 
 	return &utxo, nil
