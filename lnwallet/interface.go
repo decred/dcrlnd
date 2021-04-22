@@ -77,7 +77,7 @@ var ErrNoOutputs = errors.New("no outputs")
 type LockID [32]byte
 
 // ErrInvalidMinconf is returned if we try to create a transaction with
-// invalid minconf value.
+// invalid minConfs value.
 var ErrInvalidMinconf = errors.New("minimum number of confirmations must " +
 	"be a non-negative number")
 
@@ -233,7 +233,7 @@ type WalletController interface {
 	//
 	// NOTE: This method requires the global coin selection lock to be held.
 	SendOutputs(outputs []*wire.TxOut,
-		feeRate chainfee.AtomPerKByte, minconf int32, label string,
+		feeRate chainfee.AtomPerKByte, minConfs int32, label string,
 		fromAccount string) (*wire.MsgTx, error)
 
 	// CreateSimpleTx creates a Bitcoin transaction paying to the specified
@@ -252,17 +252,17 @@ type WalletController interface {
 		dryRun bool) (*txauthor.AuthoredTx, error)
 
 	// ListUnspentWitness returns all unspent outputs which are version 0
-	// witness programs. The 'minconfirms' and 'maxconfirms' parameters
+	// witness programs. The 'minConfs' and 'maxConfs' parameters
 	// indicate the minimum and maximum number of confirmations an output
 	// needs in order to be returned by this method. Passing -1 as
-	// 'minconfirms' indicates that even unconfirmed outputs should be
-	// returned. Using MaxInt32 as 'maxconfirms' implies returning all
-	// outputs with at least 'minconfirms'. The account parameter serves as
+	// 'minConfs' indicates that even unconfirmed outputs should be
+	// returned. Using MaxInt32 as 'maxConfs' implies returning all
+	// outputs with at least 'minConfs'. The account parameter serves as
 	// a filter to retrieve the unspent outputs for a specific account.
 	// When empty, the unspent outputs of all wallet accounts are returned.
 	//
 	// NOTE: This method requires the global coin selection lock to be held.
-	ListUnspentWitness(minconfirms, maxconfirms int32,
+	ListUnspentWitness(minConfs, maxConfs int32,
 		accountFilter string) ([]*Utxo, error)
 
 	// ListTransactionDetails returns a list of all transactions which are

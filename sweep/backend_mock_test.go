@@ -91,7 +91,7 @@ func (b *mockBackend) AbandonDoubleSpends(spentOutpoints ...*wire.OutPoint) erro
 	return nil
 }
 
-func (b *mockBackend) ListUnspentWitnessFromDefaultAccount(minconfirms, maxconfirms int32) (
+func (b *mockBackend) ListUnspentWitnessFromDefaultAccount(minConfs, maxConfs int32) (
 	[]*lnwallet.Utxo, error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
