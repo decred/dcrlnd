@@ -39,6 +39,7 @@ import (
 	"github.com/decred/dcrlnd/routing/localchans"
 	"github.com/decred/dcrlnd/signal"
 	"github.com/decred/dcrlnd/sweep"
+	"github.com/decred/dcrlnd/walletunlocker"
 	"github.com/decred/dcrlnd/watchtower"
 	"github.com/decred/dcrlnd/watchtower/wtclient"
 	sphinx "github.com/decred/lightning-onion/v3"
@@ -128,6 +129,7 @@ func SetupLoggers(root *build.RotatingLogWriter) {
 	AddSubLogger(root, "CHFD", chanfunding.UseLogger)
 	AddSubLogger(root, "PEER", peer.UseLogger)
 	AddSubLogger(root, "CHCL", chancloser.UseLogger)
+	AddSubLogger(root, "WUNL", walletunlocker.UseLogger)
 
 	AddSubLogger(root, routing.Subsystem, routing.UseLogger, localchans.UseLogger)
 	AddSubLogger(root, routerrpc.Subsystem, routerrpc.UseLogger)

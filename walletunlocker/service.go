@@ -403,13 +403,34 @@ func (u *UnlockerService) unlockRemoteWallet(ctx context.Context,
 
 	wallet := pb.NewWalletServiceClient(conn)
 
-	// Ensure we can grab the privkey for the given account using the
-	// provided password.
-	getAcctReq := &pb.GetAccountExtendedPrivKeyRequest{
+	// Unlock the account.
+	unlockAcctReq := &pb.UnlockAccountRequest{
 		AccountNumber: uint32(u.dcrwAccount),
 		Passphrase:    in.WalletPassword,
 	}
+	_, err = wallet.UnlockAccount(ctx, unlockAcctReq)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unlock account: %v", err)
+	}
+
+	// Ensure we can grab the privkey for the given account.
+	getAcctReq := &pb.GetAccountExtendedPrivKeyRequest{
+		AccountNumber: uint32(u.dcrwAccount),
+	}
 	getAcctResp, err := wallet.GetAccountExtendedPrivKey(ctx, getAcctReq)
+
+	// Irrespective of the return of GetAccountExtendedPrivKey, re-lock the
+	// account.
+	lockAcctReq := &pb.LockAccountRequest{
+		AccountNumber: uint32(u.dcrwAccount),
+	}
+	_, lockErr := wallet.LockAccount(ctx, lockAcctReq)
+	if lockErr != nil {
+		log.Errorf("Error while locking account number %d: %v",
+			u.dcrwAccount, lockErr)
+	}
+
+	// And now check if GetAccountExtendedPrivKey returned an error.
 	if err != nil {
 		return nil, fmt.Errorf("unable to get xpriv: %v", err)
 	}

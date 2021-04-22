@@ -3261,6 +3261,9 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 			alicePrivatePass, &rpcConfig,
 		)
 		defer aliceCleanup()
+		if err := testutils.SetPerAccountPassphrase(aliceConn, alicePrivatePass); err != nil {
+			t.Fatalf("unable to set alice wallet to account pwd: %v", err)
+		}
 		aliceWalletConfig := &remotedcrwallet.Config{
 			Conn:        aliceConn,
 			ChainIO:     aliceBio,
@@ -3280,6 +3283,9 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 			&rpcConfig,
 		)
 		defer bobCleanup()
+		if err := testutils.SetPerAccountPassphrase(bobConn, bobPrivatePass); err != nil {
+			t.Fatalf("unable to set bob wallet to account pwd: %v", err)
+		}
 		bobWalletConfig := &remotedcrwallet.Config{
 			Conn:        bobConn,
 			ChainIO:     bobBio,

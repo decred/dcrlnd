@@ -6,7 +6,8 @@ to fetch the `dcrlnd`-specific account keys and to perform its on-chain operatio
 
 The connection is made through dcrwallet's gRPC interface, therefore starting in
 version 1.6.0, a client certificate is needed to authenticate against the
-wallet instance.
+wallet instance. Also note that the wallet must be using individually locked
+accounts (`setaccountpassphrase`).
 
 The following is a quick guide on setting up such environment.
 

@@ -301,3 +301,22 @@ func NewTestRemoteDcrwallet(t TB, dcrd *rpcclient.ConnConfig) (*grpc.ClientConn,
 
 	return c, tearDown
 }
+
+// SetPerAccountPassphrase calls the SetAccountPassphrase rpc endpoint on the
+// wallet at the given conn, setting it to the specified passphrse.
+//
+// This function expects a conn returned by NewTestRemoteDcrwallet.
+func SetPerAccountPassphrase(conn *grpc.ClientConn, passphrase []byte) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	// Set the wallet to use per-account passphrases.
+	wallet := pb.NewWalletServiceClient(conn)
+	reqSetAcctPwd := &pb.SetAccountPassphraseRequest{
+		AccountNumber:        0,
+		WalletPassphrase:     passphrase,
+		NewAccountPassphrase: passphrase,
+	}
+	_, err := wallet.SetAccountPassphrase(ctx, reqSetAcctPwd)
+	return err
+}

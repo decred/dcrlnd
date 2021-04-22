@@ -83,20 +83,42 @@ func New(cfg Config) (*DcrWallet, error) {
 
 	// TODO(decred): Check if the node is synced before allowing this to
 	// proceed.
-
-	// Obtain the root master priv key from which all LN-related
-	// keys are derived. By convention, this is a special branch in
-	// the default account.
 	ctxb := context.Background()
 	wallet := pb.NewWalletServiceClient(cfg.Conn)
-	network := pb.NewNetworkServiceClient(cfg.Conn)
-	req := &pb.GetAccountExtendedPrivKeyRequest{
+
+	// Unlock the account.
+	unlockAcctReq := &pb.UnlockAccountRequest{
 		AccountNumber: uint32(cfg.AccountNumber),
 		Passphrase:    cfg.PrivatePass,
 	}
-	resp, err := wallet.GetAccountExtendedPrivKey(ctxb, req)
+	_, err := wallet.UnlockAccount(ctxb, unlockAcctReq)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get master LN account "+
+		return nil, fmt.Errorf("unable to unlock account: %v", err)
+	}
+
+	// Obtain the root master priv key from which all LN-related
+	// keys are derived. By convention, this is a special branch in the
+	// passed account.
+	network := pb.NewNetworkServiceClient(cfg.Conn)
+	req := &pb.GetAccountExtendedPrivKeyRequest{
+		AccountNumber: uint32(cfg.AccountNumber),
+	}
+	resp, err := wallet.GetAccountExtendedPrivKey(ctxb, req)
+
+	// Irrespective of the return of GetAccountExtendedPrivKey, re-lock the
+	// account.
+	lockAcctReq := &pb.LockAccountRequest{
+		AccountNumber: uint32(cfg.AccountNumber),
+	}
+	_, lockErr := wallet.LockAccount(ctxb, lockAcctReq)
+	if lockErr != nil {
+		dcrwLog.Errorf("Error while locking account number %d: %v",
+			cfg.AccountNumber, lockErr)
+	}
+
+	// And now check if GetAccountExtendedPrivKey returned an error.
+	if err != nil {
+		return nil, fmt.Errorf("unable to get master LN account "+
 			"extended priv key: %v", err)
 	}
 

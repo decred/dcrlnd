@@ -1,4 +1,4 @@
-package channelnotifier
+package walletunlocker
 
 import (
 	"github.com/decred/dcrlnd/build"
@@ -12,7 +12,7 @@ var log slog.Logger
 
 // The default amount of logging is none.
 func init() {
-	UseLogger(build.NewSubLogger("CHNF", nil))
+	UseLogger(build.NewSubLogger("WUNL", nil))
 }
 
 // DisableLog disables all library log output.  Logging output is disabled by
@@ -23,7 +23,7 @@ func DisableLog() {
 
 // UseLogger uses a specified Logger to output package logging info.  This
 // should be used in preference to SetLogWriter if the caller is also using
-// btclog.
+// slog.
 func UseLogger(logger slog.Logger) {
 	log = logger
 }

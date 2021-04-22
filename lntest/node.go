@@ -710,6 +710,18 @@ func (hn *HarnessNode) startRemoteWallet() error {
 			return err
 		}
 
+		// Set the wallet to use per-account passphrases.
+		wallet := pb.NewWalletServiceClient(hn.walletConn)
+		reqSetAcctPwd := &pb.SetAccountPassphraseRequest{
+			AccountNumber:        0,
+			WalletPassphrase:     password,
+			NewAccountPassphrase: password,
+		}
+		_, err = wallet.SetAccountPassphrase(ctxb, reqSetAcctPwd)
+		if err != nil {
+			return err
+		}
+
 		err = hn.Cfg.BackendCfg.StartWalletSync(loader, password)
 		if err != nil {
 			return err
@@ -797,6 +809,18 @@ func (hn *HarnessNode) initRemoteWallet(ctx context.Context,
 		Seed:              seed,
 	}
 	_, err = loader.CreateWallet(ctx, reqCreate)
+	if err != nil {
+		return err
+	}
+
+	// Set the wallet to use per-account passphrases.
+	wallet := pb.NewWalletServiceClient(hn.walletConn)
+	reqSetAcctPwd := &pb.SetAccountPassphraseRequest{
+		AccountNumber:        0,
+		WalletPassphrase:     initReq.WalletPassword,
+		NewAccountPassphrase: initReq.WalletPassword,
+	}
+	_, err = wallet.SetAccountPassphrase(ctx, reqSetAcctPwd)
 	if err != nil {
 		return err
 	}
