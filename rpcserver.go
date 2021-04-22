@@ -961,7 +961,7 @@ func allowCORS(handler http.Handler, origins []string) http.Handler {
 // more addresses specified in the passed payment map. The payment map maps an
 // address to a specified output value to be sent to that address.
 func (r *rpcServer) sendCoinsOnChain(paymentMap map[string]int64,
-	feeRate chainfee.AtomPerKByte, minConf int32,
+	feeRate chainfee.AtomPerKByte, minConfs int32,
 	label, fromAccount string) (*chainhash.Hash, error) {
 
 	outputs, err := addrPairsToOutputs(paymentMap, r.cfg.ActiveNetParams.Params)
@@ -990,7 +990,7 @@ func (r *rpcServer) sendCoinsOnChain(paymentMap map[string]int64,
 	// If that checks out, we're failry confident that creating sending to
 	// these outputs will keep the wallet balance above the reserve.
 	tx, err := r.server.cc.Wallet.SendOutputs(
-		outputs, feeRate, minConf, label, fromAccount,
+		outputs, feeRate, minConfs, label, fromAccount,
 	)
 	if err != nil {
 		return nil, err
