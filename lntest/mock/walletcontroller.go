@@ -104,7 +104,7 @@ func (w *WalletController) SendOutputs(outputs []*wire.TxOut,
 
 // CreateSimpleTx currently returns dummy values.
 func (w *WalletController) CreateSimpleTx(outputs []*wire.TxOut,
-	_ chainfee.AtomPerKByte, _ bool) (*txauthor.AuthoredTx, error) {
+	_ chainfee.AtomPerKByte, _ int32, _ bool) (*txauthor.AuthoredTx, error) {
 
 	return nil, nil
 }

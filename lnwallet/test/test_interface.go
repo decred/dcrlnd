@@ -2675,52 +2675,107 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 
 	// The test cases we will run through for all backends.
 	testCases := []struct {
-		outVals []int64
-		feeRate chainfee.AtomPerKByte
-		valid   bool
+		outVals     []int64
+		feeRate     chainfee.AtomPerKByte
+		valid       bool
+		unconfirmed bool
 	}{
 		{
-			outVals: []int64{},
-			feeRate: 2500,
-			valid:   false, // No outputs.
+			outVals:     []int64{},
+			feeRate:     2500,
+			valid:       false, // No outputs.
+			unconfirmed: false,
+		},
+		{
+			outVals:     []int64{},
+			feeRate:     2500,
+			valid:       false, // No outputs.
+			unconfirmed: true,
 		},
 
 		{
-			outVals: []int64{1e3},
-			feeRate: 2500,
-			valid:   false, // Dust output.
+			outVals:     []int64{1e3},
+			feeRate:     2500,
+			valid:       false, // Dust output.
+			unconfirmed: false,
+		},
+		{
+			outVals:     []int64{1e3},
+			feeRate:     2500,
+			valid:       false, // Dust output.
+			unconfirmed: true,
+		},
+		{
+			outVals:     []int64{1e8},
+			feeRate:     2500,
+			valid:       true,
+			unconfirmed: false,
+		},
+		{
+			outVals:     []int64{1e8},
+			feeRate:     2500,
+			valid:       true,
+			unconfirmed: true,
 		},
 
 		{
-			outVals: []int64{1e8},
-			feeRate: 2500,
-			valid:   true,
+			outVals:     []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+			feeRate:     2500,
+			valid:       true,
+			unconfirmed: false,
 		},
 		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
-			feeRate: 2500,
-			valid:   true,
+			outVals:     []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+			feeRate:     2500,
+			valid:       true,
+			unconfirmed: true,
+		},
+
+		{
+			outVals:     []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+			feeRate:     12500,
+			valid:       true,
+			unconfirmed: false,
 		},
 		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
-			feeRate: 12500,
-			valid:   true,
+			outVals:     []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+			feeRate:     12500,
+			valid:       true,
+			unconfirmed: true,
+		},
+
+		{
+			outVals:     []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+			feeRate:     50000,
+			valid:       true,
+			unconfirmed: false,
 		},
 		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
-			feeRate: 50000,
-			valid:   true,
+			outVals:     []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+			feeRate:     50000,
+			valid:       true,
+			unconfirmed: true,
+		},
+
+		{
+			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5, 1e8, 2e8,
+				1e8, 2e7, 3e5},
+			feeRate:     44250,
+			valid:       true,
+			unconfirmed: false,
 		},
 		{
 			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5, 1e8, 2e8,
 				1e8, 2e7, 3e5},
-			feeRate: 44250,
-			valid:   true,
+			feeRate:     44250,
+			valid:       true,
+			unconfirmed: true,
 		},
 	}
 
 	ctxb := context.Background()
 	for _, test := range testCases {
+		var minConfs int32 = 1
 		feeRate := test.feeRate
 
 		// Grab some fresh addresses from the miner that we will send
@@ -2747,7 +2802,7 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 
 		// Now try creating a tx spending to these outputs.
 		createTx, createErr := w.CreateSimpleTx(
-			outputs, feeRate, true,
+			outputs, feeRate, minConfs, true,
 		)
 		if test.valid == (createErr != nil) {
 			fmt.Println(spew.Sdump(createTx.Tx))
@@ -2759,7 +2814,7 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 		// _very_ similar to the one we just created being sent. The
 		// only difference is that the dry run tx is not signed, and
 		// that the change output position might be different.
-		tx, sendErr := w.SendOutputs(outputs, feeRate, 1, labels.External, "")
+		tx, sendErr := w.SendOutputs(outputs, feeRate, minConfs, labels.External, "")
 		if test.valid == (sendErr != nil) {
 			t.Fatalf("got unexpected error when sending tx: %v",
 				sendErr)

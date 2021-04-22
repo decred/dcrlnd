@@ -361,7 +361,7 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) CreateSimpleTx(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, dryRun bool) (*txauthor.AuthoredTx, error) {
+	feeRate chainfee.AtomPerKByte, minConfs int32, dryRun bool) (*txauthor.AuthoredTx, error) {
 
 	// Sanity check outputs.
 	if len(outputs) < 1 {
