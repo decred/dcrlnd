@@ -390,19 +390,34 @@ func SenderHtlcSpendRevokeWithKey(signer Signer, signDesc *SignDescriptor,
 func SenderHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
 	sweepTx *wire.MsgTx) (TxWitness, error) {
 
-	if signDesc.KeyDesc.PubKey == nil {
-		return nil, fmt.Errorf("cannot generate witness with nil " +
-			"KeyDesc pubkey")
+	revokeKey, err := deriveRevokePubKey(signDesc)
+	if err != nil {
+		return nil, err
 	}
 
-	// Derive the revocation key using the local revocation base point and
-	// commitment point.
-	revokeKey := DeriveRevocationPubkey(
-		signDesc.KeyDesc.PubKey,
-		signDesc.DoubleTweak.PubKey(),
-	)
-
 	return SenderHtlcSpendRevokeWithKey(signer, signDesc, revokeKey, sweepTx)
+}
+
+// IsHtlcSpendRevoke is used to determine if the passed spend is spending a
+// HTLC output using the revocation key.
+func IsHtlcSpendRevoke(txIn *wire.TxIn, signDesc *SignDescriptor) (
+	bool, error) {
+
+	revokeKey, err := deriveRevokePubKey(signDesc)
+	if err != nil {
+		return false, err
+	}
+
+	witness, err := SigScriptToWitnessStack(txIn.SignatureScript)
+	if err != nil {
+		return false, err
+	}
+	if len(witness) == 3 &&
+		bytes.Equal(witness[1], revokeKey.SerializeCompressed()) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // SenderHtlcSpendRedeem constructs a valid witness allowing the receiver of an
@@ -651,16 +666,7 @@ func ReceiverHtlcSpendRevokeWithKey(signer Signer, signDesc *SignDescriptor,
 	return witnessStack, nil
 }
 
-// ReceiverHtlcSpendRevoke constructs a valid witness allowing the sender of an
-// HTLC within a previously revoked commitment transaction to re-claim the
-// pending funds in the case that the receiver broadcasts this revoked
-// commitment transaction. This method first derives the appropriate revocation
-// key, and requires that the provided SignDescriptor has a local revocation
-// basepoint and commitment secret in the PubKey and DoubleTweak fields,
-// respectively.
-func ReceiverHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
-	sweepTx *wire.MsgTx) (TxWitness, error) {
-
+func deriveRevokePubKey(signDesc *SignDescriptor) (*secp256k1.PublicKey, error) {
 	if signDesc.KeyDesc.PubKey == nil {
 		return nil, fmt.Errorf("cannot generate witness with nil " +
 			"KeyDesc pubkey")
@@ -672,6 +678,24 @@ func ReceiverHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
 		signDesc.KeyDesc.PubKey,
 		signDesc.DoubleTweak.PubKey(),
 	)
+
+	return revokeKey, nil
+}
+
+// ReceiverHtlcSpendRevoke constructs a valid witness allowing the sender of an
+// HTLC within a previously revoked commitment transaction to re-claim the
+// pending funds in the case that the receiver broadcasts this revoked
+// commitment transaction. This method first derives the appropriate revocation
+// key, and requires that the provided SignDescriptor has a local revocation
+// basepoint and commitment secret in the PubKey and DoubleTweak fields,
+// respectively.
+func ReceiverHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
+	sweepTx *wire.MsgTx) (TxWitness, error) {
+
+	revokeKey, err := deriveRevokePubKey(signDesc)
+	if err != nil {
+		return nil, err
+	}
 
 	return ReceiverHtlcSpendRevokeWithKey(signer, signDesc, revokeKey, sweepTx)
 }
