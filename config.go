@@ -31,6 +31,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch/hodl"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lncfg"
+	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lnrpc/signrpc"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -242,6 +243,8 @@ type Config struct {
 	DisableListen     bool          `long:"nolisten" description:"Disable listening for incoming peer connections"`
 	DisableRest       bool          `long:"norest" description:"Disable REST API"`
 	DisableRestTLS    bool          `long:"no-rest-tls" description:"Disable TLS for REST connections"`
+	WSPingInterval    time.Duration `long:"ws-ping-interval" description:"The ping interval for REST based WebSocket connections, set to 0 to disable sending ping messages from the server side"`
+	WSPongWait        time.Duration `long:"ws-pong-wait" description:"The time we wait for a pong response message on REST based WebSocket connections before the connection is closed as inactive"`
 	NAT               bool          `long:"nat" description:"Toggle NAT traversal support (using either UPnP or NAT-PMP) to automatically advertise your external IP address to the network -- NOTE this does not support devices behind multiple NATs"`
 	MinBackoff        time.Duration `long:"minbackoff" description:"Shortest backoff when reconnecting to persistent peers. Valid time units are {s, m, h}."`
 	MaxBackoff        time.Duration `long:"maxbackoff" description:"Longest backoff when reconnecting to persistent peers. Valid time units are {s, m, h}."`
@@ -382,6 +385,8 @@ func DefaultConfig() Config {
 		MaxLogFiles:       defaultMaxLogFiles,
 		MaxLogFileSize:    defaultMaxLogFileSize,
 		AcceptorTimeout:   defaultAcceptorTimeout,
+		WSPingInterval:    lnrpc.DefaultPingInterval,
+		WSPongWait:        lnrpc.DefaultPongWait,
 		Decred: &lncfg.Chain{
 			MinHTLCIn:     chainreg.DefaultDecredMinHTLCInMAtoms,
 			MinHTLCOut:    chainreg.DefaultDecredMinHTLCOutMAtoms,
