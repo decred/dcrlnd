@@ -217,10 +217,9 @@ type WalletController interface {
 	// key corresponding to the account public key (also known as the key
 	// with derivation path m/). This may be required by some hardware
 	// wallets for proper identification and signing.
-	//
-	// The address type can usually be inferred from the key's version, but
-	// may be required for certain keys to map them into the proper scope.
-	ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error
+	ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey,
+		dryRun bool) (*wallet.AccountProperties, []stdaddr.Address,
+		[]stdaddr.Address, error)
 
 	// ImportPublicKey imports a single derived public key into the wallet.
 	ImportPublicKey(pubKey *secp256k1.PublicKey) error

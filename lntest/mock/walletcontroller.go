@@ -86,8 +86,11 @@ func (w *WalletController) ListAccounts(string) ([]wallet.AccountProperties, err
 }
 
 // ImportAccountcurrently returns a dummy value.
-func (w *WalletController) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error {
-	return nil
+func (w *WalletController) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey,
+	dryRun bool) (*wallet.AccountProperties, []stdaddr.Address,
+	[]stdaddr.Address, error) {
+
+	return nil, nil, nil, nil
 }
 
 // ImportPublicKeycurrently returns a dummy value.

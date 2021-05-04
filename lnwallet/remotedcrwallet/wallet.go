@@ -12,6 +12,7 @@ import (
 	"time"
 
 	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
+	"decred.org/dcrwallet/v3/wallet"
 	base "decred.org/dcrwallet/v3/wallet"
 	"google.golang.org/grpc"
 
@@ -30,6 +31,13 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
+)
+
+const (
+	// dryRunImportAccountNumAddrs represents the number of addresses we'll
+	// derive for an imported account's external and internal branch when a
+	// dry run is attempted.
+	dryRunImportAccountNumAddrs = 5
 )
 
 type DcrWallet struct {
@@ -1258,13 +1266,44 @@ func (b *DcrWallet) ListAccounts(accountName string) ([]base.AccountProperties, 
 // ImportAccount imports the specified xpub into the wallet.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error {
+func (b *DcrWallet) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey, dryRun bool) (
+	*wallet.AccountProperties, []stdaddr.Address, []stdaddr.Address, error) {
+
+	fail := func(err error) (*wallet.AccountProperties, []stdaddr.Address, []stdaddr.Address, error) {
+		return nil, nil, nil, err
+	}
+
+	if dryRun {
+		intAddrs, extAddrs, err := lnwallet.DeriveAddrsFromExtPub(accountPubKey,
+			b.chainParams, dryRunImportAccountNumAddrs)
+		if err != nil {
+			return fail(err)
+		}
+
+		acctProps := &wallet.AccountProperties{
+			AccountName: name,
+		}
+		return acctProps, intAddrs, extAddrs, nil
+	}
+
 	req := &pb.ImportExtendedPublicKeyRequest{
 		AccountName: name,
 		Xpub:        accountPubKey.String(),
 	}
 	_, err := b.wallet.ImportExtendedPublicKey(context.Background(), req)
-	return err
+	if err != nil {
+		return fail(err)
+	}
+
+	accounts, err := b.ListAccounts(name)
+	if err != nil {
+		return fail(err)
+	}
+	if len(accounts) == 0 {
+		return fail(fmt.Errorf("account named %q does not exist", name))
+	}
+
+	return &accounts[0], nil, nil, nil
 }
 
 // ImportPublicKey imports the specified public key into the wallet.
