@@ -22,6 +22,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 
+	"decred.org/dcrwallet/v3/wallet"
 	base "decred.org/dcrwallet/v3/wallet"
 	"decred.org/dcrwallet/v3/wallet/txauthor"
 	"decred.org/dcrwallet/v3/wallet/udb"
@@ -35,6 +36,11 @@ const (
 	// UnconfirmedHeight is the special case end height that is used to
 	// obtain unconfirmed transactions from ListTransactionDetails.
 	UnconfirmedHeight int32 = -1
+
+	// dryRunImportAccountNumAddrs represents the number of addresses we'll
+	// derive for an imported account's external and internal branch when a
+	// dry run is attempted.
+	dryRunImportAccountNumAddrs = 5
 )
 
 const (
@@ -1054,8 +1060,41 @@ func (b *DcrWallet) ListAccounts(accountName string) ([]base.AccountProperties, 
 // ImportAccount imports the specified xpub into the wallet.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey) error {
-	return b.wallet.ImportXpubAccount(context.Background(), name, accountPubKey)
+func (b *DcrWallet) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey, dryRun bool) (
+	*wallet.AccountProperties, []stdaddr.Address, []stdaddr.Address, error) {
+
+	fail := func(err error) (*wallet.AccountProperties, []stdaddr.Address, []stdaddr.Address, error) {
+		return nil, nil, nil, err
+	}
+
+	if dryRun {
+		chainParams := b.wallet.ChainParams()
+		intAddrs, extAddrs, err := lnwallet.DeriveAddrsFromExtPub(accountPubKey,
+			chainParams, dryRunImportAccountNumAddrs)
+		if err != nil {
+			return fail(err)
+		}
+
+		acctProps := &wallet.AccountProperties{
+			AccountName: name,
+		}
+		return acctProps, intAddrs, extAddrs, nil
+	}
+
+	err := b.wallet.ImportXpubAccount(context.Background(), name, accountPubKey)
+	if err != nil {
+		return fail(err)
+	}
+
+	accounts, err := b.ListAccounts(name)
+	if err != nil {
+		return fail(err)
+	}
+	if len(accounts) == 0 {
+		return fail(fmt.Errorf("account named %q does not exist", name))
+	}
+
+	return &accounts[0], nil, nil, nil
 }
 
 // ImportPublicKey imports the specified public key into the wallet.
