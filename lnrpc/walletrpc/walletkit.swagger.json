@@ -923,9 +923,9 @@
           "description": "The public key backing the account that all keys are derived from\nrepresented as an extended key. This will always be empty for the default\nimported account in which single public keys are imported into."
         },
         "master_key_fingerprint": {
-          "type": "integer",
-          "format": "int64",
-          "description": "The fingerprint of the root key from which the account public key was\nderived from. This will always be zero for the default imported account in\nwhich single public keys are imported into."
+          "type": "string",
+          "format": "byte",
+          "description": "The fingerprint of the root key from which the account public key was\nderived from. This will always be zero for the default imported account in\nwhich single public keys are imported into. The bytes are in big-endian\norder."
         },
         "derivation_path": {
           "type": "string",
