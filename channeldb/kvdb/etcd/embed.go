@@ -100,8 +100,6 @@ func NewEmbeddedEtcdInstance(path string, clientPort, peerPort uint16) (
 
 	connConfig := &Config{
 		Host:               "http://" + clientURL,
-		User:               "user",
-		Pass:               "pass",
 		InsecureSkipVerify: true,
 		Namespace:          defaultNamespace,
 	}
