@@ -1125,7 +1125,27 @@
       }
     },
     "walletrpcImportAccountResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/walletrpcAccount",
+          "description": "The details of the imported account."
+        },
+        "dry_run_external_addrs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The first N addresses that belong to the external branch of the account.\nThe external branch is typically used for external non-change addresses.\nThese are only returned if a dry run was specified within the request."
+        },
+        "dry_run_internal_addrs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The first N addresses that belong to the internal branch of the account.\nThe internal branch is typically used for change addresses. These are only\nreturned if a dry run was specified within the request."
+        }
+      }
     },
     "walletrpcImportPublicKeyRequest": {
       "type": "object",
