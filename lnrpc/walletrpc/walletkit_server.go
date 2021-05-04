@@ -1535,8 +1535,7 @@ func (w *WalletKit) ImportAccount(ctx context.Context,
 	}
 
 	accountProps, extAddrs, intAddrs, err := w.cfg.Wallet.ImportAccount(
-		req.Name, accountPubKey,
-		req.DryRun,
+		req.Name, accountPubKey, req.DryRun,
 	)
 	if err != nil {
 		return nil, err
