@@ -71,7 +71,6 @@ func testSendPaymentAMP(net *lntest.NetworkHarness, t *harnessTest) {
 			Dest:           ctx.bob.PubKey[:],
 			Amt:            int64(paymentAmt),
 			FinalCltvDelta: chainreg.DefaultDecredTimeLockDelta,
-			MaxParts:       10,
 			TimeoutSeconds: 60,
 			FeeLimitMAtoms: noFeeLimitMAtoms,
 			Amp:            true,
