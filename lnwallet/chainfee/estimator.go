@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	// maxBlockTarget is the highest number of blocks confirmations that a
-	// WebAPIEstimator will cache fees for. This number is chosen because
-	// it's the highest number of confs bitcoind will return a fee estimate
-	// for.
-	maxBlockTarget uint32 = 1009
+	// maxBlockTarget is the highest number of blocks confirmations that
+	// a WebAPIEstimator will cache fees for. This number is chosen
+	// because it's the highest number of confs bitcoind will return a fee
+	// estimate for.
+	maxBlockTarget uint32 = 1008
 
 	// minBlockTarget is the lowest number of blocks confirmations that
 	// a WebAPIEstimator will cache fees for. Requesting an estimate for
