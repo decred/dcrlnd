@@ -218,6 +218,13 @@ func (b *DcrdEstimator) RelayFeePerKB() AtomPerKByte {
 //
 // NOTE: This method is part of the FeeEstimator interface.
 func (b *DcrdEstimator) EstimateFeePerKB(numBlocks uint32) (AtomPerKByte, error) {
+	if numBlocks > maxBlockTarget {
+		log.Debugf("conf target %d exceeds the max value, "+
+			"use %d instead.", numBlocks, maxBlockTarget,
+		)
+		numBlocks = maxBlockTarget
+	}
+
 	feeEstimate, err := b.fetchEstimate(numBlocks)
 	switch {
 	// If the estimator doesn't have enough data, or returns an error, then
