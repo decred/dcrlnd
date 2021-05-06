@@ -200,6 +200,7 @@ type NodeConfig struct {
 	WalletPort  int
 
 	AcceptKeySend bool
+	AcceptAMP     bool
 
 	FeeURL string
 
@@ -293,6 +294,10 @@ func (cfg NodeConfig) genArgs() []string {
 
 	if cfg.AcceptKeySend {
 		args = append(args, "--accept-keysend")
+	}
+
+	if cfg.AcceptAMP {
+		args = append(args, "--accept-amp")
 	}
 
 	if cfg.Etcd {
