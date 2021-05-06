@@ -264,7 +264,7 @@ func newMppTestContext(t *harnessTest,
 		t.Fatalf("unable to create alice: %v", err)
 	}
 
-	bob, err := net.NewNode("bob", nil)
+	bob, err := net.NewNode("bob", []string{"--accept-amp"})
 	if err != nil {
 		t.Fatalf("unable to create bob: %v", err)
 	}
