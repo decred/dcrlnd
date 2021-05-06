@@ -99,6 +99,7 @@ func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainreg.Cha
 	anchorTowerClient wtclient.Client,
 	tcpResolver lncfg.TCPResolver,
 	genInvoiceFeatures func() *lnwire.FeatureVector,
+	genAmpInvoiceFeatures func() *lnwire.FeatureVector,
 	rpcLogger slog.Logger) error {
 
 	// First, we'll use reflect to obtain a version of the config struct
@@ -225,6 +226,9 @@ func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainreg.Cha
 			)
 			subCfgValue.FieldByName("GenInvoiceFeatures").Set(
 				reflect.ValueOf(genInvoiceFeatures),
+			)
+			subCfgValue.FieldByName("GenAmpInvoiceFeatures").Set(
+				reflect.ValueOf(genAmpInvoiceFeatures),
 			)
 
 		// RouterRPC isn't conditionally compiled and doesn't need to be
