@@ -72,6 +72,11 @@ var addInvoiceCommand = cli.Command{
 				"in directly connected channels and create the " +
 				"invoice anyway.",
 		},
+		cli.BoolFlag{
+			Name: "amp",
+			Usage: "creates an AMP invoice. If true, preimage " +
+				"should not be set.",
+		},
 	},
 	Action: actionDecorator(addInvoice),
 }
@@ -126,6 +131,7 @@ func addInvoice(ctx *cli.Context) error {
 		Expiry:              ctx.Int64("expiry"),
 		Private:             ctx.Bool("private"),
 		IgnoreMaxInboundAmt: ctx.Bool("ignore_max_inbound_amt"),
+		IsAmp:               ctx.Bool("amp"),
 	}
 
 	resp, err := client.AddInvoice(ctxc, invoice)
