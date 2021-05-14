@@ -64,7 +64,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				// the node from seed, then manually recover
 				// the channel backup.
 				return chanRestoreViaRPC(
-					net, password, mnemonic, multi,
+					net, password, mnemonic, multi, oldNode,
 				)
 			},
 		},
@@ -90,7 +90,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				// create a new nodeRestorer that will restore
 				// using the on-disk channels.backup.
 				return chanRestoreViaRPC(
-					net, password, mnemonic, multi,
+					net, password, mnemonic, multi, oldNode,
 				)
 			},
 		},
@@ -125,6 +125,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 					return net.RestoreNodeWithSeed(
 						"dave", nil, password,
 						mnemonic, 1000, backupSnapshot,
+						copyPorts(oldNode),
 					)
 				}, nil
 			},
@@ -161,6 +162,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 					newNode, err := net.RestoreNodeWithSeed(
 						"dave", nil, password,
 						mnemonic, 1000, nil,
+						copyPorts(oldNode),
 					)
 					if err != nil {
 						return nil, err
@@ -207,7 +209,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				return func() (*lntest.HarnessNode, error) {
 					newNode, err := net.RestoreNodeWithSeed(
 						"dave", nil, password, mnemonic,
-						1000, nil,
+						1000, nil, copyPorts(oldNode),
 					)
 					if err != nil {
 						return nil, fmt.Errorf("unable to "+
@@ -277,7 +279,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				// the node from seed, then manually recover
 				// the channel backup.
 				return chanRestoreViaRPC(
-					net, password, mnemonic, multi,
+					net, password, mnemonic, multi, oldNode,
 				)
 			},
 		},
@@ -327,7 +329,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				// the channel backup.
 				multi := chanBackup.MultiChanBackup.MultiChanBackup
 				return chanRestoreViaRPC(
-					net, password, mnemonic, multi,
+					net, password, mnemonic, multi, oldNode,
 				)
 			},
 		},
@@ -354,7 +356,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				// create a new nodeRestorer that will restore
 				// using the on-disk channels.backup.
 				return chanRestoreViaRPC(
-					net, password, mnemonic, multi,
+					net, password, mnemonic, multi, oldNode,
 				)
 			},
 		},
@@ -385,7 +387,7 @@ func testChannelBackupRestore(net *lntest.NetworkHarness, t *harnessTest) {
 				// the node from seed, then manually recover the
 				// channel backup.
 				return chanRestoreViaRPC(
-					net, password, mnemonic, multi,
+					net, password, mnemonic, multi, oldNode,
 				)
 			},
 		},
@@ -1240,9 +1242,9 @@ func createLegacyRevocationChannel(net *lntest.NetworkHarness, t *harnessTest,
 // chanRestoreViaRPC is a helper test method that returns a nodeRestorer
 // instance which will restore the target node from a password+seed, then
 // trigger a SCB restore using the RPC interface.
-func chanRestoreViaRPC(net *lntest.NetworkHarness,
-	password []byte, mnemonic []string,
-	multi []byte) (nodeRestorer, error) {
+func chanRestoreViaRPC(net *lntest.NetworkHarness, password []byte,
+	mnemonic []string, multi []byte,
+	oldNode *lntest.HarnessNode) (nodeRestorer, error) {
 
 	backup := &lnrpc.RestoreChanBackupRequest_MultiChanBackup{
 		MultiChanBackup: multi,
@@ -1253,6 +1255,7 @@ func chanRestoreViaRPC(net *lntest.NetworkHarness,
 	return func() (*lntest.HarnessNode, error) {
 		newNode, err := net.RestoreNodeWithSeed(
 			"dave", nil, password, mnemonic, 1000, nil,
+			copyPorts(oldNode),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("unable to "+
@@ -1271,4 +1274,15 @@ func chanRestoreViaRPC(net *lntest.NetworkHarness,
 
 		return newNode, nil
 	}, nil
+}
+
+// copyPorts returns a node option function that copies the ports of an existing
+// node over to the newly created one.
+func copyPorts(oldNode *lntest.HarnessNode) lntest.NodeOption {
+	return func(cfg *lntest.NodeConfig) {
+		cfg.P2PPort = oldNode.Cfg.P2PPort
+		cfg.RPCPort = oldNode.Cfg.RPCPort
+		cfg.RESTPort = oldNode.Cfg.RESTPort
+		cfg.ProfilePort = oldNode.Cfg.ProfilePort
+	}
 }
