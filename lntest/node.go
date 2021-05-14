@@ -136,15 +136,23 @@ func GetLogDir() string {
 
 // generateListeningPorts returns five ints representing ports to listen on
 // designated for the current lightning network test. This returns the next
-// available ports for the p2p, rpc, rest, profiling and wallet services.
-func generateListeningPorts() (int, int, int, int, int) {
-	p2p := NextAvailablePort()
-	rpc := NextAvailablePort()
-	rest := NextAvailablePort()
-	profile := NextAvailablePort()
-	wallet := NextAvailablePort()
-
-	return p2p, rpc, rest, profile, wallet
+// available ports for the p2p, rpc, rest and profiling services.
+func generateListeningPorts(cfg *NodeConfig) {
+	if cfg.P2PPort == 0 {
+		cfg.P2PPort = NextAvailablePort()
+	}
+	if cfg.RPCPort == 0 {
+		cfg.RPCPort = NextAvailablePort()
+	}
+	if cfg.RESTPort == 0 {
+		cfg.RESTPort = NextAvailablePort()
+	}
+	if cfg.ProfilePort == 0 {
+		cfg.ProfilePort = NextAvailablePort()
+	}
+	if cfg.WalletPort == 0 {
+		cfg.WalletPort = NextAvailablePort()
+	}
 }
 
 // BackendConfig is an interface that abstracts away the specific chain backend
@@ -442,7 +450,7 @@ func newNode(cfg NodeConfig) (*HarnessNode, error) {
 
 	nodeNum := atomic.AddUint32(&numActiveNodes, 1)
 
-	cfg.P2PPort, cfg.RPCPort, cfg.RESTPort, cfg.ProfilePort, cfg.WalletPort = generateListeningPorts()
+	generateListeningPorts(&cfg)
 
 	err := os.MkdirAll(cfg.DataDir, os.FileMode(0755))
 	if err != nil {
