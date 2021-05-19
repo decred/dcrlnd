@@ -70,7 +70,7 @@ func makeFakeInfo() (*PaymentCreationInfo, *HTLCAttemptInfo) {
 
 	a := &HTLCAttemptInfo{
 		AttemptID:   44,
-		SessionKey:  priv,
+		sessionKey:  priv,
 		Route:       testRoute,
 		AttemptTime: time.Unix(100, 0),
 		Hash:        &hash,
