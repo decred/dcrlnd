@@ -53,7 +53,7 @@ type duplicateHTLCAttemptInfo struct {
 	attemptID uint64
 
 	// sessionKey is the ephemeral key used for this attempt.
-	sessionKey *secp256k1.PrivateKey
+	sessionKey [secp256k1.PrivKeyBytesLen]byte
 
 	// route is the route attempted to send the HTLC.
 	route route.Route
