@@ -817,8 +817,8 @@ var listAccountsCommand = cli.Command{
 	Name:  "list",
 	Usage: "Retrieve information of existing on-chain wallet accounts.",
 	Description: `
-	ListAccounts retrieves all accounts belonging to the wallet by default.
-	A name scope filter can be provided to filter through all of the wallet
+	Retrieves all accounts belonging to the wallet by default. A name
+	filter can be provided to filter through all of the wallet
 	accounts and return only those matching.
 	`,
 	Flags: []cli.Flag{
