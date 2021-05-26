@@ -1053,7 +1053,9 @@ var abandonChannelCommand = cli.Command{
 	summary. This method can be used to get rid of permanently unusable
 	channels due to bugs fixed in newer versions of dcrlnd.
 
-	Only available when dcrlnd is built in debug mode.
+	Only available when dcrlnd is built in debug mode. The flag
+	--i_know_what_im_doing can be set to override the debug/dev mode
+	requirement.
 
 	To view which 'funding_txids' or 'output_indexes' can be used for this command,
 	see the 'channel_point' values within the 'listchannels' command output.
@@ -1068,6 +1070,16 @@ var abandonChannelCommand = cli.Command{
 			Name: "output_index",
 			Usage: "The output index for the funding output of the funding " +
 				"transaction",
+		},
+		cli.BoolFlag{
+			Name: "i_know_what_i_am_doing",
+			Usage: "override the requirement for lnd needing to " +
+				"be in dev/debug mode to use this command; " +
+				"when setting this the user attests that " +
+				"they know the danger of using this command " +
+				"on channels and that doing so can lead to " +
+				"loss of funds if the channel funding TX " +
+				"ever confirms (or was confirmed)",
 		},
 	},
 	Action: actionDecorator(abandonChannel),
@@ -1090,7 +1102,8 @@ func abandonChannel(ctx *cli.Context) error {
 	}
 
 	req := &lnrpc.AbandonChannelRequest{
-		ChannelPoint: channelPoint,
+		ChannelPoint:      channelPoint,
+		IKnowWhatIAmDoing: ctx.Bool("i_know_what_i_am_doing"),
 	}
 
 	resp, err := client.AbandonChannel(ctxc, req)
