@@ -192,6 +192,13 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "i_know_what_i_am_doing",
+            "description": "Override the requirement for being in dev mode by setting this to true and\nconfirming the user knows what they are doing and this is a potential foot\ngun to lose funds if used on active channels.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
