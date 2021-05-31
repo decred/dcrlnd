@@ -2,10 +2,12 @@ package peer
 
 import (
 	"bytes"
+	"io/ioutil"
 	"testing"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
@@ -18,6 +20,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet/chancloser"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/pool"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1031,4 +1034,96 @@ func genScript(t *testing.T, address string) lnwire.DeliveryAddress {
 	}
 
 	return script
+}
+
+// TestPeerCustomMessage tests custom message exchange between peers.
+func TestPeerCustomMessage(t *testing.T) {
+	t.Parallel()
+
+	// Set up node Alice.
+	alicePath, err := ioutil.TempDir("", "alicedb")
+	require.NoError(t, err)
+
+	dbAlice, err := channeldb.Open(alicePath)
+	require.NoError(t, err)
+
+	aliceKey, err := secp256k1.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	writeBufferPool := pool.NewWriteBuffer(
+		pool.DefaultWriteBufferGCInterval,
+		pool.DefaultWriteBufferExpiryInterval,
+	)
+
+	writePool := pool.NewWrite(
+		writeBufferPool, 1, timeout,
+	)
+	require.NoError(t, writePool.Start())
+
+	readBufferPool := pool.NewReadBuffer(
+		pool.DefaultReadBufferGCInterval,
+		pool.DefaultReadBufferExpiryInterval,
+	)
+
+	readPool := pool.NewRead(
+		readBufferPool, 1, timeout,
+	)
+	require.NoError(t, readPool.Start())
+
+	mockConn := newMockConn(t, 1)
+
+	remoteKey := [33]byte{8}
+
+	notifier := &mock.ChainNotifier{
+		SpendChan: make(chan *chainntnfs.SpendDetail),
+		EpochChan: make(chan *chainntnfs.BlockEpoch),
+		ConfChan:  make(chan *chainntnfs.TxConfirmation),
+	}
+
+	alicePeer := NewBrontide(Config{
+		PubKeyBytes: remoteKey,
+		ChannelDB:   dbAlice.ChannelStateDB(),
+		Addr: &lnwire.NetAddress{
+			IdentityKey: aliceKey.PubKey(),
+		},
+		PrunePersistentPeerConnection: func([33]byte) {},
+		Features:                      lnwire.EmptyFeatureVector(),
+		LegacyFeatures:                lnwire.EmptyFeatureVector(),
+		WritePool:                     writePool,
+		ReadPool:                      readPool,
+		Conn:                          mockConn,
+		ChainNotifier:                 notifier,
+	})
+
+	// Set up the init sequence.
+	go func() {
+		// Read init message.
+		<-mockConn.writtenMessages
+
+		// Write the init reply message.
+		initReplyMsg := lnwire.NewInitMessage(
+			lnwire.NewRawFeatureVector(
+				lnwire.DataLossProtectRequired,
+			),
+			lnwire.NewRawFeatureVector(),
+		)
+		var b bytes.Buffer
+		_, err = lnwire.WriteMessage(&b, initReplyMsg, 0)
+		assert.NoError(t, err)
+
+		mockConn.readMessages <- b.Bytes()
+	}()
+
+	// Start the peer.
+	require.NoError(t, alicePeer.Start())
+
+	// Send a custom message.
+	customMsg, err := lnwire.NewCustom(lnwire.MessageType(40000), []byte{1, 2, 3})
+	require.NoError(t, err)
+
+	require.NoError(t, alicePeer.SendMessageLazy(false, customMsg))
+
+	// Verify that it is passed down to the noise layer correctly.
+	writtenMsg := <-mockConn.writtenMessages
+	require.Equal(t, []byte{0x9c, 0x40, 0x1, 0x2, 0x3}, writtenMsg)
 }
