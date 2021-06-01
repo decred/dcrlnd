@@ -3809,6 +3809,15 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 			err)
 	}
 
+	// Calculate the total fee Carol paid.
+	var totalFeeCarol dcrutil.Amount
+	for _, tx := range sweepTxns {
+		fee, err := getTxFee(net.Miner.Node, tx)
+		require.NoError(t.t, err)
+
+		totalFeeCarol += fee
+	}
+
 	// We look up the sweep txns we have found in mempool and create
 	// expected resolutions for carol.
 	carolCommit, carolAnchor := findCommitAndAnchor(
@@ -3914,7 +3923,9 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 	// At this point, the CSV will expire in the next block, meaning that
 	// the sweeping transaction should now be broadcast. So we fetch the
 	// node's mempool to ensure it has been properly broadcast.
-	sweepingTXID, err := waitForTxInMempool(net.Miner.Node, minerMempoolTimeout)
+	sweepingTXID, err := waitForTxInMempool(
+		net.Miner.Node, minerMempoolTimeout,
+	)
 	if err != nil {
 		t.Fatalf("failed to get sweep tx from mempool: %v", err)
 	}
@@ -4490,20 +4501,29 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		t.Fatalf(predErr.Error())
 	}
 
-	// At this point, Bob should now be aware of his new immediately
+	// At this point, Carol should now be aware of her new immediately
 	// spendable on-chain balance, as it was Alice who broadcast the
 	// commitment transaction.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	carolBalResp, err = net.Bob.WalletBalance(ctxt, carolBalReq)
-	if err != nil {
-		t.Fatalf("unable to get carol's balance: %v", err)
+	carolBalResp, err = carol.WalletBalance(ctxt, carolBalReq)
+	require.NoError(t.t, err, "unable to get carol's balance")
+
+	// Carol's expected balance should be its starting balance plus the
+	// push amount sent by Alice and minus the miner fee paid.
+	carolExpectedBalance := dcrutil.Amount(carolStartingBalance) +
+		pushAmt - totalFeeCarol
+
+	// In addition, if this is an anchor-enabled channel, further add the
+	// anchor size.
+	if channelType == commitTypeAnchors {
+		carolExpectedBalance += dcrutil.Amount(anchorSize)
 	}
-	carolExpectedBalance := dcrutil.Amount(carolStartingBalance) + pushAmt
-	if dcrutil.Amount(carolBalResp.ConfirmedBalance) < carolExpectedBalance {
-		t.Fatalf("carol's balance is incorrect: expected %v got %v",
-			carolExpectedBalance,
-			carolBalResp.ConfirmedBalance)
-	}
+
+	require.Equal(
+		t.t, carolExpectedBalance,
+		dcrutil.Amount(carolBalResp.ConfirmedBalance),
+		"carol's balance is incorrect",
+	)
 
 	// Finally, we check that alice and carol have the set of resolutions
 	// we expect.
