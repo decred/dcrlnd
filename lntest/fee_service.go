@@ -100,3 +100,11 @@ func (f *feeService) setFee(fee chainfee.AtomPerKByte) {
 
 	f.Fees[feeServiceTarget] = uint32(fee)
 }
+
+// setFeeWithConf sets a fee for the given confirmation target.
+func (f *feeService) setFeeWithConf(fee chainfee.AtomPerKByte, conf uint32) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	f.Fees[conf] = uint32(fee)
+}
