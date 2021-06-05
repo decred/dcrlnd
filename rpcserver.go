@@ -5220,6 +5220,7 @@ func (r *rpcServer) SubscribeTransactions(req *lnrpc.GetTransactionsRequest,
 		return err
 	}
 	defer txClient.Cancel()
+	rpcsLog.Infof("New transaction subscription")
 
 	for {
 		select {
@@ -5261,6 +5262,7 @@ func (r *rpcServer) SubscribeTransactions(req *lnrpc.GetTransactionsRequest,
 			}
 
 		case <-updateStream.Context().Done():
+			rpcsLog.Infof("Cancelling transaction subscription")
 			return updateStream.Context().Err()
 
 		case <-r.quit:
