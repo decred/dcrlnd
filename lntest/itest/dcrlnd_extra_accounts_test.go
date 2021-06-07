@@ -98,8 +98,7 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 	require.NoError(t.t, err)
 
 	// Create Dave.
-	dave, err := net.NewNode("dave", nil)
-	require.NoError(t.t, err)
+	dave := net.NewNode(t.t, "dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
 	// Dave will spend the utxo from Carol's account into its own wallet.

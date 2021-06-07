@@ -37,21 +37,15 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Create Dave's Node.
-	dave, err := net.NewNode("Dave", nil)
-	if err != nil {
-		t.Fatalf("unable to create new nodes: %v", err)
-	}
+	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
+	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
 	if err != nil {
 		t.Fatalf("unable to send coins to dave: %v", err)
 	}
 
-	carol, err := net.NewNode("Carol", []string{"--nolisten"})
-	if err != nil {
-		t.Fatalf("unable to create new nodes: %v", err)
-	}
+	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
