@@ -19,10 +19,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Create a Carol node to use in tests. All invoices will be created on
 	// her node.
-	carol, err := net.NewNode("Carol", []string{"--nolisten"})
-	if err != nil {
-		t.Fatalf("unable to create carol's node: %v", err)
-	}
+	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
@@ -30,7 +27,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
+	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
 	if err != nil {
 		t.Fatalf("unable to send coins to bob: %v", err)
 	}
@@ -166,10 +163,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 
 	// Create and fund a Carol node to use in tests. All invoices will be
 	// created on her node.
-	carol, err := net.NewNode("Carol", nil)
-	if err != nil {
-		t.Fatalf("unable to create carol's node: %v", err)
-	}
+	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
@@ -177,7 +171,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
+	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
 	if err != nil {
 		t.Fatalf("unable to send coins to bob: %v", err)
 	}
@@ -263,10 +257,7 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Create a Carol node to use in tests. All invoices will be created on
 	// her node.
-	carol, err := net.NewNode("Carol", []string{"--nolisten"})
-	if err != nil {
-		t.Fatalf("unable to create carol's node: %v", err)
-	}
+	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
@@ -274,7 +265,7 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
+	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
 	if err != nil {
 		t.Fatalf("unable to send coins to bob: %v", err)
 	}
@@ -405,10 +396,7 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Create a new Carol node to ensure no older channels interfere with
 	// the test. Connect Carol to Bob and fund her.
-	carol, err := net.NewNode("Carol", nil)
-	if err != nil {
-		t.Fatalf("unable to create carol's node: %v", err)
-	}
+	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
@@ -416,7 +404,7 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
+	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
 	if err != nil {
 		t.Fatalf("unable to send coins to bob: %v", err)
 	}
