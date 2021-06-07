@@ -9,10 +9,12 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/walletrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testPsbtChanFunding makes sure a channel can be opened between carol and dave
@@ -245,6 +247,225 @@ func testPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	// will additionally assert the relevant channel closing post
 	// conditions.
 	closeChannelAndAssert(t, net, carol, chanPoint, false)
+}
+
+// testPsbtChanFundingExternal makes sure a channel can be opened between carol
+// and dave by using a Partially Signed Bitcoin Transaction that funds the
+// channel multisig funding output and is fully funded by an external third
+// party.
+func testPsbtChanFundingExternal(net *lntest.NetworkHarness, t *harnessTest) {
+	t.Skipf("psbt is not currently implemented in dcrlnd")
+
+	ctxb := context.Background()
+	const chanSize = funding.MaxDecredFundingAmount
+
+	// First, we'll create two new nodes that we'll use to open channels
+	// between for this test. Both these nodes have an empty wallet as Alice
+	// will be funding the channel.
+	carol := net.NewNode(t.t, "carol", nil)
+	defer shutdownAndAssert(net, t, carol)
+
+	dave := net.NewNode(t.t, "dave", nil)
+	defer shutdownAndAssert(net, t, dave)
+
+	// Before we start the test, we'll ensure both sides are connected so
+	// the funding flow can be properly executed.
+	net.EnsureConnected(t.t, carol, dave)
+	net.EnsureConnected(t.t, carol, net.Alice)
+
+	// At this point, we can begin our PSBT channel funding workflow. We'll
+	// start by generating a pending channel ID externally that will be used
+	// to track this new funding type.
+	var pendingChanID [32]byte
+	_, err := rand.Read(pendingChanID[:])
+	require.NoError(t.t, err)
+
+	// We'll also test batch funding of two channels so we need another ID.
+	var pendingChanID2 [32]byte
+	_, err = rand.Read(pendingChanID2[:])
+	require.NoError(t.t, err)
+
+	// Now that we have the pending channel ID, Carol will open the channel
+	// by specifying a PSBT shim. We use the NoPublish flag here to avoid
+	// publishing the whole batch TX too early.
+	ctxt, cancel := context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	chanUpdates, tempPsbt, err := openChannelPsbt(
+		ctxt, carol, dave, lntest.OpenChannelParams{
+			Amt: chanSize,
+			FundingShim: &lnrpc.FundingShim{
+				Shim: &lnrpc.FundingShim_PsbtShim{
+					PsbtShim: &lnrpc.PsbtShim{
+						PendingChanId: pendingChanID[:],
+						NoPublish:     true,
+					},
+				},
+			},
+		},
+	)
+	require.NoError(t.t, err)
+
+	// Let's add a second channel to the batch. This time between Carol and
+	// Alice. We will publish the batch TX once this channel funding is
+	// complete.
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	chanUpdates2, psbtBytes2, err := openChannelPsbt(
+		ctxt, carol, net.Alice, lntest.OpenChannelParams{
+			Amt: chanSize,
+			FundingShim: &lnrpc.FundingShim{
+				Shim: &lnrpc.FundingShim_PsbtShim{
+					PsbtShim: &lnrpc.PsbtShim{
+						PendingChanId: pendingChanID2[:],
+						NoPublish:     true,
+						BasePsbt:      tempPsbt,
+					},
+				},
+			},
+		},
+	)
+	require.NoError(t.t, err)
+
+	// We'll now ask Alice's wallet to fund the PSBT for us. This will
+	// return a packet with inputs and outputs set but without any witness
+	// data. This is exactly what we need for the next step.
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	fundReq := &walletrpc.FundPsbtRequest{
+		Template: &walletrpc.FundPsbtRequest_Psbt{
+			Psbt: psbtBytes2,
+		},
+		Fees: &walletrpc.FundPsbtRequest_AtomsPerByte{
+			AtomsPerByte: 2,
+		},
+	}
+	fundResp, err := net.Alice.WalletKitClient.FundPsbt(ctxt, fundReq)
+	require.NoError(t.t, err)
+
+	// We have a PSBT that has no witness data yet, which is exactly what we
+	// need for the next step: Verify the PSBT with the funding intents.
+	// We tell the PSBT intent to skip the finalize step because we know the
+	// final transaction will not be broadcast by Carol herself but by
+	// Alice. And we assume that Alice is a third party that is not in
+	// direct communication with Carol and won't send the signed TX to her
+	// before broadcasting it. So we cannot call the finalize step but
+	// instead just tell lnd to wait for a TX to be published/confirmed.
+	_, err = carol.FundingStateStep(ctxb, &lnrpc.FundingTransitionMsg{
+		Trigger: &lnrpc.FundingTransitionMsg_PsbtVerify{
+			PsbtVerify: &lnrpc.FundingPsbtVerify{
+				PendingChanId: pendingChanID[:],
+				FundedPsbt:    fundResp.FundedPsbt,
+				SkipFinalize:  true,
+			},
+		},
+	})
+	require.NoError(t.t, err)
+	_, err = carol.FundingStateStep(ctxb, &lnrpc.FundingTransitionMsg{
+		Trigger: &lnrpc.FundingTransitionMsg_PsbtVerify{
+			PsbtVerify: &lnrpc.FundingPsbtVerify{
+				PendingChanId: pendingChanID2[:],
+				FundedPsbt:    fundResp.FundedPsbt,
+				SkipFinalize:  true,
+			},
+		},
+	})
+	require.NoError(t.t, err)
+
+	// Consume the "channel pending" update. This waits until the funding
+	// transaction was fully compiled for both channels.
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	updateResp, err := receiveChanUpdate(ctxt, chanUpdates)
+	require.NoError(t.t, err)
+	upd, ok := updateResp.Update.(*lnrpc.OpenStatusUpdate_ChanPending)
+	require.True(t.t, ok)
+	chanPoint := &lnrpc.ChannelPoint{
+		FundingTxid: &lnrpc.ChannelPoint_FundingTxidBytes{
+			FundingTxidBytes: upd.ChanPending.Txid,
+		},
+		OutputIndex: upd.ChanPending.OutputIndex,
+	}
+	updateResp2, err := receiveChanUpdate(ctxt, chanUpdates2)
+	require.NoError(t.t, err)
+	upd2, ok := updateResp2.Update.(*lnrpc.OpenStatusUpdate_ChanPending)
+	require.True(t.t, ok)
+	chanPoint2 := &lnrpc.ChannelPoint{
+		FundingTxid: &lnrpc.ChannelPoint_FundingTxidBytes{
+			FundingTxidBytes: upd2.ChanPending.Txid,
+		},
+		OutputIndex: upd2.ChanPending.OutputIndex,
+	}
+	numPending, err := numOpenChannelsPending(ctxt, carol)
+	require.NoError(t.t, err)
+	require.Equal(t.t, 2, numPending)
+
+	// Now we'll ask Alice's wallet to sign the PSBT so we can finish the
+	// funding flow.
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	finalizeReq := &walletrpc.FinalizePsbtRequest{
+		FundedPsbt: fundResp.FundedPsbt,
+	}
+	finalizeRes, err := net.Alice.WalletKitClient.FinalizePsbt(
+		ctxt, finalizeReq,
+	)
+	require.NoError(t.t, err)
+
+	// No transaction should have been published yet.
+	mempool, err := net.Miner.Node.GetRawMempool(testctx.New(t.t), jsonrpctypes.GRMRegular)
+	require.NoError(t.t, err)
+	require.Equal(t.t, 0, len(mempool))
+
+	// Great, now let's publish the final raw transaction.
+	var finalTx wire.MsgTx
+	err = finalTx.Deserialize(bytes.NewReader(finalizeRes.RawFinalTx))
+	require.NoError(t.t, err)
+
+	txHash := finalTx.TxHash()
+	_, err = net.Miner.Node.SendRawTransaction(testctx.New(t.t), &finalTx, false)
+	require.NoError(t.t, err)
+
+	// Now we can mine a block to get the transaction confirmed, then wait
+	// for the new channel to be propagated through the network.
+	block := mineBlocks(t, net, 6, 1)[0]
+	assertTxInBlock(t, block, &txHash)
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	require.NoError(t.t, err)
+	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint2)
+	require.NoError(t.t, err)
+
+	// With the channel open, ensure that it is counted towards Carol's
+	// total channel balance.
+	balReq := &lnrpc.ChannelBalanceRequest{}
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
+	balRes, err := carol.ChannelBalance(ctxt, balReq)
+	require.NoError(t.t, err)
+	require.NotEqual(t.t, int64(0), balRes.LocalBalance.Atoms)
+
+	// Next, to make sure the channel functions as normal, we'll make some
+	// payments within the channel.
+	payAmt := dcrutil.Amount(100000)
+	invoice := &lnrpc.Invoice{
+		Memo:  "new chans",
+		Value: int64(payAmt),
+	}
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	resp, err := dave.AddInvoice(ctxt, invoice)
+	require.NoError(t.t, err)
+	err = completePaymentRequests(
+		carol, carol.RouterClient, []string{resp.PaymentRequest}, true,
+	)
+	require.NoError(t.t, err)
+
+	// To conclude, we'll close the newly created channel between Carol and
+	// Dave. This function will also block until the channels are closed and
+	// will additionally assert the relevant channel closing post
+	// conditions.
+	closeChannelAndAssert(t, net, carol, chanPoint, false)
+	closeChannelAndAssert(t, net, carol, chanPoint2, false)
 }
 
 // openChannelPsbt attempts to open a channel between srcNode and destNode with
