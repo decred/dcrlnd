@@ -313,8 +313,7 @@ func (c *interceptorTestContext) openChannel(from, to *lntest.HarnessNode,
 	ctxb := context.Background()
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err := c.net.SendCoins(ctxt, dcrutil.AtomsPerCoin, from)
-	require.NoError(c.t.t, err, "unable to send coins")
+	c.net.SendCoins(ctxt, c.t.t, dcrutil.AtomsPerCoin, from)
 
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPoint := openChannelAndAssert(

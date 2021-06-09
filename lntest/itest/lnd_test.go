@@ -1149,13 +1149,9 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 
 			// Send one DCR to the next P2PKH address.
 			ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-			err = net.SendCoins(
-				ctxt, dcrutil.AtomsPerCoin, node,
+			net.SendCoins(
+				ctxt, t.t, dcrutil.AtomsPerCoin, node,
 			)
-			if err != nil {
-				t.Fatalf("unable to send coins to node: %v",
-					err)
-			}
 		}
 	}
 
@@ -1923,10 +1919,7 @@ func testUpdateChannelPolicy(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Send some coins to Carol that can be used for channel funding.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	if err := net.ConnectNodes(ctxb, carol, net.Bob); err != nil {
 		t.Fatalf("unable to connect dave to alice: %v", err)
@@ -2659,10 +2652,7 @@ func testDisconnectingTargetPeer(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Give Alice some coins so she can fund a channel.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, alice)
-	if err != nil {
-		t.Fatalf("unable to send coins to alice: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, alice)
 
 	chanAmt := defaultChanAmt
 	pushAmt := dcrutil.Amount(0)
@@ -3420,23 +3410,11 @@ func testChannelForceClosure(net *lntest.NetworkHarness, t *harnessTest) {
 			ctxt, _ := context.WithTimeout(
 				context.Background(), defaultTimeout,
 			)
-			err := net.SendCoins(
-				ctxt, dcrutil.AtomsPerCoin, alice,
-			)
-			if err != nil {
-				t.Fatalf("unable to send coins to Alice: %v",
-					err)
-			}
+			net.SendCoins(ctxt, t, dcrutil.AtomsPerCoin, alice)
 
 			// Also give Carol some coins to allow her to sweep her
 			// anchor.
-			err = net.SendCoins(
-				ctxt, dcrutil.AtomsPerCoin, carol,
-			)
-			if err != nil {
-				t.Fatalf("unable to send coins to Alice: %v",
-					err)
-			}
+			net.SendCoins(ctxt, t, dcrutil.AtomsPerCoin, carol)
 
 			channelForceClosureTest(
 				net, ht, alice, carol, channelType,
@@ -4767,10 +4745,8 @@ func testSphinxReplayPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPoint := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -4792,10 +4768,8 @@ func testSphinxReplayPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect fred to carol: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, fred)
-	if err != nil {
-		t.Fatalf("unable to send coins to fred: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, fred)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointFC := openChannelAndAssert(
 		ctxt, t, net, fred, carol,
@@ -4998,10 +4972,7 @@ func testListChannels(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Give Alice some coins so she can fund a channel.
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, alice)
-	if err != nil {
-		t.Fatalf("unable to send coins to alice: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, alice)
 
 	// Open a channel with 100k satoshis between Alice and Bob with Alice
 	// being the sole funder of the channel. The minial HTLC amount is set to
@@ -5022,7 +4993,7 @@ func testListChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	// Wait for Alice and Bob to receive the channel edge from the
 	// funding manager.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = alice.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err := alice.WaitForNetworkChannelOpen(ctxt, chanPoint)
 	if err != nil {
 		t.Fatalf("alice didn't see the alice->bob channel before "+
 			"timeout: %v", err)
@@ -5146,10 +5117,7 @@ func testUpdateChanStatus(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Give Alice some coins so she can fund a channel.
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, alice)
-	if err != nil {
-		t.Fatalf("unable to send coins to alice: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, alice)
 
 	// Open a channel with 100k satoshis between Alice and Bob with Alice
 	// being the sole funder of the channel.
@@ -5165,7 +5133,7 @@ func testUpdateChanStatus(net *lntest.NetworkHarness, t *harnessTest) {
 	// Wait for Alice and Bob to receive the channel edge from the
 	// funding manager.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = alice.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err := alice.WaitForNetworkChannelOpen(ctxt, chanPoint)
 	if err != nil {
 		t.Fatalf("alice didn't see the alice->bob channel before "+
 			"timeout: %v", err)
@@ -5757,10 +5725,7 @@ func testSingleHopSendToRouteCase(net *lntest.NetworkHarness, t *harnessTest,
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Open a channel with 100k atoms between Carol and Dave with Carol
 	// being the sole funder of the channel.
@@ -6131,10 +6096,8 @@ func testMultiHopSendToRoute(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, net.Bob)
-	if err != nil {
-		t.Fatalf("unable to send coins to bob: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, net.Bob)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointBob := openChannelAndAssert(
 		ctxt, t, net, net.Bob, carol,
@@ -6307,19 +6270,13 @@ func testSendToRouteErrorPropagation(net *lntest.NetworkHarness, t *harnessTest)
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	if err := net.ConnectNodes(ctxt, carol, dave); err != nil {
@@ -6553,10 +6510,8 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect dave to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
 		ctxt, t, net, dave, net.Alice,
@@ -6584,10 +6539,8 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -7172,10 +7125,8 @@ func testMultiHopOverPrivateChannels(net *lntest.NetworkHarness, t *harnessTest)
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -7818,9 +7769,7 @@ func testMaxPendingChannels(net *lntest.NetworkHarness, t *harnessTest) {
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	carolBalance := dcrutil.Amount(maxPendingChannels) * amount
-	if err := net.SendCoins(ctxt, carolBalance, carol); err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, carolBalance, carol)
 
 	// Send open channel requests without generating new blocks thereby
 	// increasing pool of pending channels. Then check that we can't open
@@ -8436,10 +8385,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 	// Before we make a channel, we'll load up Carol with some coins sent
 	// directly from the miner.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// In order to test Carol's response to an uncooperative channel
 	// closure by Bob, we'll first open up a channel between them with a
@@ -8715,10 +8661,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel
 	// closure by Carol, we'll first open up a channel between them with a
@@ -8976,10 +8919,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.Amount(initialBalance), dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel closure
 	// by Carol, we'll first open up a channel between them with a
@@ -9451,10 +9391,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.Amount(initialBalance), dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.Amount(initialBalance), dave)
 
 	// In order to test Dave's response to an uncooperative channel closure
 	// by Carol, we'll first open up a channel between them with a
@@ -10103,10 +10040,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	err = net.SendCoins(ctxb, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxb, t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel
 	// closure by Carol, we'll first open up a channel between them with a
@@ -10626,10 +10560,7 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 	// Before we make a channel, we'll load up Carol with some coins sent
 	// directly from the miner.
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// timeTravel is a method that will make Carol open a channel to the
 	// passed node, settle a series of payments, then reset the node back
@@ -11010,16 +10941,10 @@ func testRejectHTLC(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Send coins to Carol.
-	err := net.SendCoins(ctxb, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxb, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Send coins to Alice.
-	err = net.SendCoins(ctxb, dcrutil.AtomsPerCoin, net.Alice)
-	if err != nil {
-		t.Fatalf("unable to send coins to alice: %v", err)
-	}
+	net.SendCoins(ctxb, t.t, dcrutil.AtomsPerCoin, net.Alice)
 
 	// Open a channel between Alice and Carol.
 	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
@@ -11046,7 +10971,7 @@ func testRejectHTLC(net *lntest.NetworkHarness, t *harnessTest) {
 	genPreImage := func() []byte {
 		preimage := make([]byte, 32)
 
-		_, err = rand.Read(preimage)
+		_, err := rand.Read(preimage)
 		if err != nil {
 			t.Fatalf("unable to generate preimage: %v", err)
 		}
@@ -11304,13 +11229,11 @@ func testGraphTopologyNtfns(net *lntest.NetworkHarness, t *harnessTest, pinned b
 
 	// Alice stimmy.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, alice)
-	require.NoError(t.t, err)
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, alice)
 
 	// Bob stimmy.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, bob)
-	require.NoError(t.t, err)
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, bob)
 
 	// Assert that Bob has the correct sync type before proceeeding.
 	if pinned {
@@ -12244,10 +12167,8 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect dave to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
 		ctxt, t, net, dave, net.Alice,
@@ -12277,10 +12198,8 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -12554,10 +12473,8 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect dave to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
 		ctxt, t, net, dave, net.Alice,
@@ -12588,10 +12505,8 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -12915,10 +12830,8 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 		t.Fatalf("unable to connect dave to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
 		ctxt, t, net, dave, net.Alice,
@@ -12949,10 +12862,8 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -13245,10 +13156,8 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 		t.Fatalf("unable to connect dave to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
 		ctxt, t, net, dave, net.Alice,
@@ -13276,10 +13185,8 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -13498,10 +13405,8 @@ func testQueryRoutes(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, net.Bob)
-	if err != nil {
-		t.Fatalf("unable to send coins to bob: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, net.Bob)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointBob := openChannelAndAssert(
 		ctxt, t, net, net.Bob, carol,
@@ -13520,10 +13425,8 @@ func testQueryRoutes(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect dave to carol: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
 		ctxt, t, net, carol, dave,
@@ -13801,10 +13704,8 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to alice: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointAliceCarol := openChannelAndAssert(
 		ctxt, t, net, net.Alice, carol,
@@ -14094,10 +13995,7 @@ func testSendUpdateDisableChannel(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Give Eve some coins.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, eve)
-	if err != nil {
-		t.Fatalf("unable to send coins to eve: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, eve)
 
 	// Connect Eve to Carol and Bob, and open a channel to carol.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
@@ -14123,7 +14021,7 @@ func testSendUpdateDisableChannel(net *lntest.NetworkHarness, t *harnessTest) {
 	// Dave has setup his updateHorizon but with a timestamp in the past
 	// (and therefore gets ignored by Dave).
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.Bob.WaitForNetworkChannelOpen(ctxt, chanPointEveCarol)
+	err := net.Bob.WaitForNetworkChannelOpen(ctxt, chanPointEveCarol)
 	if err != nil {
 		t.Fatalf("Bob did not see Carol->Eve channel open: %v", err)
 	}
@@ -14462,15 +14360,10 @@ func testSweepAllCoins(net *lntest.NetworkHarness, t *harnessTest) {
 	// Next, we'll give Carol exactly 2 utxos of 1 DCR each, both using
 	// p2pkh addresses.
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Ensure that we can't send coins to our own Pubkey.
 	info, err := carol.GetInfo(ctxt, &lnrpc.GetInfoRequest{})

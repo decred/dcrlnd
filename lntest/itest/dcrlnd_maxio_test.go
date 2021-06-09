@@ -27,10 +27,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to bob: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Closure to help on tests.
 	addInvoice := func(value int64, ignoreMaxInbound bool) error {
@@ -45,7 +42,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Test that adding an invoice when Carol doesn't have any open channels
 	// fails.
-	err = addInvoice(0, false)
+	err := addInvoice(0, false)
 	if err == nil {
 		t.Fatalf("adding invoice without open channels should return an error")
 	}
@@ -171,10 +168,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to bob: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Now open a channel from Carol -> Bob.
 	chanAmt := int64(1000000)
@@ -200,7 +194,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 	// reserve cannot be paid.
 	maxInboundCap := pushAmt - chanReserve
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	_, err = carol.AddInvoice(ctxt, &lnrpc.Invoice{Value: maxInboundCap + 1})
+	_, err := carol.AddInvoice(ctxt, &lnrpc.Invoice{Value: maxInboundCap + 1})
 	if err == nil {
 		t.Fatalf("adding an invoice for maxInboundCap + 1 should fail")
 	}
@@ -265,10 +259,7 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to bob: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Create an invoice with zero amount on Bob for the next tests.
 	invoice, err := net.Bob.AddInvoice(ctxt, &lnrpc.Invoice{IgnoreMaxInboundAmt: true})
@@ -404,10 +395,7 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to bob: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to bob: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Closures to help with tests.
 
