@@ -220,16 +220,10 @@ func createThreeHopNetwork(t *harnessTest, net *lntest.NetworkHarness,
 	// Make sure there are enough utxos for anchoring.
 	for i := 0; i < 2; i++ {
 		ctxt, _ = context.WithTimeout(context.Background(), defaultTimeout)
-		err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, alice)
-		if err != nil {
-			t.Fatalf("unable to send coins to Alice: %v", err)
-		}
+		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, alice)
 
 		ctxt, _ = context.WithTimeout(context.Background(), defaultTimeout)
-		err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, bob)
-		if err != nil {
-			t.Fatalf("unable to send coins to Bob: %v", err)
-		}
+		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, bob)
 	}
 
 	// We'll start the test by creating a channel between Alice and Bob,
@@ -280,10 +274,7 @@ func createThreeHopNetwork(t *harnessTest, net *lntest.NetworkHarness,
 	// positively-yielding transaction.
 	for i := 0; i < 2; i++ {
 		ctxt, _ = context.WithTimeout(context.Background(), defaultTimeout)
-		err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-		if err != nil {
-			t.Fatalf("unable to send coins to Carol: %v", err)
-		}
+		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 	}
 
 	// We'll then create a channel from Bob to Carol. After this channel is

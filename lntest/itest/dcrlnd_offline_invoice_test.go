@@ -40,10 +40,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.SendCoins(ctxt, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
@@ -53,10 +50,8 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to connect carol to dave: %v", err)
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.SendCoins(ctxt, dcrutil.AtomsPerCoin, carol)
-	if err != nil {
-		t.Fatalf("unable to send coins to carol: %v", err)
-	}
+	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
 		ctxt, t, net, dave, carol,

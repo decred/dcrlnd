@@ -33,16 +33,13 @@ func testPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
-	err := net.SendCoins(ctxb, dcrutil.AtomsPerCoin, dave)
-	if err != nil {
-		t.Fatalf("unable to send coins to dave: %v", err)
-	}
+	net.SendCoins(ctxb, t.t, dcrutil.AtomsPerCoin, dave)
 
 	// Before we start the test, we'll ensure both sides are connected so
 	// the funding flow can be properly executed.
 	ctxt, cancel := context.WithTimeout(ctxb, defaultTimeout)
 	defer cancel()
-	err = net.EnsureConnected(ctxt, carol, dave)
+	err := net.EnsureConnected(ctxt, carol, dave)
 	require.NoError(t.t, err)
 	err = net.EnsureConnected(ctxt, carol, net.Alice)
 	require.NoError(t.t, err)
