@@ -1247,6 +1247,16 @@ func (l *LightningWallet) handleContributionMsg(req *addContributionMsg) {
 	pendingReservation.Lock()
 	defer pendingReservation.Unlock()
 
+	// If UpfrontShutdownScript is set, validate that it is a valid script.
+	shutdown := req.contribution.UpfrontShutdown
+	if len(shutdown) > 0 {
+		// Validate the shutdown script.
+		if !validateUpfrontShutdown(shutdown, &l.Cfg.NetParams) {
+			req.err <- fmt.Errorf("invalid shutdown script")
+			return
+		}
+	}
+
 	// Some temporary variables to cut down on the resolution verbosity.
 	pendingReservation.theirContribution = req.contribution
 	theirContribution := req.contribution
@@ -1559,6 +1569,17 @@ func (l *LightningWallet) handleSingleContribution(req *addSingleContributionMsg
 
 	// TODO(roasbeef): verify sanity of remote party's parameters, fail if
 	// disagree
+
+	// Validate that the remote's UpfrontShutdownScript is a valid script
+	// if it's set.
+	shutdown := req.contribution.UpfrontShutdown
+	if len(shutdown) > 0 {
+		// Validate the shutdown script.
+		if !validateUpfrontShutdown(shutdown, &l.Cfg.NetParams) {
+			req.err <- fmt.Errorf("invalid shutdown script")
+			return
+		}
+	}
 
 	// Simply record the counterparty's contribution into the pending
 	// reservation data as they'll be solely funding the channel entirely.
@@ -2135,4 +2156,25 @@ func (s *shimKeyRing) DeriveNextKey(keyFam keychain.KeyFamily) (keychain.KeyDesc
 	}
 
 	return *fundingKeys.LocalKey, nil
+}
+
+// validateUpfrontShutdown checks whether the provided upfront_shutdown_script
+// is of a valid type that we accept.
+func validateUpfrontShutdown(shutdown lnwire.DeliveryAddress,
+	params *chaincfg.Params) bool {
+
+	// We don't need to worry about a large UpfrontShutdownScript since it
+	// was already checked in lnwire when decoding from the wire.
+	scriptClass := stdscript.DetermineScriptType(0, shutdown)
+
+	switch scriptClass {
+	case stdscript.STPubKeyHashEcdsaSecp256k1,
+		stdscript.STScriptHash:
+		// The above two types are permitted according to BOLT#02.
+		// Everything else is disallowed.
+		return true
+
+	default:
+		return false
+	}
 }
