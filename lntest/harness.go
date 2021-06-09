@@ -1031,6 +1031,10 @@ type OpenChannelParams struct {
 	// AtomsPerByte is the amount of atoms to spend in chain fees per byte
 	// of the transaction.
 	AtomsPerByte dcrutil.Amount
+
+	// CommitmentType is the commitment type that should be used for the
+	// channel to be opened.
+	CommitmentType lnrpc.CommitmentType
 }
 
 // OpenChannel attempts to open a channel between srcNode and destNode with the
@@ -1074,6 +1078,7 @@ func (n *NetworkHarness) OpenChannel(srcNode, destNode *HarnessNode,
 		RemoteMaxHtlcs:     uint32(p.RemoteMaxHtlcs),
 		FundingShim:        p.FundingShim,
 		AtomsPerByte:       int64(p.AtomsPerByte),
+		CommitmentType:     p.CommitmentType,
 	}
 
 	respStream, err := srcNode.OpenChannel(ctx, openReq)
