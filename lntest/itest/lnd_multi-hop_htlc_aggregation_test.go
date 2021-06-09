@@ -24,7 +24,7 @@ import (
 // case of anchor channels, the second-level spends can also be aggregated and
 // properly feebumped, so we'll check that as well.
 func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
-	alice, bob *lntest.HarnessNode, c commitType) {
+	alice, bob *lntest.HarnessNode, c lnrpc.CommitmentType) {
 
 	// HTLC aggregation for anchor outputs in BTC's LN relies on the fact
 	// that SIGHASH_SINGLE|SIGHASH_ANYONECANPAY for segwit outputs only use
@@ -45,7 +45,7 @@ func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
 	// aggregation and disable anchor outputs in mainnet dcrlnd (where they
 	// are less useful than in BTC, because the current fee market is much
 	// more stable and fees are actually lower).
-	if c == commitTypeAnchors {
+	if c == lnrpc.CommitmentType_ANCHORS {
 		t.Skipf("HTLC aggregation cannot happen in dcrlnd")
 	}
 
@@ -212,7 +212,7 @@ func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
 	// Bob's force close transaction should now be found in the mempool. If
 	// there are anchors, we also expect Bob's anchor sweep.
 	expectedTxes := 1
-	if c == commitTypeAnchors {
+	if c == lnrpc.CommitmentType_ANCHORS {
 		expectedTxes = 2
 	}
 
@@ -286,7 +286,7 @@ func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
 	// one, the same is the case for the timeout transactions. In this case
 	// Carol will also sweep her anchor output in a separate tx (since it
 	// will be low fee).
-	if c == commitTypeAnchors {
+	if c == lnrpc.CommitmentType_ANCHORS {
 		expectedTxes = 4
 	}
 
@@ -322,7 +322,7 @@ func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
 	// In case of anchor we expect all the timeout and success second
 	// levels to be aggregated into one tx. For earlier channel types, they
 	// will be separate transactions.
-	if c == commitTypeAnchors {
+	if c == lnrpc.CommitmentType_ANCHORS {
 		require.Len(t.t, timeoutTxs, 1)
 		require.Len(t.t, successTxs, 1)
 	} else {
@@ -398,7 +398,7 @@ func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
 
 	// Mining one additional block, Bob's second level tx is mature, and he
 	// can sweep the output.
-	case c == commitTypeAnchors:
+	case c == lnrpc.CommitmentType_ANCHORS:
 		_ = mineBlocks(t, net, 1, 1)
 
 	// In case this is a non-anchor channel type, we must mine 2 blocks, as

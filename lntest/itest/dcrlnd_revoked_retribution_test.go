@@ -527,7 +527,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// amount minus the (breached) commitment tx fee, the second-level fees
 	// and the justice tx fee itself.
 	jtx := justiceTx.MsgTx()
-	commitFee := int64(cType.calcStaticFee(6))
+	commitFee := int64(calcStaticFee(cType, 6))
 	justiceFee := totalJusticeIn - jtx.TxOut[0].Value
 	expectedJusticeOut := int64(chanAmt) - commitFee - justiceFee -
 		feesSecondLvlSuccess - feesSecondLvlTimeout
