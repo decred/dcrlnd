@@ -23,9 +23,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, carol, net.Bob); err != nil {
-		t.Fatalf("unable to connect carol to bob: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -164,9 +162,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, carol, net.Bob); err != nil {
-		t.Fatalf("unable to connect carol to bob: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -255,9 +251,7 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, carol, net.Bob); err != nil {
-		t.Fatalf("unable to connect carol to bob: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -391,9 +385,7 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, carol, net.Bob); err != nil {
-		t.Fatalf("unable to connect carol to bob: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 

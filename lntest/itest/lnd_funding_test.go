@@ -50,8 +50,7 @@ func testBasicChannelFunding(net *lntest.NetworkHarness, t *harnessTest) {
 		// are connected to the funding flow can properly be
 		// executed.
 		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-		err := net.EnsureConnected(ctxt, carol, dave)
-		require.NoError(t.t, err, "unable to connect peers")
+		net.EnsureConnected(ctxt, t.t, carol, dave)
 
 		carolChannel, daveChannel, closeChan, err := basicChannelFundingTest(
 			t, net, carol, dave, nil,
@@ -312,9 +311,7 @@ func testUnconfirmedChannelFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	// as she doesn't have any other funds since it's a new node.
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, carol, net.Alice); err != nil {
-		t.Fatalf("unable to connect dave to alice: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, carol, net.Alice)
 
 	chanOpenUpdate := openChannelStream(
 		ctxt, t, net, carol, net.Alice,
@@ -420,8 +417,7 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 	// Before we start the test, we'll ensure both sides are connected to
 	// the funding flow can properly be executed.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err := net.EnsureConnected(ctxt, carol, dave)
-	require.NoError(t.t, err)
+	net.EnsureConnected(ctxt, t.t, carol, dave)
 
 	// At this point, we're ready to simulate our external channel funding
 	// flow. To start with, we'll create a pending channel with a shim for

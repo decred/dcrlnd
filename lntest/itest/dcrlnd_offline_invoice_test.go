@@ -46,9 +46,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, carol, dave); err != nil {
-		t.Fatalf("unable to connect carol to dave: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, carol, dave)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -104,10 +102,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Connect Carol to Alice (but don't create a channel yet).
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.EnsureConnected(ctxt, carol, net.Alice); err != nil {
-		t.Fatalf("unable to connect carol to Alice %v",
-			err)
-	}
+	net.EnsureConnected(ctxt, t.t, carol, net.Alice)
 
 	// Try to perform the payments from Carol and Dave. They should still fail.
 	tryPayment(payReqs[1], carol, errNoPath)
@@ -187,15 +182,9 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Reconnect Carol to Alice & Dave
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.EnsureConnected(ctxt, carol, net.Alice); err != nil {
-		t.Fatalf("unable to connect carol to Alice %v",
-			err)
-	}
+	net.EnsureConnected(ctxt, t.t, carol, net.Alice)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.EnsureConnected(ctxt, carol, dave); err != nil {
-		t.Fatalf("unable to connect carol to Alice %v",
-			err)
-	}
+	net.EnsureConnected(ctxt, t.t, carol, dave)
 
 	// Give some time for reconnection to finalize.
 	time.Sleep(time.Second)
