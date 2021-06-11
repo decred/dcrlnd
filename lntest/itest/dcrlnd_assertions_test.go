@@ -8,7 +8,6 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
-	"github.com/stretchr/testify/require"
 	"matheusd.com/testctx"
 )
 
@@ -20,9 +19,7 @@ func assertCleanState(h *harnessTest, net *lntest.NetworkHarness) {
 		h.Fatalf("unable to get best height: %v", err)
 	}
 
-	err = net.EnsureConnected(testctx.New(h.t), net.Alice, net.Bob)
-	require.NoError(h.t, err, "unable to connect alice to bob")
-
+	net.EnsureConnected(testctx.New(h.t), h.t, net.Alice, net.Bob)
 	assertNodeBlockHeight(h, net.Alice, int32(minerHeight))
 	assertNodeBlockHeight(h, net.Bob, int32(minerHeight))
 	assertNodeNumChannels(h, net.Alice, 0)

@@ -92,9 +92,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// We must let Dave communicate with Carol before they are able to open
 	// channel, so we connect Dave and Carol,
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, dave, carol); err != nil {
-		t.Fatalf("unable to connect dave to carol: %v", err)
-	}
+	net.ConnectNodes(ctxt, t.t, dave, carol)
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
