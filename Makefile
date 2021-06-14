@@ -10,6 +10,7 @@ FALAFEL_PKG := github.com/lightninglabs/falafel
 GOIMPORTS_PKG := golang.org/x/tools/cmd/goimports
 GOFUZZ_BUILD_PKG := github.com/dvyukov/go-fuzz/go-fuzz-build
 GOFUZZ_PKG := github.com/dvyukov/go-fuzz/go-fuzz
+GOFUZZ_DEP_PKG := github.com/dvyukov/go-fuzz/go-fuzz-dep
 
 GO_BIN := ${GOPATH}/bin
 DCRD_BIN := $(GO_BIN)/dcrd
@@ -50,7 +51,7 @@ DCRWALLET_TMPDIR := $(shell mktemp -d)
 GOACC_COMMIT := 80342ae2e0fcf265e99e76bcc4efd022c7c3811b
 LINT_COMMIT := v1.18.0
 FALAFEL_COMMIT := v0.7.1
-GOFUZZ_COMMIT := 21309f307f61
+GOFUZZ_COMMIT := b1f3d6f
 
 DEPGET := cd /tmp && GO111MODULE=on go get -v
 GOBUILD := CGO_ENABLED=0 GO111MODULE=on go build -v
@@ -83,6 +84,8 @@ LINT = $(LINT_BIN) \
 	--enable=ineffassign \
 	--enable=unused \
 	--deadline=10m
+
+GOFUZZ_DEP_PKG_FETCH = go get -v $(GOFUZZ_DEP_PKG)@$(GOFUZZ_COMMIT)
 
 GREEN := "\\033[0;32m"
 NC := "\\033[0m"
@@ -261,6 +264,8 @@ flakehunter-parallel:
 # FUZZING
 # =============
 fuzz-build: $(GOFUZZ_BUILD_BIN)
+	@$(call print, "Fetching go-fuzz-dep package")
+	$(GOFUZZ_DEP_PKG_FETCH)
 	@$(call print, "Creating fuzz harnesses for packages '$(FUZZPKG)'.")
 	scripts/fuzz.sh build "$(FUZZPKG)"
 
