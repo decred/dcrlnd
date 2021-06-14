@@ -180,7 +180,21 @@ scratch: build
 
 check: unit itest
 
-itest-only:
+db-instance:
+ifeq ($(dbbackend),postgres)
+	# Remove a previous postgres instance if it exists.
+	docker rm lnd-postgres --force || echo "Starting new postgres container"
+
+	# Start a fresh postgres instance. Allow a maximum of 500 connections.
+	# This is required for the async benchmark to pass.
+	docker run --name lnd-postgres -e POSTGRES_PASSWORD=postgres -p 6432:5432 -d postgres -N 500
+
+	# Wait for the instance to be started.
+	sleep 3
+endif
+
+
+itest-only: db-instance
 	@$(call print, "Building itest binary for $(backend) backend")
 	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -c -o lntest/itest/itest.test
 
@@ -202,7 +216,7 @@ itest-parallel-run:
 
 itest-race: build-itest-race itest-only
 
-itest-parallel: dcrd dcrwallet build-itest itest-parallel-run
+itest-parallel: dcrd dcrwallet db-instance build-itest itest-parallel-run
 
 unit-only:
 	@$(call print, "Running unit tests.")

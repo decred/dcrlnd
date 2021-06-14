@@ -217,6 +217,9 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
+	// Ensure Carol is connected to Dave after restart.
+	net.EnsureConnected(t.t, dave, carol)
+
 	// Finally, send payments from Dave to Carol, consuming Carol's
 	// remaining payment hashes.
 	err = completePaymentRequests(

@@ -122,6 +122,10 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
+	// Reconnect the peers after the restart that was needed for the db
+	// backup.
+	net.EnsureConnected(t.t, carol, net.Bob)
+
 	// Finally, send payments from Carol to Bob, consuming Bob's remaining
 	// payment hashes.
 	err = completePaymentRequests(
@@ -344,6 +348,10 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
+
+	// Reconnect the peers after the restart that was needed for the db
+	// backup.
+	net.EnsureConnected(t.t, dave, carol)
 
 	// Finally, send payments from Dave to Carol, consuming Carol's
 	// remaining payment hashes.
@@ -650,6 +658,10 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
+
+	// Reconnect the peers after the restart that was needed for the db
+	// backup.
+	net.EnsureConnected(t.t, dave, carol)
 
 	// Finally, send payments from Dave to Carol, consuming Carol's
 	// remaining payment hashes.
@@ -1085,6 +1097,10 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
+
+	// Reconnect the peers after the restart that was needed for the db
+	// backup.
+	net.EnsureConnected(t.t, dave, carol)
 
 	// Finally, send payments from Dave to Carol, consuming Carol's remaining
 	// payment hashes.
