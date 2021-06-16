@@ -20,6 +20,7 @@ var (
 func TestEtcd(t *testing.T) {
 	tests := []struct {
 		name       string
+		debugOnly  bool
 		test       func(*testing.T, walletdb.DB)
 		expectedDb map[string]string
 	}{
@@ -104,8 +105,9 @@ func TestEtcd(t *testing.T) {
 			test: testBucketSequence,
 		},
 		{
-			name: "key clash",
-			test: testKeyClash,
+			name:      "key clash",
+			debugOnly: true,
+			test:      testKeyClash,
 			expectedDb: map[string]string{
 				bkey("apple"):           bval("apple"),
 				bkey("apple", "banana"): bval("apple", "banana"),
@@ -137,6 +139,10 @@ func TestEtcd(t *testing.T) {
 
 	for _, test := range tests {
 		test := test
+
+		if test.debugOnly && !etcdDebug {
+			continue
+		}
 
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
