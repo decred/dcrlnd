@@ -6921,18 +6921,10 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 	// broadcast this soon to be revoked state.
 	bobStateNumPreCopy := bobChan.NumUpdates
 
-	// Create a temporary file to house Bob's database state at this
-	// particular point in history.
-	bobTempDbPath, err := ioutil.TempDir("", "bob-past-state")
-	if err != nil {
-		t.Fatalf("unable to create temp db folder: %v", err)
-	}
-	defer os.Remove(bobTempDbPath)
-
 	// With the temporary file created, copy Bob's current state into the
 	// temporary file we created above. Later after more updates, we'll
 	// restore this state.
-	if err := lntest.CopyAll(bobTempDbPath, net.Bob.DBDir()); err != nil {
+	if err := net.BackupDb(net.Bob); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
@@ -6966,7 +6958,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 	// state. With this, we essentially force Bob to travel back in time
 	// within the channel's history.
 	if err = net.RestartNode(net.Bob, func() error {
-		return lntest.CopyAll(net.Bob.DBDir(), bobTempDbPath)
+		return net.RestoreDb(net.Bob)
 	}); err != nil {
 		t.Fatalf("unable to restart node: %v", err)
 	}
@@ -7172,18 +7164,10 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 	// broadcast this soon to be revoked state.
 	carolStateNumPreCopy := carolChan.NumUpdates
 
-	// Create a temporary file to house Carol's database state at this
-	// particular point in history.
-	carolTempDbPath, err := ioutil.TempDir("", "carol-past-state")
-	if err != nil {
-		t.Fatalf("unable to create temp db folder: %v", err)
-	}
-	defer os.Remove(carolTempDbPath)
-
 	// With the temporary file created, copy Carol's current state into the
 	// temporary file we created above. Later after more updates, we'll
 	// restore this state.
-	if err := lntest.CopyAll(carolTempDbPath, carol.DBDir()); err != nil {
+	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
@@ -7216,7 +7200,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 	// state. With this, we essentially force Carol to travel back in time
 	// within the channel's history.
 	if err = net.RestartNode(carol, func() error {
-		return lntest.CopyAll(carol.DBDir(), carolTempDbPath)
+		return net.RestoreDb(carol)
 	}); err != nil {
 		t.Fatalf("unable to restart node: %v", err)
 	}
@@ -7513,18 +7497,10 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	// to her channel.
 	checkCarolNumUpdatesAtLeast(1)
 
-	// Create a temporary file to house Carol's database state at this
-	// particular point in history.
-	carolTempDbPath, err := ioutil.TempDir("", "carol-past-state")
-	if err != nil {
-		t.Fatalf("unable to create temp db folder: %v", err)
-	}
-	defer os.Remove(carolTempDbPath)
-
 	// With the temporary file created, copy Carol's current state into the
 	// temporary file we created above. Later after more updates, we'll
 	// restore this state.
-	if err := lntest.CopyAll(carolTempDbPath, carol.DBDir()); err != nil {
+	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
@@ -7561,7 +7537,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	// state. With this, we essentially force Carol to travel back in time
 	// within the channel's history.
 	if err = net.RestartNode(carol, func() error {
-		return lntest.CopyAll(carol.DBDir(), carolTempDbPath)
+		return net.RestoreDb(carol)
 	}); err != nil {
 		t.Fatalf("unable to restart node: %v", err)
 	}
@@ -7962,18 +7938,10 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 	// broadcast this soon to be revoked state.
 	carolStateNumPreCopy := carolChan.NumUpdates
 
-	// Create a temporary file to house Carol's database state at this
-	// particular point in history.
-	carolTempDbPath, err := ioutil.TempDir("", "carol-past-state")
-	if err != nil {
-		t.Fatalf("unable to create temp db folder: %v", err)
-	}
-	defer os.Remove(carolTempDbPath)
-
 	// With the temporary file created, copy Carol's current state into the
 	// temporary file we created above. Later after more updates, we'll
 	// restore this state.
-	if err := lntest.CopyAll(carolTempDbPath, carol.DBDir()); err != nil {
+	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
@@ -8030,7 +7998,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 	// state. With this, we essentially force Carol to travel back in time
 	// within the channel's history.
 	if err = net.RestartNode(carol, func() error {
-		return lntest.CopyAll(carol.DBDir(), carolTempDbPath)
+		return net.RestoreDb(carol)
 	}); err != nil {
 		t.Fatalf("unable to restart node: %v", err)
 	}
@@ -8516,18 +8484,10 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 		// revoke this state.
 		stateNumPreCopy := nodeChan.NumUpdates
 
-		// Create a temporary file to house the database state at this
-		// particular point in history.
-		tempDbPath, err := ioutil.TempDir("", node.Name()+"-past-state")
-		if err != nil {
-			t.Fatalf("unable to create temp db folder: %v", err)
-		}
-		defer os.Remove(tempDbPath)
-
 		// With the temporary file created, copy the current state into
 		// the temporary file we created above. Later after more
 		// updates, we'll restore this state.
-		if err := lntest.CopyAll(tempDbPath, node.DBDir()); err != nil {
+		if err := net.BackupDb(node); err != nil {
 			t.Fatalf("unable to copy database files: %v", err)
 		}
 
@@ -8571,7 +8531,7 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 		// force the node to travel back in time within the channel's
 		// history.
 		if err = net.RestartNode(node, func() error {
-			return lntest.CopyAll(node.DBDir(), tempDbPath)
+			return net.RestoreDb(node)
 		}); err != nil {
 			t.Fatalf("unable to restart node: %v", err)
 		}

@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
@@ -220,19 +217,10 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// to her channel.
 	checkCarolNumUpdatesAtLeast(1)
 
-	// Create a temporary file to house Carol's database state at this
-	// particular point in history.
-	carolTempDbPath, err := ioutil.TempDir("", "carol-past-state")
-	if err != nil {
-		t.Fatalf("unable to create temp db folder: %v", err)
-	}
-	carolTempDbFile := filepath.Join(carolTempDbPath, "channel.db")
-	defer os.Remove(carolTempDbPath)
-
 	// With the temporary file created, copy Carol's current state into the
 	// temporary file we created above. Later after more updates, we'll
 	// restore this state.
-	if err := lntest.CopyFile(carolTempDbFile, carol.DBPath()); err != nil {
+	if err := net.BackupDb(carol); err != nil {
 		t.Fatalf("unable to copy database files: %v", err)
 	}
 
@@ -276,7 +264,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// state. With this, we essentially force Carol to travel back in time
 	// within the channel's history.
 	if err = net.RestartNode(carol, func() error {
-		return lntest.CopyAll(carol.DBDir(), carolTempDbPath)
+		return net.RestoreDb(carol)
 	}); err != nil {
 		t.Fatalf("unable to restart node: %v", err)
 	}
