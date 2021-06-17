@@ -111,7 +111,7 @@ type ChannelUpdate struct {
 	// atom.
 	FeeRate uint32
 
-	// HtlcMaximumMsat is the maximum HTLC value which will be accepted.
+	// HtlcMaximumMAtoms is the maximum HTLC value which will be accepted.
 	HtlcMaximumMAtoms MilliAtom
 
 	// ExtraData is the set of data that was appended to this message to
@@ -159,7 +159,7 @@ func (a *ChannelUpdate) Decode(r io.Reader, pver uint32) error {
 // observing the protocol version specified.
 //
 // This is part of the lnwire.Message interface.
-func (a *ChannelUpdate) Encode(w io.Writer, pver uint32) error {
+func (a *ChannelUpdate) Encode(w *bytes.Buffer, pver uint32) error {
 	err := WriteElements(w,
 		a.Signature,
 		a.ChainHash[:],
