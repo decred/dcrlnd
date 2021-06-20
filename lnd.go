@@ -185,6 +185,10 @@ type ListenerCfg struct {
 	ExternalRestRegistrar RestRegistrar
 }
 
+var errStreamIsolationWithDirectConnections = errors.New(
+	"direct connections cannot be used while stream isolation is enabled",
+)
+
 // Main is the true entry point for lnd. It accepts a fully populated and
 // validated main configuration struct and an optional listener config struct.
 // This function starts all main system components then blocks until a signal
@@ -784,10 +788,19 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		return err
 	}
 
+	if cfg.Tor.StreamIsolation && cfg.Tor.DirectConnections {
+		return errStreamIsolationWithDirectConnections
+	}
+
 	if cfg.Tor.Active {
-		srvrLog.Infof("Proxying all network traffic via Tor "+
-			"(stream_isolation=%v)! NOTE: Ensure the backend node "+
-			"is proxying over Tor as well", cfg.Tor.StreamIsolation)
+		if cfg.Tor.DirectConnections {
+			srvrLog.Info("Onion services are accessible via Tor! NOTE: " +
+				"Traffic to clearnet services is not routed via Tor.")
+		} else {
+			srvrLog.Infof("Proxying all network traffic via Tor "+
+				"(stream_isolation=%v)! NOTE: Ensure the backend node "+
+				"is proxying over Tor as well", cfg.Tor.StreamIsolation)
+		}
 	}
 
 	// If tor is active and either v2 or v3 onion services have been specified,
