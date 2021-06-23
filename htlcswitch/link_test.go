@@ -3737,6 +3737,7 @@ func TestShouldAdjustCommitFee(t *testing.T) {
 	tests := []struct {
 		netFee       chainfee.AtomPerKByte
 		chanFee      chainfee.AtomPerKByte
+		minRelayFee  chainfee.AtomPerKByte
 		shouldAdjust bool
 	}{
 
@@ -3812,11 +3813,22 @@ func TestShouldAdjustCommitFee(t *testing.T) {
 			chanFee:      1000,
 			shouldAdjust: false,
 		},
+
+		// The network fee is higher than our commitment fee,
+		// hasn't yet crossed our activation threshold, but the
+		// current commitment fee is below the minimum relay fee and
+		// so the fee should be updated.
+		{
+			netFee:       1100,
+			chanFee:      1098,
+			minRelayFee:  1099,
+			shouldAdjust: true,
+		},
 	}
 
 	for i, test := range tests {
 		adjustedFee := shouldAdjustCommitFee(
-			test.netFee, test.chanFee,
+			test.netFee, test.chanFee, test.minRelayFee,
 		)
 
 		if adjustedFee && !test.shouldAdjust {
@@ -4002,6 +4014,13 @@ func TestChannelLinkUpdateCommitFee(t *testing.T) {
 		{"bob", "alice", &lnwire.RevokeAndAck{}, false},
 		{"bob", "alice", &lnwire.CommitSig{}, false},
 		{"alice", "bob", &lnwire.RevokeAndAck{}, false},
+
+		// Third fee update.
+		{"alice", "bob", &lnwire.UpdateFee{}, false},
+		{"alice", "bob", &lnwire.CommitSig{}, false},
+		{"bob", "alice", &lnwire.RevokeAndAck{}, false},
+		{"bob", "alice", &lnwire.CommitSig{}, false},
+		{"alice", "bob", &lnwire.RevokeAndAck{}, false},
 	}
 	n.aliceServer.intersect(createInterceptorFunc("[alice] <-- [bob]",
 		"alice", messages, chanID, false))
@@ -4018,8 +4037,8 @@ func TestChannelLinkUpdateCommitFee(t *testing.T) {
 
 	// triggerFeeUpdate is a helper closure to determine whether a fee
 	// update was triggered and completed properly.
-	triggerFeeUpdate := func(feeEstimate, newFeeRate chainfee.AtomPerKByte,
-		shouldUpdate bool) {
+	triggerFeeUpdate := func(feeEstimate, minRelayFee,
+		newFeeRate chainfee.AtomPerKByte, shouldUpdate bool) {
 
 		t.Helper()
 
@@ -4037,6 +4056,13 @@ func TestChannelLinkUpdateCommitFee(t *testing.T) {
 		case n.feeEstimator.byteFeeIn <- feeEstimate:
 		case <-time.After(time.Second * 5):
 			t.Fatalf("alice didn't query for the new network fee")
+		}
+
+		// We also send the min relay fee response to Alice.
+		select {
+		case n.feeEstimator.relayFee <- minRelayFee:
+		case <-time.After(time.Second * 5):
+			t.Fatalf("alice didn't query for the min relay fee")
 		}
 
 		// Record the fee rates after the links have processed the fee
@@ -4064,20 +4090,28 @@ func TestChannelLinkUpdateCommitFee(t *testing.T) {
 		}, 10*time.Second, time.Second)
 	}
 
+	minRelayFee := startingFeeRate / 3
+
 	// Triggering the link to update the fee of the channel with the same
 	// fee rate should not send a fee update.
-	triggerFeeUpdate(startingFeeRate, startingFeeRate, false)
+	triggerFeeUpdate(startingFeeRate, minRelayFee, startingFeeRate, false)
 
 	// Triggering the link to update the fee of the channel with a much
 	// larger fee rate _should_ send a fee update.
 	newFeeRate := startingFeeRate * 3
-	triggerFeeUpdate(newFeeRate, newFeeRate, true)
+	triggerFeeUpdate(newFeeRate, minRelayFee, newFeeRate, true)
 
 	// Triggering the link to update the fee of the channel with a fee rate
 	// that exceeds its maximum fee allocation should result in a fee rate
 	// corresponding to the maximum fee allocation.
-	const maxFeeRate chainfee.AtomPerKByte = 412087912
-	triggerFeeUpdate(maxFeeRate+1, maxFeeRate, true)
+	const maxFeeRate chainfee.AtomPerKByte = 412086510 // 598180000
+	triggerFeeUpdate(maxFeeRate+1, minRelayFee, maxFeeRate, true)
+
+	// Triggering the link to update the fee of the channel with a fee rate
+	// that is below the current min relay fee rate should result in a fee
+	// rate corresponding to the minimum relay fee.
+	newFeeRate = minRelayFee / 2
+	triggerFeeUpdate(newFeeRate, minRelayFee, chainfee.FeePerKBFloor, true)
 }
 
 // TestChannelLinkAcceptDuplicatePayment tests that if a link receives an
