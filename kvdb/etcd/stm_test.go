@@ -29,7 +29,7 @@ func TestPutToEmpty(t *testing.T) {
 	defer func() {
 		cancel()
 		f.Cleanup()
-		txQueue.Wait()
+		txQueue.Stop()
 	}()
 
 	db, err := newEtcdBackend(ctx, f.BackendConfig())
@@ -56,7 +56,7 @@ func TestGetPutDel(t *testing.T) {
 	defer func() {
 		cancel()
 		f.Cleanup()
-		txQueue.Wait()
+		txQueue.Stop()
 	}()
 
 	testKeyValues := []KV{
@@ -142,7 +142,7 @@ func TestFirstLastNextPrev(t *testing.T) {
 	defer func() {
 		cancel()
 		f.Cleanup()
-		txQueue.Wait()
+		txQueue.Stop()
 	}()
 
 	testKeyValues := []KV{
@@ -300,7 +300,7 @@ func TestCommitError(t *testing.T) {
 	defer func() {
 		cancel()
 		f.Cleanup()
-		txQueue.Wait()
+		txQueue.Stop()
 	}()
 
 	db, err := newEtcdBackend(ctx, f.BackendConfig())
@@ -348,7 +348,7 @@ func TestManualTxError(t *testing.T) {
 	defer func() {
 		cancel()
 		f.Cleanup()
-		txQueue.Wait()
+		txQueue.Stop()
 	}()
 
 	db, err := newEtcdBackend(ctx, f.BackendConfig())
