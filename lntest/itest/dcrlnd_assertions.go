@@ -3,7 +3,9 @@ package itest
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
@@ -76,4 +78,78 @@ func recordedTxFee(tx *wire.MsgTx) int64 {
 		amountOut += out.Value
 	}
 	return amountIn - amountOut
+}
+
+// waitForPendingHtlcs waits for up to 15 seconds for the given channel in the
+// given node to show the specified number of pending HTLCs.
+func waitForPendingHtlcs(node *lntest.HarnessNode,
+	chanPoint *lnrpc.ChannelPoint, pendingHtlcs int) error {
+
+	fundingTxID, err := chainhash.NewHash(chanPoint.GetFundingTxidBytes())
+	if err != nil {
+		return fmt.Errorf("unable to convert funding txid into "+
+			"chainhash.Hash: %v", err)
+	}
+	outPoint := wire.OutPoint{
+		Hash:  *fundingTxID,
+		Index: chanPoint.OutputIndex,
+	}
+	targetChan := outPoint.String()
+
+	req := &lnrpc.ListChannelsRequest{}
+	ctxb := context.Background()
+
+	var predErr error
+	wait.Predicate(func() bool {
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
+		channelInfo, err := node.ListChannels(ctxt, req)
+		if err != nil {
+			predErr = err
+			return false
+		}
+
+		for _, channel := range channelInfo.Channels {
+			if channel.ChannelPoint != targetChan {
+				continue
+			}
+
+			foundHtlcs := len(channel.PendingHtlcs)
+			if foundHtlcs == pendingHtlcs {
+				predErr = nil
+				return true
+			}
+
+			predErr = fmt.Errorf("found only %d htlcs (wanted %d)",
+				foundHtlcs, pendingHtlcs)
+			return false
+		}
+
+		predErr = fmt.Errorf("could not find channel %s", targetChan)
+		return false
+	}, time.Second*15)
+	return predErr
+}
+
+func assertNumUnminedUnspent(t *harnessTest, node *lntest.HarnessNode, expected int) {
+	err := wait.NoError(func() error {
+		ctxb := context.Background()
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
+		utxoReq := &lnrpc.ListUnspentRequest{}
+		utxoResp, err := node.ListUnspent(ctxt, utxoReq)
+		if err != nil {
+			return fmt.Errorf("unable to query utxos: %v", err)
+		}
+
+		actual := len(utxoResp.Utxos)
+		if actual != expected {
+			return fmt.Errorf("node %s has wrong number of unmined utxos ("+
+				"expected %d actual %d)", node.Name(), expected, actual)
+		}
+
+		return nil
+
+	}, defaultTimeout)
+	if err != nil {
+		t.Fatalf("failed asserting nb of unmined unspent: %v", err)
+	}
 }
