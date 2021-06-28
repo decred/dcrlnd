@@ -1491,7 +1491,7 @@ func testFailingChannel(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 		n := len(pendingChanResp.WaitingCloseChannels)
 		if n != 1 {
-			predErr = fmt.Errorf("Expected to find %d channels "+
+			predErr = fmt.Errorf("expected to find %d channels "+
 				"waiting close, found %d", 1, n)
 			return false
 		}
@@ -1521,7 +1521,7 @@ func testFailingChannel(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 		n := len(pendingChanResp.WaitingCloseChannels)
 		if n != 0 {
-			predErr = fmt.Errorf("Expected to find %d channels "+
+			predErr = fmt.Errorf("expected to find %d channels "+
 				"waiting close, found %d", 0, n)
 			return false
 		}
