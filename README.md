@@ -112,7 +112,7 @@ as well as compatible versions of `dcrd` and `dcrwallet`.
 ## Safety
 
 When operating a mainnet `dcrlnd` node, please refer to our [operational safety
-guildelines](docs/safety.md). It is important to note that `dcrlnd` is still
+guidelines](docs/safety.md). It is important to note that `dcrlnd` is still
 **beta** software and that ignoring these operational guidelines can lead to
 loss of funds.
 
