@@ -12,6 +12,8 @@ import (
 	"github.com/decred/dcrlnd/lnrpc/invoicesrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntypes"
+	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 func testMultiHopHtlcClaims(net *lntest.NetworkHarness, t *harnessTest) {
@@ -71,6 +73,7 @@ func testMultiHopHtlcClaims(net *lntest.NetworkHarness, t *harnessTest) {
 	commitTypes := []lnrpc.CommitmentType{
 		lnrpc.CommitmentType_LEGACY,
 		lnrpc.CommitmentType_ANCHORS,
+		lnrpc.CommitmentType_SCRIPT_ENFORCED_LEASE,
 	}
 
 	for _, commitType := range commitTypes {
@@ -223,11 +226,22 @@ func createThreeHopNetwork(t *harnessTest, net *lntest.NetworkHarness,
 	// We'll start the test by creating a channel between Alice and Bob,
 	// which will act as the first leg for out multi-hop HTLC.
 	const chanAmt = 1000000
+	var aliceFundingShim *lnrpc.FundingShim
+	var thawHeight uint32
+	if c == lnrpc.CommitmentType_SCRIPT_ENFORCED_LEASE {
+		_, minerHeight, err := net.Miner.Node.GetBestBlock(testctx.New(t))
+		require.NoError(t.t, err)
+		thawHeight = uint32(minerHeight + 144)
+		aliceFundingShim, _, _ = deriveFundingShim(
+			net, t, alice, bob, chanAmt, thawHeight, true,
+		)
+	}
 	aliceChanPoint := openChannelAndAssert(
 		t, net, alice, bob,
 		lntest.OpenChannelParams{
 			Amt:            chanAmt,
 			CommitmentType: c,
+			FundingShim:    aliceFundingShim,
 		},
 	)
 
@@ -270,11 +284,18 @@ func createThreeHopNetwork(t *harnessTest, net *lntest.NetworkHarness,
 
 	// We'll then create a channel from Bob to Carol. After this channel is
 	// open, our topology looks like:  A -> B -> C.
+	var bobFundingShim *lnrpc.FundingShim
+	if c == lnrpc.CommitmentType_SCRIPT_ENFORCED_LEASE {
+		bobFundingShim, _, _ = deriveFundingShim(
+			net, t, bob, carol, chanAmt, thawHeight, true,
+		)
+	}
 	bobChanPoint := openChannelAndAssert(
 		t, net, bob, carol,
 		lntest.OpenChannelParams{
 			Amt:            chanAmt,
 			CommitmentType: c,
+			FundingShim:    bobFundingShim,
 		},
 	)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
