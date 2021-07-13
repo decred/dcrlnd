@@ -66,6 +66,10 @@ ifeq ($(dbbackend),etcd)
 DEV_TAGS += kvdb_etcd
 endif
 
+ifeq ($(dbbackend),postgres)
+DEV_TAGS += kvdb_postgres
+endif
+
 ifneq ($(tags),)
 DEV_TAGS += ${tags}
 endif

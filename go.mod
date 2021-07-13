@@ -30,14 +30,17 @@ require (
 	github.com/decred/dcrtest/dcrdtest v1.0.0
 	github.com/decred/lightning-onion/v4 v4.0.0
 	github.com/decred/slog v1.2.0
+	github.com/fergusstrange/embedded-postgres v1.25.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-errors/errors v1.4.2
 	github.com/golang/glog v1.1.2
 	github.com/golang/protobuf v1.5.3
+	github.com/google/btree v1.1.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
+	github.com/jackc/pgx/v4 v4.18.1
 	github.com/jackpal/gateway v1.0.10
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
@@ -52,6 +55,7 @@ require (
 	github.com/tv42/zbase32 v0.0.0-20220222190657-f76a9fc892fa
 	github.com/urfave/cli v1.20.0
 	go.etcd.io/bbolt v1.3.8
+	go.etcd.io/etcd/api/v3 v3.5.7
 	go.etcd.io/etcd/client/pkg/v3 v3.5.7
 	go.etcd.io/etcd/client/v3 v3.5.7
 	go.etcd.io/etcd/server/v3 v3.5.7
@@ -102,14 +106,21 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/btree v1.1.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgconn v1.14.0 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/jrick/bitset v1.0.0 // indirect
 	github.com/jrick/wsrpc/v2 v2.3.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/lib/pq v1.10.4 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
@@ -126,11 +137,11 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 // indirect
 	gitlab.com/NebulousLabs/go-upnp v0.0.0-20211002182029-11da932010b6 // indirect
 	gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec // indirect
-	go.etcd.io/etcd/api/v3 v3.5.7 // indirect
 	go.etcd.io/etcd/client/v2 v2.305.7 // indirect
 	go.etcd.io/etcd/pkg/v3 v3.5.7 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.7 // indirect
