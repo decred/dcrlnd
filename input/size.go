@@ -699,6 +699,17 @@ const (
 	// larger because of the conditional CSV check in the input script.
 	HTLCSuccessConfirmedTxSize = HTLCSuccessTxSize + htlcConfirmedScriptOverhead
 
+	// LeaseRedeemScriptSizeOverhead represents the size overhead in bytes
+	// of the redeem scripts used within script enforced lease commitments.
+	// This overhead results from the additional CLTV clause required to
+	// spend.
+	//
+	//	- OP_DATA: 1 byte
+	// 	- lease_expiry: 4 bytes
+	// 	- OP_CHECKLOCKTIMEVERIFY: 1 byte
+	// 	- OP_DROP: 1 byte
+	LeaseRedeemScriptSizeOverhead = 1 + 4 + 1 + 1
+
 	// MaxHTLCNumber is the maximum number HTLCs which can be included in a
 	// commitment transaction. This limit was chosen such that, in the case
 	// of a contract breach, the punishment transaction is able to sweep
