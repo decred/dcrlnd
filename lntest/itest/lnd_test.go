@@ -201,9 +201,9 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	t.Logf("Running %v integration tests", len(testCases))
 	for idx, testCase := range testCases {
 		testCase := testCase
-		name := fmt.Sprintf("%02d-of-%d/%s/%s",
-			trancheOffset+uint(idx)+1, len(allTestCases),
-			chainBackend.Name(), testCase.name)
+		name := fmt.Sprintf("tranche%02d/%02d-of-%d/%s/%s",
+			trancheIndex, trancheOffset+uint(idx)+1,
+			len(allTestCases), chainBackend.Name(), testCase.name)
 
 		success := t.Run(name, func(t1 *testing.T) {
 			cleanTestCaseName := strings.ReplaceAll(
