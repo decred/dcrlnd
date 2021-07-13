@@ -848,6 +848,12 @@ func testChanRestoreScenario(t *harnessTest, net *lntest.NetworkHarness,
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
+	// For the anchor output case we need two UTXOs for Carol so she can
+	// sweep both the local and remote anchor.
+	if testCase.anchorCommit {
+		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	}
+
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
@@ -1087,6 +1093,12 @@ func testChanRestoreScenario(t *harnessTest, net *lntest.NetworkHarness,
 	// let's start up Carol again.
 	err = restartCarol()
 	require.NoError(t.t, err)
+
+	numUTXOs := 1
+	if testCase.anchorCommit {
+		numUTXOs = 2
+	}
+	assertNumUTXOs(t.t, carol, numUTXOs)
 
 	// Now that we have our new node up, we expect that it'll re-connect to
 	// Carol automatically based on the restored backup.
