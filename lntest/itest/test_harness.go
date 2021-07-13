@@ -96,7 +96,7 @@ func (h *harnessTest) Skipf(format string, args ...interface{}) {
 func (h *harnessTest) Fatalf(format string, a ...interface{}) {
 	h.t.Errorf("harnessTest.Fatal() time: %s", time.Now().Format("2006-01-02T15:04:05.999"))
 	if h.lndHarness != nil {
-		h.lndHarness.SaveProfilesPages()
+		h.lndHarness.SaveProfilesPages(h.t)
 	}
 
 	stacktrace := errors.Wrap(fmt.Sprintf(format, a...), 1).ErrorStack()
