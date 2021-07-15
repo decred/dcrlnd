@@ -66,12 +66,9 @@ func CreateHtlcSuccessTx(chanType channeldb.ChannelType,
 	// Next, we'll generate the script used as the output for all second
 	// level HTLC which forces a covenant w.r.t what can be done with all
 	// HTLC outputs.
-	witnessScript, err := input.SecondLevelHtlcScript(revocationKey, delayKey,
-		csvDelay)
-	if err != nil {
-		return nil, err
-	}
-	pkScript, err := input.ScriptHashPkScript(witnessScript)
+	script, err := SecondLevelHtlcScript(
+		revocationKey, delayKey, csvDelay,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +77,7 @@ func CreateHtlcSuccessTx(chanType channeldb.ChannelType,
 	// required fees), paying to the timeout script.
 	successTx.AddTxOut(&wire.TxOut{
 		Value:    int64(htlcAmt),
-		PkScript: pkScript,
+		PkScript: script.PkScript,
 	})
 
 	return successTx, nil
@@ -119,6 +116,7 @@ func CreateHtlcTimeoutTx(chanType channeldb.ChannelType,
 	// sequence number based on the channel type.
 	txin := &wire.TxIn{
 		PreviousOutPoint: htlcOutput,
+		SignatureScript:  []byte{},
 		Sequence:         HtlcSecondLevelInputSequence(chanType),
 	}
 	timeoutTx.AddTxIn(txin)
@@ -126,12 +124,9 @@ func CreateHtlcTimeoutTx(chanType channeldb.ChannelType,
 	// Next, we'll generate the script used as the output for all second
 	// level HTLC which forces a covenant w.r.t what can be done with all
 	// HTLC outputs.
-	witnessScript, err := input.SecondLevelHtlcScript(revocationKey, delayKey,
-		csvDelay)
-	if err != nil {
-		return nil, err
-	}
-	pkScript, err := input.ScriptHashPkScript(witnessScript)
+	script, err := SecondLevelHtlcScript(
+		revocationKey, delayKey, csvDelay,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +135,7 @@ func CreateHtlcTimeoutTx(chanType channeldb.ChannelType,
 	// required fees), paying to the regular second level HTLC script.
 	timeoutTx.AddTxOut(&wire.TxOut{
 		Value:    int64(htlcAmt),
-		PkScript: pkScript,
+		PkScript: script.PkScript,
 	})
 
 	return timeoutTx, nil
