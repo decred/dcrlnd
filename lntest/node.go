@@ -1533,6 +1533,27 @@ func getChanPointFundingTxid(chanPoint *lnrpc.ChannelPoint) ([]byte, error) {
 	return txid, nil
 }
 
+func checkChanPointInGraph(ctx context.Context,
+	node *HarnessNode, chanPoint wire.OutPoint) bool {
+
+	ctxt, cancel := context.WithTimeout(ctx, DefaultTimeout)
+	defer cancel()
+	chanGraph, err := node.DescribeGraph(ctxt, &lnrpc.ChannelGraphRequest{})
+	if err != nil {
+		return false
+	}
+
+	targetChanPoint := chanPoint.String()
+	for _, chanEdge := range chanGraph.Edges {
+		candidateChanPoint := chanEdge.ChanPoint
+		if targetChanPoint == candidateChanPoint {
+			return true
+		}
+	}
+
+	return false
+}
+
 // lightningNetworkWatcher is a goroutine which is able to dispatch
 // notifications once it has been observed that a target channel has been
 // closed or opened within the network. In order to dispatch these
@@ -1664,6 +1685,21 @@ func (hn *HarnessNode) lightningNetworkWatcher(subscribed chan error) {
 				}
 				hn.LogPrintf("Going to wait for %s",
 					targetChan)
+
+				// Before we add the channel to our set of open
+				// clients, we'll check to see if the channel
+				// is already in the channel graph of the
+				// target node. This lets us handle the case
+				// where a node has already seen a channel
+				// before a notification has been requested,
+				// causing us to miss it.
+				chanFound := checkChanPointInGraph(
+					context.Background(), hn, targetChan,
+				)
+				if chanFound {
+					close(watchRequest.eventChan)
+					continue
+				}
 
 				// Otherwise, we'll add this to the list of
 				// watch open clients for this out point.
