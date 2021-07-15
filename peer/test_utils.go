@@ -76,6 +76,7 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 	bobDustLimit := dcrutil.Amount(1300)
 	csvTimeoutAlice := uint32(5)
 	csvTimeoutBob := uint32(4)
+	isAliceInitiator := true
 
 	prevOut := &wire.OutPoint{
 		Hash:  channels.TestHdSeed,
@@ -159,7 +160,7 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 	aliceCommitTx, bobCommitTx, err := lnwallet.CreateCommitmentTxns(
 		channelBal, channelBal, &aliceCfg, &bobCfg, aliceCommitPoint,
 		bobCommitPoint, *fundingTxIn, channeldb.SingleFunderTweaklessBit,
-		chainParams,
+		isAliceInitiator, 0, chainParams,
 	)
 	if err != nil {
 		return nil, nil, nil, err
@@ -227,7 +228,7 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 		FundingOutpoint:         *prevOut,
 		ShortChannelID:          shortChanID,
 		ChanType:                channeldb.SingleFunderTweaklessBit,
-		IsInitiator:             true,
+		IsInitiator:             isAliceInitiator,
 		Capacity:                channelCapacity,
 		RemoteCurrentRevocation: bobCommitPoint,
 		RevocationProducer:      alicePreimageProducer,
@@ -244,7 +245,7 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 		IdentityPub:             bobKeyPub,
 		FundingOutpoint:         *prevOut,
 		ChanType:                channeldb.SingleFunderTweaklessBit,
-		IsInitiator:             false,
+		IsInitiator:             !isAliceInitiator,
 		Capacity:                channelCapacity,
 		RemoteCurrentRevocation: aliceCommitPoint,
 		RevocationProducer:      bobPreimageProducer,

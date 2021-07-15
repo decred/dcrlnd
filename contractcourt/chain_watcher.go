@@ -366,8 +366,13 @@ func (c *chainWatcher) handleUnknownLocalState(
 
 	// With the keys derived, we'll construct the remote script that'll be
 	// present if they have a non-dust balance on the commitment.
+	var leaseExpiry uint32
+	if c.cfg.chanState.ChanType.HasLeaseExpiration() {
+		leaseExpiry = c.cfg.chanState.ThawHeight
+	}
 	remoteScript, _, err := lnwallet.CommitScriptToRemote(
-		c.cfg.chanState.ChanType, commitKeyRing.ToRemoteKey,
+		c.cfg.chanState.ChanType, c.cfg.chanState.IsInitiator,
+		commitKeyRing.ToRemoteKey, leaseExpiry,
 	)
 	if err != nil {
 		return false, err
@@ -377,8 +382,9 @@ func (c *chainWatcher) handleUnknownLocalState(
 	// the remote party allowing them to claim this output before the CSV
 	// delay if we breach.
 	localScript, err := lnwallet.CommitScriptToSelf(
+		c.cfg.chanState.ChanType, c.cfg.chanState.IsInitiator,
 		commitKeyRing.ToLocalKey, commitKeyRing.RevocationKey,
-		uint32(c.cfg.chanState.LocalChanCfg.CsvDelay),
+		uint32(c.cfg.chanState.LocalChanCfg.CsvDelay), leaseExpiry,
 	)
 	if err != nil {
 		return false, err
