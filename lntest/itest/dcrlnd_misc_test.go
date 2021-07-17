@@ -55,7 +55,7 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 	nbAttempts := 10
 	for i := 0; i < nbAttempts; i++ {
 		// Sanity check that neither node has a connection.
-		assertNumConnections(t, net.Alice, net.Bob, 0)
+		assertNotConnected(t, net.Alice, net.Bob)
 
 		logLine := fmt.Sprintf("=== %s: Starting connection iteration %d\n",
 			time.Now(), i)
@@ -98,7 +98,7 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 		net.Bob.AddToLog(logLine)
 
 		// Sanity check connection number.
-		assertNumConnections(t, net.Alice, net.Bob, 1)
+		assertConnected(t, net.Alice, net.Bob)
 
 		// Check whether the connection was made alice -> bob or bob ->
 		// alice.  The assert above ensures we can safely access
@@ -122,8 +122,6 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Wait for the final disconnection to release all resources, then
 	// ensure both nodes are connected again.
-	time.Sleep(time.Millisecond * 50)
-	assertNumConnections(t, net.Alice, net.Bob, 0)
+	assertNotConnected(t, net.Alice, net.Bob)
 	net.EnsureConnected(t.t, net.Alice, net.Bob)
-	time.Sleep(time.Millisecond * 50)
 }
