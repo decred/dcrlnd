@@ -90,7 +90,7 @@ func settleInvoice(ctx *cli.Context) error {
 var cancelInvoiceCommand = cli.Command{
 	Name:     "cancelinvoice",
 	Category: "Invoices",
-	Usage:    "Cancels a (hold) invoice",
+	Usage:    "Cancels a (hold) invoice.",
 	Description: `
 	Todo.`,
 	ArgsUsage: "paymenthash",
