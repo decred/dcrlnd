@@ -76,6 +76,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/companyzero/sntrup4591761 v0.0.0-20220309191932-9e0f3af2f07a // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/decred/base58 v1.0.5 // indirect
