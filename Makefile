@@ -54,7 +54,7 @@ FALAFEL_COMMIT := v0.7.1
 GOFUZZ_COMMIT := b1f3d6f
 
 DEPGET := cd /tmp && GO111MODULE=on go get -v
-GOBUILD := CGO_ENABLED=0 GO111MODULE=on go build -v
+GOBUILD := GO111MODULE=on go build -v
 GOINSTALL := CGO_ENABLED=0 GO111MODULE=on go install -v
 GOTEST := GO111MODULE=on go test -v
 
@@ -151,13 +151,20 @@ $(GOFUZZ_BUILD_BIN):
 
 build:
 	@$(call print, "Building debug dcrlnd and dcrlncli.")
-	$(GOBUILD) -tags="$(DEV_TAGS)" -o dcrlnd-debug $(LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -tags="$(DEV_TAGS)" -o dcrlncli-debug $(LDFLAGS) $(PKG)/cmd/dcrlncli
+	CGO_ENABLED=0 $(GOBUILD) -tags="$(DEV_TAGS)" -o dcrlnd-debug $(LDFLAGS) $(PKG)/cmd/dcrlnd
+	CGO_ENABLED=0 $(GOBUILD) -tags="$(DEV_TAGS)" -o dcrlncli-debug $(LDFLAGS) $(PKG)/cmd/dcrlncli
 
 build-itest:
 	@$(call print, "Building itest dcrlnd and dcrlncli.")
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlncli
+	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
+	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlncli
+
+build-itest-race:
+	@$(call print, "Building itest with race detector.")
+	CGO_ENABLED=1 $(GOBUILD) -race -tags="$(ITEST_TAGS)" -o lntest/itest/lnd-itest$(EXEC_SUFFIX) $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
+
+	@$(call print, "Building itest binary for ${backend} backend.")
+	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -c -o lntest/itest/itest.test$(EXEC_SUFFIX)
 
 install:
 	@$(call print, "Installing dcrlnd and dcrlncli.")
@@ -201,6 +208,9 @@ itest-parallel-run:
 	@$(call print, "Running tests")
 	rm -rf lntest/itest/*.log lntest/itest/.logs-*
 	EXEC_SUFFIX=$(EXEC_SUFFIX) echo "$$(seq 0 $$(expr $(ITEST_PARALLELISM) - 1))" | xargs -P $(ITEST_PARALLELISM) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS) $(ITEST_FLAGS)
+
+
+itest-race: build-itest-race itest-only
 
 itest-parallel: dcrd dcrwallet build-itest itest-parallel-run
 
