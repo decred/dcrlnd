@@ -126,6 +126,7 @@ type db struct {
 	cli                  *clientv3.Client
 	commitStatsCollector *commitStatsCollector
 	txQueue              *commitQueue
+	txMutex              sync.RWMutex
 }
 
 // Enforce db implements the walletdb.DB interface.
@@ -205,9 +206,14 @@ func (db *db) getSTMOptions() []STMOptionFunc {
 // expect retries of the f closure (depending on the database backend used), the
 // reset function will be called before each retry respectively.
 func (db *db) View(f func(tx walletdb.ReadTx) error, reset func()) error {
+	if db.cfg.SingleWriter {
+		db.txMutex.RLock()
+		defer db.txMutex.RUnlock()
+	}
+
 	apply := func(stm STM) error {
 		reset()
-		return f(newReadWriteTx(stm, etcdDefaultRootBucketId))
+		return f(newReadWriteTx(stm, etcdDefaultRootBucketId, nil))
 	}
 
 	return RunSTM(db.cli, apply, db.txQueue, db.getSTMOptions()...)
@@ -221,9 +227,14 @@ func (db *db) View(f func(tx walletdb.ReadTx) error, reset func()) error {
 // returned. As callers may expect retries of the f closure, the reset function
 // will be called before each retry respectively.
 func (db *db) Update(f func(tx walletdb.ReadWriteTx) error, reset func()) error {
+	if db.cfg.SingleWriter {
+		db.txMutex.Lock()
+		defer db.txMutex.Unlock()
+	}
+
 	apply := func(stm STM) error {
 		reset()
-		return f(newReadWriteTx(stm, etcdDefaultRootBucketId))
+		return f(newReadWriteTx(stm, etcdDefaultRootBucketId, nil))
 	}
 
 	return RunSTM(db.cli, apply, db.txQueue, db.getSTMOptions()...)
@@ -240,17 +251,29 @@ func (db *db) PrintStats() string {
 
 // BeginReadWriteTx opens a database read+write transaction.
 func (db *db) BeginReadWriteTx() (walletdb.ReadWriteTx, error) {
+	var locker sync.Locker
+	if db.cfg.SingleWriter {
+		db.txMutex.Lock()
+		locker = &db.txMutex
+	}
+
 	return newReadWriteTx(
 		NewSTM(db.cli, db.txQueue, db.getSTMOptions()...),
-		etcdDefaultRootBucketId,
+		etcdDefaultRootBucketId, locker,
 	), nil
 }
 
 // BeginReadTx opens a database read transaction.
 func (db *db) BeginReadTx() (walletdb.ReadTx, error) {
+	var locker sync.Locker
+	if db.cfg.SingleWriter {
+		db.txMutex.RLock()
+		locker = db.txMutex.RLocker()
+	}
+
 	return newReadWriteTx(
 		NewSTM(db.cli, db.txQueue, db.getSTMOptions()...),
-		etcdDefaultRootBucketId,
+		etcdDefaultRootBucketId, locker,
 	), nil
 }
 

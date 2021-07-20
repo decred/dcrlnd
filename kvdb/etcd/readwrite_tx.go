@@ -4,6 +4,8 @@
 package etcd
 
 import (
+	"sync"
+
 	"github.com/btcsuite/btcwallet/walletdb"
 )
 
@@ -18,13 +20,18 @@ type readWriteTx struct {
 
 	// active is true if the transaction hasn't been committed yet.
 	active bool
+
+	// lock is passed on for manual txns when the backend is instantiated
+	// such that we read/write lock transactions to ensure a single writer.
+	lock sync.Locker
 }
 
 // newReadWriteTx creates an rw transaction with the passed STM.
-func newReadWriteTx(stm STM, prefix string) *readWriteTx {
+func newReadWriteTx(stm STM, prefix string, lock sync.Locker) *readWriteTx {
 	return &readWriteTx{
 		stm:          stm,
 		active:       true,
+		lock:         lock,
 		rootBucketID: makeBucketID([]byte(prefix)),
 	}
 }
@@ -67,6 +74,10 @@ func (tx *readWriteTx) Rollback() error {
 		return walletdb.ErrTxClosed
 	}
 
+	if tx.lock != nil {
+		defer tx.lock.Unlock()
+	}
+
 	// Rollback the STM and set the tx to inactive.
 	tx.stm.Rollback()
 	tx.active = false
@@ -99,6 +110,10 @@ func (tx *readWriteTx) Commit() error {
 	// Commit will fail if the transaction is already committed.
 	if !tx.active {
 		return walletdb.ErrTxClosed
+	}
+
+	if tx.lock != nil {
+		defer tx.lock.Unlock()
 	}
 
 	// Try committing the transaction.
