@@ -1776,7 +1776,10 @@ func (s *server) Start() error {
 		// configure the set of active bootstrappers, and launch a
 		// dedicated goroutine to maintain a set of persistent
 		// connections.
-		if !s.cfg.NoNetBootstrap && !s.cfg.Decred.SimNet && !s.cfg.Decred.RegTest {
+		isSimnet := s.cfg.Decred.SimNet
+		isRegtest := s.cfg.Decred.RegTest
+		isDevNetwork := isSimnet || isRegtest
+		if !s.cfg.NoNetBootstrap && !isDevNetwork {
 			bootstrappers, err := initNetworkBootstrappers(s)
 			if err != nil {
 				startErr = err
