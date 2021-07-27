@@ -1,0 +1,8 @@
+type: google.api.Service
+config_version: 3
+
+http:
+  rules:
+    - selector: initialchainsyncrpc.InitialChainSync.SubscribeChainSync
+      get: "/v2/initchainsync/subscribe"
+

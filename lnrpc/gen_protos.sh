@@ -9,7 +9,6 @@ build_protoc_gen_go() {
     go install github.com/golang/protobuf/protoc-gen-go \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-
 }
 
 generate() {
@@ -36,15 +35,16 @@ generate() {
         "${file}"
 
       # Generate the REST reverse proxy.
+      annotationsFile=${file//proto/yaml}
       protoc -I. \
         -I$GOOGAPIS -I$PROTOBUFAPIS \
-        --grpc-gateway_out=logtostderr=true,paths=source_relative,grpc_api_configuration=rest-annotations.yaml:. \
+        --grpc-gateway_out=logtostderr=true,paths=source_relative,grpc_api_configuration=${annotationsFile}:. \
         "${file}"
 
       # Finally, generate the swagger file which describes the REST API in detail.
       protoc -I. \
         -I$GOOGAPIS -I$PROTOBUFAPIS \
-        --swagger_out=logtostderr=true,grpc_api_configuration=rest-annotations.yaml:. \
+        --swagger_out=logtostderr=true,grpc_api_configuration=${annotationsFile}:. \
         "${file}"
     done
 }

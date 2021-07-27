@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -30,6 +31,7 @@ var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
+var _ = metadata.Join
 
 func request_ChainNotifier_RegisterConfirmationsNtfn_0(ctx context.Context, marshaler runtime.Marshaler, client ChainNotifierClient, req *http.Request, pathParams map[string]string) (ChainNotifier_RegisterConfirmationsNtfnClient, runtime.ServerMetadata, error) {
 	var protoReq ConfRequest
@@ -109,6 +111,7 @@ func request_ChainNotifier_RegisterBlockEpochNtfn_0(ctx context.Context, marshal
 // RegisterChainNotifierHandlerServer registers the http handlers for service ChainNotifier to "mux".
 // UnaryRPC     :call ChainNotifierServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterChainNotifierHandlerFromEndpoint instead.
 func RegisterChainNotifierHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ChainNotifierServer) error {
 
 	mux.Handle("POST", pattern_ChainNotifier_RegisterConfirmationsNtfn_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {

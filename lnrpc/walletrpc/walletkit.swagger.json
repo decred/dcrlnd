@@ -76,6 +76,16 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/walletrpcImportAccountRequest"
+            }
+          }
+        ],
         "tags": [
           "WalletKit"
         ]
@@ -1121,6 +1131,32 @@
         "block_hash": {
           "type": "string",
           "format": "byte"
+        }
+      }
+    },
+    "walletrpcImportAccountRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "A name to identify the account with."
+        },
+        "extended_public_key": {
+          "type": "string",
+          "description": "A public key that corresponds to a wallet account represented as an extended\nkey. It must conform to a derivation path of the form\nm/purpose'/coin_type'/account'."
+        },
+        "master_key_fingerprint": {
+          "type": "string",
+          "format": "byte",
+          "description": "The fingerprint of the root key (also known as the key with derivation path\nm/) from which the account public key was derived from. This may be required\nby some hardware wallets for proper identification and signing. The bytes\nmust be in big-endian order."
+        },
+        "address_type": {
+          "$ref": "#/definitions/walletrpcAddressType",
+          "description": "An address type is only required when the extended account public key has a\nlegacy version (xpub, tpub, etc.), such that the wallet cannot detect what\naddress scheme it belongs to."
+        },
+        "dry_run": {
+          "type": "boolean",
+          "description": "Whether a dry run should be attempted when importing the account. This\nserves as a way to confirm whether the account is being imported correctly\nby returning the first N addresses for the external and internal branches of\nthe account. If these addresses match as expected, then it should be safe to\nimport the account as is."
         }
       }
     },

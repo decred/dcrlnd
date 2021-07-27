@@ -10,7 +10,40 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v2/initchainsync/subscribe": {
+      "get": {
+        "summary": "SubscribeChainSync is a streaming call that registers a client to receive\nupdates about the progress of the sync procedure. If an update message is\nreceived with synced = true, then this will be the last update sent and\nthe server will be shutdown.",
+        "operationId": "InitialChainSync_SubscribeChainSync",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/initialchainsyncrpcChainSyncUpdate"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of initialchainsyncrpcChainSyncUpdate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "InitialChainSync"
+        ]
+      }
+    }
+  },
   "definitions": {
     "initialchainsyncrpcChainSyncUpdate": {
       "type": "object",
