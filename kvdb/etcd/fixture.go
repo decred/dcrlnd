@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/matheusd/etcd/clientv3"
-	"github.com/matheusd/etcd/clientv3/namespace"
 	"github.com/stretchr/testify/require"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/namespace"
 )
 
 const (

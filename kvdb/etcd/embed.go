@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/matheusd/etcd/embed"
+	"go.etcd.io/etcd/server/v3/embed"
 )
 
 const (
@@ -70,9 +70,8 @@ func NewEmbeddedEtcdInstance(path string, clientPort, peerPort uint16) (
 	// To ensure that we can submit large transactions.
 	cfg.MaxTxnOps = 8192
 	cfg.MaxRequestBytes = 16384 * 1024
-	cfg.Debug = false
-	// cfg.Logger = "zap"
-	// cfg.LogLevel = "error"
+	cfg.Logger = "zap"
+	cfg.LogLevel = "error"
 
 	// Listen on random free ports if no ports were specified.
 	if clientPort == 0 {

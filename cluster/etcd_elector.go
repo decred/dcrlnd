@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/decred/dcrlnd/kvdb/etcd"
-	"github.com/matheusd/etcd/clientv3"
-	"github.com/matheusd/etcd/clientv3/concurrency"
-	"github.com/matheusd/etcd/clientv3/namespace"
-	"github.com/matheusd/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.etcd.io/etcd/client/v3/namespace"
 )
 
 const (
