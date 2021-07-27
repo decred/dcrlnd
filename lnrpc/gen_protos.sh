@@ -7,8 +7,8 @@ build_protoc_gen_go() {
     export GOBIN=$PWD/bin
     go build .
     go install github.com/golang/protobuf/protoc-gen-go \
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 }
 
 generate() {
@@ -38,13 +38,19 @@ generate() {
       annotationsFile=${file//proto/yaml}
       protoc -I. \
         -I$GOOGAPIS -I$PROTOBUFAPIS \
-        --grpc-gateway_out=logtostderr=true,paths=source_relative,grpc_api_configuration=${annotationsFile}:. \
+	--grpc-gateway_out . \
+	--grpc-gateway_opt logtostderr=true \
+	--grpc-gateway_opt paths=source_relative \
+	--grpc-gateway_opt grpc_api_configuration=${annotationsFile} \
         "${file}"
 
       # Finally, generate the swagger file which describes the REST API in detail.
       protoc -I. \
         -I$GOOGAPIS -I$PROTOBUFAPIS \
-        --swagger_out=logtostderr=true,grpc_api_configuration=${annotationsFile}:. \
+	--openapiv2_out . \
+	--openapiv2_opt logtostderr=true \
+	--openapiv2_opt grpc_api_configuration=${annotationsFile} \
+	--openapiv2_opt json_names_for_fields=false \
         "${file}"
     done
 }

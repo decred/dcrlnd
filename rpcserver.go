@@ -70,7 +70,7 @@ import (
 	"github.com/decred/dcrlnd/watchtower"
 	"github.com/decred/dcrlnd/zpay32"
 
-	proxy "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	proxy "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/tv42/zbase32"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -520,6 +520,11 @@ func MainRPCServerPermissions() map[string][]bakery.Op {
 type rpcServer struct {
 	started  int32 // To be used atomically.
 	shutdown int32 // To be used atomically.
+
+	// Required by the grpc-gateway/v2 library for forward compatibility.
+	// Must be after the atomically used variables to not break struct
+	// alignment.
+	lnrpc.UnimplementedLightningServer
 
 	server *server
 

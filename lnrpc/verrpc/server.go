@@ -6,7 +6,7 @@ import (
 
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/lnrpc"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"gopkg.in/macaroon-bakery.v2/bakery"
 )

@@ -11,8 +11,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/lnrpc"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"gopkg.in/macaroon-bakery.v2/bakery"
 )
