@@ -73,17 +73,7 @@ include make/fuzz_flags.mk
 
 DEV_TAGS := $(if ${tags},$(DEV_TAGS) ${tags},$(DEV_TAGS))
 
-LINT = $(LINT_BIN) \
-	run \
-	--skip-files="mobile\\/.*generated\\.go" \
-	--disable-all \
-	--enable=gofmt \
-	--enable=vet \
-	--enable=gosimple \
-	--enable=unconvert \
-	--enable=ineffassign \
-	--enable=unused \
-	--deadline=10m
+LINT = $(LINT_BIN) run
 
 GOFUZZ_DEP_PKG_FETCH = go get -v $(GOFUZZ_DEP_PKG)@$(GOFUZZ_COMMIT)
 
