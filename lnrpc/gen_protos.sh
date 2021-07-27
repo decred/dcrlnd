@@ -20,7 +20,7 @@ generate() {
 
     echo "Generating root gRPC server protos"
 
-    PROTOS="rpc.proto walletunlocker.proto stateservice.proto **/*.proto"
+    PROTOS="lightning.proto walletunlocker.proto stateservice.proto **/*.proto"
 
     # For each of the sub-servers, we then generate their protos, but a restricted
     # set as they don't yet require REST proxies, or swagger docs.
