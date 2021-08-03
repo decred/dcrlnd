@@ -39,6 +39,7 @@ import (
 	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
@@ -701,7 +702,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		HeightHintCacheQueryDisable: cfg.HeightHintCacheQueryDisable,
 		DcrdMode:                    cfg.DcrdMode,
 		DcrwMode:                    cfg.Dcrwallet,
-		HeightHintDB:                dbs.graphDB,
+		HeightHintDB:                dbs.heightHintDB,
 		ChanStateDB:                 dbs.chanStateDB,
 		PrivateWalletPw:             privateWalletPw,
 		PublicWalletPw:              publicWalletPw,
@@ -1611,8 +1612,9 @@ func waitForWalletPassword(cfg *Config,
 // databaseInstances is a struct that holds all instances to the actual
 // databases that are used in lnd.
 type databaseInstances struct {
-	graphDB     *channeldb.DB
-	chanStateDB *channeldb.DB
+	graphDB      *channeldb.DB
+	chanStateDB  *channeldb.DB
+	heightHintDB kvdb.Backend
 }
 
 // initializeDatabases extracts the current databases that we'll use for normal
@@ -1642,7 +1644,9 @@ func initializeDatabases(ctx context.Context,
 	// If the remoteDB is nil, then we'll just open a local DB as normal,
 	// having the remote and local pointer be the exact same instance.
 	var (
-		dbs        = &databaseInstances{}
+		dbs = &databaseInstances{
+			heightHintDB: databaseBackends.HeightHintDB,
+		}
 		closeFuncs []func()
 	)
 	if databaseBackends.ChanStateDB == nil {

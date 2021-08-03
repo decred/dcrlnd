@@ -25,6 +25,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -58,7 +59,7 @@ type Config struct {
 
 	// HeightHintDB is a pointer to the database that stores the height
 	// hints.
-	HeightHintDB *channeldb.DB
+	HeightHintDB kvdb.Backend
 
 	// ChanStateDB is a pointer to the database that stores the channel
 	// state.
