@@ -56,11 +56,13 @@ type Config struct {
 	// DcrwMode defines settings for connecting to a dcrwallet instance.
 	DcrwMode *lncfg.DcrwalletConfig
 
-	// LocalChanDB is a pointer to the local backing channel database.
-	LocalChanDB *channeldb.DB
+	// HeightHintDB is a pointer to the database that stores the height
+	// hints.
+	HeightHintDB *channeldb.DB
 
-	// RemoteChanDB is a pointer to the remote backing channel database.
-	RemoteChanDB *channeldb.DB
+	// ChanStateDB is a pointer to the database that stores the channel
+	// state.
+	ChanStateDB *channeldb.DB
 
 	// BlockCacheSize is the size (in bytes) of blocks kept in memory.
 	BlockCacheSize uint64
@@ -279,7 +281,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 
 	// Initialize the height hint cache within the chain directory.
 	hintCache, err := chainntnfs.NewHeightHintCache(
-		heightHintCacheConfig, cfg.LocalChanDB,
+		heightHintCacheConfig, cfg.HeightHintDB,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to initialize height hint "+
@@ -380,7 +382,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		dcrwConfig := &remotedcrwallet.Config{
 			PrivatePass:   cfg.PrivateWalletPw,
 			NetParams:     cfg.ActiveNetParams.Params,
-			DB:            cfg.RemoteChanDB,
+			DB:            cfg.ChanStateDB,
 			Conn:          cfg.WalletConn,
 			AccountNumber: cfg.WalletAccountNb,
 			ChainIO:       cc.ChainIO,
@@ -450,7 +452,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			Wallet:         cfg.Wallet,
 			Loader:         cfg.WalletLoader,
 			BlockCache:     blockCache,
-			DB:             cfg.RemoteChanDB,
+			DB:             cfg.ChanStateDB,
 		}
 
 		wc, err := dcrwallet.New(*dcrwConfig)
@@ -586,7 +588,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 	// Create, and start the lnwallet, which handles the core payment
 	// channel logic, and exposes control via proxy state machines.
 	walletCfg := lnwallet.Config{
-		Database:           cfg.RemoteChanDB,
+		Database:           cfg.ChanStateDB,
 		Notifier:           cc.ChainNotifier,
 		WalletController:   cc.Wc,
 		Signer:             cc.Signer,
