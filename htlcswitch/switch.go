@@ -546,7 +546,7 @@ func (s *Switch) SendHTLC(firstHop lnwire.ShortChannelID, attemptID uint64,
 	// Send packet to link.
 	packet.circuit = circuit
 
-	return link.HandleLocalAddPacket(packet)
+	return link.handleLocalAddPacket(packet)
 }
 
 // UpdateForwardingPolicies sends a message to the switch to update the
@@ -1182,7 +1182,7 @@ func (s *Switch) handlePacketForward(packet *htlcPacket) error {
 		// Send the packet to the destination channel link which
 		// manages the channel.
 		packet.outgoingChanID = destination.ShortChanID()
-		return destination.HandleSwitchPacket(packet)
+		return destination.handleSwitchPacket(packet)
 
 	case *lnwire.UpdateFailHTLC, *lnwire.UpdateFulfillHTLC:
 		// If the source of this packet has not been set, use the
