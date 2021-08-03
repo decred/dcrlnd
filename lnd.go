@@ -1619,6 +1619,7 @@ type databaseInstances struct {
 	chanStateDB  *channeldb.DB
 	heightHintDB kvdb.Backend
 	macaroonDB   kvdb.Backend
+	decayedLogDB kvdb.Backend
 }
 
 // initializeDatabases extracts the current databases that we'll use for normal
@@ -1652,6 +1653,7 @@ func initializeDatabases(ctx context.Context,
 	dbs := &databaseInstances{
 		heightHintDB: databaseBackends.HeightHintDB,
 		macaroonDB:   databaseBackends.MacaroonDB,
+		decayedLogDB: databaseBackends.DecayedLogDB,
 	}
 	cleanUp := func() {
 		// We can just close the returned close functions directly. Even
