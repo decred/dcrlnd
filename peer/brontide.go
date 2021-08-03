@@ -826,7 +826,7 @@ func (p *Brontide) addLink(chanPoint *wire.OutPoint,
 		FetchLastChannelUpdate:  p.cfg.FetchLastChanUpdate,
 		HodlMask:                p.cfg.Hodl.Mask(),
 		Registry:                p.cfg.Invoices,
-		Switch:                  p.cfg.Switch,
+		BestHeight:              p.cfg.Switch.BestHeight,
 		Circuits:                p.cfg.Switch.CircuitModifier(),
 		ForwardPackets:          p.cfg.InterceptSwitch.ForwardPackets,
 		FwrdingPolicy:           *forwardingPolicy,
@@ -852,6 +852,9 @@ func (p *Brontide) addLink(chanPoint *wire.OutPoint,
 		NotifyActiveChannel:     p.cfg.ChannelNotifier.NotifyActiveChannelEvent,
 		NotifyInactiveChannel:   p.cfg.ChannelNotifier.NotifyInactiveChannelEvent,
 		HtlcNotifier:            p.cfg.HtlcNotifier,
+
+		ResetChanReestablishWaitTime: p.cfg.ChannelDB.ResetChanReestablishWaitTime,
+		AddToChanReestablishWaitTime: p.cfg.ChannelDB.AddToChanReestablishWaitTime,
 	}
 
 	link := htlcswitch.NewChannelLink(linkCfg, lnChan)

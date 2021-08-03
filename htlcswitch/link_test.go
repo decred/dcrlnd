@@ -1941,6 +1941,7 @@ func newSingleLinkTestHarness(chanAmt, chanReserve dcrutil.Amount) (
 		FwrdingPolicy:      globalPolicy,
 		Peer:               alicePeer,
 		Switch:             aliceSwitch,
+		BestHeight:         aliceSwitch.BestHeight,
 		Circuits:           aliceSwitch.CircuitModifier(),
 		ForwardPackets:     aliceSwitch.ForwardPackets,
 		DecodeHopIterators: decoder.DecodeHopIterators,
@@ -1973,6 +1974,9 @@ func newSingleLinkTestHarness(chanAmt, chanReserve dcrutil.Amount) (
 		NotifyActiveChannel:   func(wire.OutPoint) {},
 		NotifyInactiveChannel: func(wire.OutPoint) {},
 		HtlcNotifier:          aliceSwitch.cfg.HtlcNotifier,
+
+		ResetChanReestablishWaitTime: aliceDb.ResetChanReestablishWaitTime,
+		AddToChanReestablishWaitTime: aliceDb.AddToChanReestablishWaitTime,
 	}
 
 	aliceLink := NewChannelLink(aliceCfg, aliceLc.channel)
@@ -4444,6 +4448,7 @@ func (h *persistentLinkHarness) restartLink(
 		FwrdingPolicy:      globalPolicy,
 		Peer:               alicePeer,
 		Switch:             aliceSwitch,
+		BestHeight:         aliceSwitch.BestHeight,
 		Circuits:           aliceSwitch.CircuitModifier(),
 		ForwardPackets:     aliceSwitch.ForwardPackets,
 		DecodeHopIterators: decoder.DecodeHopIterators,
@@ -4479,6 +4484,9 @@ func (h *persistentLinkHarness) restartLink(
 		NotifyInactiveChannel: func(wire.OutPoint) {},
 		HtlcNotifier:          aliceSwitch.cfg.HtlcNotifier,
 		SyncStates:            syncStates,
+
+		ResetChanReestablishWaitTime: aliceDb.ResetChanReestablishWaitTime,
+		AddToChanReestablishWaitTime: aliceDb.AddToChanReestablishWaitTime,
 	}
 
 	aliceLink := NewChannelLink(aliceCfg, aliceChannel)

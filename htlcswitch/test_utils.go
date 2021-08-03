@@ -1127,6 +1127,7 @@ func (h *hopNetwork) createChannelLink(server, peer *mockServer,
 	link := NewChannelLink(
 		ChannelLinkConfig{
 			Switch:             server.htlcSwitch,
+			BestHeight:         server.htlcSwitch.BestHeight,
 			FwrdingPolicy:      h.globalPolicy,
 			Peer:               peer,
 			Circuits:           server.htlcSwitch.CircuitModifier(),
@@ -1160,6 +1161,9 @@ func (h *hopNetwork) createChannelLink(server, peer *mockServer,
 			NotifyActiveChannel:     func(wire.OutPoint) {},
 			NotifyInactiveChannel:   func(wire.OutPoint) {},
 			HtlcNotifier:            server.htlcSwitch.cfg.HtlcNotifier,
+
+			ResetChanReestablishWaitTime: func(chanID lnwire.ShortChannelID) error { return nil },
+			AddToChanReestablishWaitTime: func(chanID lnwire.ShortChannelID, waitTime time.Duration) error { return nil },
 		},
 		channel,
 	)

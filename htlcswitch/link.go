@@ -136,6 +136,17 @@ type ChannelLinkConfig struct {
 	// TODO(conner): remove after refactoring htlcswitch testing framework.
 	Switch *Switch
 
+	// BestHeight returns the best known height.
+	BestHeight func() uint32
+
+	// ResetChanReestablishWaitTime zeroes the time it took to reestablish
+	// the channel after restart.
+	ResetChanReestablishWaitTime func(chanID lnwire.ShortChannelID) error
+
+	// AddToChanReestablishWaitTime adds to the total time tracked to have
+	// taken a channel to be reestablished.
+	AddToChanReestablishWaitTime func(chanID lnwire.ShortChannelID, waitTime time.Duration) error
+
 	// ForwardPackets attempts to forward the batch of htlcs through the
 	// switch. The function returns and error in case it fails to send one or
 	// more packets. The link's quit signal should be provided to allow
@@ -746,7 +757,7 @@ func (l *channelLink) syncChanStates() error {
 
 		// Channel reestablish successfully received, so reset the wait
 		// time.
-		err := l.cfg.Switch.cfg.DB.ResetChanReestablishWaitTime(l.shortChanID)
+		err := l.cfg.ResetChanReestablishWaitTime(l.shortChanID)
 		if err != nil {
 			l.log.Errorf("Unable to reset ChannelReestblish wait "+
 				"time: %v", err)
@@ -757,7 +768,7 @@ func (l *channelLink) syncChanStates() error {
 		// how long we waited for a ChannelReestasblish message.
 		waitTime := time.Since(sendTime)
 		l.log.Debugf("Adding +%s to channel reestablish wait time", waitTime)
-		err := l.cfg.Switch.cfg.DB.AddToChanReestablishWaitTime(l.shortChanID, waitTime)
+		err := l.cfg.AddToChanReestablishWaitTime(l.shortChanID, waitTime)
 		if err != nil {
 			l.log.Errorf("Unable to track wait time for "+
 				"ChannelReestblish msg: %v", err)
@@ -2775,7 +2786,7 @@ func (l *channelLink) processRemoteAdds(fwdPkg *channeldb.FwdPkg,
 			continue
 		}
 
-		heightNow := l.cfg.Switch.BestHeight()
+		heightNow := l.cfg.BestHeight()
 
 		pld, err := chanIterator.HopPayload()
 		if err != nil {
