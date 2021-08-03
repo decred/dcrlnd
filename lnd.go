@@ -460,7 +460,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		ltndLog.Infof("Elected as leader (%v)", cfg.Cluster.ID)
 	}
 
-	localChanDB, remoteChanDB, cleanUp, err := initializeDatabases(ctx, cfg)
+	dbs, cleanUp, err := initializeDatabases(ctx, cfg)
 	switch {
 	case err == channeldb.ErrDryRunMigrationOK:
 		ltndLog.Infof("%v, exiting", err)
@@ -478,13 +478,13 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		// environment. This will ensure that all members of the cluster
 		// have access to the same wallet state.
 		loaderOpts = append(loaderOpts, walletloader.LoaderWithExternalWalletDB(
-			remoteChanDB.Backend,
+			dbs.remoteChanDB.Backend,
 		))
 	} else {
 		// Nothing to do.
 	}
 
-	pwService.SetDB(remoteChanDB)
+	pwService.SetDB(dbs.remoteChanDB)
 	pwService.SetLoaderOpts(loaderOpts)
 	walletExists, err := pwService.WalletExists()
 	if err != nil {
@@ -701,8 +701,8 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		HeightHintCacheQueryDisable: cfg.HeightHintCacheQueryDisable,
 		DcrdMode:                    cfg.DcrdMode,
 		DcrwMode:                    cfg.Dcrwallet,
-		LocalChanDB:                 localChanDB,
-		RemoteChanDB:                remoteChanDB,
+		LocalChanDB:                 dbs.localChanDB,
+		RemoteChanDB:                dbs.remoteChanDB,
 		PrivateWalletPw:             privateWalletPw,
 		PublicWalletPw:              publicWalletPw,
 		Birthday:                    walletInitParams.Birthday,
@@ -922,7 +922,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// Set up the core server which will listen for incoming peer
 	// connections.
 	server, err := newServer(
-		cfg, cfg.Listeners, localChanDB, remoteChanDB, towerClientDB,
+		cfg, cfg.Listeners, dbs, towerClientDB,
 		activeChainControl, &idKeyDesc, walletInitParams.ChansToRestore,
 		chainedAcceptor, torController,
 	)
@@ -1010,7 +1010,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	autoServer := automation.NewServer(&automation.Config{
 		Automation:   cfg.Automation,
 		CloseChannel: rpcServer.CloseChannel,
-		DB:           remoteChanDB,
+		DB:           dbs.remoteChanDB,
 	})
 	if err := autoServer.Start(); err != nil {
 		return err
@@ -1608,6 +1608,13 @@ func waitForWalletPassword(cfg *Config,
 	}
 }
 
+// databaseInstances is a struct that holds all instances to the actual
+// databases that are used in lnd.
+type databaseInstances struct {
+	localChanDB  *channeldb.DB
+	remoteChanDB *channeldb.DB
+}
+
 // initializeDatabases extracts the current databases that we'll use for normal
 // operation in the daemon. Two databases are returned: one remote and one
 // local. However, only if the replicated database is active will the remote
@@ -1615,7 +1622,7 @@ func waitForWalletPassword(cfg *Config,
 // both point to the same local database. A function closure that closes all
 // opened databases is also returned.
 func initializeDatabases(ctx context.Context,
-	cfg *Config) (*channeldb.DB, *channeldb.DB, func(), error) {
+	cfg *Config) (*databaseInstances, func(), error) {
 
 	ltndLog.Infof("Opening the main database, this might take a few " +
 		"minutes...")
@@ -1630,20 +1637,20 @@ func initializeDatabases(ctx context.Context,
 
 	databaseBackends, err := cfg.DB.GetBackends(ctx, cfg.localDatabaseDir())
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to obtain database "+
+		return nil, nil, fmt.Errorf("unable to obtain database "+
 			"backends: %v", err)
 	}
 
 	// If the remoteDB is nil, then we'll just open a local DB as normal,
 	// having the remote and local pointer be the exact same instance.
 	var (
-		localChanDB, remoteChanDB *channeldb.DB
-		closeFuncs                []func()
+		dbs        = &databaseInstances{}
+		closeFuncs []func()
 	)
 	if databaseBackends.RemoteDB == nil {
 		// Open the channeldb, which is dedicated to storing channel,
 		// and network related metadata.
-		localChanDB, err = channeldb.CreateWithBackend(
+		dbs.localChanDB, err = channeldb.CreateWithBackend(
 			databaseBackends.LocalDB,
 			channeldb.OptionSetRejectCacheSize(cfg.Caches.RejectCacheSize),
 			channeldb.OptionSetChannelCacheSize(cfg.Caches.ChannelCacheSize),
@@ -1652,19 +1659,19 @@ func initializeDatabases(ctx context.Context,
 		)
 		switch {
 		case err == channeldb.ErrDryRunMigrationOK:
-			return nil, nil, nil, err
+			return nil, nil, err
 
 		case err != nil:
 			err := fmt.Errorf("unable to open local channeldb: %v", err)
 			ltndLog.Error(err)
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		closeFuncs = append(closeFuncs, func() {
-			localChanDB.Close()
+			dbs.localChanDB.Close()
 		})
 
-		remoteChanDB = localChanDB
+		dbs.remoteChanDB = dbs.localChanDB
 	} else {
 		ltndLog.Infof("Database replication is available! Creating " +
 			"local and remote channeldb instances")
@@ -1672,7 +1679,7 @@ func initializeDatabases(ctx context.Context,
 		// Otherwise, we'll open two instances, one for the state we
 		// only need locally, and the other for things we want to
 		// ensure are replicated.
-		localChanDB, err = channeldb.CreateWithBackend(
+		dbs.localChanDB, err = channeldb.CreateWithBackend(
 			databaseBackends.LocalDB,
 			channeldb.OptionSetRejectCacheSize(cfg.Caches.RejectCacheSize),
 			channeldb.OptionSetChannelCacheSize(cfg.Caches.ChannelCacheSize),
@@ -1689,34 +1696,34 @@ func initializeDatabases(ctx context.Context,
 		case err != nil:
 			err := fmt.Errorf("unable to open local channeldb: %v", err)
 			ltndLog.Error(err)
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		closeFuncs = append(closeFuncs, func() {
-			localChanDB.Close()
+			dbs.localChanDB.Close()
 		})
 
 		ltndLog.Infof("Opening replicated database instance...")
 
-		remoteChanDB, err = channeldb.CreateWithBackend(
+		dbs.remoteChanDB, err = channeldb.CreateWithBackend(
 			databaseBackends.RemoteDB,
 			channeldb.OptionDryRunMigration(cfg.DryRunMigration),
 			channeldb.OptionSetBatchCommitInterval(cfg.DB.BatchCommitInterval),
 		)
 		switch {
 		case err == channeldb.ErrDryRunMigrationOK:
-			return nil, nil, nil, err
+			return nil, nil, err
 
 		case err != nil:
-			localChanDB.Close()
+			dbs.localChanDB.Close()
 
 			err := fmt.Errorf("unable to open remote channeldb: %v", err)
 			ltndLog.Error(err)
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		closeFuncs = append(closeFuncs, func() {
-			remoteChanDB.Close()
+			dbs.remoteChanDB.Close()
 		})
 	}
 
@@ -1729,5 +1736,5 @@ func initializeDatabases(ctx context.Context,
 		}
 	}
 
-	return localChanDB, remoteChanDB, cleanUp, nil
+	return dbs, cleanUp, nil
 }
