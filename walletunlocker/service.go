@@ -314,9 +314,7 @@ func extractChanBackups(chanBackups *lnrpc.ChanBackupSnapshot) *ChannelsToRecove
 	var backups ChannelsToRecover
 	if chanBackups.MultiChanBackup != nil {
 		multiBackup := chanBackups.MultiChanBackup
-		backups.PackedMultiChanBackup = chanbackup.PackedMulti(
-			multiBackup.MultiChanBackup,
-		)
+		backups.PackedMultiChanBackup = multiBackup.MultiChanBackup
 	}
 
 	if chanBackups.SingleChanBackups == nil {
