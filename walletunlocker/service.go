@@ -14,6 +14,7 @@ import (
 	"github.com/decred/dcrlnd/chanbackup"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/macaroons"
@@ -132,9 +133,8 @@ type UnlockerService struct {
 	// the WalletUnlocker service.
 	MacResponseChan chan []byte
 
-	chainDir       string
-	noFreelistSync bool
-	netParams      *chaincfg.Params
+	chainDir  string
+	netParams *chaincfg.Params
 
 	// db is the db used for checking remote wallet unlocks.
 	db atomic.Pointer[channeldb.DB]
@@ -150,20 +150,21 @@ type UnlockerService struct {
 	// initialization of lnd.
 	macaroonFiles []string
 
-	// dbTimeout specifies the timeout value to use when opening the wallet
-	// database.
-	dbTimeout time.Duration
-
 	// resetWalletTransactions indicates that the wallet state should be
 	// reset on unlock to force a full chain rescan.
 	resetWalletTransactions bool
 
 	// LoaderOpts holds the functional options for the wallet loader.
 	loaderOpts []walletloader.LoaderOption
+
+	// macaroonDB is an instance of a database backend that stores all
+	// macaroon root keys. This will be nil on initialization and must be
+	// set using the SetMacaroonDB method as soon as it's available.
+	macaroonDB kvdb.Backend
 }
 
 // New creates and returns a new UnlockerService.
-func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
+func New(chainDir string, params *chaincfg.Params,
 	macaroonFiles []string, dbTimeout time.Duration,
 	dcrwHost, dcrwCert, dcrwClientKey,
 	dcrwClientCert string, dcrwAccount int32) *UnlockerService {
@@ -183,8 +184,6 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 		chainDir:                chainDir,
 		netParams:               params,
 		macaroonFiles:           macaroonFiles,
-		dbTimeout:               dbTimeout,
-		noFreelistSync:          noFreelistSync,
 		resetWalletTransactions: false,
 	}
 }
@@ -199,6 +198,12 @@ func (u *UnlockerService) SetDB(db *channeldb.DB) {
 // service has been hooked to the main RPC server.
 func (u *UnlockerService) SetLoaderOpts(loaderOpts []walletloader.LoaderOption) {
 	u.loaderOpts = loaderOpts
+}
+
+// SetMacaroonDB can be used to inject the macaroon database after the unlocker
+// service has been hooked to the main RPC server.
+func (u *UnlockerService) SetMacaroonDB(macaroonDB kvdb.Backend) {
+	u.macaroonDB = macaroonDB
 }
 
 func (u *UnlockerService) newLoader(recoveryWindow uint32) (*walletloader.Loader,
@@ -631,9 +636,8 @@ func (u *UnlockerService) ChangePassword(ctx context.Context,
 	// then close it again.
 	// Attempt to open the macaroon DB, unlock it and then change
 	// the passphrase.
-	netDir := dcrwallet.NetworkDir(u.chainDir, u.netParams)
 	macaroonService, err := macaroons.NewService(
-		netDir, "lnd", in.StatelessInit, u.dbTimeout,
+		u.macaroonDB, "lnd", in.StatelessInit,
 	)
 	if err != nil {
 		return nil, err
