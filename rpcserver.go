@@ -4530,7 +4530,7 @@ func (r *rpcServer) checkCanSendPayment(payIntent *rpcPaymentIntent) error {
 		// Try to retrieve a the link from the htlc switch to verify we
 		// can currently use this channel for routing.
 		channelID := lnwire.NewChanIDFromOutPoint(chanPoint)
-		var link htlcswitch.ChannelLink
+		var link htlcswitch.ChannelUpdateHandler
 		if link, err = r.server.htlcSwitch.GetLink(channelID); err != nil {
 			continue
 		}
@@ -4995,7 +4995,7 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 		// Try to retrieve a the link from the htlc switch to verify we can
 		// currently use this channel for routing.
 		channelID := lnwire.NewChanIDFromOutPoint(chanPoint)
-		var link htlcswitch.ChannelLink
+		var link htlcswitch.ChannelUpdateHandler
 		if link, err = r.server.htlcSwitch.GetLink(channelID); err != nil {
 			continue
 		}

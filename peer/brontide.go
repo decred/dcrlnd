@@ -1158,7 +1158,7 @@ func (ms *msgStream) AddMsg(msg lnwire.Message) {
 // ChannelLink to pass messages to. It accomplishes this by subscribing to
 // an ActiveLinkEvent which is emitted by the link when it first starts up.
 func waitUntilLinkActive(p *Brontide,
-	cid lnwire.ChannelID) htlcswitch.ChannelLink {
+	cid lnwire.ChannelID) htlcswitch.ChannelUpdateHandler {
 
 	// Subscribe to receive channel events.
 	//
@@ -1180,9 +1180,11 @@ func waitUntilLinkActive(p *Brontide,
 
 	// The link may already be active by this point, and we may have missed the
 	// ActiveLinkEvent. Check if the link exists.
-	link, _ := p.cfg.Switch.GetLink(cid)
-	if link != nil {
-		return link
+	links, _ := p.cfg.Switch.GetLinksByInterface(p.cfg.PubKeyBytes)
+	for _, link := range links {
+		if link.ChanID() == cid {
+			return link
+		}
 	}
 
 	// If the link is nil, we must wait for it to be active.
@@ -1210,8 +1212,16 @@ func waitUntilLinkActive(p *Brontide,
 			// The link shouldn't be nil as we received an
 			// ActiveLinkEvent. If it is nil, we return nil and the
 			// calling function should catch it.
-			link, _ = p.cfg.Switch.GetLink(cid)
-			return link
+			links, _ = p.cfg.Switch.GetLinksByInterface(
+				p.cfg.PubKeyBytes,
+			)
+			for _, link := range links {
+				if link.ChanID() == cid {
+					return link
+				}
+			}
+
+			return nil
 
 		case <-p.quit:
 			return nil
@@ -1227,7 +1237,7 @@ func waitUntilLinkActive(p *Brontide,
 // lookups.
 func newChanMsgStream(p *Brontide, cid lnwire.ChannelID) *msgStream {
 
-	var chanLink htlcswitch.ChannelLink
+	var chanLink htlcswitch.ChannelUpdateHandler
 
 	apply := func(msg lnwire.Message) {
 		// This check is fine because if the link no longer exists, it will

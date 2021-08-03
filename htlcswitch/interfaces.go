@@ -104,11 +104,6 @@ type ChannelUpdateHandler interface {
 	// MayAddOutgoingHtlc returns an error if we may not add an outgoing
 	// htlc to the channel.
 	MayAddOutgoingHtlc() error
-
-	// ShutdownIfChannelClean shuts the link down if the channel state is
-	// clean. This can be used with dynamic commitment negotiation or coop
-	// close negotiation which require a clean channel state.
-	ShutdownIfChannelClean() error
 }
 
 // ChannelLink is an interface which represents the subsystem for managing the
@@ -134,22 +129,14 @@ type ChannelLink interface {
 	// Embed the packetHandler interface.
 	packetHandler
 
-	// HandleChannelUpdate handles the htlc requests as settle/add/fail
-	// which sent to us from remote peer we have a channel with.
-	//
-	// NOTE: This function MUST be non-blocking (or block as little as
-	// possible).
-	HandleChannelUpdate(lnwire.Message)
+	// Embed the ChannelUpdateHandler interface.
+	ChannelUpdateHandler
 
 	// Embed the dustHandler interface.
 	dustHandler
 
 	// ChannelPoint returns the channel outpoint for the channel link.
 	ChannelPoint() *wire.OutPoint
-
-	// ChanID returns the channel ID for the channel link. The channel ID
-	// is a more compact representation of a channel's full outpoint.
-	ChanID() lnwire.ChannelID
 
 	// ShortChanID returns the short channel ID for the channel link. The
 	// short channel ID encodes the exact location in the main chain that
@@ -200,17 +187,6 @@ type ChannelLink interface {
 	// Peer returns the representation of remote peer with which we have
 	// the channel link opened.
 	Peer() lnpeer.Peer
-
-	// EligibleToForward returns a bool indicating if the channel is able
-	// to actively accept requests to forward HTLC's. A channel may be
-	// active, but not able to forward HTLC's if it hasn't yet finalized
-	// the pre-channel operation protocol with the remote peer. The switch
-	// will use this function in forwarding decisions accordingly.
-	EligibleToForward() bool
-
-	// MayAddOutgoingHtlc returns an error if we may not add an outgoing
-	// htlc to the channel.
-	MayAddOutgoingHtlc() error
 
 	// AttachMailBox delivers an active MailBox to the link. The MailBox may
 	// have buffered messages.
