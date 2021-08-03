@@ -61,7 +61,7 @@ type LinkNode struct {
 
 // NewLinkNode creates a new LinkNode from the provided parameters, which is
 // backed by an instance of channeldb.
-func (db *DB) NewLinkNode(bitNet wire.CurrencyNet, pub *secp256k1.PublicKey,
+func (d *DB) NewLinkNode(bitNet wire.CurrencyNet, pub *secp256k1.PublicKey,
 	addrs ...net.Addr) *LinkNode {
 
 	filledAddrs := make([]net.Addr, 0, len(addrs))
@@ -77,7 +77,7 @@ func (db *DB) NewLinkNode(bitNet wire.CurrencyNet, pub *secp256k1.PublicKey,
 		IdentityPub: pub,
 		LastSeen:    time.Now(),
 		Addresses:   filledAddrs,
-		db:          db,
+		db:          d,
 	}
 }
 
@@ -137,13 +137,13 @@ func putLinkNode(nodeMetaBucket kvdb.RwBucket, l *LinkNode) error {
 
 // DeleteLinkNode removes the link node with the given identity from the
 // database.
-func (db *DB) DeleteLinkNode(identity *secp256k1.PublicKey) error {
-	return kvdb.Update(db, func(tx kvdb.RwTx) error {
-		return db.deleteLinkNode(tx, identity)
+func (d *DB) DeleteLinkNode(identity *secp256k1.PublicKey) error {
+	return kvdb.Update(d, func(tx kvdb.RwTx) error {
+		return d.deleteLinkNode(tx, identity)
 	}, func() {})
 }
 
-func (db *DB) deleteLinkNode(tx kvdb.RwTx, identity *secp256k1.PublicKey) error {
+func (d *DB) deleteLinkNode(tx kvdb.RwTx, identity *secp256k1.PublicKey) error {
 	nodeMetaBucket := tx.ReadWriteBucket(nodeInfoBucket)
 	if nodeMetaBucket == nil {
 		return ErrLinkNodesNotFound
@@ -156,9 +156,9 @@ func (db *DB) deleteLinkNode(tx kvdb.RwTx, identity *secp256k1.PublicKey) error 
 // FetchLinkNode attempts to lookup the data for a LinkNode based on a target
 // identity public key. If a particular LinkNode for the passed identity public
 // key cannot be found, then ErrNodeNotFound if returned.
-func (db *DB) FetchLinkNode(identity *secp256k1.PublicKey) (*LinkNode, error) {
+func (d *DB) FetchLinkNode(identity *secp256k1.PublicKey) (*LinkNode, error) {
 	var linkNode *LinkNode
-	err := kvdb.View(db, func(tx kvdb.RTx) error {
+	err := kvdb.View(d, func(tx kvdb.RTx) error {
 		node, err := fetchLinkNode(tx, identity)
 		if err != nil {
 			return err
@@ -199,10 +199,10 @@ func fetchLinkNode(tx kvdb.RTx, targetPub *secp256k1.PublicKey) (*LinkNode, erro
 
 // FetchAllLinkNodes starts a new database transaction to fetch all nodes with
 // whom we have active channels with.
-func (db *DB) FetchAllLinkNodes() ([]*LinkNode, error) {
+func (d *DB) FetchAllLinkNodes() ([]*LinkNode, error) {
 	var linkNodes []*LinkNode
-	err := kvdb.View(db, func(tx kvdb.RTx) error {
-		nodes, err := db.fetchAllLinkNodes(tx)
+	err := kvdb.View(d, func(tx kvdb.RTx) error {
+		nodes, err := d.fetchAllLinkNodes(tx)
 		if err != nil {
 			return err
 		}
@@ -221,7 +221,7 @@ func (db *DB) FetchAllLinkNodes() ([]*LinkNode, error) {
 
 // fetchAllLinkNodes uses an existing database transaction to fetch all nodes
 // with whom we have active channels with.
-func (db *DB) fetchAllLinkNodes(tx kvdb.RTx) ([]*LinkNode, error) {
+func (d *DB) fetchAllLinkNodes(tx kvdb.RTx) ([]*LinkNode, error) {
 	nodeMetaBucket := tx.ReadBucket(nodeInfoBucket)
 	if nodeMetaBucket == nil {
 		return nil, ErrLinkNodesNotFound
