@@ -7,9 +7,11 @@ package loader
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"decred.org/dcrwallet/v3/errors"
 	"decred.org/dcrwallet/v3/wallet"
@@ -27,10 +29,18 @@ const (
 
 // LoaderOption is similar to the upstream btcwallet.LoaderOption type, but not
 // yet used.
-type LoaderOption func()
+type LoaderOption func(l *Loader)
 
 func LoaderWithExternalWalletDB(backend kvdb.Backend) LoaderOption {
 	panic("unimplemented")
+}
+
+func LoaderWithLocalWalletDB(dbDirPath string, noSyncFreeList bool, dbTimeout time.Duration) LoaderOption {
+	return func(l *Loader) {
+		if dbDirPath != l.dbDirPath {
+			panic(fmt.Sprintf("wrong usage: %s != %s", dbDirPath, l.dbDirPath))
+		}
+	}
 }
 
 // Loader implements the creating of new and opening of existing wallets, while
