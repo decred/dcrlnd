@@ -66,7 +66,6 @@ import (
 	"github.com/decred/dcrlnd/walletunlocker"
 	"github.com/decred/dcrlnd/watchtower/blob"
 	"github.com/decred/dcrlnd/watchtower/wtclient"
-	"github.com/decred/dcrlnd/watchtower/wtdb"
 	"github.com/decred/dcrlnd/watchtower/wtpolicy"
 	"github.com/decred/dcrlnd/watchtower/wtserver"
 	sphinx "github.com/decred/lightning-onion/v4"
@@ -352,8 +351,7 @@ func noiseDial(idKey keychain.SingleKeyECDH,
 // newServer creates a new instance of the server which is to listen using the
 // passed listener address.
 func newServer(cfg *Config, listenAddrs []net.Addr,
-	dbs *databaseInstances,
-	towerClientDB *wtdb.ClientDB, cc *chainreg.ChainControl,
+	dbs *databaseInstances, cc *chainreg.ChainControl,
 	nodeKeyDesc *keychain.KeyDescriptor,
 	chansToRestore walletunlocker.ChannelsToRecover,
 	chanPredicate chanacceptor.ChannelAcceptor,
@@ -1302,7 +1300,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 			SecretKeyRing:  s.cc.KeyRing,
 			Dial:           cfg.net.Dial,
 			AuthDial:       authDial,
-			DB:             towerClientDB,
+			DB:             dbs.towerClientDB,
 			Policy:         policy,
 			ChainHash:      s.cfg.ActiveNetParams.GenesisHash,
 			MinBackoff:     10 * time.Second,
@@ -1326,7 +1324,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 			SecretKeyRing:  s.cc.KeyRing,
 			Dial:           cfg.net.Dial,
 			AuthDial:       authDial,
-			DB:             towerClientDB,
+			DB:             dbs.towerClientDB,
 			Policy:         anchorPolicy,
 			ChainHash:      s.cfg.ActiveNetParams.GenesisHash,
 			MinBackoff:     10 * time.Second,
