@@ -3314,11 +3314,10 @@ func TestLightningWallet(t *testing.T, driverName, backEnd string) {
 	hintCacheCfg := chainntnfs.CacheConfig{
 		QueryDisable: false,
 	}
-	hintCache, err := chainntnfs.NewHeightHintCache(hintCacheCfg, db)
+	hintCache, err := chainntnfs.NewHeightHintCache(hintCacheCfg, db.Backend)
 	require.NoError(t, err)
 	chainNotifier, err := dcrdnotify.New(
-		&rpcConfig, netParams, hintCache, hintCache,
-		nil,
+		&rpcConfig, netParams, hintCache, hintCache, nil,
 	)
 	require.NoError(t, err)
 	if err := chainNotifier.Start(); err != nil {
