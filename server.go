@@ -1776,10 +1776,7 @@ func (s *server) Start() error {
 		// configure the set of active bootstrappers, and launch a
 		// dedicated goroutine to maintain a set of persistent
 		// connections.
-		isSimnet := s.cfg.Decred.SimNet
-		isRegtest := s.cfg.Decred.RegTest
-		isDevNetwork := isSimnet || isRegtest
-		if !s.cfg.NoNetBootstrap && !isDevNetwork {
+		if shouldPeerBootstrap(s.cfg) {
 			bootstrappers, err := initNetworkBootstrappers(s)
 			if err != nil {
 				startErr = err
@@ -3986,4 +3983,15 @@ func newSweepPkScriptGen(
 
 		return input.PayToAddrScript(sweepAddr)
 	}
+}
+
+// shouldPeerBootstrap returns true if we should attempt to perform peer
+// boostrapping to actively seek our peers using the set of active network
+// bootsrappers.
+func shouldPeerBootstrap(cfg *Config) bool {
+	isSimnet := cfg.Decred.SimNet
+	isRegtest := cfg.Decred.RegTest
+	isDevNetwork := isSimnet || isRegtest
+
+	return !cfg.NoNetBootstrap && !isDevNetwork
 }

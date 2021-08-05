@@ -18,6 +18,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/decred/dcrlnd/lncfg"
 )
 
 func TestParseHexColor(t *testing.T) {
@@ -203,4 +205,66 @@ func genExpiredCertPair(t *testing.T, certDirPath string) ([]byte, []byte) {
 	}
 
 	return certDerBytes, keyBytes
+}
+
+// TestShouldPeerBootstrap tests that we properly skip network bootstrap for
+// the developer networks, and also if bootstrapping is explicitly disabled.
+func TestShouldPeerBootstrap(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		cfg            *Config
+		shouldBoostrap bool
+	}{
+		// Simnet active, no bootstrap.
+		{
+			cfg: &Config{
+				Decred: &lncfg.Chain{
+					SimNet: true,
+				},
+			},
+		},
+
+		// Regtest active, no bootstrap.
+		{
+			cfg: &Config{
+				Decred: &lncfg.Chain{
+					RegTest: true,
+				},
+			},
+		},
+
+		// Mainnet active, but boostrap disabled, no boostrap.
+		{
+			cfg: &Config{
+				Decred:         &lncfg.Chain{},
+				NoNetBootstrap: true,
+			},
+		},
+
+		// Mainnet active, should boostrap.
+		{
+			cfg: &Config{
+				Decred: &lncfg.Chain{},
+			},
+			shouldBoostrap: true,
+		},
+
+		// Testnet active, should boostrap.
+		{
+			cfg: &Config{
+				Decred: &lncfg.Chain{
+					TestNet3: true,
+				},
+			},
+			shouldBoostrap: true,
+		},
+	}
+	for i, testCase := range testCases {
+		bootstrapped := shouldPeerBootstrap(testCase.cfg)
+		if bootstrapped != testCase.shouldBoostrap {
+			t.Fatalf("#%v: expected bootstrap=%v, got bootstrap=%v",
+				i, testCase.shouldBoostrap, bootstrapped)
+		}
+	}
 }
