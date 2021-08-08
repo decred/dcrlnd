@@ -792,7 +792,7 @@ out:
 						continue
 					}
 
-					err := checkChannelPolicy(
+					err := lntest.CheckChannelPolicy(
 						update.RoutingPolicy,
 						exp.expectedPolicy,
 					)
@@ -916,42 +916,11 @@ func assertChannelPolicy(t *harnessTest, node *lntest.HarnessNode,
 
 	policies := getChannelPolicies(t, node, advertisingNode, chanPoints...)
 	for _, policy := range policies {
-		err := checkChannelPolicy(policy, expectedPolicy)
+		err := lntest.CheckChannelPolicy(policy, expectedPolicy)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
 	}
-}
-
-// checkChannelPolicy checks that the policy matches the expected one.
-func checkChannelPolicy(policy, expectedPolicy *lnrpc.RoutingPolicy) error {
-	if policy.FeeBaseMAtoms != expectedPolicy.FeeBaseMAtoms {
-		return fmt.Errorf("expected base fee %v, got %v",
-			expectedPolicy.FeeBaseMAtoms, policy.FeeBaseMAtoms)
-	}
-	if policy.FeeRateMilliMAtoms != expectedPolicy.FeeRateMilliMAtoms {
-		return fmt.Errorf("expected fee rate %v, got %v",
-			expectedPolicy.FeeRateMilliMAtoms,
-			policy.FeeRateMilliMAtoms)
-	}
-	if policy.TimeLockDelta != expectedPolicy.TimeLockDelta {
-		return fmt.Errorf("expected time lock delta %v, got %v",
-			expectedPolicy.TimeLockDelta,
-			policy.TimeLockDelta)
-	}
-	if policy.MinHtlc != expectedPolicy.MinHtlc {
-		return fmt.Errorf("expected min htlc %v, got %v",
-			expectedPolicy.MinHtlc, policy.MinHtlc)
-	}
-	if policy.MaxHtlcMAtoms != expectedPolicy.MaxHtlcMAtoms {
-		return fmt.Errorf("expected max htlc %v, got %v",
-			expectedPolicy.MaxHtlcMAtoms, policy.MaxHtlcMAtoms)
-	}
-	if policy.Disabled != expectedPolicy.Disabled {
-		return errors.New("edge should be disabled but isn't")
-	}
-
-	return nil
 }
 
 // assertMinerBlockHeightDelta ensures that tempMiner is 'delta' blocks ahead
