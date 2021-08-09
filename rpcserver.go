@@ -4076,6 +4076,19 @@ func (r *rpcServer) SubscribeChannelEvents(req *lnrpc.ChannelEventSubscription,
 			case channelnotifier.ActiveLinkEvent:
 				continue
 
+			case channelnotifier.FullyResolvedChannelEvent:
+				update = &lnrpc.ChannelEventUpdate{
+					Type: lnrpc.ChannelEventUpdate_FULLY_RESOLVED_CHANNEL,
+					Channel: &lnrpc.ChannelEventUpdate_FullyResolvedChannel{
+						FullyResolvedChannel: &lnrpc.ChannelPoint{
+							FundingTxid: &lnrpc.ChannelPoint_FundingTxidBytes{
+								FundingTxidBytes: event.ChannelPoint.Hash[:],
+							},
+							OutputIndex: event.ChannelPoint.Index,
+						},
+					},
+				}
+
 			default:
 				return fmt.Errorf("unexpected channel event update: %v", event)
 			}
