@@ -1607,6 +1607,7 @@ func verifyCloseUpdate(chanUpdate *lnrpc.ChannelEventUpdate,
 				lnrpc.ChannelEventUpdate_INACTIVE_CHANNEL,
 				chanUpdate.Type)
 		}
+
 	case *lnrpc.ChannelEventUpdate_ClosedChannel:
 		if chanUpdate.Type !=
 			lnrpc.ChannelEventUpdate_CLOSED_CHANNEL {
@@ -1626,6 +1627,13 @@ func verifyCloseUpdate(chanUpdate *lnrpc.ChannelEventUpdate,
 			return fmt.Errorf("expected close intiator: %v, got: %v",
 				closeInitiator,
 				update.ClosedChannel.CloseInitiator)
+		}
+
+	case *lnrpc.ChannelEventUpdate_FullyResolvedChannel:
+		if chanUpdate.Type != lnrpc.ChannelEventUpdate_FULLY_RESOLVED_CHANNEL {
+			return fmt.Errorf("update type mismatch: expected %v, got %v",
+				lnrpc.ChannelEventUpdate_FULLY_RESOLVED_CHANNEL,
+				chanUpdate.Type)
 		}
 
 	default:
