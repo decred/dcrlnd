@@ -154,8 +154,7 @@ func testCommitmentTransactionDeadline(net *lntest.NetworkHarness,
 			t.t, checkNumWaitingCloseChannels(pendingChanResp, 1),
 		)
 
-		// We should see only one sweep transaction because the anchor
-		// sweep is skipped.
+		// Check our sweep transactions can be found in mempool.
 		sweepTxns, err := getNTxsFromMempool(
 			net.Miner.Node,
 			expectedSweepTxNum, minerMempoolTimeout,
