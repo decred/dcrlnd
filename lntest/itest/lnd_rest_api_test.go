@@ -522,7 +522,7 @@ func wsTestCaseBiDirectionalSubscription(ht *harnessTest,
 				Amt: 500000,
 			},
 		)
-		defer closeChannelAndAssert(testctx.New(ht.t), ht, net, net.Alice,
+		defer closeChannelAndAssert(ht, net, net.Alice,
 			cp, false)
 
 		select {

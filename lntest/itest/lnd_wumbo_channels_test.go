@@ -67,5 +67,5 @@ func testWumboChannels(net *lntest.NetworkHarness, t *harnessTest) {
 			Amt: chanAmt,
 		},
 	)
-	closeChannelAndAssert(ctxb, t, net, wumboNode, chanPoint, false)
+	closeChannelAndAssert(t, net, wumboNode, chanPoint, false)
 }

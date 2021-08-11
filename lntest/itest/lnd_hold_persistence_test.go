@@ -407,6 +407,5 @@ func testHoldInvoicePersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		require.Equal(t.t, io.EOF, err)
 	}
 
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, carol, chanPointAlice, false)
+	closeChannelAndAssert(t, net, carol, chanPointAlice, false)
 }

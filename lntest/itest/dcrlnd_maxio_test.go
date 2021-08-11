@@ -143,8 +143,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Force-close and cleanup the channel, since bob & carol are disconnected.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, carol, chanPoint, true)
+	closeChannelAndAssert(t, net, carol, chanPoint, true)
 	cleanupForceClose(t, net, carol, chanPoint)
 }
 
@@ -233,10 +232,8 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 			"inbound capacity")
 	}
 
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, carol, chanPointCarol, false)
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, net.Alice, chanPointAlice, false)
+	closeChannelAndAssert(t, net, carol, chanPointCarol, false)
+	closeChannelAndAssert(t, net, net.Alice, chanPointAlice, false)
 }
 
 // testSendPaymentMaxAmt tests whether trying to send an invoice fails under
@@ -369,8 +366,7 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Force-close and cleanup the channel, since bob & carol are
 	// disconnected.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, net.Bob, chanPoint, true)
+	closeChannelAndAssert(t, net, net.Bob, chanPoint, true)
 	cleanupForceClose(t, net, net.Bob, chanPoint)
 }
 
@@ -555,7 +551,6 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 		if t.t.Failed() {
 			t.Fatalf("Case '%s' failed", tc.descr)
 		}
-		ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-		closeChannelAndAssert(ctxt, t, net, carol, chanPoint, false)
+		closeChannelAndAssert(t, net, carol, chanPoint, false)
 	}
 }

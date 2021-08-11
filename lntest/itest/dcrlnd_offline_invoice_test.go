@@ -199,12 +199,9 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	tryPayment(payReqs[4], dave, success)
 
 	// Close the channels.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, net.Alice, chanPointAlice, false)
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, carol, chanPointCarol, false)
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, dave, chanPointDave, false)
+	closeChannelAndAssert(t, net, net.Alice, chanPointAlice, false)
+	closeChannelAndAssert(t, net, carol, chanPointCarol, false)
+	closeChannelAndAssert(t, net, dave, chanPointDave, false)
 }
 
 // testCalcPayStats asserts the correctness of the CalcPaymentStats RPC.
@@ -292,8 +289,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 	waitForInvoiceAccepted(t, bob, payHash2)
 
 	// Fetch the payment stats.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	payStats, err := alice.CalcPaymentStats(ctxt, &lnrpc.CalcPaymentStatsRequest{})
+	payStats, err := alice.CalcPaymentStats(testctx.WithTimeout(t, defaultTimeout), &lnrpc.CalcPaymentStatsRequest{})
 	require.NoError(t.t, err)
 	require.Equal(t.t, uint64(7), payStats.Total)
 	require.Equal(t.t, uint64(5), payStats.Succeeded)
@@ -304,8 +300,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 	require.Equal(t.t, uint64(0), payStats.OldDupePayments)
 
 	// Clean up the channel.
-	_, err = bob.CancelInvoice(ctxt, &invoicesrpc.CancelInvoiceMsg{PaymentHash: payHash2[:]})
+	_, err = bob.CancelInvoice(testctx.New(t), &invoicesrpc.CancelInvoiceMsg{PaymentHash: payHash2[:]})
 	require.NoError(t.t, err)
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, alice, chanPoint, false)
+	closeChannelAndAssert(t, net, alice, chanPoint, false)
 }

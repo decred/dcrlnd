@@ -401,8 +401,7 @@ func testUnannouncedChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Close the channel used during the test.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, net.Alice, fundingChanPoint, false)
+	closeChannelAndAssert(t, net, net.Alice, fundingChanPoint, false)
 }
 
 func testGraphTopologyNotifications(net *lntest.NetworkHarness, t *harnessTest) {
@@ -542,8 +541,7 @@ func testGraphTopologyNtfns(net *lntest.NetworkHarness, t *harnessTest, pinned b
 
 	// Now we'll test that updates are properly sent after channels are closed
 	// within the network.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, alice, chanPoint, false)
+	closeChannelAndAssert(t, net, alice, chanPoint, false)
 
 	// Now that the channel has been closed, we should receive a
 	// notification indicating so.
@@ -674,8 +672,7 @@ out:
 	}
 
 	// Close the channel between Bob and Carol.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, bob, chanPoint, false)
+	closeChannelAndAssert(t, net, bob, chanPoint, false)
 }
 
 // testNodeAnnouncement ensures that when a node is started with one or more
@@ -771,6 +768,5 @@ func testNodeAnnouncement(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Close the channel between Bob and Dave.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeChannelAndAssert(ctxt, t, net, net.Bob, chanPoint, false)
+	closeChannelAndAssert(t, net, net.Bob, chanPoint, false)
 }
