@@ -358,6 +358,13 @@ type Brontide struct {
 	// our last ping message. To be used atomically.
 	pingLastSend int64
 
+	// lastPingPayload stores an unsafe pointer wrapped as an atomic
+	// variable which points to the last payload the remote party sent us
+	// as their ping.
+	//
+	// MUST be used atomically.
+	lastPingPayload atomic.Value
+
 	cfg Config
 
 	// activeSignal when closed signals that the peer is now active and
@@ -1385,8 +1392,14 @@ out:
 			p.handlePong()
 
 		case *lnwire.Ping:
-			// TODO(roasbeef): get from buffer pool somewhere? ends
-			// up w/ lots of small allocations
+			// First, we'll store their latest ping payload within
+			// the relevant atomic variable.
+			p.lastPingPayload.Store(msg.PaddingBytes[:])
+
+			// Next, we'll send over the amount of specified pong
+			// bytes.
+			//
+			// TODO(roasbeef): read out from pong scratch instead?
 			pongBytes := make([]byte, msg.NumPongBytes)
 			p.queueMsg(lnwire.NewPong(pongBytes), nil)
 
@@ -2024,7 +2037,13 @@ out:
 		// between all our peers, which can later be used to
 		// cross-check our own view of the network to mitigate various
 		// types of eclipse attacks.
-		case epoch := <-blockEpochs.Epochs:
+		case epoch, ok := <-blockEpochs.Epochs:
+			if !ok {
+				peerLog.Debugf("block notifications " +
+					"canceled")
+				return
+			}
+
 			blockHeader = epoch.BlockHeader
 			headerBuf := bytes.NewBuffer(pingPayload[0:0])
 			err := blockHeader.Serialize(headerBuf)
@@ -3188,4 +3207,20 @@ func (p *Brontide) BytesReceived() uint64 {
 // BytesSent returns the number of bytes sent to the peer.
 func (p *Brontide) BytesSent() uint64 {
 	return atomic.LoadUint64(&p.bytesSent)
+}
+
+// LastRemotePingPayload returns the last payload the remote party sent as part
+// of their ping.
+func (p *Brontide) LastRemotePingPayload() []byte {
+	pingPayload := p.lastPingPayload.Load()
+	if pingPayload == nil {
+		return []byte{}
+	}
+
+	pingBytes, ok := pingPayload.(lnwire.PingPayload)
+	if !ok {
+		return nil
+	}
+
+	return pingBytes
 }
