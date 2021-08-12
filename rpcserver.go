@@ -2667,16 +2667,17 @@ func (r *rpcServer) ListPeers(ctx context.Context,
 		)
 
 		rpcPeer := &lnrpc.Peer{
-			PubKey:    hex.EncodeToString(nodePub[:]),
-			Address:   serverPeer.Conn().RemoteAddr().String(),
-			Inbound:   serverPeer.Inbound(),
-			BytesRecv: serverPeer.BytesReceived(),
-			BytesSent: serverPeer.BytesSent(),
-			AtomsSent: atomsSent,
-			AtomsRecv: atomsRecv,
-			PingTime:  serverPeer.PingTime(),
-			SyncType:  lnrpcSyncType,
-			Features:  features,
+			PubKey:          hex.EncodeToString(nodePub[:]),
+			Address:         serverPeer.Conn().RemoteAddr().String(),
+			Inbound:         serverPeer.Inbound(),
+			BytesRecv:       serverPeer.BytesReceived(),
+			BytesSent:       serverPeer.BytesSent(),
+			AtomsSent:       atomsSent,
+			AtomsRecv:       atomsRecv,
+			PingTime:        serverPeer.PingTime(),
+			SyncType:        lnrpcSyncType,
+			Features:        features,
+			LastPingPayload: serverPeer.LastRemotePingPayload(),
 		}
 
 		var peerErrors []interface{}
