@@ -40,6 +40,7 @@ import (
 	"github.com/decred/dcrlnd/peernotifier"
 	"github.com/decred/dcrlnd/routing"
 	"github.com/decred/dcrlnd/routing/localchans"
+	"github.com/decred/dcrlnd/rpcperms"
 	"github.com/decred/dcrlnd/signal"
 	"github.com/decred/dcrlnd/sweep"
 	"github.com/decred/dcrlnd/walletunlocker"
@@ -173,6 +174,7 @@ func SetupLoggers(root *build.RotatingLogWriter, interceptor signal.Interceptor)
 	AddSubLogger(root, chanacceptor.Subsystem, interceptor, chanacceptor.UseLogger)
 	AddSubLogger(root, funding.Subsystem, interceptor, funding.UseLogger)
 	AddSubLogger(root, cluster.Subsystem, interceptor, cluster.UseLogger)
+	AddSubLogger(root, rpcperms.Subsystem, interceptor, rpcperms.UseLogger)
 }
 
 // AddSubLogger is a helper method to conveniently create and register the
