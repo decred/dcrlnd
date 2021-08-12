@@ -846,7 +846,7 @@ func (hn *HarnessNode) start(lndBinary string, lndError chan<- error,
 		return fmt.Errorf("unable to connect to %s's RPC: %v", hn.Name(), err)
 	}
 
-	if err := hn.waitUntilStarted(conn, DefaultTimeout); err != nil {
+	if err := hn.WaitUntilStarted(conn, DefaultTimeout); err != nil {
 		return err
 	}
 
@@ -1057,8 +1057,8 @@ func (hn *HarnessNode) unlockRemoteWallet() error {
 	return nil
 }
 
-// waitUntilStarted waits until the wallet state flips from "WAITING_TO_START".
-func (hn *HarnessNode) waitUntilStarted(conn grpc.ClientConnInterface,
+// WaitUntilStarted waits until the wallet state flips from "WAITING_TO_START".
+func (hn *HarnessNode) WaitUntilStarted(conn grpc.ClientConnInterface,
 	timeout time.Duration) error {
 
 	stateClient := lnrpc.NewStateClient(conn)
@@ -1079,6 +1079,7 @@ func (hn *HarnessNode) waitUntilStarted(conn grpc.ClientConnInterface,
 			resp, err := stateStream.Recv()
 			if err != nil {
 				errChan <- err
+				return
 			}
 
 			if resp.State != lnrpc.WalletState_WAITING_TO_START {
@@ -1119,7 +1120,7 @@ func (hn *HarnessNode) WaitUntilLeader(timeout time.Duration) error {
 	}
 	timeout -= time.Since(startTs)
 
-	if err := hn.waitUntilStarted(conn, timeout); err != nil {
+	if err := hn.WaitUntilStarted(conn, timeout); err != nil {
 		return err
 	}
 
@@ -1622,7 +1623,9 @@ func (hn *HarnessNode) stop() error {
 	// Close any attempts at further grpc connections.
 	if hn.conn != nil {
 		err := hn.conn.Close()
-		if err != nil {
+		if err != nil &&
+			!strings.Contains(err.Error(), "connection is closing") {
+
 			return fmt.Errorf("error attempting to stop grpc "+
 				"client: %v", err)
 		}

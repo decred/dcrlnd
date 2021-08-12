@@ -801,7 +801,7 @@ func (n *NetworkHarness) DisconnectNodes(a, b *HarnessNode) error {
 func (n *NetworkHarness) RestartNode(node *HarnessNode, callback func() error,
 	chanBackups ...*lnrpc.ChanBackupSnapshot) error {
 
-	err := n.RestartNodeNoUnlock(node, callback)
+	err := n.RestartNodeNoUnlock(node, callback, true)
 	if err != nil {
 		return err
 	}
@@ -839,7 +839,7 @@ func (n *NetworkHarness) RestartNode(node *HarnessNode, callback func() error,
 // the callback parameter is non-nil, then the function will be executed after
 // the node shuts down, but *before* the process has been started up again.
 func (n *NetworkHarness) RestartNodeNoUnlock(node *HarnessNode,
-	callback func() error) error {
+	callback func() error, wait bool) error {
 
 	if err := node.stop(); err != nil {
 		return err
@@ -851,7 +851,7 @@ func (n *NetworkHarness) RestartNodeNoUnlock(node *HarnessNode,
 		}
 	}
 
-	return node.start(n.lndBinary, n.lndErrorChan, true)
+	return node.start(n.lndBinary, n.lndErrorChan, wait)
 }
 
 // SuspendNode stops the given node and returns a callback that can be used to
