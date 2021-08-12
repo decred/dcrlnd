@@ -7250,8 +7250,7 @@ func (r *rpcServer) CheckMacaroonPermissions(ctx context.Context,
 	}
 
 	err := r.macService.CheckMacAuth(
-		ctx, hex.EncodeToString(req.Macaroon), permissions,
-		req.FullMethod,
+		ctx, req.Macaroon, permissions, req.FullMethod,
 	)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
