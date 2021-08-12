@@ -41,7 +41,7 @@ func TestPeerChannelClosureAcceptFeeResponder(t *testing.T) {
 	broadcastTxChan := make(chan *wire.MsgTx)
 
 	alicePeer, bobChan, cleanUp, err := createTestPeer(
-		notifier, broadcastTxChan, noUpdate,
+		notifier, broadcastTxChan, noUpdate, nil,
 	)
 	if err != nil {
 		t.Fatalf("unable to create test channels: %v", err)
@@ -144,7 +144,7 @@ func TestPeerChannelClosureAcceptFeeInitiator(t *testing.T) {
 	broadcastTxChan := make(chan *wire.MsgTx)
 
 	alicePeer, bobChan, cleanUp, err := createTestPeer(
-		notifier, broadcastTxChan, noUpdate,
+		notifier, broadcastTxChan, noUpdate, nil,
 	)
 	if err != nil {
 		t.Fatalf("unable to create test channels: %v", err)
@@ -266,7 +266,7 @@ func TestPeerChannelClosureFeeNegotiationsResponder(t *testing.T) {
 	broadcastTxChan := make(chan *wire.MsgTx)
 
 	alicePeer, bobChan, cleanUp, err := createTestPeer(
-		notifier, broadcastTxChan, noUpdate,
+		notifier, broadcastTxChan, noUpdate, nil,
 	)
 	if err != nil {
 		t.Fatalf("unable to create test channels: %v", err)
@@ -460,7 +460,7 @@ func TestPeerChannelClosureFeeNegotiationsInitiator(t *testing.T) {
 	broadcastTxChan := make(chan *wire.MsgTx)
 
 	alicePeer, bobChan, cleanUp, err := createTestPeer(
-		notifier, broadcastTxChan, noUpdate,
+		notifier, broadcastTxChan, noUpdate, nil,
 	)
 	if err != nil {
 		t.Fatalf("unable to create test channels: %v", err)
@@ -796,7 +796,7 @@ func TestCustomShutdownScript(t *testing.T) {
 
 			// Open a channel.
 			alicePeer, bobChan, cleanUp, err := createTestPeer(
-				notifier, broadcastTxChan, test.update,
+				notifier, broadcastTxChan, test.update, nil,
 			)
 			if err != nil {
 				t.Fatalf("unable to create test channels: %v", err)
