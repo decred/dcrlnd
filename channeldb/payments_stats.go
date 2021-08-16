@@ -1,6 +1,8 @@
 package channeldb
 
 import (
+	"bytes"
+
 	"github.com/decred/dcrlnd/kvdb"
 )
 
@@ -39,10 +41,13 @@ func (d *DB) CalcPaymentStats() (*PaymentCountStats, error) {
 			if htlcsBucket != nil {
 				var inflight, settled bool
 				err := htlcsBucket.ForEach(func(k, _ []byte) error {
+					if !bytes.HasPrefix(k, htlcAttemptInfoKey) {
+						return nil
+					}
+					ai := k[len(htlcAttemptInfoKey):]
 					res.HTLCAttempts += 1
-					htlcBucket := htlcsBucket.NestedReadBucket(k)
-					hasFail := htlcBucket.Get(htlcFailInfoKey) != nil
-					hasSettle := htlcBucket.Get(htlcSettleInfoKey) != nil
+					hasFail := htlcsBucket.Get(htlcBucketKey(htlcFailInfoKey, ai)) != nil
+					hasSettle := htlcsBucket.Get(htlcBucketKey(htlcSettleInfoKey, ai)) != nil
 					if hasFail {
 						res.HTLCFailed += 1
 					} else if hasSettle {
