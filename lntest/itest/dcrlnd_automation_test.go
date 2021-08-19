@@ -35,7 +35,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 	net.EnsureConnected(testctx.New(t), t.t, dave, carol)
 
 	chanPoint := openChannelAndAssert(
-		testctx.New(t), t, net, carol, dave,
+		t, net, carol, dave,
 		lntest.OpenChannelParams{
 			Amt:     chanAmt,
 			PushAmt: pushAmt,

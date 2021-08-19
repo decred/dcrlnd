@@ -64,9 +64,8 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		Amt:     dcrutil.Amount(chanAmt),
 		PushAmt: dcrutil.Amount(pushAmt),
 	}
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPoint := openChannelAndAssert(
-		ctxt, t, net, carol, net.Bob, channelParam)
+		t, net, carol, net.Bob, channelParam)
 
 	// Test various scenarios with the channel open. The maximum amount receivable
 	// from a channel should be the remote channel balance minus our required
@@ -173,17 +172,15 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 		Amt:     dcrutil.Amount(chanAmt),
 		PushAmt: dcrutil.Amount(pushAmt),
 	}
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
-		ctxt, t, net, carol, net.Bob, channelParam)
+		t, net, carol, net.Bob, channelParam)
 
 	// Also open a channel from Alice -> bob. Alice will attempt the payments.
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	channelParam = lntest.OpenChannelParams{
 		Amt: dcrutil.Amount(chanAmt),
 	}
 	chanPointAlice := openChannelAndAssert(
-		ctxt, t, net, net.Alice, net.Bob, channelParam)
+		t, net, net.Alice, net.Bob, channelParam)
 
 	// Sanity check that payments one atom larger than the channel capacity -
 	// reserve cannot be paid.
@@ -301,9 +298,8 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		Amt:     dcrutil.Amount(chanAmt),
 		PushAmt: dcrutil.Amount(pushAmt),
 	}
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPoint := openChannelAndAssert(
-		ctxt, t, net, carol, net.Bob, channelParam)
+		t, net, carol, net.Bob, channelParam)
 
 	// Try to send a payment for one atom more than the maximum possible
 	// amount.  It should fail due to not enough outbound capacity.
@@ -392,14 +388,13 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 			Amt:     dcrutil.Amount(chanAmt),
 			PushAmt: dcrutil.Amount(pushAmt),
 		}
-		ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
 		if reverse {
 			return openChannelAndAssert(
-				ctxt, t, net, net.Bob, carol, channelParam,
+				t, net, net.Bob, carol, channelParam,
 			)
 		}
 		return openChannelAndAssert(
-			ctxt, t, net, carol, net.Bob, channelParam,
+			t, net, carol, net.Bob, channelParam,
 		)
 	}
 

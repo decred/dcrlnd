@@ -99,9 +99,8 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// In order to test Dave's response to an uncooperative channel closure
 	// by Carol, we'll first open up a channel between them with a
 	// defaultChanAmt (2^24) atoms value.
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPoint := openChannelAndAssert(
-		ctxt, t, net, dave, carol,
+		t, net, dave, carol,
 		lntest.OpenChannelParams{
 			Amt:     chanAmt,
 			PushAmt: pushAmt,

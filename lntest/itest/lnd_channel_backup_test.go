@@ -514,12 +514,9 @@ func testChannelBackupUpdates(net *lntest.NetworkHarness, t *harnessTest) {
 	numChans := 2
 	chanAmt := dcrutil.Amount(1000000)
 	for i := 0; i < numChans; i++ {
-		ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
 		chanPoint := openChannelAndAssert(
-			ctxt, t, net, net.Alice, carol,
-			lntest.OpenChannelParams{
-				Amt: chanAmt,
-			},
+			t, net, net.Alice, carol,
+			lntest.OpenChannelParams{Amt: chanAmt},
 		)
 
 		chanPoints = append(chanPoints, chanPoint)
@@ -653,12 +650,9 @@ func testExportChannelBackup(net *lntest.NetworkHarness, t *harnessTest) {
 	numChans := 2
 	chanAmt := dcrutil.Amount(1000000)
 	for i := 0; i < numChans; i++ {
-		ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
 		chanPoint := openChannelAndAssert(
-			ctxt, t, net, net.Alice, carol,
-			lntest.OpenChannelParams{
-				Amt: chanAmt,
-			},
+			t, net, net.Alice, carol,
+			lntest.OpenChannelParams{Amt: chanAmt},
 		)
 
 		chanPoints = append(chanPoints, chanPoint)
@@ -944,9 +938,8 @@ func testChanRestoreScenario(t *harnessTest, net *lntest.NetworkHarness,
 		)
 
 	default:
-		ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 		chanPoint = openChannelAndAssert(
-			ctxt, t, net, from, to,
+			t, net, from, to,
 			lntest.OpenChannelParams{
 				Amt:     chanAmt,
 				PushAmt: pushAmt,

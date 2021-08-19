@@ -517,10 +517,8 @@ func wsTestCaseBiDirectionalSubscription(ht *harnessTest,
 	const numChannels = 3
 	for i := 0; i < numChannels; i++ {
 		cp := openChannelAndAssert(
-			context.Background(), ht, net, net.Bob, net.Alice,
-			lntest.OpenChannelParams{
-				Amt: 500000,
-			},
+			ht, net, net.Bob, net.Alice,
+			lntest.OpenChannelParams{Amt: 500000},
 		)
 		defer closeChannelAndAssert(ht, net, net.Alice,
 			cp, false)

@@ -33,9 +33,8 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Open a channel between Alice and Bob with Alice being the sole funder of
 	// the channel.
-	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointAlice := openChannelAndAssert(
-		ctxt, t, net, net.Alice, net.Bob,
+		t, net, net.Alice, net.Bob,
 		lntest.OpenChannelParams{
 			Amt: chanAmt,
 		},
@@ -44,7 +43,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	// Create Dave's Node.
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
@@ -55,9 +54,8 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointDave := openChannelAndAssert(
-		ctxt, t, net, dave, carol,
+		t, net, dave, carol,
 		lntest.OpenChannelParams{
 			Amt: chanAmt,
 		},
@@ -114,9 +112,8 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	tryPayment(payReqs[1], dave, errNoPath)
 
 	// Create a channel between Carol and Alice and wait for it to become valid.
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanPointCarol := openChannelAndAssert(
-		ctxt, t, net, carol, net.Alice,
+		t, net, carol, net.Alice,
 		lntest.OpenChannelParams{
 			Amt: chanAmt,
 		},
@@ -222,8 +219,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 		Amt: defaultChanAmt,
 	}
 
-	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
-	chanPoint := openChannelAndAssert(ctxt, t, net, alice, bob, chanReq)
+	chanPoint := openChannelAndAssert(t, net, alice, bob, chanReq)
 
 	// Complete 5 payments.
 	const numPayments = 5
@@ -232,6 +228,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 		bob, paymentAmt, numPayments,
 	)
 	require.NoError(t.t, err)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
 		ctxt, alice, alice.RouterClient,
 		payReqs, true,

@@ -107,9 +107,8 @@ func testEtcdFailoverCase(net *lntest.NetworkHarness, ht *harnessTest,
 	// Open a channel with 100k satoshis between Carol and Alice with Alice
 	// being the sole funder of the channel.
 	chanAmt := dcrutil.Amount(100000)
-	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	_ = openChannelAndAssert(
-		ctxt, ht, net, net.Alice, carol1,
+		ht, net, net.Alice, carol1,
 		lntest.OpenChannelParams{
 			Amt: chanAmt,
 		},
