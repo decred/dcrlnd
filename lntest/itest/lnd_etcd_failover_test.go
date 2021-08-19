@@ -130,11 +130,13 @@ func testEtcdFailoverCase(net *lntest.NetworkHarness, ht *harnessTest,
 		ht.Fatalf("Carol-2 is unable to create payment requests: %v",
 			err)
 	}
-	sendAndAssertSuccess(ctxb, ht, net.Alice, &routerrpc.SendPaymentRequest{
-		PaymentRequest: payReqs[0],
-		TimeoutSeconds: 60,
-		FeeLimitAtoms:  noFeeLimitMAtoms,
-	})
+	sendAndAssertSuccess(
+		ht, net.Alice, &routerrpc.SendPaymentRequest{
+			PaymentRequest: payReqs[0],
+			TimeoutSeconds: 60,
+			FeeLimitAtoms:  noFeeLimitMAtoms,
+		},
+	)
 
 	// Shut down or kill Carol-1 and wait for Carol-2 to become the leader.
 	var failoverTimeout time.Duration
@@ -178,11 +180,13 @@ func testEtcdFailoverCase(net *lntest.NetworkHarness, ht *harnessTest,
 
 	// Now let Alice pay the second invoice but this time we expect Carol-2
 	// to receive the payment.
-	sendAndAssertSuccess(ctxb, ht, net.Alice, &routerrpc.SendPaymentRequest{
-		PaymentRequest: payReqs[1],
-		TimeoutSeconds: 60,
-		FeeLimitAtoms:  noFeeLimitMAtoms,
-	})
+	sendAndAssertSuccess(
+		ht, net.Alice, &routerrpc.SendPaymentRequest{
+			PaymentRequest: payReqs[1],
+			TimeoutSeconds: 60,
+			FeeLimitAtoms:  noFeeLimitMAtoms,
+		},
+	)
 
 	shutdownAndAssert(net, ht, carol2)
 }

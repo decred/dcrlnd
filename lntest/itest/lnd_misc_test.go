@@ -1860,7 +1860,7 @@ func testSweepAllCoins(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	sweepTxStr := sweepTx.TxHash().String()
-	assertTxLabel(ctxb, t, carol, sweepTxStr, sendCoinsLabel)
+	assertTxLabel(t, carol, sweepTxStr, sendCoinsLabel)
 
 	// While we are looking at labels, we test our label transaction command
 	// to make sure it is behaving as expected. First, we try to label our
@@ -1919,7 +1919,7 @@ func testSweepAllCoins(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("could not label tx: %v", err)
 	}
 
-	assertTxLabel(ctxb, t, carol, sweepTxStr, newLabel)
+	assertTxLabel(t, carol, sweepTxStr, newLabel)
 
 	// Finally, Ainz should now have no coins at all within his wallet.
 	balReq := &lnrpc.WalletBalanceRequest{}
