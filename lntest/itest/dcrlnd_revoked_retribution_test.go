@@ -313,8 +313,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 
 	// Wait for the final close status update, then ensure that the closing
 	// transaction was included in the block.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	breachTXID, err := net.WaitForChannelClose(ctxt, closeUpdates)
+	breachTXID, err := net.WaitForChannelClose(closeUpdates)
 	if err != nil {
 		t.Fatalf("error while waiting for channel close: %v", err)
 	}

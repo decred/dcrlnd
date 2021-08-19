@@ -211,8 +211,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 	// block.
 	block := mineBlocks(t, net, 1, 1)[0]
 
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	breachTXID, err := net.WaitForChannelClose(ctxt, closeUpdates)
+	breachTXID, err := net.WaitForChannelClose(closeUpdates)
 	if err != nil {
 		t.Fatalf("error while waiting for channel close: %v", err)
 	}
@@ -458,8 +457,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 		t.Fatalf("unable to stop Dave's node: %v", err)
 	}
 
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	breachTXID, err := net.WaitForChannelClose(ctxt, closeUpdates)
+	breachTXID, err := net.WaitForChannelClose(closeUpdates)
 	if err != nil {
 		t.Fatalf("error while waiting for channel close: %v", err)
 	}
@@ -1231,8 +1229,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 	// block.
 	block := mineBlocks(t, net, 1, 1)[0]
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	breachTXID, err := net.WaitForChannelClose(ctxt, closeUpdates)
+	breachTXID, err := net.WaitForChannelClose(closeUpdates)
 	if err != nil {
 		t.Fatalf("error while waiting for channel close: %v", err)
 	}

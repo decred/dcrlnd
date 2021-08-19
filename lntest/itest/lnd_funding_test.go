@@ -376,11 +376,8 @@ func testUnconfirmedChannelFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	// parties. Two transactions should be mined, the unconfirmed spend and
 	// the funding tx.
 	mineBlocks(t, net, 6, 2)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	chanPoint, err := net.WaitForChannelOpen(ctxt, chanOpenUpdate)
-	if err != nil {
-		t.Fatalf("error while waiting for channel open: %v", err)
-	}
+	chanPoint, err := net.WaitForChannelOpen(chanOpenUpdate)
+	require.NoError(t.t, err, "error while waitinng for channel open")
 
 	// With the channel open, we'll check the balances on each side of the
 	// channel as a sanity check to ensure things worked out as intended.
