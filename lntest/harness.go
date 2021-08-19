@@ -955,10 +955,10 @@ func saveProfilesPage(node *HarnessNode) error {
 	return nil
 }
 
-// WaitForTxInMempool blocks until the target txid is seen in the mempool. If
+// waitForTxInMempool blocks until the target txid is seen in the mempool. If
 // the transaction isn't seen within the network before the passed timeout,
 // then an error is returned.
-func (n *NetworkHarness) WaitForTxInMempool(ctx context.Context,
+func (n *NetworkHarness) waitForTxInMempool(ctx context.Context,
 	txid chainhash.Hash) error {
 
 	// Return immediately if harness has been torn down.
@@ -1329,7 +1329,7 @@ func (n *NetworkHarness) CloseChannel(lnNode *HarnessNode,
 				"%v", err)
 			return
 		}
-		if err := n.WaitForTxInMempool(ctx, *closeTxid); err != nil {
+		if err := n.waitForTxInMempool(ctx, *closeTxid); err != nil {
 			errChan <- fmt.Errorf("error while waiting for "+
 				"broadcast tx: %v", err)
 			return
