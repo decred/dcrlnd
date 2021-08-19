@@ -13,7 +13,6 @@ import (
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/stretchr/testify/require"
-	"matheusd.com/testctx"
 )
 
 // testOfflineHopInvoice tests whether trying to pay an invoice to an offline
@@ -43,15 +42,13 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	// Create Dave's Node.
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 
 	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
 	net.ConnectNodes(t.t, carol, dave)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	chanPointDave := openChannelAndAssert(
 		t, net, dave, carol,
@@ -77,7 +74,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 			PaymentRequest:       payReq,
 			IgnoreMaxOutboundAmt: true,
 		}
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		resp, err := srcNode.SendPaymentSync(ctxt, sendReq)
 		if err != nil {
 			t.Fatalf("unable to send payment: %v", err)
@@ -103,7 +100,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	tryPayment(payReqs[1], dave, errNoPath)
 
 	// Connect Carol to Alice (but don't create a channel yet).
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.EnsureConnected(ctxt, t.t, carol, net.Alice)
 
 	// Try to perform the payments from Carol and Dave. They should still fail.
@@ -207,7 +204,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 
 	alice := net.NewNode(t.t, "Alice", nil)
 	defer shutdownAndAssert(net, t, alice)
-	net.SendCoins(testctx.New(t), t.t, dcrutil.AtomsPerCoin, alice)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, alice)
 
 	bob := net.NewNode(t.t, "Bob", nil)
 	defer shutdownAndAssert(net, t, bob)

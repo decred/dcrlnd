@@ -48,8 +48,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Before we make a channel, we'll load up Carol with some coins sent
 	// directly from the miner.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	// In order to test Carol's response to an uncooperative channel
 	// closure by Bob, we'll first open up a channel between them with a
@@ -71,7 +70,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Wait for Carol to receive the channel edge from the funding manager.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint)
 	if err != nil {
 		t.Fatalf("carol didn't see the carol->bob channel before "+
@@ -312,8 +311,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel
 	// closure by Carol, we'll first open up a channel between them with a
@@ -335,7 +333,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 	}
 
 	// Wait for Dave to receive the channel edge from the funding manager.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = dave.WaitForNetworkChannelOpen(ctxt, chanPoint)
 	if err != nil {
 		t.Fatalf("dave didn't see the dave->carol channel before "+
@@ -559,8 +557,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel closure
 	// by Carol, we'll first open up a channel between them with a
@@ -591,7 +588,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	// We'll introduce a closure to validate that Carol's current balance
 	// matches the given expected amount.
 	checkCarolBalance := func(expectedAmt int64) {
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		carolChan, err := getChanInfo(ctxt, carol)
 		if err != nil {
 			t.Fatalf("unable to get carol's channel info: %v", err)
@@ -607,7 +604,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	// number of updates is at least as large as the provided minimum
 	// number.
 	checkCarolNumUpdatesAtLeast := func(minimum uint64) {
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		carolChan, err := getChanInfo(ctxt, carol)
 		if err != nil {
 			t.Fatalf("unable to get carol's channel info: %v", err)
@@ -620,7 +617,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	}
 
 	// Wait for Dave to receive the channel edge from the funding manager.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = dave.WaitForNetworkChannelOpen(ctxt, chanPoint)
 	if err != nil {
 		t.Fatalf("dave didn't see the dave->carol channel before "+
@@ -1082,7 +1079,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	net.SendCoins(ctxb, t.t, dcrutil.AtomsPerCoin, dave)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel
 	// closure by Carol, we'll first open up a channel between them with a

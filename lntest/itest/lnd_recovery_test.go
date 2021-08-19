@@ -226,9 +226,8 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 			}
 
 			// Send one DCR to the next P2PKH address.
-			ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 			net.SendCoins(
-				ctxt, t.t, dcrutil.AtomsPerCoin, node,
+				t.t, dcrutil.AtomsPerCoin, node,
 			)
 		}
 	}

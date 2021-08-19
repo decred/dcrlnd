@@ -290,11 +290,10 @@ func newMppTestContext(t *harnessTest,
 }
 
 // openChannel is a helper to open a channel from->to.
-func (c *mppTestContext) openChannel(from, to *lntest.HarnessNode, chanSize dcrutil.Amount) {
-	ctxb := context.Background()
+func (c *mppTestContext) openChannel(from, to *lntest.HarnessNode,
+	chanSize dcrutil.Amount) {
 
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	c.net.SendCoins(ctxt, c.t.t, dcrutil.AtomsPerCoin, from)
+	c.net.SendCoins(c.t.t, dcrutil.AtomsPerCoin, from)
 
 	chanPoint := openChannelAndAssert(
 		c.t, c.net, from, to,

@@ -44,19 +44,17 @@ func testBasicChannelFunding(net *lntest.NetworkHarness, t *harnessTest) {
 		carol := net.NewNode(t.t, "Carol", carolArgs)
 		defer shutdownAndAssert(net, t, carol)
 
-		// Each time, we'll send Carol a new set of coins in
-		// order to fund the channel.
-		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+		// Each time, we'll send Carol a new set of coins in order to
+		// fund the channel.
+		net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 		daveArgs := daveCommitType.Args()
 		dave := net.NewNode(t.t, "Dave", daveArgs)
 		defer shutdownAndAssert(net, t, dave)
 
-		// Before we start the test, we'll ensure both sides
-		// are connected to the funding flow can properly be
-		// executed.
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		// Before we start the test, we'll ensure both sides are
+		// connected to the funding flow can properly be executed.
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		net.EnsureConnected(ctxt, t.t, carol, dave)
 
 		carolChannel, daveChannel, closeChan, err := basicChannelFundingTest(
@@ -282,15 +280,14 @@ func testUnconfirmedChannelFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	// We'll send her some confirmed funds.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, 2*chanAmt, carol)
+	net.SendCoins(t.t, 2*chanAmt, carol)
 
 	// Now let Carol send some funds to herself, making a unconfirmed
 	// change output.
 	addrReq := &lnrpc.NewAddressRequest{
 		Type: lnrpc.AddressType_PUBKEY_HASH,
 	}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	resp, err := carol.NewAddress(ctxt, addrReq)
 	if err != nil {
 		t.Fatalf("unable to get new address: %v", err)
@@ -414,12 +411,11 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Carol will be funding the channel, so we'll send some coins over to
 	// her and ensure they have enough confirmations before we proceed.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Before we start the test, we'll ensure both sides are connected to
 	// the funding flow can properly be executed.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.EnsureConnected(ctxt, t.t, carol, dave)
 
 	// At this point, we're ready to simulate our external channel funding

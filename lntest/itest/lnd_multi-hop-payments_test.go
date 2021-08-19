@@ -51,8 +51,7 @@ func testMultiHopPayments(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, dave)
 
 	net.ConnectNodes(t.t, dave, net.Alice)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 
 	chanPointDave := openChannelAndAssert(
 		t, net, dave, net.Alice,
@@ -76,8 +75,7 @@ func testMultiHopPayments(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	net.ConnectNodes(t.t, carol, dave)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	chanPointCarol := openChannelAndAssert(
 		t, net, carol, dave,
@@ -110,7 +108,7 @@ func testMultiHopPayments(net *lntest.NetworkHarness, t *harnessTest) {
 				Index: chanPoint.OutputIndex,
 			}
 
-			ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+			ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 			err = node.WaitForNetworkChannelOpen(ctxt, chanPoint)
 			if err != nil {
 				t.Fatalf("%s(%d): timeout waiting for "+
@@ -133,7 +131,7 @@ func testMultiHopPayments(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// We'll wait for all parties to recognize the new channels within the
 	// network.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = dave.WaitForNetworkChannelOpen(ctxt, chanPointDave)
 	if err != nil {
 		t.Fatalf("dave didn't advertise his channel: %v", err)

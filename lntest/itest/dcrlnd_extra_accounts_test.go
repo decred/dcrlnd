@@ -64,7 +64,7 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Send coins to Alice, then from Alice to Carol.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, 2*dcrutil.AtomsPerCoin, net.Alice)
+	net.SendCoins(t.t, 2*dcrutil.AtomsPerCoin, net.Alice)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	_, err = net.Alice.SendCoins(ctxt, &lnrpc.SendCoinsRequest{Addr: addrRes.Addr, Amount: dcrutil.AtomsPerCoin})
 	require.NoError(t.t, err)

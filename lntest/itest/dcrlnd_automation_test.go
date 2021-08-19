@@ -30,8 +30,8 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 	require.Nil(t.t, err)
 	defer shutdownAndAssert(net, t, dave)
 
-	net.SendCoins(testctx.New(t), t.t, dcrutil.AtomsPerCoin, carol)
-	net.SendCoins(testctx.New(t), t.t, dcrutil.AtomsPerCoin, dave)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 	net.EnsureConnected(testctx.New(t), t.t, dave, carol)
 
 	chanPoint := openChannelAndAssert(

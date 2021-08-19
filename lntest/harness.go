@@ -1435,11 +1435,11 @@ func (n *NetworkHarness) DumpLogs(node *HarnessNode) (string, error) {
 // SendCoins attempts to send amt atoms from the internal mining node to the
 // targeted lightning node using a P2WKH address. 6 blocks are mined after in
 // order to confirm the transaction.
-func (n *NetworkHarness) SendCoins(ctx context.Context, t *testing.T,
-	amt dcrutil.Amount, target *HarnessNode) {
+func (n *NetworkHarness) SendCoins(t *testing.T, amt dcrutil.Amount,
+	target *HarnessNode) {
 
 	err := n.sendCoins(
-		ctx, amt, target, lnrpc.AddressType_PUBKEY_HASH,
+		amt, target, lnrpc.AddressType_PUBKEY_HASH,
 		true,
 	)
 	require.NoErrorf(t, err, "unable to send coins for %s", target.Cfg.Name)
@@ -1448,11 +1448,11 @@ func (n *NetworkHarness) SendCoins(ctx context.Context, t *testing.T,
 // SendCoinsUnconfirmed sends coins from the internal mining node to the target
 // lightning node using a P2WPKH address. No blocks are mined after, so the
 // transaction remains unconfirmed.
-func (n *NetworkHarness) SendCoinsUnconfirmed(ctx context.Context,
-	t *testing.T, amt dcrutil.Amount, target *HarnessNode) {
+func (n *NetworkHarness) SendCoinsUnconfirmed(t *testing.T, amt dcrutil.Amount,
+	target *HarnessNode) {
 
 	err := n.sendCoins(
-		ctx, amt, target, lnrpc.AddressType_PUBKEY_HASH,
+		amt, target, lnrpc.AddressType_PUBKEY_HASH,
 		false,
 	)
 	require.NoErrorf(
@@ -1464,9 +1464,12 @@ func (n *NetworkHarness) SendCoinsUnconfirmed(ctx context.Context,
 // sendCoins attempts to send amt atoms from the internal mining node to the
 // targeted lightning node. The confirmed boolean indicates whether the
 // transaction that pays to the target should confirm.
-func (n *NetworkHarness) sendCoins(ctx context.Context, amt dcrutil.Amount,
-	target *HarnessNode, addrType lnrpc.AddressType,
-	confirmed bool) error {
+func (n *NetworkHarness) sendCoins(amt dcrutil.Amount, target *HarnessNode,
+	addrType lnrpc.AddressType, confirmed bool) error {
+
+	ctxb := context.Background()
+	ctx, cancel := context.WithTimeout(ctxb, DefaultTimeout)
+	defer cancel()
 
 	// This method requires that there be no other utxos for this node in
 	// the mempool, therefore mine up to 244 blocks to clear it.

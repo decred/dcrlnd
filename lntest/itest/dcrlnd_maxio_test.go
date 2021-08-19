@@ -9,6 +9,7 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testAddInvoiceMaxInboundAmt tests whether trying to add an invoice fails
@@ -23,8 +24,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	net.ConnectNodes(t.t, carol, net.Bob)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Closure to help on tests.
 	addInvoice := func(value int64, ignoreMaxInbound bool) error {
@@ -159,8 +159,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 	defer shutdownAndAssert(net, t, carol)
 
 	net.ConnectNodes(t.t, carol, net.Bob)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Now open a channel from Carol -> Bob.
 	chanAmt := int64(1000000)
@@ -183,7 +182,7 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 	// Sanity check that payments one atom larger than the channel capacity -
 	// reserve cannot be paid.
 	maxInboundCap := pushAmt - chanReserve
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	_, err := carol.AddInvoice(ctxt, &lnrpc.Invoice{Value: maxInboundCap + 1})
 	if err == nil {
 		t.Fatalf("adding an invoice for maxInboundCap + 1 should fail")
@@ -243,11 +242,10 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	net.ConnectNodes(t.t, carol, net.Bob)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Create an invoice with zero amount on Bob for the next tests.
-	invoice, err := net.Bob.AddInvoice(ctxt, &lnrpc.Invoice{IgnoreMaxInboundAmt: true})
+	invoice, err := net.Bob.AddInvoice(testctx.New(t), &lnrpc.Invoice{IgnoreMaxInboundAmt: true})
 	if err != nil {
 		t.Fatalf("unable to create invoice in Bob: %v", err)
 	}
@@ -374,8 +372,7 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, carol)
 
 	net.ConnectNodes(t.t, carol, net.Bob)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Closures to help with tests.
 
