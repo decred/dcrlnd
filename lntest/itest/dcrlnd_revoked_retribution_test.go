@@ -124,8 +124,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// We'll introduce a closure to validate that Carol's current balance
 	// matches the given expected amount.
 	checkCarolBalance := func(expectedAmt int64) {
-		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-		carolChan, err := getChanInfo(ctxt, carol)
+		carolChan, err := getChanInfo(carol)
 		if err != nil {
 			t.Fatalf("unable to get carol's channel info: %v", err)
 		}
@@ -140,8 +139,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// number of updates is at least as large as the provided minimum
 	// number.
 	checkCarolNumUpdatesAtLeast := func(minimum uint64) {
-		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-		carolChan, err := getChanInfo(ctxt, carol)
+		carolChan, err := getChanInfo(carol)
 		if err != nil {
 			t.Fatalf("unable to get carol's channel info: %v", err)
 		}
@@ -194,8 +192,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// Next query for Carol's channel state, as we sent 3 payments of 10k
 	// atoms each, however Carol should now see her balance as being
 	// equal to the push amount in atoms since she has not settled.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	carolChan, err := getChanInfo(ctxt, carol)
+	carolChan, err := getChanInfo(carol)
 	if err != nil {
 		t.Fatalf("unable to get carol's channel info: %v", err)
 	}
@@ -272,8 +269,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 
 	// Now query for Carol's channel state, it should show that she's at a
 	// state number in the past, *not* the latest state.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	carolChan, err = getChanInfo(ctxt, carol)
+	carolChan, err = getChanInfo(carol)
 	if err != nil {
 		t.Fatalf("unable to get carol chan info: %v", err)
 	}

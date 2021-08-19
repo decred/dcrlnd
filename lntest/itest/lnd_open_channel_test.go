@@ -110,8 +110,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	if err != nil {
 		t.Fatalf("unable to get current blockheight %v", err)
 	}
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err = waitForNodeBlockHeight(ctxt, net.Alice, minerHeight)
+	err = waitForNodeBlockHeight(net.Alice, minerHeight)
 	if err != nil {
 		t.Fatalf("unable to sync to chain: %v", err)
 	}
@@ -128,7 +127,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Wait for Alice and Bob to recognize and advertise the new channel
 	// generated above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = net.Alice.WaitForNetworkChannelOpen(ctxt, chanPoint)
 	if err != nil {
 		t.Fatalf("alice didn't advertise channel before "+
@@ -201,8 +200,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	if err != nil {
 		t.Fatalf("unable to get current blockheight %v", err)
 	}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = waitForNodeBlockHeight(ctxt, net.Alice, tempMinerHeight)
+	err = waitForNodeBlockHeight(net.Alice, tempMinerHeight)
 	if err != nil {
 		t.Fatalf("unable to sync to chain: %v", err)
 	}
