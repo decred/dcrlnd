@@ -312,7 +312,7 @@ func testUnconfirmedChannelFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	net.ConnectNodes(t.t, carol, net.Alice)
 
 	chanOpenUpdate := openChannelStream(
-		ctxt, t, net, carol, net.Alice,
+		t, net, carol, net.Alice,
 		lntest.OpenChannelParams{
 			Amt:              chanAmt,
 			PushAmt:          pushAmt,
@@ -423,13 +423,12 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 		net, t, carol, dave, chanSize, thawHeight, 1, false,
 	)
 	_ = openChannelStream(
-		ctxb, t, net, carol, dave, lntest.OpenChannelParams{
+		t, net, carol, dave, lntest.OpenChannelParams{
 			Amt:         chanSize,
 			FundingShim: fundingShim1,
 		},
 	)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	assertNumOpenChannelsPending(ctxt, t, carol, dave, 1)
+	assertNumOpenChannelsPending(t, carol, dave, 1)
 
 	// That channel is now pending forever and normally would saturate the
 	// max pending channel limit for both nodes. But because the channel is
@@ -466,7 +465,7 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 		Memo:  "new chans",
 		Value: int64(payAmt),
 	}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	resp, err := dave.AddInvoice(ctxt, invoice)
 	require.NoError(t.t, err)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
@@ -496,8 +495,7 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// As a last step, we check if we still have the pending channel hanging
 	// around because we never published the funding TX.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	assertNumOpenChannelsPending(ctxt, t, carol, dave, 1)
+	assertNumOpenChannelsPending(t, carol, dave, 1)
 
 	// Let's make sure we can abandon it.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
@@ -514,7 +512,7 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 	require.NoError(t.t, err)
 
 	// It should now not appear in the pending channels anymore.
-	assertNumOpenChannelsPending(ctxt, t, carol, dave, 0)
+	assertNumOpenChannelsPending(t, carol, dave, 0)
 }
 
 // testFundingPersistence is intended to ensure that the Funding Manager
@@ -553,8 +551,7 @@ func testChannelFundingPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	// At this point, the channel's funding transaction will have been
 	// broadcast, but not confirmed. Alice and Bob's nodes should reflect
 	// this when queried via RPC.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	assertNumOpenChannelsPending(ctxt, t, net.Alice, carol, 1)
+	assertNumOpenChannelsPending(t, net.Alice, carol, 1)
 
 	// Restart both nodes to test that the appropriate state has been
 	// persisted and that both nodes recover gracefully.
@@ -614,8 +611,7 @@ func testChannelFundingPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Both nodes should still show a single channel as pending.
 	time.Sleep(time.Second * 1)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	assertNumOpenChannelsPending(ctxt, t, net.Alice, carol, 1)
+	assertNumOpenChannelsPending(t, net.Alice, carol, 1)
 
 	// Finally, mine the last block which should mark the channel as open.
 	if _, err := net.Generate(1); err != nil {
@@ -625,8 +621,7 @@ func testChannelFundingPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	// At this point, the channel should be fully opened and there should
 	// be no pending channels remaining for either node.
 	time.Sleep(time.Second * 1)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	assertNumOpenChannelsPending(ctxt, t, net.Alice, carol, 0)
+	assertNumOpenChannelsPending(t, net.Alice, carol, 0)
 
 	// The channel should be listed in the peer information returned by
 	// both peers.

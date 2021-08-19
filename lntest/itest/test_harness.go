@@ -44,6 +44,12 @@ const (
 	minerMempoolTimeout = lntest.MinerMempoolTimeout
 	channelOpenTimeout  = lntest.ChannelOpenTimeout * 4
 	channelCloseTimeout = lntest.ChannelCloseTimeout
+	itestLndBinary      = "../../dcrlnd-itest"
+
+	// anchorSize is the value of an anchor output. This MUST match what
+	// lnwallet uses.
+	anchorSize       = 12060
+	noFeeLimitMAtoms = math.MaxInt64
 
 	// defaultChanAmt is the default channel capacity for channels opened
 	// for testing. This is an amount that should allow a large number of
@@ -51,13 +57,6 @@ const (
 	// of the lntest harness, assuming the harness initializes those nodes
 	// with 10 outputs of 1 DCR each.
 	defaultChanAmt = dcrutil.Amount(1<<24) - 1 // 0.16 DCR
-
-	itestLndBinary = "../../dcrlnd-itest"
-
-	// anchorSize is the value of an anchor output. This MUST match what
-	// lnwallet uses.
-	anchorSize       = 12060
-	noFeeLimitMAtoms = math.MaxInt64
 
 	AddrTypePubkeyHash = lnrpc.AddressType_PUBKEY_HASH
 )
