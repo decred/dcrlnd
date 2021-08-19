@@ -47,7 +47,7 @@ func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
 	// Next we'll connect both nodes, then attempt to make a wumbo channel
 	// funding request, which should fail as it exceeds the default wumbo
 	// soft limit of 500 DCR.
-	net.EnsureConnected(ctxb, t.t, wumboNode, wumboNode2)
+	net.EnsureConnected(t.t, wumboNode, wumboNode2)
 
 	chanAmt := funding.MaxDecredFundingAmountWumbo + 1
 	_, err := net.OpenChannel(
@@ -70,7 +70,7 @@ func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
 	miniNode := net.NewNode(t.t, "mini", nil)
 	defer shutdownAndAssert(net, t, miniNode)
 
-	net.EnsureConnected(ctxb, t.t, wumboNode, miniNode)
+	net.EnsureConnected(t.t, wumboNode, miniNode)
 
 	_, err = net.OpenChannel(
 		ctxb, wumboNode, miniNode, lntest.OpenChannelParams{
@@ -96,7 +96,7 @@ func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
 	defer shutdownAndAssert(net, t, wumboNode3)
 
 	// Creating a wumbo channel between these two nodes should succeed.
-	net.EnsureConnected(ctxb, t.t, wumboNode, wumboNode3)
+	net.EnsureConnected(t.t, wumboNode, wumboNode3)
 	chanPoint := openChannelAndAssert(
 		t, net, wumboNode, wumboNode3,
 		lntest.OpenChannelParams{

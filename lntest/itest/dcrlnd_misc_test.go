@@ -124,7 +124,6 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 	// ensure both nodes are connected again.
 	time.Sleep(time.Millisecond * 50)
 	assertNumConnections(t, net.Alice, net.Bob, 0)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, net.Alice, net.Bob)
+	net.EnsureConnected(t.t, net.Alice, net.Bob)
 	time.Sleep(time.Millisecond * 50)
 }

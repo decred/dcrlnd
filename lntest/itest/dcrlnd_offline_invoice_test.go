@@ -100,8 +100,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	tryPayment(payReqs[1], dave, errNoPath)
 
 	// Connect Carol to Alice (but don't create a channel yet).
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, carol, net.Alice)
+	net.EnsureConnected(t.t, carol, net.Alice)
 
 	// Try to perform the payments from Carol and Dave. They should still fail.
 	tryPayment(payReqs[1], carol, errNoPath)
@@ -116,6 +115,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Ensure Dave knows about the Carol -> Alice channel
+	ctxt, _ := context.WithTimeout(context.Background(), defaultTimeout)
 	if err = dave.WaitForNetworkChannelOpen(ctxt, chanPointCarol); err != nil {
 		t.Fatalf("carol didn't advertise channel before "+
 			"timeout: %v", err)
@@ -179,10 +179,8 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	tryPayment(payReqs[3], dave, errNoPath)
 
 	// Reconnect Carol to Alice & Dave
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, carol, net.Alice)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, carol, dave)
+	net.EnsureConnected(t.t, carol, net.Alice)
+	net.EnsureConnected(t.t, carol, dave)
 
 	// Give some time for reconnection to finalize.
 	time.Sleep(time.Second)

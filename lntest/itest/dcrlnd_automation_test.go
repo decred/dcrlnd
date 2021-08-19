@@ -32,7 +32,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 
 	net.SendCoins(t.t, dcrutil.AtomsPerCoin, carol)
 	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
-	net.EnsureConnected(testctx.New(t), t.t, dave, carol)
+	net.EnsureConnected(t.t, dave, carol)
 
 	chanPoint := openChannelAndAssert(
 		t, net, carol, dave,
@@ -76,7 +76,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 	// ht.AssertNumEdges(daveRestored, 0, true)
 
 	// Assert Carol does not autoclose and Dave does not have the channel.
-	net.EnsureConnected(testctx.New(t), t.t, daveRestored, carol)
+	net.EnsureConnected(t.t, daveRestored, carol)
 	time.Sleep(time.Second)
 	assertNumPendingChannels(t, daveRestored, 0, 0, 0, 0)
 	assertNodeNumChannels(t, daveRestored, 0)
@@ -94,7 +94,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 
 	// Wait long enough for Carol's automation to want to force-close the
 	// channel.
-	net.EnsureConnected(testctx.New(t), t.t, daveRestored, carol)
+	net.EnsureConnected(t.t, daveRestored, carol)
 	time.Sleep(time.Second * 3)
 	err = net.ShutdownNode(daveRestored)
 	require.Nil(t.t, err)

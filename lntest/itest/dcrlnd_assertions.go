@@ -10,7 +10,6 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
-	"matheusd.com/testctx"
 )
 
 // assertCleanStateAliceBob ensures the state of the passed test nodes and the
@@ -21,7 +20,7 @@ func assertCleanStateAliceBob(h *harnessTest, alice, bob *lntest.HarnessNode, ne
 		h.Fatalf("unable to get best height: %v", err)
 	}
 
-	net.EnsureConnected(testctx.New(h.t), h.t, alice, bob)
+	net.EnsureConnected(h.t, alice, bob)
 	assertNodeBlockHeight(h, alice, int32(minerHeight))
 	assertNodeBlockHeight(h, bob, int32(minerHeight))
 	assertNodeNumChannels(h, alice, 0)

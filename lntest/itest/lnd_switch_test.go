@@ -190,11 +190,8 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Ensure all of the intermediate links are reconnected.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, net.Alice, dave)
-
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, net.Bob, net.Alice)
+	net.EnsureConnected(t.t, net.Alice, dave)
+	net.EnsureConnected(t.t, net.Bob, net.Alice)
 
 	// Ensure all nodes in the network still have 5 outstanding htlcs.
 	err = wait.Predicate(func() bool {
@@ -212,8 +209,7 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("Node restart failed: %v", err)
 	}
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, carol)
+	net.EnsureConnected(t.t, dave, carol)
 
 	// After the payments settle, there should be no active htlcs on any of
 	// the nodes in the network.
@@ -543,8 +539,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Now that the settles have reached Dave, reconnect him with Alice,
 	// allowing the settles to return to the sender.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, net.Alice)
+	net.EnsureConnected(t.t, dave, net.Alice)
 
 	// Wait until all outstanding htlcs in the network have been settled.
 	err = wait.Predicate(func() bool {
@@ -581,8 +576,7 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Ensure Carol and Dave are connected so the final payment will
 	// complete.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, carol, dave)
+	net.EnsureConnected(t.t, carol, dave)
 
 	// Lastly, we will send one more payment to ensure all channels are
 	// still functioning properly.
@@ -807,8 +801,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Make Carol and Dave are reconnected before waiting for the htlcs to
 	// clear.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, carol)
+	net.EnsureConnected(t.t, dave, carol)
 
 	// Wait for Carol to report no outstanding htlcs, and also for Dav to
 	// receive all the settles from Carol.
@@ -837,12 +830,10 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Force Dave and Alice to reconnect before waiting for the htlcs to
 	// clear.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, net.Alice)
+	net.EnsureConnected(t.t, dave, net.Alice)
 
 	// Also ensure Alice and Bob have reconnected.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, net.Alice, net.Bob)
+	net.EnsureConnected(t.t, net.Alice, net.Bob)
 
 	// After reconnection succeeds, the settles should be propagated all
 	// the way back to the sender. All nodes should report no active htlcs.
@@ -880,8 +871,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Before completing the final payment request, ensure that the
 	// connection between Dave and Carol has been healed.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, carol)
+	net.EnsureConnected(t.t, dave, carol)
 
 	// Lastly, we will send one more payment to ensure all channels are
 	// still functioning properly.
@@ -899,8 +889,7 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Before completing the final payment request, ensure that the
 	// connection between Dave and Carol has been healed.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, carol)
+	net.EnsureConnected(t.t, dave, carol)
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
@@ -1147,8 +1136,7 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 
 	// Ensure that Dave is reconnected to Alice before waiting for the
 	// htlcs to clear.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, dave, net.Alice)
+	net.EnsureConnected(t.t, dave, net.Alice)
 
 	// Since Carol has been shutdown permanently, we will wait until all
 	// other nodes in the network report no active htlcs.

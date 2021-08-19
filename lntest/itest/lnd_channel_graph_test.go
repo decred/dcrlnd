@@ -203,8 +203,7 @@ func testUpdateChanStatus(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Reconnecting the nodes should propagate a "Disabled = false" update.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, alice, bob)
+	net.EnsureConnected(t.t, alice, bob)
 	expectedPolicy.Disabled = false
 	waitForChannelUpdate(
 		t, carolSub,
@@ -247,8 +246,7 @@ func testUpdateChanStatus(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Bob sends a "Disabled = false" update upon detecting the
 	// reconnect.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, alice, bob)
+	net.EnsureConnected(t.t, alice, bob)
 	expectedPolicy.Disabled = false
 	waitForChannelUpdate(
 		t, carolSub,
@@ -281,7 +279,7 @@ func testUpdateChanStatus(net *lntest.NetworkHarness, t *harnessTest) {
 	// BOTH Alice and Bob should set the channel state back to "enabled"
 	// on reconnect.
 	sendReq(alice, chanPoint, routerrpc.ChanStatusAction_AUTO)
-	net.EnsureConnected(ctxt, t.t, alice, bob)
+	net.EnsureConnected(t.t, alice, bob)
 	expectedPolicy.Disabled = false
 	waitForChannelUpdate(
 		t, carolSub,
@@ -439,8 +437,7 @@ func testGraphTopologyNtfns(net *lntest.NetworkHarness, t *harnessTest, pinned b
 	defer shutdownAndAssert(net, t, alice)
 
 	// Connect Alice and Bob.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, alice, bob)
+	net.EnsureConnected(t.t, alice, bob)
 
 	// Alice stimmy.
 	net.SendCoins(t.t, dcrutil.AtomsPerCoin, alice)
@@ -608,8 +605,7 @@ out:
 	// and Carol. Note that we will also receive a node announcement from
 	// Bob, since a node will update its node announcement after a new
 	// channel is opened.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.EnsureConnected(ctxt, t.t, alice, bob)
+	net.EnsureConnected(t.t, alice, bob)
 
 	// We should receive an update advertising the newly connected node,
 	// Bob's new node announcement, and the channel between Bob and Carol.
