@@ -14,6 +14,7 @@ import (
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/routing"
+	"github.com/stretchr/testify/require"
 )
 
 // testRevokedCloseRetributionRemoteHodlSecondLevel tests that Dave properly
@@ -289,12 +290,8 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// commitment transaction of a prior *revoked* state, so she'll soon
 	// feel the wrath of Dave's retribution.
 	force := true
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	closeUpdates, closeTxId, err := net.CloseChannel(ctxt, carol,
-		chanPoint, force)
-	if err != nil {
-		t.Fatalf("unable to close channel: %v", err)
-	}
+	closeUpdates, closeTxId, err := net.CloseChannel(carol, chanPoint, force)
+	require.Nil(t.t, err)
 
 	// Query the mempool for the breaching closing transaction, this should
 	// be broadcast by Carol when she force closes the channel above.
@@ -314,9 +311,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// Wait for the final close status update, then ensure that the closing
 	// transaction was included in the block.
 	breachTXID, err := net.WaitForChannelClose(closeUpdates)
-	if err != nil {
-		t.Fatalf("error while waiting for channel close: %v", err)
-	}
+	require.Nil(t.t, err)
 	if *breachTXID != *closeTxId {
 		t.Fatalf("expected breach ID(%v) to be equal to close ID (%v)",
 			breachTXID, closeTxId)

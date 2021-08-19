@@ -13,6 +13,7 @@ import (
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testOfflineHopInvoice tests whether trying to pay an invoice to an offline

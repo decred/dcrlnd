@@ -479,12 +479,11 @@ func testExternalFundingChanPoint(net *lntest.NetworkHarness, t *harnessTest) {
 	// First, we'll try to close the channel as Carol, the initiator. This
 	// should fail as a frozen channel only allows the responder to
 	// initiate a channel close.
-	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
-	_, _, err = net.CloseChannel(ctxt, carol, chanPoint2, false)
-	if err == nil {
-		t.Fatalf("carol wasn't denied a co-op close attempt for a " +
-			"frozen channel")
-	}
+	_, _, err = net.CloseChannel(carol, chanPoint2, false)
+	require.Error(t.t, err,
+		"carol wasn't denied a co-op close attempt "+
+			"for a frozen channel",
+	)
 
 	// Next we'll try but this time with Dave (the responder) as the
 	// initiator. This time the channel should be closed as normal.
@@ -645,13 +644,11 @@ func testChannelFundingPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Check both nodes to ensure that the channel is ready for operation.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.AssertChannelExists(ctxt, net.Alice, &outPoint, check)
+	err = net.AssertChannelExists(net.Alice, &outPoint, check)
 	if err != nil {
 		t.Fatalf("unable to assert channel existence: %v", err)
 	}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.AssertChannelExists(ctxt, carol, &outPoint); err != nil {
+	if err := net.AssertChannelExists(carol, &outPoint); err != nil {
 		t.Fatalf("unable to assert channel existence: %v", err)
 	}
 
