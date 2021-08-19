@@ -1,7 +1,6 @@
 package itest
 
 import (
-	"context"
 	"strings"
 
 	"github.com/decred/dcrlnd"
@@ -27,7 +26,6 @@ func testWumboChannels(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// We'll send coins to the wumbo node, as it'll be the one imitating
 	// the channel funding.
-	ctxb := context.Background()
 	net.SendCoins(t.t, dcrlnd.MaxFundingAmount+1e8, wumboNode)
 
 	// Next we'll connect both nodes, then attempt to make a wumbo channel
@@ -37,7 +35,7 @@ func testWumboChannels(net *lntest.NetworkHarness, t *harnessTest) {
 
 	chanAmt := dcrlnd.MaxFundingAmount + 1
 	_, err := net.OpenChannel(
-		ctxb, wumboNode, miniNode, lntest.OpenChannelParams{
+		wumboNode, miniNode, lntest.OpenChannelParams{
 			Amt: chanAmt,
 		},
 	)

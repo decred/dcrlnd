@@ -241,8 +241,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 
 	// Disconnect Carol and Dave, so that the channel isn't corrected once Carol
 	// is restarted.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.DisconnectNodes(ctxt, dave, carol)
+	err = net.DisconnectNodes(dave, carol)
 	if err != nil {
 		t.Fatalf("unable to disconnect dave and carol: %v", err)
 	}

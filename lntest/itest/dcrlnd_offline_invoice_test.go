@@ -164,11 +164,10 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Disconnect Carol from Alice & Dave (simulating a broken link, carol
 	// offline, etc)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.DisconnectNodes(ctxt, carol, net.Alice); err != nil {
+	if err := net.DisconnectNodes(carol, net.Alice); err != nil {
 		t.Fatalf("unable to disconnect carol from alice: %v", err)
 	}
-	if err := net.DisconnectNodes(ctxt, carol, dave); err != nil {
+	if err := net.DisconnectNodes(carol, dave); err != nil {
 		t.Fatalf("unable to disconnect carol from dave: %v", err)
 	}
 

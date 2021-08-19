@@ -85,7 +85,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 
 	// Assert Carol is tracking the time Dave has been online without
 	// reestablishing the channel.
-	require.Nil(t.t, net.DisconnectNodes(testctx.New(t), carol, daveRestored))
+	require.Nil(t.t, net.DisconnectNodes(carol, daveRestored))
 	time.Sleep(time.Second)
 	chanInfo, err := carol.ListChannels(testctx.New(t), &lnrpc.ListChannelsRequest{})
 	require.Nil(t.t, err)

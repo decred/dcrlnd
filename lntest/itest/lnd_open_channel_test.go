@@ -67,9 +67,9 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	// open, then broadcast the funding transaction
 	chanAmt := defaultChanAmt
 	pushAmt := dcrutil.Amount(0)
-	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
-	pendingUpdate, err := net.OpenPendingChannel(ctxt, net.Alice, net.Bob,
-		chanAmt, pushAmt)
+	pendingUpdate, err := net.OpenPendingChannel(
+		net.Alice, net.Bob, chanAmt, pushAmt,
+	)
 	if err != nil {
 		t.Fatalf("unable to open channel: %v", err)
 	}
@@ -110,7 +110,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	if err != nil {
 		t.Fatalf("unable to get current blockheight %v", err)
 	}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = waitForNodeBlockHeight(ctxt, net.Alice, minerHeight)
 	if err != nil {
 		t.Fatalf("unable to sync to chain: %v", err)

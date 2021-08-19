@@ -31,8 +31,6 @@ import (
 // Bob-peer and then re-connects them again. We expect Alice to be able to
 // disconnect at any point.
 func testDisconnectingTargetPeer(net *lntest.NetworkHarness, t *harnessTest) {
-	ctxb := context.Background()
-
 	// We'll start both nodes with a high backoff so that they don't
 	// reconnect automatically during our test.
 	args := []string{
@@ -61,9 +59,8 @@ func testDisconnectingTargetPeer(net *lntest.NetworkHarness, t *harnessTest) {
 	// Create a new channel that requires 1 confs before it's considered
 	// open, then broadcast the funding transaction
 	const numConfs = 1
-	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
 	pendingUpdate, err := net.OpenPendingChannel(
-		ctxt, alice, bob, chanAmt, pushAmt,
+		alice, bob, chanAmt, pushAmt,
 	)
 	if err != nil {
 		t.Fatalf("unable to open channel: %v", err)
@@ -76,7 +73,7 @@ func testDisconnectingTargetPeer(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Disconnect Alice-peer from Bob-peer and get error causes by one
 	// pending channel with detach node is existing.
-	if err := net.DisconnectNodes(ctxt, alice, bob); err != nil {
+	if err := net.DisconnectNodes(alice, bob); err != nil {
 		t.Fatalf("Bob's peer was disconnected from Alice's"+
 			" while one pending channel is existing: err %v", err)
 	}
@@ -124,7 +121,7 @@ func testDisconnectingTargetPeer(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Disconnect Alice-peer from Bob-peer and get error causes by one
 	// active channel with detach node is existing.
-	if err := net.DisconnectNodes(ctxt, alice, bob); err != nil {
+	if err := net.DisconnectNodes(alice, bob); err != nil {
 		t.Fatalf("Bob's peer was disconnected from Alice's"+
 			" while one active channel is existing: err %v", err)
 	}
@@ -149,7 +146,7 @@ func testDisconnectingTargetPeer(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Disconnect Alice-peer from Bob-peer without getting error about
 	// existing channels.
-	if err := net.DisconnectNodes(ctxt, alice, bob); err != nil {
+	if err := net.DisconnectNodes(alice, bob); err != nil {
 		t.Fatalf("unable to disconnect Bob's peer from Alice's: err %v",
 			err)
 	}
@@ -520,10 +517,8 @@ func testMaxPendingChannels(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Carol exhausted available amount of pending channels, next open
 	// channel request should cause ErrorGeneric to be sent back to Alice.
-	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
 	_, err := net.OpenChannel(
-		ctxt, net.Alice, carol,
-		lntest.OpenChannelParams{
+		net.Alice, carol, lntest.OpenChannelParams{
 			Amt: amount,
 		},
 	)
@@ -561,7 +556,7 @@ func testMaxPendingChannels(net *lntest.NetworkHarness, t *harnessTest) {
 		// Ensure that the funding transaction enters a block, and is
 		// properly advertised by Alice.
 		assertTxInBlock(t, block, fundingTxID)
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		err = net.Alice.WaitForNetworkChannelOpen(ctxt, fundingChanPoint)
 		if err != nil {
 			t.Fatalf("channel not seen on network before "+
@@ -972,8 +967,7 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 
 		// Disconnect the nodes, to prevent Carol attempting to reconnect
 		// and restore the node state.
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-		err = net.DisconnectNodes(ctxt, carol, node)
+		err = net.DisconnectNodes(carol, node)
 		if err != nil {
 			t.Fatalf("unable to disconnect carol and dave: %v", err)
 		}
@@ -1503,8 +1497,7 @@ func testSendUpdateDisableChannel(net *lntest.NetworkHarness, t *harnessTest) {
 	// Now we'll test a long disconnection. Disconnect Carol and Eve and
 	// ensure they both detect each other as disabled. Their min backoffs
 	// are high enough to not interfere with disabling logic.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.DisconnectNodes(ctxt, carol, eve); err != nil {
+	if err := net.DisconnectNodes(carol, eve); err != nil {
 		t.Fatalf("unable to disconnect Carol from Eve: %v", err)
 	}
 
@@ -1537,8 +1530,7 @@ func testSendUpdateDisableChannel(net *lntest.NetworkHarness, t *harnessTest) {
 	// should allow for the disconnect to be detected, but still leave time
 	// to cancel the announcement before the 3 second inactive timeout is
 	// hit.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.DisconnectNodes(ctxt, carol, eve); err != nil {
+	if err := net.DisconnectNodes(carol, eve); err != nil {
 		t.Fatalf("unable to disconnect Carol from Eve: %v", err)
 	}
 	time.Sleep(time.Second)

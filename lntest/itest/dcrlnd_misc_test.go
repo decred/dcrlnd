@@ -47,7 +47,7 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 	// Initially disconnect Alice and Bob. Several connection attempts will
 	// be performed later on. Ignore errors if they are not connected and
 	// give some time for the disconnection to clear all resources.
-	net.DisconnectNodes(ctxb, net.Alice, net.Bob)
+	net.DisconnectNodes(net.Alice, net.Bob)
 	time.Sleep(50 * time.Millisecond)
 
 	// Perform a number of trial runs in sequence, so we have some reasonable
@@ -109,10 +109,10 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 		if !alicePeers.Peers[0].Inbound {
 			// Connection was made in the alice -> bob direction.
-			net.DisconnectNodes(ctxb, net.Alice, net.Bob)
+			net.DisconnectNodes(net.Alice, net.Bob)
 		} else {
 			// Connection was made in the alice <- bob direction.
-			net.DisconnectNodes(ctxb, net.Alice, net.Bob)
+			net.DisconnectNodes(net.Alice, net.Bob)
 		}
 	}
 	logLine := fmt.Sprintf("=== %s: Reconnection tests successful\n",

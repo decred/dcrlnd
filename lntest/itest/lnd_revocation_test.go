@@ -143,8 +143,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Disconnect the nodes to prevent Carol trying to reconnect to Bob after
 	// Bob is restarted and fixing the wrong state.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.DisconnectNodes(ctxt, carol, net.Bob)
+	err = net.DisconnectNodes(carol, net.Bob)
 	if err != nil {
 		t.Fatalf("unable to disconnect carol and bob: %v", err)
 	}
@@ -382,8 +381,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 
 	// Disconnect Dave from Carol, so that upon Carol's restart he doesn't
 	// try to automatically reconnect and alert her of the changed state.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.DisconnectNodes(ctxt, dave, carol)
+	err = net.DisconnectNodes(dave, carol)
 	if err != nil {
 		t.Fatalf("unable to disconnect dave and carol: %v", err)
 	}
@@ -712,8 +710,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 
 	// Disconnect Carol and Dave, so that the channel isn't corrected once Carol
 	// is restarted.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = net.DisconnectNodes(ctxt, dave, carol)
+	err = net.DisconnectNodes(dave, carol)
 	if err != nil {
 		t.Fatalf("unable to disconnect dave and carol: %v", err)
 	}

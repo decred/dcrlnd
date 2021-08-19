@@ -112,7 +112,7 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Disconnect the nodes from one another. While their channel remains open,
 	// carol cannot receive payments (since bob is offline from her POV).
-	err = net.DisconnectNodes(ctxb, carol, net.Bob)
+	err = net.DisconnectNodes(carol, net.Bob)
 	if err != nil {
 		t.Fatalf("unable to disconnect carol and bob: %v", err)
 	}
@@ -329,7 +329,7 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	// Disconnect the nodes from one another. While their channel remains
 	// open, carol cannot send payments (since bob is offline from her
 	// POV).
-	err = net.DisconnectNodes(ctxb, carol, net.Bob)
+	err = net.DisconnectNodes(carol, net.Bob)
 	if err != nil {
 		t.Fatalf("unable to disconnect carol and bob: %v", err)
 	}
