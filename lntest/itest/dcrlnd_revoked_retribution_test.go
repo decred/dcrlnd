@@ -88,12 +88,11 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 
 	// We must let Dave communicate with Carol before they are able to open
 	// channel, so we connect Dave and Carol,
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, dave, carol)
+	net.ConnectNodes(t.t, dave, carol)
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.Amount(initialBalance), dave)
 
 	// In order to test Dave's response to an uncooperative channel closure

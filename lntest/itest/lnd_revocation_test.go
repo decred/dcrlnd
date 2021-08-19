@@ -44,12 +44,11 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// We must let Bob communicate with Carol before they are able to open
 	// channel, so we connect Bob and Carol,
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
+	net.ConnectNodes(t.t, carol, net.Bob)
 
 	// Before we make a channel, we'll load up Carol with some coins sent
 	// directly from the miner.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// In order to test Carol's response to an uncooperative channel
@@ -309,12 +308,11 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 
 	// We must let Dave have an open channel before she can send a node
 	// announcement, so we open a channel with Carol,
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, dave, carol)
+	net.ConnectNodes(t.t, dave, carol)
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel
@@ -557,12 +555,11 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 
 	// We must let Dave communicate with Carol before they are able to open
 	// channel, so we connect Dave and Carol,
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, dave, carol)
+	net.ConnectNodes(t.t, dave, carol)
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	// In order to test Dave's response to an uncooperative channel closure
@@ -1081,7 +1078,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 
 	// We must let Dave have an open channel before she can send a node
 	// announcement, so we open a channel with Carol,
-	net.ConnectNodes(ctxb, t.t, dave, carol)
+	net.ConnectNodes(t.t, dave, carol)
 
 	// Before we make a channel, we'll load up Dave with some coins sent
 	// directly from the miner.

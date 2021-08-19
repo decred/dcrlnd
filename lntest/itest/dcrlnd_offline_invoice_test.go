@@ -49,8 +49,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, dave)
+	net.ConnectNodes(t.t, carol, dave)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -212,7 +211,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 
 	bob := net.NewNode(t.t, "Bob", nil)
 	defer shutdownAndAssert(net, t, bob)
-	net.ConnectNodes(testctx.New(t), t.t, alice, bob)
+	net.ConnectNodes(t.t, alice, bob)
 
 	// Open a channel between alice and bob.
 	chanReq := lntest.OpenChannelParams{

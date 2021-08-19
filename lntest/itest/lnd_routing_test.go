@@ -106,9 +106,8 @@ func testSingleHopSendToRouteCase(net *lntest.NetworkHarness, t *harnessTest,
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
+	net.ConnectNodes(t.t, carol, dave)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, dave)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Open a channel with 100k satoshis between Carol and Dave with Carol
@@ -472,9 +471,8 @@ func testMultiHopSendToRoute(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Bob)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, net.Bob)
 
 	chanPointBob := openChannelAndAssert(
@@ -652,8 +650,7 @@ func testSendToRouteErrorPropagation(net *lntest.NetworkHarness, t *harnessTest)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, charlie)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, charlie)
+	net.ConnectNodes(t.t, carol, charlie)
 
 	chanPointCarol := openChannelAndAssert(
 		t, net, carol, charlie,
@@ -766,9 +763,8 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
+	net.ConnectNodes(t.t, dave, net.Alice)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, dave, net.Alice)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, dave)
 
 	chanPointDave := openChannelAndAssert(
@@ -792,8 +788,7 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, dave)
+	net.ConnectNodes(t.t, carol, dave)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -840,8 +835,7 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 	// Now create a _private_ channel directly between Carol and
 	// Alice of 100k.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Alice)
+	net.ConnectNodes(t.t, carol, net.Alice)
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
 	chanOpenUpdate := openChannelStream(
 		ctxt, t, net, carol, net.Alice,
@@ -1084,8 +1078,7 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 	defer shutdownAndAssert(net, t, carol)
 
 	// Connect Carol to Bob.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
+	net.ConnectNodes(t.t, carol, net.Bob)
 
 	// Open a channel with 100k satoshis between Bob and Carol.
 	chanPointBobCarol := openChannelAndAssert(
@@ -1119,7 +1112,7 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 		Value:   paymentAmt,
 		Private: true,
 	}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	resp, err := carol.AddInvoice(ctxt, invoice)
 	require.NoError(t.t, err, "unable to create invoice for carol")
 
@@ -1226,8 +1219,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, net.Alice, carol)
+	net.ConnectNodes(t.t, net.Alice, carol)
 	chanPointCarol := openChannelAndAssert(
 		t, net, net.Alice, carol,
 		lntest.OpenChannelParams{
@@ -1241,8 +1233,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	// we should only include routing hints for nodes that are publicly
 	// advertised, otherwise we'd end up leaking information about nodes
 	// that wish to stay unadvertised.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, net.Bob, carol)
+	net.ConnectNodes(t.t, net.Bob, carol)
 	chanPointBobCarol := openChannelAndAssert(
 		t, net, net.Bob, carol,
 		lntest.OpenChannelParams{
@@ -1258,8 +1249,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, net.Alice, dave)
+	net.ConnectNodes(t.t, net.Alice, dave)
 	chanPointDave := openChannelAndAssert(
 		t, net, net.Alice, dave,
 		lntest.OpenChannelParams{
@@ -1273,8 +1263,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	// channel has been created to avoid populating routing hints for
 	// inactive channels.
 	eve := net.NewNode(t.t, "Eve", nil)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, net.Alice, eve)
+	net.ConnectNodes(t.t, net.Alice, eve)
 	chanPointEve := openChannelAndAssert(
 		t, net, net.Alice, eve,
 		lntest.OpenChannelParams{
@@ -1317,7 +1306,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	var predErr error
 	var decoded *lnrpc.PayReq
 	err := wait.Predicate(func() bool {
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+		ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 		resp, err := net.Alice.AddInvoice(ctxt, invoice)
 		if err != nil {
 			predErr = fmt.Errorf("unable to add invoice: %v", err)
@@ -1357,7 +1346,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 	// We'll need the short channel ID of the channel between Alice and Bob
 	// to make sure the routing hint is for this channel.
 	listReq := &lnrpc.ListChannelsRequest{}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	listResp, err := net.Alice.ListChannels(ctxt, listReq)
 	if err != nil {
 		t.Fatalf("unable to retrieve alice's channels: %v", err)
@@ -1443,8 +1432,7 @@ func testMultiHopOverPrivateChannels(net *lntest.NetworkHarness, t *harnessTest)
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, net.Bob, carol)
+	net.ConnectNodes(t.t, net.Bob, carol)
 	chanPointBob := openChannelAndAssert(
 		t, net, net.Bob, carol,
 		lntest.OpenChannelParams{
@@ -1486,8 +1474,7 @@ func testMultiHopOverPrivateChannels(net *lntest.NetworkHarness, t *harnessTest)
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, dave)
+	net.ConnectNodes(t.t, carol, dave)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -1624,9 +1611,8 @@ func testQueryRoutes(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Bob)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, net.Bob)
 
 	chanPointBob := openChannelAndAssert(
@@ -1641,8 +1627,7 @@ func testQueryRoutes(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, dave, carol)
+	net.ConnectNodes(t.t, dave, carol)
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
@@ -1913,9 +1898,8 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Alice)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Alice)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	chanPointAliceCarol := openChannelAndAssert(
@@ -1930,8 +1914,7 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "Dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, dave, net.Bob)
+	net.ConnectNodes(t.t, dave, net.Bob)
 	chanPointBobDave := openChannelAndAssert(
 		t, net, net.Bob, dave,
 		lntest.OpenChannelParams{
@@ -1940,8 +1923,7 @@ func testRouteFeeCutoff(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Open a channel between Carol and Dave.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, dave)
+	net.ConnectNodes(t.t, carol, dave)
 	chanPointCarolDave := openChannelAndAssert(
 		t, net, carol, dave,
 		lntest.OpenChannelParams{

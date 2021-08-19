@@ -22,9 +22,8 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Bob)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Closure to help on tests.
@@ -159,9 +158,8 @@ func testAddReceiveInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTe
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Bob)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Now open a channel from Carol -> Bob.
@@ -244,9 +242,8 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", []string{"--nolisten"})
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Bob)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Create an invoice with zero amount on Bob for the next tests.
@@ -376,9 +373,8 @@ func testMaxIOChannelBalances(net *lntest.NetworkHarness, t *harnessTest) {
 	carol := net.NewNode(t.t, "Carol", nil)
 	defer shutdownAndAssert(net, t, carol)
 
+	net.ConnectNodes(t.t, carol, net.Bob)
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, carol, net.Bob)
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, carol)
 
 	// Closures to help with tests.

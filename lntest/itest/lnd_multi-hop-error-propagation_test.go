@@ -92,8 +92,7 @@ func testHtlcErrorPropagation(net *lntest.NetworkHarness, t *harnessTest) {
 	// channel between them so we have the topology: Alice -> Bob -> Carol.
 	// The channel created will be of lower capacity that the one created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxt, t.t, net.Bob, carol)
+	net.ConnectNodes(t.t, net.Bob, carol)
 	const bobChanAmt = defaultChanAmt
 	chanPointBob := openChannelAndAssert(
 		t, net, net.Bob, carol,
