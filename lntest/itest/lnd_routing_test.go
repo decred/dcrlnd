@@ -889,10 +889,7 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	time.Sleep(time.Millisecond * 50)
 
 	// Let Carol pay the invoices.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err = completePaymentRequests(
-		ctxt, carol, carol.RouterClient, payReqs, true,
-	)
+	err = completePaymentRequests(carol, carol.RouterClient, payReqs, true)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
 	}
@@ -947,9 +944,8 @@ func testPrivateChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	time.Sleep(time.Millisecond * 50)
 
 	// Let Bob pay the invoices.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Alice, net.Alice.RouterClient, payReqs, true,
+		net.Alice, net.Alice.RouterClient, payReqs, true,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -1131,11 +1127,10 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 
 	// Alice pays the invoices. She will use the updated baseFeeMSat in the
 	// payment
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	payReqs := []string{resp.PaymentRequest}
 	require.NoError(t.t,
 		completePaymentRequests(
-			ctxt, net.Alice, net.Alice.RouterClient, payReqs, true,
+			net.Alice, net.Alice.RouterClient, payReqs, true,
 		), "unable to send payment",
 	)
 
@@ -1526,9 +1521,8 @@ func testMultiHopOverPrivateChannels(net *lntest.NetworkHarness, t *harnessTest)
 
 	// Let Alice pay the invoice.
 	payReqs := []string{resp.PaymentRequest}
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Alice, net.Alice.RouterClient, payReqs, true,
+		net.Alice, net.Alice.RouterClient, payReqs, true,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments from alice to dave: %v", err)

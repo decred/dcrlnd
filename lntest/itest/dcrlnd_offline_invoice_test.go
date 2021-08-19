@@ -222,9 +222,8 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 		bob, paymentAmt, numPayments,
 	)
 	require.NoError(t.t, err)
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, alice, alice.RouterClient,
+		alice, alice.RouterClient,
 		payReqs, true,
 	)
 	require.NoError(t.t, err)
@@ -240,8 +239,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 		Hash:       payHash[:],
 	}
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	bobInvoice, err := bob.AddHoldInvoice(ctxt, invoiceReq)
+	bobInvoice, err := bob.AddHoldInvoice(testctx.New(t), invoiceReq)
 	require.NoError(t.t, err)
 	_, err = alice.RouterClient.SendPaymentV2(
 		ctxb, &routerrpc.SendPaymentRequest{
@@ -252,7 +250,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 	require.NoError(t.t, err)
 	waitForInvoiceAccepted(t, bob, payHash)
-	_, err = bob.CancelInvoice(ctxt, &invoicesrpc.CancelInvoiceMsg{PaymentHash: payHash[:]})
+	_, err = bob.CancelInvoice(testctx.New(t), &invoicesrpc.CancelInvoiceMsg{PaymentHash: payHash[:]})
 	require.NoError(t.t, err)
 
 	// Create but do not settle a payment (by using a hold invoice).
@@ -266,8 +264,7 @@ func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
 		Hash:       payHash2[:],
 	}
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	bobInvoice2, err := bob.AddHoldInvoice(ctxt, invoiceReq2)
+	bobInvoice2, err := bob.AddHoldInvoice(testctx.New(t), invoiceReq2)
 	require.NoError(t.t, err)
 	_, err = alice.RouterClient.SendPaymentV2(
 		ctxb, &routerrpc.SendPaymentRequest{

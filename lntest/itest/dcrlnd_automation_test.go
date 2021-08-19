@@ -56,7 +56,7 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 	invoiceResp, err := carol.AddInvoice(testctx.New(t), invoice)
 	require.Nil(t.t, err)
 	err = completePaymentRequests(
-		testctx.New(t), dave, dave.RouterClient,
+		dave, dave.RouterClient,
 		[]string{invoiceResp.PaymentRequest}, true,
 	)
 	require.Nil(t.t, err)

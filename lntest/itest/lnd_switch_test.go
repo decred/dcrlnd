@@ -158,9 +158,8 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, false,
+		net.Bob, net.Bob.RouterClient, payReqs, false,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -262,9 +261,8 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, true,
+		net.Bob, net.Bob.RouterClient, payReqs, true,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -446,9 +444,8 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, false,
+		net.Bob, net.Bob.RouterClient, payReqs, false,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -592,9 +589,8 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, true,
+		net.Bob, net.Bob.RouterClient, payReqs, true,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -767,9 +763,8 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, false,
+		net.Bob, net.Bob.RouterClient, payReqs, false,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -891,9 +886,8 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, true,
+		net.Bob, net.Bob.RouterClient, payReqs, true,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)
@@ -1064,9 +1058,8 @@ func testSwitchOfflineDeliveryOutgoingOffline(
 
 	// Using Carol as the source, pay to the 5 invoices from Bob created
 	// above.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Bob, net.Bob.RouterClient, payReqs, false,
+		net.Bob, net.Bob.RouterClient, payReqs, false,
 	)
 	if err != nil {
 		t.Fatalf("unable to send payments: %v", err)

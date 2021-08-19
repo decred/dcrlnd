@@ -893,9 +893,8 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 
 		// Send payments from Carol using 3 of the payment hashes
 		// generated above.
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 		err = completePaymentRequests(
-			ctxt, carol, carol.RouterClient,
+			carol, carol.RouterClient,
 			payReqs[:numInvoices/2], true,
 		)
 		if err != nil {
@@ -941,10 +940,8 @@ func testDataLossProtection(net *lntest.NetworkHarness, t *harnessTest) {
 
 		// Finally, send more payments from , using the remaining
 		// payment hashes.
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 		err = completePaymentRequests(
-			ctxt, carol, carol.RouterClient,
-			payReqs[numInvoices/2:], true,
+			carol, carol.RouterClient, payReqs[numInvoices/2:], true,
 		)
 		if err != nil {
 			t.Fatalf("unable to send payments: %v", err)
@@ -1158,7 +1155,6 @@ func testRejectHTLC(net *lntest.NetworkHarness, t *harnessTest) {
 	//
 	const chanAmt = dcrutil.Amount(1000000)
 	ctxb := context.Background()
-	timeout := time.Second * 5
 
 	// Create Carol with reject htlc flag.
 	carol := net.NewNode(t.t, "Carol", []string{"--rejecthtlc"})
@@ -1224,9 +1220,8 @@ func testRejectHTLC(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Alice pays Carols invoice.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	err = completePaymentRequests(
-		ctxt, net.Alice, net.Alice.RouterClient,
+		net.Alice, net.Alice.RouterClient,
 		[]string{resp.PaymentRequest}, true,
 	)
 	if err != nil {
@@ -1250,9 +1245,8 @@ func testRejectHTLC(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Carol pays Bobs invoice.
-	ctxt, _ = context.WithTimeout(ctxb, timeout)
 	err = completePaymentRequests(
-		ctxt, carol, carol.RouterClient,
+		carol, carol.RouterClient,
 		[]string{resp.PaymentRequest}, true,
 	)
 	if err != nil {
@@ -1279,9 +1273,8 @@ func testRejectHTLC(net *lntest.NetworkHarness, t *harnessTest) {
 	// Alice attempts to pay Bobs invoice. This payment should be rejected since
 	// we are using Carol as an intermediary hop, Carol is running lnd with
 	// --rejecthtlc.
-	ctxt, _ = context.WithTimeout(ctxb, timeout)
 	err = completePaymentRequests(
-		ctxt, net.Alice, net.Alice.RouterClient,
+		net.Alice, net.Alice.RouterClient,
 		[]string{resp.PaymentRequest}, true,
 	)
 	if err == nil {
