@@ -308,7 +308,7 @@ func testSingleHopSendToRouteCase(net *lntest.NetworkHarness, t *harnessTest,
 
 	// Verify that the payment's from Carol's PoV have the correct payment
 	// hash and amount.
-	ctxt, _ = context.WithTimeout(ctxt, defaultTimeout)
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	paymentsResp, err := carol.ListPayments(
 		ctxt, &lnrpc.ListPaymentsRequest{},
 	)
@@ -388,7 +388,7 @@ func testSingleHopSendToRouteCase(net *lntest.NetworkHarness, t *harnessTest,
 
 	// Verify that the invoices's from Dave's PoV have the correct payment
 	// hash and amount.
-	ctxt, _ = context.WithTimeout(ctxt, defaultTimeout)
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	invoicesResp, err := dave.ListInvoices(
 		ctxt, &lnrpc.ListInvoiceRequest{},
 	)
@@ -1134,7 +1134,7 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 
 	// Check that Alice did make the payment with two HTLCs, one failed and
 	// one succeeded.
-	ctxt, _ = context.WithTimeout(ctxt, defaultTimeout)
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	paymentsResp, err := net.Alice.ListPayments(
 		ctxt, &lnrpc.ListPaymentsRequest{IndexOffset: newPaymentsStartIdx},
 	)
