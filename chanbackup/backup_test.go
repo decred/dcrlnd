@@ -8,6 +8,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 type mockChannelSource struct {
@@ -38,7 +39,9 @@ func (m *mockChannelSource) FetchAllChannels() ([]*channeldb.OpenChannel, error)
 	return chans, nil
 }
 
-func (m *mockChannelSource) FetchChannel(chanPoint wire.OutPoint) (*channeldb.OpenChannel, error) {
+func (m *mockChannelSource) FetchChannel(_ kvdb.RTx, chanPoint wire.OutPoint) (
+	*channeldb.OpenChannel, error) {
+
 	if m.failQuery {
 		return nil, fmt.Errorf("fail")
 	}

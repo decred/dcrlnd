@@ -136,7 +136,8 @@ type ChannelGraphSource interface {
 	// ForAllOutgoingChannels is used to iterate over all channels
 	// emanating from the "source" node which is the center of the
 	// star-graph.
-	ForAllOutgoingChannels(cb func(c *channeldb.ChannelEdgeInfo,
+	ForAllOutgoingChannels(cb func(tx kvdb.RTx,
+		c *channeldb.ChannelEdgeInfo,
 		e *channeldb.ChannelEdgePolicy) error) error
 
 	// CurrentBlockHeight returns the block height from POV of the router
@@ -2485,15 +2486,16 @@ func (r *ChannelRouter) ForEachNode(cb func(*channeldb.LightningNode) error) err
 // the router.
 //
 // NOTE: This method is part of the ChannelGraphSource interface.
-func (r *ChannelRouter) ForAllOutgoingChannels(cb func(*channeldb.ChannelEdgeInfo,
-	*channeldb.ChannelEdgePolicy) error) error {
+func (r *ChannelRouter) ForAllOutgoingChannels(cb func(kvdb.RTx,
+	*channeldb.ChannelEdgeInfo, *channeldb.ChannelEdgePolicy) error) error {
 
 	openChans, err := r.cfg.Graph.LocalOpenChanIDs()
 	if err != nil {
 		return fmt.Errorf("unable to query local open chan IDs: %v", err)
 	}
 
-	return r.selfNode.ForEachChannel(nil, func(_ kvdb.RTx, c *channeldb.ChannelEdgeInfo,
+	return r.selfNode.ForEachChannel(nil, func(tx kvdb.RTx,
+		c *channeldb.ChannelEdgeInfo,
 		e, _ *channeldb.ChannelEdgePolicy) error {
 
 		if e == nil {
@@ -2511,7 +2513,7 @@ func (r *ChannelRouter) ForAllOutgoingChannels(cb func(*channeldb.ChannelEdgeInf
 			return nil
 		}
 
-		return cb(c, e)
+		return cb(tx, c, e)
 	})
 }
 

@@ -23,6 +23,7 @@ import (
 	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnpeer"
 	"github.com/decred/dcrlnd/lntest/mock"
 	"github.com/decred/dcrlnd/lntest/wait"
@@ -193,7 +194,8 @@ func (r *mockGraphSource) ForEachNode(func(node *channeldb.LightningNode) error)
 	return nil
 }
 
-func (r *mockGraphSource) ForAllOutgoingChannels(cb func(i *channeldb.ChannelEdgeInfo,
+func (r *mockGraphSource) ForAllOutgoingChannels(cb func(tx kvdb.RTx,
+	i *channeldb.ChannelEdgeInfo,
 	c *channeldb.ChannelEdgePolicy) error) error {
 
 	r.mu.Lock()
@@ -216,7 +218,9 @@ func (r *mockGraphSource) ForAllOutgoingChannels(cb func(i *channeldb.ChannelEdg
 	}
 
 	for _, channel := range chans {
-		cb(channel.Info, channel.Policy1)
+		if err := cb(nil, channel.Info, channel.Policy1); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -3548,6 +3552,7 @@ out:
 	const newTimeLockDelta = 100
 	var edgesToUpdate []EdgeWithInfo
 	err = ctx.router.ForAllOutgoingChannels(func(
+		_ kvdb.RTx,
 		info *channeldb.ChannelEdgeInfo,
 		edge *channeldb.ChannelEdgePolicy) error {
 

@@ -17,6 +17,7 @@ import (
 	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnpeer"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -1217,6 +1218,7 @@ func (d *AuthenticatedGossiper) retransmitStaleAnns(now time.Time) error {
 		edgesToUpdate      []updateTuple
 	)
 	err := d.cfg.Router.ForAllOutgoingChannels(func(
+		_ kvdb.RTx,
 		info *channeldb.ChannelEdgeInfo,
 		edge *channeldb.ChannelEdgePolicy) error {
 

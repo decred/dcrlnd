@@ -8,6 +8,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/discovery"
 	"github.com/decred/dcrlnd/htlcswitch"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing"
 )
@@ -27,12 +28,14 @@ type Manager struct {
 
 	// ForAllOutgoingChannels is required to iterate over all our local
 	// channels.
-	ForAllOutgoingChannels func(cb func(*channeldb.ChannelEdgeInfo,
+	ForAllOutgoingChannels func(cb func(kvdb.RTx,
+		*channeldb.ChannelEdgeInfo,
 		*channeldb.ChannelEdgePolicy) error) error
 
-	// FetchChannel is used to query local channel parameters.
-	FetchChannel func(chanPoint wire.OutPoint) (*channeldb.OpenChannel,
-		error)
+	// FetchChannel is used to query local channel parameters. Optionally an
+	// existing db tx can be supplied.
+	FetchChannel func(tx kvdb.RTx, chanPoint wire.OutPoint) (
+		*channeldb.OpenChannel, error)
 
 	// policyUpdateLock ensures that the database and the link do not fall
 	// out of sync if there are concurrent fee update calls. Without it,
@@ -66,6 +69,7 @@ func (r *Manager) UpdatePolicy(newSchema routing.ChannelPolicy,
 	// If we have a filter then we'll only collected those channels,
 	// otherwise we'll collect them all.
 	err := r.ForAllOutgoingChannels(func(
+		tx kvdb.RTx,
 		info *channeldb.ChannelEdgeInfo,
 		edge *channeldb.ChannelEdgePolicy) error {
 
@@ -197,7 +201,7 @@ func (r *Manager) updateEdge(chanPoint wire.OutPoint,
 func (r *Manager) getHtlcAmtLimits(chanPoint wire.OutPoint) (
 	lnwire.MilliAtom, lnwire.MilliAtom, error) {
 
-	ch, err := r.FetchChannel(chanPoint)
+	ch, err := r.FetchChannel(nil, chanPoint)
 	if err != nil {
 		return 0, 0, err
 	}

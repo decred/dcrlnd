@@ -3,6 +3,7 @@ package localchans
 import (
 	"testing"
 
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwire"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
@@ -88,10 +89,12 @@ func TestManager(t *testing.T) {
 		return nil
 	}
 
-	forAllOutgoingChannels := func(cb func(*channeldb.ChannelEdgeInfo,
+	forAllOutgoingChannels := func(cb func(kvdb.RTx,
+		*channeldb.ChannelEdgeInfo,
 		*channeldb.ChannelEdgePolicy) error) error {
 
 		return cb(
+			nil,
 			&channeldb.ChannelEdgeInfo{
 				Capacity:     chanCap,
 				ChannelPoint: chanPoint,
@@ -100,8 +103,8 @@ func TestManager(t *testing.T) {
 		)
 	}
 
-	fetchChannel := func(chanPoint wire.OutPoint) (*channeldb.OpenChannel,
-		error) {
+	fetchChannel := func(tx kvdb.RTx, chanPoint wire.OutPoint) (
+		*channeldb.OpenChannel, error) {
 
 		constraints := channeldb.ChannelConstraints{
 			MaxPendingAmount: maxPendingAmount,
