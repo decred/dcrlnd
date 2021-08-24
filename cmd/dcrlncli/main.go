@@ -369,6 +369,7 @@ func main() {
 		connectCommand,
 		disconnectCommand,
 		openChannelCommand,
+		batchOpenChannelCommand,
 		closeChannelCommand,
 		closeAllChannelsCommand,
 		abandonChannelCommand,
