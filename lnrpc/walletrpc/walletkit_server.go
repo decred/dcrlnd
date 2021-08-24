@@ -280,7 +280,7 @@ func (w *WalletKit) Stop() error {
 //
 // NOTE: This is part of the lnrpc.SubServer interface.
 func (w *WalletKit) Name() string {
-	return subServerName
+	return SubServerName
 }
 
 // RegisterWithRootServer will be called by the root gRPC server to direct a
