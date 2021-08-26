@@ -71,6 +71,7 @@ type ChainscanNotifier struct {
 	ctx       context.Context
 	cancelCtx func()
 
+	tipTxsMtx     sync.Mutex
 	tipWatcherTxs map[chainhash.Hash]map[*wire.MsgTx]chainscan.Event
 
 	historical  *chainscan.Historical
@@ -272,15 +273,18 @@ type filteredBlock struct {
 // foundAtTip is called by the tipWatcher whenever a watched target matches.
 func (n *ChainscanNotifier) foundAtTip(e chainscan.Event, _ chainscan.FindFunc) {
 	chainntnfs.Log.Tracef("Found at tip bh %s: %s", e.BlockHash, e)
+	n.tipTxsMtx.Lock()
 	txs, ok := n.tipWatcherTxs[e.BlockHash]
 	if !ok {
 		txs = make(map[*wire.MsgTx]chainscan.Event)
 		n.tipWatcherTxs[e.BlockHash] = txs
 	}
 	txs[e.Tx] = e
+	n.tipTxsMtx.Unlock()
 }
 
 func (n *ChainscanNotifier) drainTipWatcherTxs(blockHash *chainhash.Hash) []*dcrutil.Tx {
+	n.tipTxsMtx.Lock()
 	txs := n.tipWatcherTxs[*blockHash]
 	utxs := make([]*dcrutil.Tx, 0, len(txs))
 	for tx, etx := range txs {
@@ -291,6 +295,7 @@ func (n *ChainscanNotifier) drainTipWatcherTxs(blockHash *chainhash.Hash) []*dcr
 	}
 
 	delete(n.tipWatcherTxs, *blockHash)
+	n.tipTxsMtx.Unlock()
 	return utxs
 }
 
