@@ -298,7 +298,7 @@ func (s *Server) RegisterConfirmationsNtfn(in *ConfRequest,
 			}
 
 		// The transaction satisfying the request has been reorged out
-		// of the chain, so we'll send an event describing so.
+		// of the chain, so we'll send an event describing it.
 		case _, ok := <-confEvent.NegativeConf:
 			if !ok {
 				return chainntnfs.ErrChainNotifierShuttingDown
@@ -322,9 +322,12 @@ func (s *Server) RegisterConfirmationsNtfn(in *ConfRequest,
 			return nil
 
 		// The response stream's context for whatever reason has been
-		// closed. We'll return the error indicated by the context
-		// itself to the caller.
+		// closed. If context is closed by an exceeded deadline we will
+		// return an error.
 		case <-confStream.Context().Done():
+			if errors.Is(confStream.Context().Err(), context.Canceled) {
+				return nil
+			}
 			return confStream.Context().Err()
 
 		// The server has been requested to shut down.
@@ -430,9 +433,12 @@ func (s *Server) RegisterSpendNtfn(in *SpendRequest,
 			return nil
 
 		// The response stream's context for whatever reason has been
-		// closed. We'll return the error indicated by the context
-		// itself to the caller.
+		// closed. If context is closed by an exceeded deadline we will
+		// return an error.
 		case <-spendStream.Context().Done():
+			if errors.Is(spendStream.Context().Err(), context.Canceled) {
+				return nil
+			}
 			return spendStream.Context().Err()
 
 		// The server has been requested to shut down.
@@ -501,9 +507,12 @@ func (s *Server) RegisterBlockEpochNtfn(in *BlockEpoch,
 			}
 
 		// The response stream's context for whatever reason has been
-		// closed. We'll return the error indicated by the context
-		// itself to the caller.
+		// closed. If context is closed by an exceeded deadline we will
+		// return an error.
 		case <-epochStream.Context().Done():
+			if errors.Is(epochStream.Context().Err(), context.Canceled) {
+				return nil
+			}
 			return epochStream.Context().Err()
 
 		// The server has been requested to shut down.
