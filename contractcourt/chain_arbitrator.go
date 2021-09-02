@@ -898,7 +898,7 @@ func (c *ChainArbitrator) Stop() error {
 		return nil
 	}
 
-	log.Infof("Stopping ChainArbitrator")
+	log.Info("ChainArbitrator shutting down")
 
 	close(c.quit)
 

@@ -441,7 +441,7 @@ func (s *UtxoSweeper) Stop() error {
 		return nil
 	}
 
-	log.Debugf("Sweeper shutting down")
+	log.Info("Sweeper shutting down")
 
 	close(s.quit)
 	s.wg.Wait()

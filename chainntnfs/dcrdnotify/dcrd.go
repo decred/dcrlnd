@@ -225,7 +225,9 @@ func (n *DcrdNotifier) Stop() error {
 		return nil
 	}
 
-	// Shutdown the rpc client, this gracefully disconnects from dcrd, and
+	chainntnfs.Log.Info("dcrd notifier shutting down")
+
+	// Shutdown the rpc client, this gracefully disconnects from btcd, and
 	// cleans up all related resources.
 	n.chainConn.Shutdown()
 
