@@ -114,22 +114,7 @@ loss of funds.
 
 ## Security
 
-`dcrlnd` is now part of Decred's [Bug Bounty Program](https://bounty.decred.org)
-on an experimental basis while we haven't yet deployed into mainnet.
-
-Additionally, given the current nature of this work as a fork from the original
-`lnd` code, bugs that have been submitted to the upstream `lnd` project are **not**
-eligible for the bug bounty program _unless_ the following points apply:
-
-  - The bug affects a mainnet worthy release of `dcrlnd`;
-  - The fix for the bug was _not_ merged from the upstream repo while a
-  substantial amount of upstream commits that are newer than the relevant one
-  were merged;
-  - The bug is not critical to `lnd` but it is to `dcrlnd`.
-
-To submit `dcrlnd` bugs eligible for inclusion in the program, please visit the
-[Bug Bounty Website](https://bounty.decred.org) and follow the instructions
-there.
+Please see the [security policy](https://github.com/decred/dcrlnd/security/policy). 
 
 ## Further reading
 * [Step-by-step send payment guide with docker](https://github.com/decred/dcrlnd/tree/master/docker)
