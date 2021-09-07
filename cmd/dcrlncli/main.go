@@ -419,6 +419,7 @@ func main() {
 		versionCommand,
 		profileSubCommand,
 		getStateCommand,
+		deletePaymentsCommand,
 	}
 
 	// Add any extra commands determined by build flags.
