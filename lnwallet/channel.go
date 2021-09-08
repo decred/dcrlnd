@@ -6848,7 +6848,10 @@ func (lc *LightningChannel) validateFeeRate(feePerKB chainfee.AtomPerKByte) erro
 	// be above our reserve balance. Otherwise, we'll reject the fee
 	// update.
 	availableBalance, txSize := lc.availableBalance()
-	oldFee := lnwire.NewMAtomsFromAtoms(lc.localCommitChain.tip().fee)
+
+	oldFee := lnwire.NewMAtomsFromAtoms(
+		lc.localCommitChain.tip().feePerKB.FeeForSize(txSize),
+	)
 
 	// Our base balance is the total amount of atoms we can commit
 	// towards fees before factoring in the channel reserve.
@@ -6868,17 +6871,6 @@ func (lc *LightningChannel) validateFeeRate(feePerKB chainfee.AtomPerKByte) erro
 		return fmt.Errorf("cannot apply fee_update=%v atom/kB, new fee "+
 			"of %v is greater than balance of %v", int64(feePerKB),
 			newFee, baseBalance)
-	}
-
-	// If this new balance is below our reserve, then we can't accommodate
-	// the fee change, so we'll reject it.
-	balanceAfterFee := baseBalance - newFee
-	if balanceAfterFee.ToAtoms() < lc.channelState.LocalChanCfg.ChanReserve {
-		return fmt.Errorf("cannot apply fee_update=%v atom/kB, "+
-			"new balance=%v would dip below channel reserve=%v",
-			int64(feePerKB),
-			balanceAfterFee.ToAtoms(),
-			lc.channelState.LocalChanCfg.ChanReserve)
 	}
 
 	// TODO(halseth): should fail if fee update is unreasonable,
