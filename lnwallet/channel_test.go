@@ -8105,8 +8105,8 @@ func TestChannelMaxFeeRate(t *testing.T) {
 	}
 	defer cleanUp()
 
-	assertMaxFeeRate(aliceChannel, 1.0, 0, 1373626373)
-	assertMaxFeeRate(aliceChannel, 0.001, 0, 1373626)
+	assertMaxFeeRate(aliceChannel, 1.0, 0, 1346144505)
+	assertMaxFeeRate(aliceChannel, 0.001, 0, 1346144)
 	assertMaxFeeRate(aliceChannel, 0.000001, 0, 10000)
 	assertMaxFeeRate(aliceChannel, 0.0000001, 0, chainfee.FeePerKBFloor)
 
