@@ -24,5 +24,9 @@ const (
 
 	// AsyncBenchmarkTimeout is the timeout used when running the async
 	// payments benchmark.
-	AsyncBenchmarkTimeout = time.Minute * 5
+	AsyncBenchmarkTimeout = 2 * time.Minute
+
+	// NodeStartTimeout is the timeout value when waiting for a node to
+	// become fully started.
+	NodeStartTimeout = time.Second * 60
 )
