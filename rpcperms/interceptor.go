@@ -45,6 +45,9 @@ const (
 
 	// rpcActive means that the RPC server is ready to accept calls.
 	rpcActive
+
+	// serverActive means that the lnd server is ready to accept calls.
+	serverActive
 )
 
 var (
@@ -196,6 +199,15 @@ func (r *InterceptorChain) SetRPCActive() {
 	_ = r.ntfnServer.SendUpdate(r.state)
 }
 
+// SetServerActive moves the RPC state from walletUnlocked to rpcActive.
+func (r *InterceptorChain) SetServerActive() {
+	r.Lock()
+	defer r.Unlock()
+
+	r.state = serverActive
+	_ = r.ntfnServer.SendUpdate(r.state)
+}
+
 // rpcStateToWalletState converts rpcState to lnrpc.WalletState. Returns
 // WAITING_TO_START and an error on conversion error.
 func rpcStateToWalletState(state rpcState) (lnrpc.WalletState, error) {
@@ -213,6 +225,8 @@ func rpcStateToWalletState(state rpcState) (lnrpc.WalletState, error) {
 		walletState = lnrpc.WalletState_UNLOCKED
 	case rpcActive:
 		walletState = lnrpc.WalletState_RPC_ACTIVE
+	case serverActive:
+		walletState = lnrpc.WalletState_SERVER_ACTIVE
 
 	default:
 		return defaultState, fmt.Errorf("unknown wallet state %v", state)
@@ -561,9 +575,9 @@ func (r *InterceptorChain) checkRPCState(srv interface{}) error {
 
 		return ErrRPCStarting
 
-	// If the RPC is active, we allow calls to any service except the
-	// WalletUnlocker.
-	case rpcActive:
+	// If the RPC server or lnd server is active, we allow calls to any
+	// service except the WalletUnlocker.
+	case rpcActive, serverActive:
 		_, ok := srv.(lnrpc.WalletUnlockerServer)
 		if ok {
 			return ErrWalletUnlocked
