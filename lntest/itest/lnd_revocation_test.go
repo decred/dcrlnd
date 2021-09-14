@@ -18,14 +18,13 @@ import (
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testRevokedCloseRetribution tests that Carol is able carry out
 // retribution in the event that she fails immediately after detecting Bob's
 // breach txn in the mempool.
 func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
-	ctxb := context.Background()
-
 	const (
 		chanAmt     = defaultChanAmt
 		paymentAmt  = 10000
@@ -71,8 +70,7 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Wait for Carol to receive the channel edge from the funding manager.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = carol.WaitForNetworkChannelOpen(chanPoint)
 	if err != nil {
 		t.Fatalf("carol didn't see the carol->bob channel before "+
 			"timeout: %v", err)
@@ -267,7 +265,6 @@ func testRevokedCloseRetribution(net *lntest.NetworkHarness, t *harnessTest) {
 // commitment output has zero-value.
 func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness,
 	t *harnessTest) {
-	ctxb := context.Background()
 
 	const (
 		chanAmt     = defaultChanAmt
@@ -319,8 +316,7 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 	}
 
 	// Wait for Dave to receive the channel edge from the funding manager.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err = dave.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = dave.WaitForNetworkChannelOpen(chanPoint)
 	if err != nil {
 		t.Fatalf("dave didn't see the dave->carol channel before "+
 			"timeout: %v", err)
@@ -496,7 +492,6 @@ func testRevokedCloseRetributionZeroValueRemoteOutput(net *lntest.NetworkHarness
 // before Dave is able to exact justice.
 func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	t *harnessTest) {
-	ctxb := context.Background()
 
 	const (
 		initialBalance = int64(dcrutil.AtomsPerCoin)
@@ -587,8 +582,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	}
 
 	// Wait for Dave to receive the channel edge from the funding manager.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err = dave.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = dave.WaitForNetworkChannelOpen(chanPoint)
 	if err != nil {
 		t.Fatalf("dave didn't see the dave->carol channel before "+
 			"timeout: %v", err)
@@ -884,8 +878,7 @@ func testRevokedCloseRetributionRemoteHodl(net *lntest.NetworkHarness,
 	// We'll now check that the total balance of each party is the one we
 	// expect. Introduce a new test closure.
 	checkTotalBalance := func(node *lntest.HarnessNode, expectedAmt int64) {
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-		balances, err := node.WalletBalance(ctxt, &lnrpc.WalletBalanceRequest{})
+		balances, err := node.WalletBalance(testctx.New(t), &lnrpc.WalletBalanceRequest{})
 		if err != nil {
 			t.Fatalf("unable to query node balance: %v", err)
 		}
@@ -1067,8 +1060,7 @@ func testRevokedCloseRetributionAltruistWatchtowerCase(
 	}
 
 	// Wait for Dave to receive the channel edge from the funding manager.
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	err = dave.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = dave.WaitForNetworkChannelOpen(chanPoint)
 	if err != nil {
 		t.Fatalf("dave didn't see the dave->carol channel before "+
 			"timeout: %v", err)

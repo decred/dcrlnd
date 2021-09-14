@@ -270,12 +270,10 @@ func (n *NetworkHarness) SetUp(t *testing.T,
 	}
 
 	// Now we want to wait for the nodes to catch up.
-	ctxt, cancel := context.WithTimeout(ctxb, DefaultTimeout)
-	defer cancel()
-	if err := n.Alice.WaitForBlockchainSync(ctxt); err != nil {
+	if err := n.Alice.WaitForBlockchainSync(); err != nil {
 		return err
 	}
-	if err := n.Bob.WaitForBlockchainSync(ctxt); err != nil {
+	if err := n.Bob.WaitForBlockchainSync(); err != nil {
 		return err
 	}
 
@@ -455,7 +453,7 @@ func (n *NetworkHarness) newNodeWithSeed(name string, extraArgs []string,
 
 	// Pass the init request via rpc to finish unlocking the node. This will
 	// also initialize the macaroon-authenticated LightningClient.
-	response, err := node.Init(ctxb, initReq)
+	response, err := node.Init(initReq)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to init new node: %v", err)
 	}
@@ -481,8 +479,6 @@ func (n *NetworkHarness) NewNodeRemoteSigner(name string, extraArgs []string,
 		return nil, err
 	}
 
-	ctxb := context.Background()
-
 	// With the seed created, construct the init request to the node,
 	// including the newly generated seed.
 	initReq := &lnrpc.InitWalletRequest{
@@ -492,7 +488,7 @@ func (n *NetworkHarness) NewNodeRemoteSigner(name string, extraArgs []string,
 
 	// Pass the init request via rpc to finish unlocking the node. This will
 	// also initialize the macaroon-authenticated LightningClient.
-	_, err = node.Init(ctxb, initReq)
+	_, err = node.Init(initReq)
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +526,7 @@ func (n *NetworkHarness) RestoreNodeWithSeed(name string, extraArgs []string,
 		ChannelBackups:     chanBackups,
 	}
 
-	_, err = node.Init(context.Background(), initReq)
+	_, err = node.Init(initReq)
 	if err != nil {
 		return nil, err
 	}
@@ -882,15 +878,13 @@ func (n *NetworkHarness) RestartNode(node *HarnessNode, callback func() error,
 		unlockReq.RecoveryWindow = 1000
 	}
 
-	if err := node.Unlock(context.Background(), unlockReq); err != nil {
+	if err := node.Unlock(unlockReq); err != nil {
 		return err
 	}
 
-	// Give the node some time to catch up with the chain before we continue
-	// with the tests.
-	ctxc, done := context.WithTimeout(context.Background(), DefaultTimeout)
-	defer done()
-	return node.WaitForBlockchainSync(ctxc)
+	// Give the node some time to catch up with the chain before we
+	// continue with the tests.
+	return node.WaitForBlockchainSync()
 }
 
 // RestartNodeNoUnlock attempts to restart a lightning node by shutting it down
@@ -1115,10 +1109,10 @@ func (n *NetworkHarness) OpenChannel(srcNode, destNode *HarnessNode,
 	// Otherwise, we may run into a check within the funding manager that
 	// prevents any funding workflows from being kicked off if the chain
 	// isn't yet synced.
-	if err := srcNode.WaitForBlockchainSync(ctx); err != nil {
+	if err := srcNode.WaitForBlockchainSync(); err != nil {
 		return nil, fmt.Errorf("unable to sync srcNode chain: %v", err)
 	}
-	if err := destNode.WaitForBlockchainSync(ctx); err != nil {
+	if err := destNode.WaitForBlockchainSync(); err != nil {
 		return nil, fmt.Errorf("unable to sync destNode chain: %v", err)
 	}
 
@@ -1191,10 +1185,10 @@ func (n *NetworkHarness) OpenPendingChannel(srcNode, destNode *HarnessNode,
 	defer cancel()
 
 	// Wait until srcNode and destNode have blockchain synced
-	if err := srcNode.WaitForBlockchainSync(ctx); err != nil {
+	if err := srcNode.WaitForBlockchainSync(); err != nil {
 		return nil, fmt.Errorf("unable to sync srcNode chain: %v", err)
 	}
-	if err := destNode.WaitForBlockchainSync(ctx); err != nil {
+	if err := destNode.WaitForBlockchainSync(); err != nil {
 		return nil, fmt.Errorf("unable to sync destNode chain: %v", err)
 	}
 

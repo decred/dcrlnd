@@ -1037,7 +1037,6 @@ func (hn *HarnessNode) startRemoteWallet() error {
 }
 
 func (hn *HarnessNode) unlockRemoteWallet() error {
-	ctxb := context.Background()
 	password := hn.Cfg.Password
 	if len(password) == 0 {
 		password = []byte("private1")
@@ -1059,7 +1058,7 @@ func (hn *HarnessNode) unlockRemoteWallet() error {
 		WalletPassword:    password,
 		DcrwClientKeyCert: clientKeyCert,
 	}
-	err = hn.Unlock(ctxb, unlockReq)
+	err = hn.Unlock(unlockReq)
 	if err != nil {
 		return fmt.Errorf("unable to unlock remote wallet: %v", err)
 	}
@@ -1242,19 +1241,19 @@ func (hn *HarnessNode) initRemoteWallet(ctx context.Context,
 
 // Init initializes a harness node by passing the init request via rpc. After
 // the request is submitted, this method will block until a
-// macaroon-authenticated RPC connection can be established to the harness node.
-// Once established, the new connection is used to initialize the
+// macaroon-authenticated RPC connection can be established to the harness
+// node. Once established, the new connection is used to initialize the
 // LightningClient and subscribes the HarnessNode to topology changes.
-func (hn *HarnessNode) Init(ctx context.Context,
+func (hn *HarnessNode) Init(
 	initReq *lnrpc.InitWalletRequest) (*lnrpc.InitWalletResponse, error) {
 
-	ctxt, cancel := context.WithTimeout(ctx, DefaultTimeout)
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
 	defer cancel()
 
 	var response *lnrpc.InitWalletResponse
 	var err error
 	if hn.Cfg.RemoteWallet {
-		response, err = hn.initRemoteWallet(ctx, initReq)
+		response, err = hn.initRemoteWallet(ctxt, initReq)
 	} else {
 		response, err = hn.InitWallet(ctxt, initReq)
 	}
@@ -1295,11 +1294,11 @@ func (hn *HarnessNode) Init(ctx context.Context,
 // a macaroon-authenticated RPC connection can be established to the harness
 // node. Once established, the new connection is used to initialize the
 // LightningClient and subscribes the HarnessNode to topology changes.
-func (hn *HarnessNode) InitChangePassword(ctx context.Context,
+func (hn *HarnessNode) InitChangePassword(
 	chngPwReq *lnrpc.ChangePasswordRequest) (*lnrpc.ChangePasswordResponse,
 	error) {
 
-	ctxt, cancel := context.WithTimeout(ctx, DefaultTimeout)
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
 	defer cancel()
 	response, err := hn.ChangePassword(ctxt, chngPwReq)
 	if err != nil {
@@ -1337,10 +1336,9 @@ func (hn *HarnessNode) InitChangePassword(ctx context.Context,
 // should be called after the restart of a HarnessNode that was created with a
 // seed+password. Once this method returns, the HarnessNode will be ready to
 // accept normal gRPC requests and harness command.
-func (hn *HarnessNode) Unlock(ctx context.Context,
-	unlockReq *lnrpc.UnlockWalletRequest) error {
-
-	ctxt, _ := context.WithTimeout(ctx, DefaultTimeout)
+func (hn *HarnessNode) Unlock(unlockReq *lnrpc.UnlockWalletRequest) error {
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
+	defer cancel()
 
 	// Otherwise, we'll need to unlock the node before it's able to start
 	// up properly.
@@ -1412,9 +1410,7 @@ func (hn *HarnessNode) initLightningClient(conn *grpc.ClientConn) error {
 		return fmt.Errorf("unable to fetch %s's node info: %v", hn.Name(), err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	err = hn.WaitForBlockchainSync(ctx)
+	err = hn.WaitForBlockchainSync()
 	if err != nil {
 		return fmt.Errorf("initial blockchain sync of %s failed: %v", hn.Name(),
 			err)
@@ -1776,12 +1772,12 @@ func getChanPointFundingTxid(chanPoint *lnrpc.ChannelPoint) ([]byte, error) {
 	return txid, nil
 }
 
-func checkChanPointInGraph(ctx context.Context,
-	node *HarnessNode, chanPoint wire.OutPoint) bool {
+func (hn *HarnessNode) checkChanPointInGraph(chanPoint wire.OutPoint) bool {
 
-	ctxt, cancel := context.WithTimeout(ctx, DefaultTimeout)
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
 	defer cancel()
-	chanGraph, err := node.DescribeGraph(ctxt, &lnrpc.ChannelGraphRequest{})
+
+	chanGraph, err := hn.DescribeGraph(ctxt, &lnrpc.ChannelGraphRequest{})
 	if err != nil {
 		return false
 	}
@@ -1856,8 +1852,11 @@ func (hn *HarnessNode) lightningNetworkWatcher() {
 // outpoint is seen as being fully advertised within the network. A channel is
 // considered "fully advertised" once both of its directional edges has been
 // advertised within the test Lightning Network.
-func (hn *HarnessNode) WaitForNetworkChannelOpen(ctx context.Context,
+func (hn *HarnessNode) WaitForNetworkChannelOpen(
 	chanPoint *lnrpc.ChannelPoint) error {
+
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
+	defer cancel()
 
 	eventChan := make(chan struct{})
 
@@ -1877,7 +1876,7 @@ func (hn *HarnessNode) WaitForNetworkChannelOpen(ctx context.Context,
 	select {
 	case <-eventChan:
 		return nil
-	case <-ctx.Done():
+	case <-ctxt.Done():
 		return fmt.Errorf("channel:%s not opened before timeout: %s",
 			op, hn)
 	}
@@ -1887,8 +1886,11 @@ func (hn *HarnessNode) WaitForNetworkChannelOpen(ctx context.Context,
 // outpoint is seen as closed within the network. A channel is considered
 // closed once a transaction spending the funding outpoint is seen within a
 // confirmed block.
-func (hn *HarnessNode) WaitForNetworkChannelClose(ctx context.Context,
+func (hn *HarnessNode) WaitForNetworkChannelClose(
 	chanPoint *lnrpc.ChannelPoint) error {
+
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
+	defer cancel()
 
 	eventChan := make(chan struct{})
 
@@ -1907,7 +1909,7 @@ func (hn *HarnessNode) WaitForNetworkChannelClose(ctx context.Context,
 	select {
 	case <-eventChan:
 		return nil
-	case <-ctx.Done():
+	case <-ctxt.Done():
 		return fmt.Errorf("channel:%s not closed before timeout: "+
 			"%s", op, hn)
 	}
@@ -1915,9 +1917,12 @@ func (hn *HarnessNode) WaitForNetworkChannelClose(ctx context.Context,
 
 // WaitForChannelPolicyUpdate will block until a channel policy with the target
 // outpoint and advertisingNode is seen within the network.
-func (hn *HarnessNode) WaitForChannelPolicyUpdate(ctx context.Context,
+func (hn *HarnessNode) WaitForChannelPolicyUpdate(
 	advertisingNode string, policy *lnrpc.RoutingPolicy,
 	chanPoint *lnrpc.ChannelPoint, includeUnannounced bool) error {
+
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
+	defer cancel()
 
 	eventChan := make(chan struct{})
 
@@ -1955,7 +1960,7 @@ func (hn *HarnessNode) WaitForChannelPolicyUpdate(ctx context.Context,
 		case <-eventChan:
 			return nil
 
-		case <-ctx.Done():
+		case <-ctxt.Done():
 			return fmt.Errorf("channel:%s policy not updated "+
 				"before timeout: [%s:%v] %s", op,
 				advertisingNode, policy, hn.String())
@@ -1967,12 +1972,15 @@ func (hn *HarnessNode) WaitForChannelPolicyUpdate(ctx context.Context,
 // the blockchain. If the passed context object has a set timeout, it will
 // continually poll until the timeout has elapsed. In the case that the chain
 // isn't synced before the timeout is up, this function will return an error.
-func (hn *HarnessNode) WaitForBlockchainSync(ctx context.Context) error {
+func (hn *HarnessNode) WaitForBlockchainSync() error {
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
+	defer cancel()
+
 	ticker := time.NewTicker(time.Millisecond * 100)
 	defer ticker.Stop()
 
 	for {
-		resp, err := hn.GetInfo(ctx, &lnrpc.GetInfoRequest{})
+		resp, err := hn.GetInfo(ctxt, &lnrpc.GetInfoRequest{})
 		if err != nil {
 			return err
 		}
@@ -1981,7 +1989,7 @@ func (hn *HarnessNode) WaitForBlockchainSync(ctx context.Context) error {
 		}
 
 		select {
-		case <-ctx.Done():
+		case <-ctxt.Done():
 			return fmt.Errorf("timeout while waiting for " +
 				"blockchain sync")
 		case <-hn.runCtx.Done():
@@ -2161,7 +2169,7 @@ func (hn *HarnessNode) handleOpenChannelWatchRequest(req *chanWatchRequest) {
 	// node. This lets us handle the case where a node has already seen a
 	// channel before a notification has been requested, causing us to miss
 	// it.
-	chanFound := checkChanPointInGraph(hn.runCtx, hn, targetChan)
+	chanFound := hn.checkChanPointInGraph(targetChan)
 	if chanFound {
 		hn.LogPrintf("Already have targetChan in graph: %s", targetChan)
 		close(req.eventChan)

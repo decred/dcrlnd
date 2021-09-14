@@ -537,8 +537,6 @@ func (c *interceptorTestContext) closeChannels() {
 }
 
 func (c *interceptorTestContext) waitForChannels() {
-	ctxb := context.Background()
-
 	// Wait for all nodes to have seen all channels.
 	for _, chanPoint := range c.networkChans {
 		for _, node := range c.nodes {
@@ -550,8 +548,7 @@ func (c *interceptorTestContext) waitForChannels() {
 				Index: chanPoint.OutputIndex,
 			}
 
-			ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-			err = node.WaitForNetworkChannelOpen(ctxt, chanPoint)
+			err = node.WaitForNetworkChannelOpen(chanPoint)
 			require.NoError(c.t.t, err, fmt.Sprintf("(%d): timeout "+
 				"waiting for channel(%s) open", node.NodeID,
 				point))

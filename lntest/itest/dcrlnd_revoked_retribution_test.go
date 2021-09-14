@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/routing"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testRevokedCloseRetributionRemoteHodlSecondLevel tests that Dave properly
@@ -29,7 +30,6 @@ import (
 // testRevokedCloseRetributionRemoteHodl.
 func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness,
 	t *harnessTest) {
-	ctxb := context.Background()
 
 	// Currently disabled in SPV due to
 	// https://github.com/decred/dcrlnd/issues/96. Re-assess after that is
@@ -151,8 +151,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	}
 
 	// Wait for Dave to receive the channel edge from the funding manager.
-	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	err = dave.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = dave.WaitForNetworkChannelOpen(chanPoint)
 	if err != nil {
 		t.Fatalf("dave didn't see the dave->carol channel before "+
 			"timeout: %v", err)
@@ -555,8 +554,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 	// We'll now check that the total balance of each party is the one we
 	// expect.  Introduce a new test closure.
 	checkTotalBalance := func(node *lntest.HarnessNode, expectedAmt int64) {
-		ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-		balances, err := node.WalletBalance(ctxt, &lnrpc.WalletBalanceRequest{})
+		balances, err := node.WalletBalance(testctx.New(t), &lnrpc.WalletBalanceRequest{})
 		if err != nil {
 			t.Fatalf("unable to query node balance: %v", err)
 		}

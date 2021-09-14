@@ -116,8 +116,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	)
 
 	// Ensure Dave knows about the Carol -> Alice channel
-	ctxt, _ := context.WithTimeout(context.Background(), defaultTimeout)
-	if err = dave.WaitForNetworkChannelOpen(ctxt, chanPointCarol); err != nil {
+	if err = dave.WaitForNetworkChannelOpen(chanPointCarol); err != nil {
 		t.Fatalf("carol didn't advertise channel before "+
 			"timeout: %v", err)
 	}
@@ -140,8 +139,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	fundingTxId, _ := chainhash.NewHash(chanPointAlice.GetFundingTxidBytes())
 	fmt.Printf("looking for %s\n", fundingTxId)
 
-	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	resp, err := dave.DescribeGraph(ctxt, &lnrpc.ChannelGraphRequest{})
+	resp, err := dave.DescribeGraph(testctx.New(t), &lnrpc.ChannelGraphRequest{})
 	if err != nil {
 		t.Fatalf("blergh: %v", err)
 	}
@@ -151,7 +149,7 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 			e.Node1Pub, e.Node2Pub)
 	}
 
-	if err = dave.WaitForNetworkChannelOpen(ctxt, chanPointAlice); err != nil {
+	if err = dave.WaitForNetworkChannelOpen(chanPointAlice); err != nil {
 		t.Fatalf("dave didn't receive the alice->bob channel before "+
 			"timeout: %v", err)
 	}

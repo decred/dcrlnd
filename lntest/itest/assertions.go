@@ -92,14 +92,11 @@ func openChannelAndAssert(t *harnessTest, net *lntest.NetworkHarness,
 		"unable to assert channel existence",
 	)
 
-	ctxt, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
-
 	// They should also notice this channel from topology subscription.
-	err = alice.WaitForNetworkChannelOpen(ctxt, fundingChanPoint)
+	err = alice.WaitForNetworkChannelOpen(fundingChanPoint)
 	require.Nil(t.t, err, "%s did not see channel open: %v", alice.Name(), err)
 
-	err = bob.WaitForNetworkChannelOpen(ctxt, fundingChanPoint)
+	err = bob.WaitForNetworkChannelOpen(fundingChanPoint)
 	require.Nil(t.t, err, "%s did not see channel open: %v", bob.Name(), err)
 
 	return fundingChanPoint
@@ -1901,13 +1898,9 @@ func assertChannelPolicyUpdate(t *testing.T, node *lntest.HarnessNode,
 	advertisingNode string, policy *lnrpc.RoutingPolicy,
 	chanPoint *lnrpc.ChannelPoint, includeUnannounced bool) {
 
-	ctxb := context.Background()
-	ctxt, cancel := context.WithTimeout(ctxb, lntest.DefaultTimeout)
-	defer cancel()
-
 	require.NoError(
 		t, node.WaitForChannelPolicyUpdate(
-			ctxt, advertisingNode, policy,
+			advertisingNode, policy,
 			chanPoint, includeUnannounced,
 		), "error while waiting for channel update",
 	)

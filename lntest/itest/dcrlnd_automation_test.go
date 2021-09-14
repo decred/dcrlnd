@@ -43,9 +43,9 @@ func testMissingChanReestablishAutoClosesChan(net *lntest.NetworkHarness, t *har
 	)
 
 	// Wait for both sides to see the opened channel.
-	err = dave.WaitForNetworkChannelOpen(testctx.New(t), chanPoint)
+	err = dave.WaitForNetworkChannelOpen(chanPoint)
 	require.Nil(t.t, err)
-	err = carol.WaitForNetworkChannelOpen(testctx.New(t), chanPoint)
+	err = carol.WaitForNetworkChannelOpen(chanPoint)
 	require.Nil(t.t, err)
 
 	// Perform a payment to assert channel is working.

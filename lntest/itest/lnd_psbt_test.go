@@ -224,11 +224,9 @@ func runPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest, carol,
 	txHash := finalTx.TxHash()
 	block := mineBlocks(t, net, 6, 1)[0]
 	assertTxInBlock(t, block, &txHash)
-	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
-	defer cancel()
-	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = carol.WaitForNetworkChannelOpen(chanPoint)
 	require.NoError(t.t, err)
-	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint2)
+	err = carol.WaitForNetworkChannelOpen(chanPoint2)
 	require.NoError(t.t, err)
 
 	// With the channel open, ensure that it is counted towards Carol's
@@ -442,11 +440,9 @@ func testPsbtChanFundingExternal(net *lntest.NetworkHarness, t *harnessTest) {
 	// for the new channel to be propagated through the network.
 	block := mineBlocks(t, net, 6, 1)[0]
 	assertTxInBlock(t, block, &txHash)
-	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
-	defer cancel()
-	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint)
+	err = carol.WaitForNetworkChannelOpen(chanPoint)
 	require.NoError(t.t, err)
-	err = carol.WaitForNetworkChannelOpen(ctxt, chanPoint2)
+	err = carol.WaitForNetworkChannelOpen(chanPoint2)
 	require.NoError(t.t, err)
 
 	// With the channel open, ensure that it is counted towards Carol's
@@ -640,7 +636,7 @@ func testPsbtChanFundingSingleStep(net *lntest.NetworkHarness, t *harnessTest) {
 	txHash := finalTx.TxHash()
 	block := mineBlocks(t, net, 6, 1)[0]
 	assertTxInBlock(t, block, &txHash)
-	err = carol.WaitForNetworkChannelOpen(testctx.New(t), chanPoint)
+	err = carol.WaitForNetworkChannelOpen(chanPoint)
 	require.NoError(t.t, err)
 
 	// Next, to make sure the channel functions as normal, we'll make some
@@ -680,11 +676,11 @@ func openChannelPsbt(ctx context.Context, srcNode, destNode *lntest.HarnessNode,
 	// Otherwise, we may run into a check within the funding manager that
 	// prevents any funding workflows from being kicked off if the chain
 	// isn't yet synced.
-	if err := srcNode.WaitForBlockchainSync(ctx); err != nil {
+	if err := srcNode.WaitForBlockchainSync(); err != nil {
 		return nil, nil, fmt.Errorf("unable to sync srcNode chain: %v",
 			err)
 	}
-	if err := destNode.WaitForBlockchainSync(ctx); err != nil {
+	if err := destNode.WaitForBlockchainSync(); err != nil {
 		return nil, nil, fmt.Errorf("unable to sync destNode chain: %v",
 			err)
 	}
