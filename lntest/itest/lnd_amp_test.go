@@ -25,6 +25,15 @@ func testSendPaymentAMPInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	ctx := newMppTestContext(t, net)
 	defer ctx.shutdownNodes()
 
+	// Subscribe to bob's invoices. Do this early in the test to make sure
+	// that the subscription has actually been completed when we add an
+	// invoice. Otherwise the notification will be missed.
+	req := &lnrpc.InvoiceSubscription{}
+	ctxc, cancelSubscription := context.WithCancel(ctxb)
+	bobInvoiceSubscription, err := ctx.bob.SubscribeInvoices(ctxc, req)
+	require.NoError(t.t, err)
+	defer cancelSubscription()
+
 	const paymentAmt = dcrutil.Amount(300000)
 
 	// Set up a network with three different paths Alice <-> Bob. Channel
@@ -47,13 +56,6 @@ func testSendPaymentAMPInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	defer ctx.closeChannels()
 
 	ctx.waitForChannels()
-
-	// Subscribe to bob's invoices.
-	req := &lnrpc.InvoiceSubscription{}
-	ctxc, cancelSubscription := context.WithCancel(ctxb)
-	bobInvoiceSubscription, err := ctx.bob.SubscribeInvoices(ctxc, req)
-	require.NoError(t.t, err)
-	defer cancelSubscription()
 
 	addInvoiceResp, err := ctx.bob.AddInvoice(context.Background(), &lnrpc.Invoice{
 		Value: int64(paymentAmt),
@@ -79,7 +81,7 @@ func testSendPaymentAMPInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		context.Background(),
 		&lnrpc.PolicyUpdateRequest{
 			Scope:         &lnrpc.PolicyUpdateRequest_Global{Global: true},
-			BaseFeeMAtoms:   500000,
+			BaseFeeMAtoms: 500000,
 			FeeRate:       0.001,
 			TimeLockDelta: 40,
 		},
@@ -94,7 +96,7 @@ func testSendPaymentAMPInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		&routerrpc.SendPaymentRequest{
 			PaymentRequest: addInvoiceResp.PaymentRequest,
 			TimeoutSeconds: 60,
-			FeeLimitMAtoms:   noFeeLimitMAtoms,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
 		},
 	)
 
