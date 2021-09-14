@@ -1,7 +1,7 @@
 //go:build !rpctest
 // +build !rpctest
 
-package dcrlnd
+package contractcourt
 
 import (
 	"bytes"
@@ -402,14 +402,14 @@ func TestBabyOutputSerialization(t *testing.T) {
 }
 
 type nurseryTestContext struct {
-	nursery     *utxoNursery
+	nursery     *UtxoNursery
 	notifier    *sweep.MockNotifier
 	chainIO     *mock.ChainIO
 	publishChan chan wire.MsgTx
 	store       *nurseryStoreInterceptor
 	restart     func() bool
 	receiveTx   func() wire.MsgTx
-	sweeper     *mockSweeper
+	sweeper     *mockSweeperFull
 	timeoutChan chan chan time.Time
 	t           *testing.T
 	dbCleanup   func()
@@ -427,7 +427,7 @@ func createNurseryTestContext(t *testing.T,
 		t.Fatalf("unable to open channeldb: %v", err)
 	}
 
-	store, err := newNurseryStore(&chainhash.Hash{}, cdb)
+	store, err := NewNurseryStore(&chainhash.Hash{}, cdb)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -440,7 +440,7 @@ func createNurseryTestContext(t *testing.T,
 
 	publishChan := make(chan wire.MsgTx, 1)
 	publishFunc := func(tx *wire.MsgTx, source string) error {
-		utxnLog.Tracef("Publishing tx %v by %v", tx.TxHash(), source)
+		log.Tracef("Publishing tx %v by %v", tx.TxHash(), source)
 		publishChan <- *tx
 		return nil
 	}
@@ -451,7 +451,7 @@ func createNurseryTestContext(t *testing.T,
 		BestHeight: 0,
 	}
 
-	sweeper := newMockSweeper(t)
+	sweeper := newMockSweeperFull(t)
 
 	nurseryCfg := NurseryConfig{
 		Notifier: notifier,
@@ -473,7 +473,7 @@ func createNurseryTestContext(t *testing.T,
 		},
 	}
 
-	nursery := newUtxoNursery(&nurseryCfg)
+	nursery := NewUtxoNursery(&nurseryCfg)
 	nursery.Start()
 
 	ctx := &nurseryTestContext{
@@ -492,7 +492,7 @@ func createNurseryTestContext(t *testing.T,
 		var tx wire.MsgTx
 		select {
 		case tx = <-ctx.publishChan:
-			utxnLog.Debugf("Published tx %v", tx.TxHash())
+			log.Debugf("Published tx %v", tx.TxHash())
 			return tx
 		case <-time.After(defaultTestTimeout):
 			pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
@@ -504,16 +504,16 @@ func createNurseryTestContext(t *testing.T,
 
 	ctx.restart = func() bool {
 		return checkStartStop(func() {
-			utxnLog.Tracef("Restart sweeper and nursery")
+			log.Tracef("Restart sweeper and nursery")
 			// Simulate lnd restart.
 			ctx.nursery.Stop()
 
 			// Restart sweeper.
-			ctx.sweeper = newMockSweeper(t)
+			ctx.sweeper = newMockSweeperFull(t)
 
 			/// Restart nursery.
 			nurseryCfg.SweepInput = ctx.sweeper.sweepInput
-			ctx.nursery = newUtxoNursery(&nurseryCfg)
+			ctx.nursery = NewUtxoNursery(&nurseryCfg)
 			ctx.nursery.Start()
 
 		})
@@ -632,7 +632,7 @@ func createOutgoingRes(onLocalCommitment bool) *lnwallet.OutgoingHtlcResolution 
 	return &outgoingRes
 }
 
-func incubateTestOutput(t *testing.T, nursery *utxoNursery,
+func incubateTestOutput(t *testing.T, nursery *UtxoNursery,
 	onLocalCommitment bool) *lnwallet.OutgoingHtlcResolution {
 
 	outgoingRes := createOutgoingRes(onLocalCommitment)
@@ -658,7 +658,7 @@ func incubateTestOutput(t *testing.T, nursery *utxoNursery,
 	return outgoingRes
 }
 
-func assertNurseryReport(t *testing.T, nursery *utxoNursery,
+func assertNurseryReport(t *testing.T, nursery *UtxoNursery,
 	expectedNofHtlcs int, expectedStage uint32,
 	expectedLimboBalance dcrutil.Amount) {
 	report, err := nursery.NurseryReport(&testChanPoint)
@@ -666,27 +666,27 @@ func assertNurseryReport(t *testing.T, nursery *utxoNursery,
 		t.Fatal(err)
 	}
 
-	if len(report.htlcs) != expectedNofHtlcs {
+	if len(report.Htlcs) != expectedNofHtlcs {
 		t.Fatalf("expected %v outputs to be reported, but report "+
-			"only contains %v", expectedNofHtlcs, len(report.htlcs))
+			"only contains %v", expectedNofHtlcs, len(report.Htlcs))
 	}
 
 	if expectedNofHtlcs != 0 {
-		htlcReport := report.htlcs[0]
-		if htlcReport.stage != expectedStage {
+		htlcReport := report.Htlcs[0]
+		if htlcReport.Stage != expectedStage {
 			t.Fatalf("expected htlc be advanced to stage %v, but "+
 				"it is reported in stage %v",
-				expectedStage, htlcReport.stage)
+				expectedStage, htlcReport.Stage)
 		}
 	}
 
-	if report.limboBalance != expectedLimboBalance {
+	if report.LimboBalance != expectedLimboBalance {
 		t.Fatalf("expected limbo balance to be %v, but it is %v instead",
-			expectedLimboBalance, report.limboBalance)
+			expectedLimboBalance, report.LimboBalance)
 	}
 }
 
-func assertNurseryReportUnavailable(t *testing.T, nursery *utxoNursery) {
+func assertNurseryReportUnavailable(t *testing.T, nursery *UtxoNursery) {
 	_, err := nursery.NurseryReport(&testChanPoint)
 	if err != ErrContractNotFound {
 		t.Fatal("expected report to be unavailable")
@@ -716,7 +716,7 @@ func testRestartLoop(t *testing.T, test func(*testing.T,
 
 				return true
 			}
-			utxnLog.Debugf("Skipping restart point %v",
+			log.Debugf("Skipping restart point %v",
 				currentStartStopIdx)
 			return false
 		}
@@ -868,7 +868,7 @@ func testSweep(t *testing.T, ctx *nurseryTestContext,
 }
 
 type nurseryStoreInterceptor struct {
-	ns NurseryStore
+	ns NurseryStorer
 
 	// TODO(joostjager): put more useful info through these channels.
 	cribToKinderChan      chan struct{}
@@ -877,7 +877,7 @@ type nurseryStoreInterceptor struct {
 	preschoolToKinderChan chan struct{}
 }
 
-func newNurseryStoreInterceptor(ns NurseryStore) *nurseryStoreInterceptor {
+func newNurseryStoreInterceptor(ns NurseryStorer) *nurseryStoreInterceptor {
 	return &nurseryStoreInterceptor{
 		ns:                    ns,
 		cribToKinderChan:      make(chan struct{}),
@@ -955,7 +955,7 @@ func (i *nurseryStoreInterceptor) RemoveChannel(chanPoint *wire.OutPoint) error 
 	return i.ns.RemoveChannel(chanPoint)
 }
 
-type mockSweeper struct {
+type mockSweeperFull struct {
 	lock sync.Mutex
 
 	resultChans map[wire.OutPoint]chan sweep.Result
@@ -964,18 +964,18 @@ type mockSweeper struct {
 	sweepChan chan input.Input
 }
 
-func newMockSweeper(t *testing.T) *mockSweeper {
-	return &mockSweeper{
+func newMockSweeperFull(t *testing.T) *mockSweeperFull {
+	return &mockSweeperFull{
 		resultChans: make(map[wire.OutPoint]chan sweep.Result),
 		sweepChan:   make(chan input.Input, 1),
 		t:           t,
 	}
 }
 
-func (s *mockSweeper) sweepInput(input input.Input,
+func (s *mockSweeperFull) sweepInput(input input.Input,
 	_ sweep.Params) (chan sweep.Result, error) {
 
-	utxnLog.Debugf("mockSweeper sweepInput called for %v", *input.OutPoint())
+	log.Debugf("mockSweeperFull sweepInput called for %v", *input.OutPoint())
 
 	select {
 	case s.sweepChan <- input:
@@ -992,7 +992,7 @@ func (s *mockSweeper) sweepInput(input input.Input,
 	return c, nil
 }
 
-func (s *mockSweeper) expectSweep() {
+func (s *mockSweeperFull) expectSweep() {
 	s.t.Helper()
 
 	select {
@@ -1002,7 +1002,7 @@ func (s *mockSweeper) expectSweep() {
 	}
 }
 
-func (s *mockSweeper) sweepAll() {
+func (s *mockSweeperFull) sweepAll() {
 	s.t.Helper()
 
 	s.lock.Lock()
@@ -1011,7 +1011,7 @@ func (s *mockSweeper) sweepAll() {
 	s.lock.Unlock()
 
 	for o, c := range currentChans {
-		utxnLog.Debugf("mockSweeper signal swept for %v", o)
+		log.Debugf("mockSweeperFull signal swept for %v", o)
 
 		select {
 		case c <- sweep.Result{}:

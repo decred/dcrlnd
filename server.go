@@ -237,7 +237,7 @@ type server struct {
 
 	witnessBeacon contractcourt.WitnessBeacon
 
-	breachArbiter *breachArbiter
+	breachArbiter *contractcourt.BreachArbiter
 
 	missionControl *routing.MissionControl
 
@@ -249,7 +249,7 @@ type server struct {
 
 	localChanMgr *localchans.Manager
 
-	utxoNursery *utxoNursery
+	utxoNursery *contractcourt.UtxoNursery
 
 	sweeper *sweep.UtxoSweeper
 
@@ -851,7 +851,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		FetchChannel:              s.chanStateDB.FetchChannel,
 	}
 
-	utxnStore, err := newNurseryStore(
+	utxnStore, err := contractcourt.NewNurseryStore(
 		&s.cfg.ActiveNetParams.GenesisHash, dbs.chanStateDB,
 	)
 	if err != nil {
@@ -888,7 +888,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		FeeRateBucketSize:    sweep.DefaultFeeRateBucketSize,
 	})
 
-	s.utxoNursery = newUtxoNursery(&NurseryConfig{
+	s.utxoNursery = contractcourt.NewUtxoNursery(&contractcourt.NurseryConfig{
 		ChainIO:             cc.ChainIO,
 		ConfDepth:           1,
 		FetchClosedChannels: dbs.chanStateDB.FetchClosedChannels,
@@ -901,7 +901,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 
 	// Construct a closure that wraps the htlcswitch's CloseLink method.
 	closeLink := func(chanPoint *wire.OutPoint,
-		closureType htlcswitch.ChannelCloseType) {
+		closureType contractcourt.ChannelCloseType) {
 		// TODO(conner): Properly respect the update and error channels
 		// returned by CloseLink.
 
@@ -912,8 +912,8 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	}
 
 	// We will use the following channel to reliably hand off contract
-	// breach events from the ChannelArbitrator to the breachArbiter,
-	contractBreaches := make(chan *ContractBreachEvent, 1)
+	// breach events from the ChannelArbitrator to the contractcourt.BreachArbiter,
+	contractBreaches := make(chan *contractcourt.ContractBreachEvent, 1)
 
 	s.chainArb = contractcourt.NewChainArbitrator(contractcourt.ChainArbitratorConfig{
 		ChainHash:              s.cfg.ActiveNetParams.GenesisHash,
@@ -967,7 +967,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 			breachRet *lnwallet.BreachRetribution,
 			markClosed func() error) error {
 
-			// processACK will handle the breachArbiter ACKing the
+			// processACK will handle the contractcourt.BreachArbiter ACKing the
 			// event.
 			finalErr := make(chan error, 1)
 			processACK := func(brarErr error) {
@@ -976,18 +976,18 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 					return
 				}
 
-				// If the breachArbiter successfully handled
+				// If the contractcourt.BreachArbiter successfully handled
 				// the event, we can mark the channel closed.
 				finalErr <- markClosed()
 			}
 
-			event := &ContractBreachEvent{
+			event := &contractcourt.ContractBreachEvent{
 				ChanPoint:         chanPoint,
 				ProcessACK:        processACK,
 				BreachRetribution: breachRet,
 			}
 
-			// Send the contract breach event to the breachArbiter.
+			// Send the contract breach event to the contractcourt.BreachArbiter.
 			select {
 			case contractBreaches <- event:
 			case <-s.quit:
@@ -995,7 +995,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 			}
 
 			// We'll wait for a final error to be available, either
-			// from the breachArbiter or from our markClosed
+			// from the contractcourt.BreachArbiter or from our markClosed
 			// function closure.
 			select {
 			case err := <-finalErr:
@@ -1017,7 +1017,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		Clock:                         clock.NewDefaultClock(),
 	}, dbs.chanStateDB)
 
-	s.breachArbiter = newBreachArbiter(&BreachConfig{
+	s.breachArbiter = contractcourt.NewBreachArbiter(&contractcourt.BreachConfig{
 		CloseLink:          closeLink,
 		DB:                 dbs.chanStateDB,
 		Estimator:          s.cc.FeeEstimator,
@@ -1026,7 +1026,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		PublishTransaction: cc.Wallet.PublishTransaction,
 		ContractBreaches:   contractBreaches,
 		Signer:             cc.Wallet.Cfg.Signer,
-		Store:              newRetributionStore(dbs.chanStateDB),
+		Store:              contractcourt.NewRetributionStore(dbs.chanStateDB),
 		NetParams:          s.cfg.ActiveNetParams.Params,
 	})
 
@@ -1838,10 +1838,10 @@ func (s *server) Stop() error {
 			srvrLog.Warnf("failed to stop fundingMgr: %v", err)
 		}
 		if err := s.breachArbiter.Stop(); err != nil {
-			srvrLog.Warnf("failed to stop breachArbiter: %v", err)
+			srvrLog.Warnf("failed to stop contractcourt.BreachArbiter: %v", err)
 		}
 		if err := s.utxoNursery.Stop(); err != nil {
-			srvrLog.Warnf("failed to stop utxoNursery: %v", err)
+			srvrLog.Warnf("failed to stop contractcourt.UtxoNursery: %v", err)
 		}
 		if err := s.authGossiper.Stop(); err != nil {
 			srvrLog.Warnf("failed to stop authGossiper: %v", err)

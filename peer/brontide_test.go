@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/contractcourt"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lntest/mock"
@@ -166,7 +167,7 @@ func TestPeerChannelClosureAcceptFeeInitiator(t *testing.T) {
 	updateChan := make(chan interface{}, 1)
 	errChan := make(chan error, 1)
 	closeCommand := &htlcswitch.ChanClose{
-		CloseType:      htlcswitch.CloseRegular,
+		CloseType:      contractcourt.CloseRegular,
 		ChanPoint:      bobChan.ChannelPoint(),
 		Updates:        updateChan,
 		TargetFeePerKB: 12500,
@@ -492,7 +493,7 @@ func TestPeerChannelClosureFeeNegotiationsInitiator(t *testing.T) {
 	updateChan := make(chan interface{}, 1)
 	errChan := make(chan error, 1)
 	closeCommand := &htlcswitch.ChanClose{
-		CloseType:      htlcswitch.CloseRegular,
+		CloseType:      contractcourt.CloseRegular,
 		ChanPoint:      bobChan.ChannelPoint(),
 		Updates:        updateChan,
 		TargetFeePerKB: 12500,
@@ -836,7 +837,7 @@ func TestCustomShutdownScript(t *testing.T) {
 			updateChan := make(chan interface{}, 1)
 			errChan := make(chan error, 1)
 			closeCommand := htlcswitch.ChanClose{
-				CloseType:      htlcswitch.CloseRegular,
+				CloseType:      contractcourt.CloseRegular,
 				ChanPoint:      chanPoint,
 				Updates:        updateChan,
 				TargetFeePerKB: 12500,

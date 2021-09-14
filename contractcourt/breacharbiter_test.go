@@ -1,7 +1,7 @@
 //go:build !rpctest
 // +build !rpctest
 
-package dcrlnd
+package contractcourt
 
 import (
 	"bytes"
@@ -27,7 +27,6 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lntest/channels"
@@ -42,8 +41,6 @@ import (
 )
 
 var (
-	defaultTimeout = 30 * time.Second
-
 	breachOutPoints = []wire.OutPoint{
 		{
 			Hash: [chainhash.HashSize]byte{
@@ -340,7 +337,7 @@ func init() {
 // modifications to the entries are made between calls or through side effects,
 // and (2) that the database is actually being persisted between actions.
 type FailingRetributionStore interface {
-	RetributionStore
+	RetributionStorer
 
 	Restart()
 }
@@ -352,18 +349,18 @@ type FailingRetributionStore interface {
 type failingRetributionStore struct {
 	mu sync.Mutex
 
-	rs RetributionStore
+	rs RetributionStorer
 
 	nextAddErr error
 
-	restart func() RetributionStore
+	restart func() RetributionStorer
 }
 
 // newFailingRetributionStore creates a new failing retribution store. The given
 // restart closure should ensure that it is reloading its contents from the
 // persistent source.
 func newFailingRetributionStore(
-	restart func() RetributionStore) *failingRetributionStore {
+	restart func() RetributionStorer) *failingRetributionStore {
 
 	return &failingRetributionStore{
 		mu:      sync.Mutex{},
@@ -596,7 +593,7 @@ func (rs *mockRetributionStore) ForAll(cb func(*retributionInfo) error,
 	return nil
 }
 
-var retributionStoreTestSuite = []struct {
+var RetributionStoreTestSuite = []struct {
 	name string
 	test func(FailingRetributionStore, *testing.T)
 }{
@@ -625,13 +622,13 @@ var retributionStoreTestSuite = []struct {
 // TestMockRetributionStore instantiates a mockRetributionStore and tests its
 // behavior using the general RetributionStore test suite.
 func TestMockRetributionStore(t *testing.T) {
-	for _, test := range retributionStoreTestSuite {
+	for _, test := range RetributionStoreTestSuite {
 		t.Run(
 			"mockRetributionStore."+test.name,
 			func(tt *testing.T) {
 				mrs := newMockRetributionStore()
 				frs := newFailingRetributionStore(
-					func() RetributionStore { return mrs },
+					func() RetributionStorer { return mrs },
 				)
 				test.test(frs, tt)
 			},
@@ -660,13 +657,13 @@ func makeTestChannelDB() (*channeldb.DB, func(), error) {
 	return db, cleanUp, nil
 }
 
-// TestChannelDBRetributionStore instantiates a retributionStore backed by a
+// TestChannelDBRetributionStore instantiates a RetributionStore backed by a
 // channeldb.DB, and tests its behavior using the general RetributionStore test
 // suite.
 func TestChannelDBRetributionStore(t *testing.T) {
 	// Finally, instantiate retribution store and execute RetributionStore
 	// test suite.
-	for _, test := range retributionStoreTestSuite {
+	for _, test := range RetributionStoreTestSuite {
 		t.Run(
 			"channeldbDBRetributionStore."+test.name,
 			func(tt *testing.T) {
@@ -677,7 +674,7 @@ func TestChannelDBRetributionStore(t *testing.T) {
 				defer db.Close()
 				defer cleanUp()
 
-				restartDb := func() RetributionStore {
+				restartDb := func() RetributionStorer {
 					// Close and reopen channeldb
 					if err = db.Close(); err != nil {
 						t.Fatalf("unable to close "+
@@ -691,7 +688,7 @@ func TestChannelDBRetributionStore(t *testing.T) {
 							"channeldb: %v", err)
 					}
 
-					return newRetributionStore(db)
+					return NewRetributionStore(db)
 				}
 
 				frs := newFailingRetributionStore(restartDb)
@@ -703,7 +700,7 @@ func TestChannelDBRetributionStore(t *testing.T) {
 
 // countRetributions uses a retribution store's ForAll to count the number of
 // elements emitted from the store.
-func countRetributions(t *testing.T, rs RetributionStore) int {
+func countRetributions(t *testing.T, rs RetributionStorer) int {
 	count := 0
 	err := rs.ForAll(func(_ *retributionInfo) error {
 		count++
@@ -971,7 +968,7 @@ restartCheck:
 	}
 }
 
-func initBreachedState(t *testing.T) (*breachArbiter,
+func initBreachedState(t *testing.T) (*BreachArbiter,
 	*lnwallet.LightningChannel, *lnwallet.LightningChannel,
 	*lnwallet.LocalForceCloseSummary, chan *ContractBreachEvent,
 	func(), func()) {
@@ -2037,7 +2034,7 @@ func findInputIndex(t *testing.T, op wire.OutPoint, tx *wire.MsgTx) int {
 
 // assertArbiterBreach checks that the breach arbiter has persisted the breach
 // information for a particular channel.
-func assertArbiterBreach(t *testing.T, brar *breachArbiter,
+func assertArbiterBreach(t *testing.T, brar *BreachArbiter,
 	chanPoint *wire.OutPoint) {
 
 	t.Helper()
@@ -2057,7 +2054,7 @@ func assertArbiterBreach(t *testing.T, brar *breachArbiter,
 
 // assertNoArbiterBreach checks that the breach arbiter has not persisted the
 // breach information for a particular channel.
-func assertNoArbiterBreach(t *testing.T, brar *breachArbiter,
+func assertNoArbiterBreach(t *testing.T, brar *BreachArbiter,
 	chanPoint *wire.OutPoint) {
 
 	t.Helper()
@@ -2076,7 +2073,7 @@ func assertNoArbiterBreach(t *testing.T, brar *breachArbiter,
 
 // assertBrarCleanup blocks until the given channel point has been removed the
 // retribution store and the channel is fully closed in the database.
-func assertBrarCleanup(t *testing.T, brar *breachArbiter,
+func assertBrarCleanup(t *testing.T, brar *BreachArbiter,
 	chanPoint *wire.OutPoint, db *channeldb.DB) {
 
 	t.Helper()
@@ -2161,11 +2158,11 @@ func assertNotPendingClosed(t *testing.T, c *lnwallet.LightningChannel) {
 // createTestArbiter instantiates a breach arbiter with a failing retribution
 // store, so that controlled failures can be tested.
 func createTestArbiter(t *testing.T, contractBreaches chan *ContractBreachEvent,
-	db *channeldb.DB) (*breachArbiter, func(), error) {
+	db *channeldb.DB) (*BreachArbiter, func(), error) {
 
 	// Create a failing retribution store, that wraps a normal one.
-	store := newFailingRetributionStore(func() RetributionStore {
-		return newRetributionStore(db)
+	store := newFailingRetributionStore(func() RetributionStorer {
+		return NewRetributionStore(db)
 	})
 
 	aliceKeyPriv := secp256k1.PrivKeyFromBytes(channels.AlicesPrivKey)
@@ -2173,8 +2170,8 @@ func createTestArbiter(t *testing.T, contractBreaches chan *ContractBreachEvent,
 
 	// Assemble our test arbiter.
 	notifier := mock.MakeMockSpendNotifier()
-	ba := newBreachArbiter(&BreachConfig{
-		CloseLink:          func(_ *wire.OutPoint, _ htlcswitch.ChannelCloseType) {},
+	ba := NewBreachArbiter(&BreachConfig{
+		CloseLink:          func(_ *wire.OutPoint, _ ChannelCloseType) {},
 		DB:                 db,
 		Estimator:          chainfee.NewStaticEstimator(12500, 0),
 		GenSweepScript:     func() ([]byte, error) { return nil, nil },

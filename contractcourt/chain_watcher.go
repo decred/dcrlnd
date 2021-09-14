@@ -157,7 +157,7 @@ type chainWatcherConfig struct {
 	// detects that a contract breach transaction has been confirmed. A
 	// callback should be passed that when called will mark the channel
 	// pending close in the database. It will only return a non-nil error
-	// when the breachArbiter has preserved the necessary breach info for
+	// when the BreachArbiter has preserved the necessary breach info for
 	// this channel point, and the callback has succeeded, meaning it is
 	// safe to stop watching the channel.
 	contractBreach func(*lnwallet.BreachRetribution, func() error) error
@@ -1155,7 +1155,7 @@ func (c *chainWatcher) dispatchContractBreach(spendEvent *chainntnfs.SpendDetail
 	// Hand the retribution info over to the breach arbiter.
 	if err := c.cfg.contractBreach(retribution, markClosed); err != nil {
 		log.Errorf("unable to hand breached contract off to "+
-			"breachArbiter: %v", err)
+			"BreachArbiter: %v", err)
 		return err
 	}
 
