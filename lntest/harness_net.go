@@ -145,48 +145,6 @@ func (n *NetworkHarness) ProcessErrors() <-chan error {
 	return n.lndErrorChan
 }
 
-// fakeLogger is a fake grpclog.Logger implementation. This is used to stop
-// grpc's logger from printing directly to stdout.
-type fakeLogger struct{}
-
-func (f *fakeLogger) Fatal(args ...interface{})                 {}
-func (f *fakeLogger) Fatalf(format string, args ...interface{}) {}
-func (f *fakeLogger) Fatalln(args ...interface{})               {}
-func (f *fakeLogger) Print(args ...interface{})                 {}
-func (f *fakeLogger) Printf(format string, args ...interface{}) {}
-func (f *fakeLogger) Println(args ...interface{})               {}
-
-// SetUpChain performs the initial chain setup for integration tests. This
-// should be done only once.
-func (n *NetworkHarness) SetUpChain() error {
-	// Generate the premine block the usual way.
-	_, err := n.Miner.Node.Generate(context.TODO(), 1)
-	if err != nil {
-		return fmt.Errorf("unable to generate premine: %v", err)
-	}
-
-	// Generate enough blocks so that the network harness can have funds to
-	// send to the voting wallet, Alice and Bob.
-	_, err = rpctest.AdjustedSimnetMiner(context.Background(), n.Miner.Node, 64)
-	if err != nil {
-		return fmt.Errorf("unable to init chain: %v", err)
-	}
-
-	// Setup a ticket buying/voting dcrwallet, so that the network advances
-	// past SVH.
-	err = n.setupVotingWallet()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ModifyTestCaseName modifies the current test case name.
-func (n *NetworkHarness) ModifyTestCaseName(testCase string) {
-	n.currentTestCase = testCase
-}
-
 // SetUp starts the initial seeder nodes within the test harness. The initial
 // node's wallets will be funded wallets with ten 1 DCR outputs each. Finally
 // rpc clients capable of communicating with the initial seeder nodes are
@@ -197,7 +155,8 @@ func (n *NetworkHarness) SetUp(t *testing.T,
 
 	// Swap out grpc's default logger with out fake logger which drops the
 	// statements on the floor.
-	grpclog.SetLogger(&fakeLogger{})
+	fakeLogger := grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard)
+	grpclog.SetLoggerV2(fakeLogger)
 	n.currentTestCase = testCase
 
 	// Start the initial seeder nodes within the test network, then connect
