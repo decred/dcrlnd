@@ -24,6 +24,7 @@ import (
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/htlcswitch"
 	lnmock "github.com/decred/dcrlnd/lntest/mock"
+	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
@@ -4275,6 +4276,7 @@ func TestBlockDifferenceFix(t *testing.T) {
 	t.Parallel()
 
 	initialBlockHeight := uint32(0)
+
 	// Starting height here is set to 0, which is behind where we want to be.
 	ctx, cleanup := createTestCtxSingleNode(t, initialBlockHeight)
 	defer cleanup()
@@ -4331,9 +4333,17 @@ func TestBlockDifferenceFix(t *testing.T) {
 		<-ctx.chainView.notifyBlockAck
 	}
 
-	// Then router height should be updated to the latest block.
-	if atomic.LoadUint32(&ctx.router.bestHeight) != newBlockHeight {
-		t.Fatalf("height should have been updated to %v, instead got "+
-			"%v", newBlockHeight, ctx.router.bestHeight)
+	err := wait.NoError(func() error {
+		// Then router height should be updated to the latest block.
+		if atomic.LoadUint32(&ctx.router.bestHeight) != newBlockHeight {
+			return fmt.Errorf("height should have been updated "+
+				"to %v, instead got %v", newBlockHeight,
+				ctx.router.bestHeight)
+		}
+
+		return nil
+	}, testTimeout)
+	if err != nil {
+		t.Fatalf("block height wasn't updated: %v", err)
 	}
 }
