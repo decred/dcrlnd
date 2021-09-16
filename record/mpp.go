@@ -36,7 +36,7 @@ func (r *MPP) PaymentAddr() [32]byte {
 	return r.paymentAddr
 }
 
-// TotalMsat returns the total value of an MPP payment in matoms.
+// TotalMAtoms returns the total value of an MPP payment in matoms.
 func (r *MPP) TotalMAtoms() lnwire.MilliAtom {
 	return r.totalMAtoms
 }
@@ -105,5 +105,9 @@ func (r *MPP) PayloadSize() uint64 {
 
 // String returns a human-readable representation of the mpp payload field.
 func (r *MPP) String() string {
+	if r == nil {
+		return "<nil>"
+	}
+
 	return fmt.Sprintf("total=%v, addr=%x", r.totalMAtoms, r.paymentAddr)
 }
