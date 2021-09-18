@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,11 +42,12 @@ import (
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/macaroons"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
-	"github.com/go-errors/errors"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 	"gopkg.in/macaroon.v2"
 )
 
@@ -374,8 +376,13 @@ type HarnessNode struct {
 	// node and the outpoint.
 	policyUpdates policyUpdateMap
 
-	quit chan struct{}
-	wg   sync.WaitGroup
+	// runCtx is a context with cancel method. It's used to signal when the
+	// node needs to quit, and used as the parent context when spawning
+	// children contexts for RPC requests.
+	runCtx context.Context
+	cancel context.CancelFunc
+
+	wg sync.WaitGroup
 
 	lnrpc.LightningClient
 
@@ -682,7 +689,10 @@ func renameFile(fromFileName, toFileName string) {
 func (hn *HarnessNode) start(lndBinary string, lndError chan<- error,
 	wait bool) error {
 
-	hn.quit = make(chan struct{})
+	// Init the runCtx.
+	ctxt, cancel := context.WithCancel(context.Background())
+	hn.runCtx = ctxt
+	hn.cancel = cancel
 
 	args := hn.Cfg.genArgs()
 	hn.cmd = exec.Command(lndBinary, args...)
@@ -794,13 +804,13 @@ func (hn *HarnessNode) start(lndBinary string, lndError chan<- error,
 
 		err := hn.cmd.Wait()
 		if err != nil {
-			lndError <- errors.Errorf("%v\n%v\n", err, errb.String())
+			lndError <- fmt.Errorf("%v\n%v", err, errb.String())
 		}
 
 		if hn.walletCmd != nil {
 			err = hn.walletCmd.Wait()
 			if err != nil {
-				lndError <- errors.Errorf("wallet error during final wait: %v", err)
+				lndError <- fmt.Errorf("wallet error during final wait: %v", err)
 			}
 		}
 
@@ -1079,7 +1089,7 @@ func (hn *HarnessNode) waitForState(conn grpc.ClientConnInterface,
 	predicate func(state lnrpc.WalletState) bool) error {
 
 	stateClient := lnrpc.NewStateClient(conn)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(hn.runCtx)
 	defer cancel()
 
 	stateStream, err := stateClient.SubscribeState(
@@ -1344,8 +1354,7 @@ func (hn *HarnessNode) Unlock(ctx context.Context,
 // waitTillServerStarted makes a subscription to the server's state change and
 // blocks until the server is in state ServerActive.
 func (hn *HarnessNode) waitTillServerStarted() error {
-	ctxb := context.Background()
-	ctxt, cancel := context.WithTimeout(ctxb, NodeStartTimeout)
+	ctxt, cancel := context.WithTimeout(hn.runCtx, NodeStartTimeout)
 	defer cancel()
 
 	client, err := hn.StateClient.SubscribeState(
@@ -1547,7 +1556,7 @@ func (hn *HarnessNode) ConnectRPCWithMacaroon(mac *macaroon.Macaroon) (
 		}),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
+	ctx, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
 	defer cancel()
 
 	if mac == nil {
@@ -1611,8 +1620,23 @@ func (hn *HarnessNode) stop() error {
 		// Don't watch for error because sometimes the RPC connection gets
 		// closed before a response is returned.
 		req := lnrpc.StopRequest{}
-		ctx := context.Background()
-		_, _ = hn.LightningClient.StopDaemon(ctx, &req)
+		err := wait.NoError(func() error {
+			_, err := hn.LightningClient.StopDaemon(hn.runCtx, &req)
+			switch {
+			case err == nil:
+				return nil
+
+			// Try again if a recovery/rescan is in progress.
+			case strings.Contains(err.Error(), "recovery in progress"):
+				return err
+
+			default:
+				return nil
+			}
+		}, DefaultTimeout)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Stop the remote dcrwallet instance if running a remote wallet.
@@ -1627,10 +1651,10 @@ func (hn *HarnessNode) stop() error {
 		return fmt.Errorf("process did not exit")
 	}
 
-	close(hn.quit)
+	// Stop the runCtx and wait for goroutines to finish.
+	hn.cancel()
 	hn.wg.Wait()
 
-	hn.quit = nil
 	hn.processExit = nil
 	hn.LightningClient = nil
 	hn.WalletUnlockerClient = nil
@@ -1639,13 +1663,25 @@ func (hn *HarnessNode) stop() error {
 
 	// Close any attempts at further grpc connections.
 	if hn.conn != nil {
-		err := hn.conn.Close()
-		if err != nil &&
-			!strings.Contains(err.Error(), "connection is closing") {
+		err := status.Code(hn.conn.Close())
+		switch err {
+		case codes.OK:
+			return nil
 
-			return fmt.Errorf("error attempting to stop grpc "+
-				"client: %v", err)
+		// When the context is canceled above, we might get the
+		// following error as the context is no longer active.
+		case codes.Canceled:
+			return nil
+
+		case codes.Unknown:
+			return fmt.Errorf("unknown error attempting to stop "+
+				"grpc client: %v", err)
+
+		default:
+			return fmt.Errorf("error attempting to stop "+
+				"grpc client: %v", err)
 		}
+
 	}
 
 	return nil
@@ -1797,7 +1833,7 @@ func (hn *HarnessNode) lightningNetworkWatcher() {
 				hn.handlePolicyUpdateWatchRequest(watchRequest)
 			}
 
-		case <-hn.quit:
+		case <-hn.runCtx.Done():
 			return
 		}
 	}
@@ -1935,7 +1971,7 @@ func (hn *HarnessNode) WaitForBlockchainSync(ctx context.Context) error {
 		case <-ctx.Done():
 			return fmt.Errorf("timeout while waiting for " +
 				"blockchain sync")
-		case <-hn.quit:
+		case <-hn.runCtx.Done():
 			return nil
 		case <-ticker.C:
 		}
@@ -1952,7 +1988,7 @@ func (hn *HarnessNode) WaitForBlockHeight(ctx context.Context, height uint32) er
 		for {
 			select {
 			case <-ctx.Done():
-			case <-hn.quit:
+			case <-hn.runCtx.Done():
 				return
 			default:
 			}
@@ -1977,7 +2013,7 @@ func (hn *HarnessNode) WaitForBlockHeight(ctx context.Context, height uint32) er
 	}()
 
 	select {
-	case <-hn.quit:
+	case <-hn.runCtx.Done():
 		return nil
 	case err := <-errChan:
 		return err
@@ -1988,13 +2024,14 @@ func (hn *HarnessNode) WaitForBlockHeight(ctx context.Context, height uint32) er
 
 // WaitForBalance waits until the node sees the expected confirmed/unconfirmed
 // balance within their wallet.
-func (hn *HarnessNode) WaitForBalance(expectedBalance dcrutil.Amount, confirmed bool) error {
-	ctx := context.Background()
+func (hn *HarnessNode) WaitForBalance(expectedBalance dcrutil.Amount,
+	confirmed bool) error {
+
 	req := &lnrpc.WalletBalanceRequest{}
 
 	var lastBalance dcrutil.Amount
 	doesBalanceMatch := func() bool {
-		balance, err := hn.WalletBalance(ctx, req)
+		balance, err := hn.WalletBalance(hn.runCtx, req)
 		if err != nil {
 			return false
 		}
@@ -2111,7 +2148,7 @@ func (hn *HarnessNode) handleOpenChannelWatchRequest(req *chanWatchRequest) {
 	// node. This lets us handle the case where a node has already seen a
 	// channel before a notification has been requested, causing us to miss
 	// it.
-	chanFound := checkChanPointInGraph(context.Background(), hn, targetChan)
+	chanFound := checkChanPointInGraph(hn.runCtx, hn, targetChan)
 	if chanFound {
 		hn.LogPrintf("Already have targetChan in graph: %s", targetChan)
 		close(req.eventChan)
@@ -2203,16 +2240,14 @@ func (hn *HarnessNode) newTopologyClient(
 func (hn *HarnessNode) receiveTopologyClientStream(
 	receiver chan *lnrpc.GraphTopologyUpdate) error {
 
-	ctxb := context.Background()
-
 	// Create a topology client to receive graph updates.
-	client, err := hn.newTopologyClient(ctxb)
+	client, err := hn.newTopologyClient(hn.runCtx)
 	if err != nil {
 		return fmt.Errorf("create topologyClient failed: %v", err)
 	}
 
 	// We use the context to time out when retrying graph subscription.
-	ctxt, cancel := context.WithTimeout(ctxb, DefaultTimeout)
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
 	defer cancel()
 
 	for {
@@ -2231,12 +2266,12 @@ func (hn *HarnessNode) receiveTopologyClientStream(
 				return fmt.Errorf("graph subscription: " +
 					"router not started before timeout")
 			case <-time.After(wait.PollInterval):
-			case <-hn.quit:
+			case <-hn.runCtx.Done():
 				return nil
 			}
 
 			// Re-create the topology client.
-			client, err = hn.newTopologyClient(ctxb)
+			client, err = hn.newTopologyClient(hn.runCtx)
 			if err != nil {
 				return fmt.Errorf("create topologyClient "+
 					"failed: %v", err)
@@ -2245,6 +2280,10 @@ func (hn *HarnessNode) receiveTopologyClientStream(
 			continue
 
 		case strings.Contains(err.Error(), "EOF"):
+			// End of subscription stream. Do nothing and quit.
+			return nil
+
+		case strings.Contains(err.Error(), context.Canceled.Error()):
 			// End of subscription stream. Do nothing and quit.
 			return nil
 
@@ -2257,7 +2296,7 @@ func (hn *HarnessNode) receiveTopologyClientStream(
 		// Send the update or quit.
 		select {
 		case receiver <- update:
-		case <-hn.quit:
+		case <-hn.runCtx.Done():
 			return nil
 		}
 	}
@@ -2328,9 +2367,7 @@ func (hn *HarnessNode) handlePolicyUpdateWatchRequest(req *chanWatchRequest) {
 // the format defined in type policyUpdateMap.
 func (hn *HarnessNode) getChannelPolicies(include bool) policyUpdateMap {
 
-	ctxt, cancel := context.WithTimeout(
-		context.Background(), DefaultTimeout,
-	)
+	ctxt, cancel := context.WithTimeout(hn.runCtx, DefaultTimeout)
 	defer cancel()
 
 	graph, err := hn.DescribeGraph(ctxt, &lnrpc.ChannelGraphRequest{
