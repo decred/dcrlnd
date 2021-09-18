@@ -18,18 +18,15 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"testing"
 	"time"
 
 	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
-	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/aezeed"
 	"github.com/decred/dcrlnd/chanbackup"
-	"github.com/decred/dcrlnd/internal/testutils"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/invoicesrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
@@ -39,7 +36,6 @@ import (
 	"github.com/decred/dcrlnd/lnrpc/wtclientrpc"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/macaroons"
-	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -47,7 +43,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"gopkg.in/macaroon.v2"
-	"matheusd.com/testctx"
 )
 
 const (
@@ -522,62 +517,6 @@ func executePgQuery(query string) error {
 
 	_, err = pool.Exec(context.Background(), query)
 	return err
-}
-
-// NewMiner creates a new miner using btcd backend. The logDir specifies the
-// miner node's log dir. When tests finished, during clean up, its logs are
-// copied to a file specified as logFilename.
-func NewMiner(t *testing.T, logDir, logFilename string, netParams *chaincfg.Params,
-	handler *rpcclient.NotificationHandlers) (*rpctest.Harness,
-	func() error, error) {
-
-	args := []string{
-		"--rejectnonstd",
-		"--txindex",
-		"--nobanning",
-		"--debuglevel=debug",
-		"--logdir=" + logDir,
-		"--maxorphantx=0",
-		"--rpcmaxclients=100",
-		"--rpcmaxwebsockets=100",
-		"--rpcmaxconcurrentreqs=100",
-		"--logsize=100M",
-		"--maxsameip=200",
-	}
-
-	miner, err := testutils.NewSetupRPCTest(testctx.New(t), 5, netParams, handler,
-		args, false, 0)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"unable to create mining node: %v", err,
-		)
-	}
-
-	cleanUp := func() error {
-		if err := miner.TearDown(); err != nil {
-			return fmt.Errorf(
-				"failed to tear down miner, got error: %s", err,
-			)
-		}
-
-		// After shutting down the miner, we'll make a copy of the log
-		// file before deleting the temporary log dir.
-		logFile := fmt.Sprintf("%s/%s/dcrd.log", logDir, netParams.Name)
-		copyPath := fmt.Sprintf("%s/../%s", logDir, logFilename)
-		err := CopyFile(filepath.Clean(copyPath), logFile)
-		if err != nil {
-			return fmt.Errorf("unable to copy file: %v", err)
-		}
-
-		if err = os.RemoveAll(logDir); err != nil {
-			return fmt.Errorf(
-				"cannot remove dir %s: %v", logDir, err,
-			)
-		}
-		return nil
-	}
-
-	return miner, cleanUp, nil
 }
 
 // String gives the internal state of the node which is useful for debugging.

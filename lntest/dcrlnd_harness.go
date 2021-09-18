@@ -5,28 +5,59 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
+// setupVotingWallet sets up a minimum voting wallet, so that the simnet used
+// for tests can advance past SVH.
+func (h *HarnessMiner) setupVotingWallet() error {
+	vwCtx, vwCancel := context.WithCancel(h.runCtx)
+	vw, err := rpctest.NewVotingWallet(vwCtx, h.Harness)
+	if err != nil {
+		vwCancel()
+		return err
+	}
+
+	// Use a custom miner on the voting wallet that ensures simnet blocks
+	// are generated as fast as possible without triggering PoW difficulty
+	// increases.
+	vw.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
+		return rpctest.AdjustedSimnetMiner(ctx, h.Node, nb)
+	})
+
+	err = vw.Start(vwCtx)
+	if err != nil {
+		defer vwCancel()
+		return err
+	}
+
+	h.votingWallet = vw
+	h.votingWalletCancel = vwCancel
+	return nil
+}
+
 // SetUpChain performs the initial chain setup for integration tests. This
 // should be done only once.
-func (n *NetworkHarness) SetUpChain() error {
+func (h *HarnessMiner) SetUpChain() error {
 	// Generate the premine block the usual way.
-	_, err := n.Miner.Node.Generate(context.TODO(), 1)
+	ctx, cancel := context.WithTimeout(h.runCtx, 30*time.Second)
+	defer cancel()
+	_, err := h.Node.Generate(ctx, 1)
 	if err != nil {
 		return fmt.Errorf("unable to generate premine: %v", err)
 	}
 
 	// Generate enough blocks so that the network harness can have funds to
 	// send to the voting wallet, Alice and Bob.
-	_, err = rpctest.AdjustedSimnetMiner(context.Background(), n.Miner.Node, 64)
+	_, err = rpctest.AdjustedSimnetMiner(ctx, h.Node, 64)
 	if err != nil {
 		return fmt.Errorf("unable to init chain: %v", err)
 	}
 
 	// Setup a ticket buying/voting dcrwallet, so that the network advances
 	// past SVH.
-	err = n.setupVotingWallet()
+	err = h.setupVotingWallet()
 	if err != nil {
 		return err
 	}

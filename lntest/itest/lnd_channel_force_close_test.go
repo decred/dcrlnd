@@ -16,7 +16,6 @@ import (
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/routing"
-	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -208,7 +207,7 @@ func testCommitmentTransactionDeadline(net *lntest.NetworkHarness,
 // calculateTxnsFeeRate takes a list of transactions and estimates the fee rate
 // used to sweep them.
 func calculateTxnsFeeRate(t *testing.T,
-	miner *rpctest.Harness, txns []*wire.MsgTx) int64 {
+	miner *lntest.HarnessMiner, txns []*wire.MsgTx) int64 {
 
 	var totalSize, totalFee int64
 	for _, tx := range txns {

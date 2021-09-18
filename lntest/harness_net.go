@@ -28,10 +28,8 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpc/jsonrpc/types/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
-	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -58,10 +56,7 @@ type NetworkHarness struct {
 
 	// Miner is a reference to a running full node that can be used to
 	// create new blocks on the network.
-	Miner *rpctest.Harness
-
-	votingWallet       *rpctest.VotingWallet
-	votingWalletCancel func()
+	Miner *HarnessMiner
 
 	// BackendCfg houses the information necessary to use a node as LND
 	// chain backend, such as rpc configuration, P2P information etc.
@@ -100,7 +95,7 @@ type NetworkHarness struct {
 // TODO(roasbeef): add option to use golang's build library to a binary of the
 // current repo. This will save developers from having to manually `go install`
 // within the repo each time before changes
-func NewNetworkHarness(r *rpctest.Harness, b BackendConfig, lndBinary string,
+func NewNetworkHarness(m *HarnessMiner, b BackendConfig, lndBinary string,
 	dbBackend DatabaseBackend) (*NetworkHarness, error) {
 
 	feeService := startFeeService()
@@ -111,8 +106,8 @@ func NewNetworkHarness(r *rpctest.Harness, b BackendConfig, lndBinary string,
 		activeNodes:  make(map[int]*HarnessNode),
 		nodesByPub:   make(map[string]*HarnessNode),
 		lndErrorChan: make(chan error),
-		netParams:    r.ActiveNet,
-		Miner:        r,
+		netParams:    m.ActiveNet,
+		Miner:        m,
 		BackendCfg:   b,
 		feeService:   feeService,
 		runCtx:       ctxt,
@@ -972,41 +967,6 @@ func saveProfilesPage(node *HarnessNode) error {
 	return nil
 }
 
-// waitForTxInMempool blocks until the target txid is seen in the mempool. If
-// the transaction isn't seen within the network before the passed timeout,
-// then an error is returned.
-func (n *NetworkHarness) waitForTxInMempool(txid chainhash.Hash) error {
-	ticker := time.NewTicker(50 * time.Millisecond)
-	defer ticker.Stop()
-
-	ctxt, cancel := context.WithTimeout(n.runCtx, DefaultTimeout)
-	defer cancel()
-
-	var mempool []*chainhash.Hash
-	for {
-		select {
-		case <-n.runCtx.Done():
-			return fmt.Errorf("NetworkHarness has been torn down")
-		case <-ctxt.Done():
-			return fmt.Errorf("wanted %v, found %v txs "+
-				"in mempool: %v", txid, len(mempool), mempool)
-
-		case <-ticker.C:
-			var err error
-			mempool, err = n.Miner.Node.GetRawMempool(ctxt, types.GRMAll)
-			if err != nil {
-				return err
-			}
-
-			for _, mempoolTx := range mempool {
-				if *mempoolTx == txid {
-					return nil
-				}
-			}
-		}
-	}
-}
-
 // OpenChannelParams houses the params to specify when opening a new channel.
 type OpenChannelParams struct {
 	// Amt is the local amount being put into the channel.
@@ -1356,7 +1316,7 @@ func (n *NetworkHarness) CloseChannel(lnNode *HarnessNode,
 			return fmt.Errorf("unable to decode closeTxid: "+
 				"%v", err)
 		}
-		if err := n.waitForTxInMempool(*closeTxid); err != nil {
+		if err := n.Miner.waitForTxInMempool(*closeTxid); err != nil {
 			return fmt.Errorf("error while waiting for "+
 				"broadcast tx: %v", err)
 		}
@@ -1638,37 +1598,11 @@ func (n *NetworkHarness) sendCoins(amt dcrutil.Amount, target *HarnessNode,
 	return target.WaitForBalance(expectedBalance, true)
 }
 
-// setupVotingWallet sets up a minimum voting wallet, so that the simnet used
-// for tests can advance past SVH.
-func (n *NetworkHarness) setupVotingWallet() error {
-	vwCtx, vwCancel := context.WithCancel(context.Background())
-	vw, err := rpctest.NewVotingWallet(vwCtx, n.Miner)
-	if err != nil {
-		return err
-	}
-
-	// Use a custom miner on the voting wallet that ensures simnet blocks
-	// are generated as fast as possible without triggering PoW difficulty
-	// increases.
-	vw.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
-		return rpctest.AdjustedSimnetMiner(ctx, n.Miner.Node, nb)
-	})
-
-	err = vw.Start(vwCtx)
-	if err != nil {
-		return err
-	}
-
-	n.votingWallet = vw
-	n.votingWalletCancel = vwCancel
-	return nil
-}
-
 // Generate generates the given number of blocks while waiting for enough time
 // that the new block can propagate to the voting node and votes for the new
 // block can be generated and published.
 func (n *NetworkHarness) Generate(nb uint32) ([]*chainhash.Hash, error) {
-	return n.votingWallet.GenerateBlocks(context.TODO(), nb)
+	return n.Miner.votingWallet.GenerateBlocks(context.TODO(), nb)
 }
 
 // SlowGenerate generates blocks with a large time interval between them. This
@@ -1694,40 +1628,6 @@ func (n *NetworkHarness) SetFeeEstimateWithConf(
 	fee chainfee.AtomPerKByte, conf uint32) {
 
 	n.feeService.setFeeWithConf(fee, conf)
-}
-
-// CopyFile copies the file src to dest.
-func CopyFile(dest, src string) error {
-	s, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer s.Close()
-
-	d, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-
-	if _, err := io.Copy(d, s); err != nil {
-		d.Close()
-		return err
-	}
-
-	return d.Close()
-}
-
-func init() {
-	rpctest.SetPathToDCRD("dcrd-dcrlnd")
-}
-
-// FileExists returns true if the file at path exists.
-func FileExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-
-	return true
 }
 
 // copyAll copies all files and directories from srcDir to dstDir recursively.

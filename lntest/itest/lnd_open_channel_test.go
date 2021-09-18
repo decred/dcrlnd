@@ -7,12 +7,12 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testOpenChannelAfterReorg tests that in the case where we have an open
@@ -29,27 +29,24 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Set up a new miner that we can use to cause a reorg.
-	tempLogDir := fmt.Sprintf("%s/.tempminerlogs", lntest.GetLogDir())
+	tempLogDir := ".tempminerlogs"
 	logFilename := "output-open_channel_reorg-temp_miner.log"
-	tempMiner, tempMinerCleanUp, err := lntest.NewMiner(
-		t.t, tempLogDir, logFilename,
-		harnessNetParams, &rpcclient.NotificationHandlers{},
-	)
+	tempMiner, err := lntest.NewTempMiner(tempLogDir, logFilename)
 	require.NoError(t.t, err, "failed to create temp miner")
 	defer func() {
 		require.NoError(
-			t.t, tempMinerCleanUp(),
+			t.t, tempMiner.Stop(),
 			"failed to clean up temp miner",
 		)
 	}()
 
 	// We start by connecting the new miner to our original miner, such
 	// that it will sync to our original chain.
-	if err := rpctest.ConnectNode(ctxb, net.Miner, tempMiner); err != nil {
+	if err := rpctest.ConnectNode(ctxb, net.Miner.Harness, tempMiner.Harness); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
-	nodeSlice := []*rpctest.Harness{net.Miner, tempMiner}
-	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
+	nodeSlice := []*rpctest.Harness{net.Miner.Harness, tempMiner.Harness}
+	if err := rpctest.JoinNodes(testctx.New(t), nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -58,7 +55,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// We disconnect the two nodes, such that we can start mining on them
 	// individually without the other one learning about the new blocks.
-	err = rpctest.RemoveNode(context.Background(), net.Miner, tempMiner)
+	err = rpctest.RemoveNode(context.Background(), net.Miner.Harness, tempMiner.Harness)
 	if err != nil {
 		t.Fatalf("unable to remove node: %v", err)
 	}
@@ -167,13 +164,13 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Connecting to the temporary miner should now cause our original
 	// chain to be re-orged out.
-	err = rpctest.ConnectNode(ctxb, net.Miner, tempMiner)
+	err = rpctest.ConnectNode(ctxb, net.Miner.Harness, tempMiner.Harness)
 	if err != nil {
 		t.Fatalf("unable to remove node: %v", err)
 	}
 
-	nodes := []*rpctest.Harness{tempMiner, net.Miner}
-	if err := rpctest.JoinNodes(ctxb, nodes, rpctest.Blocks); err != nil {
+	nodes := []*rpctest.Harness{tempMiner.Harness, net.Miner.Harness}
+	if err := rpctest.JoinNodes(testctx.New(t), nodes, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -182,7 +179,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Now we disconnect the two miners, and connect our original miner to
 	// our chain backend once again.
-	err = rpctest.RemoveNode(context.Background(), net.Miner, tempMiner)
+	err = rpctest.RemoveNode(context.Background(), net.Miner.Harness, tempMiner.Harness)
 	if err != nil {
 		t.Fatalf("unable to remove node: %v", err)
 	}

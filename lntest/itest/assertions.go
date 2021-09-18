@@ -21,7 +21,6 @@ import (
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/sweep"
-	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -787,7 +786,7 @@ func assertChannelPolicy(t *harnessTest, node *lntest.HarnessNode,
 // assertMinerBlockHeightDelta ensures that tempMiner is 'delta' blocks ahead
 // of miner.
 func assertMinerBlockHeightDelta(t *harnessTest,
-	miner, tempMiner *rpctest.Harness, delta int64) {
+	miner, tempMiner *lntest.HarnessMiner, delta int64) {
 
 	// Ensure the chain lengths are what we expect.
 	var predErr error

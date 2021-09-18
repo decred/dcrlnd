@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/stretchr/testify/require"
 )
@@ -110,22 +109,23 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	// guarantees of getting included in to blocks.
 	//
 	// We will also connect it to our chain backend.
-	minerLogDir := fmt.Sprintf("%s/.minerlogs", logDir)
-	miner, minerCleanUp, err := lntest.NewMiner(
-		t, minerLogDir, "output_dcrd_miner.log",
-		harnessNetParams, &rpcclient.NotificationHandlers{},
-	)
+	miner, err := lntest.NewMiner()
 	require.NoError(t, err, "failed to create new miner")
 	defer func() {
-		require.NoError(t, minerCleanUp(), "failed to clean up miner")
+		require.NoError(t, miner.Stop(), "failed to stop miner")
 	}()
+
+	// Setup the initial chain. This is a dcrlnd-only operation, needed to
+	// setup the initial chain + the voting wallet.
+	err = miner.SetUpChain()
+	require.NoError(t, err)
 
 	if err := miner.Node.NotifyNewTransactions(context.Background(), false); err != nil {
 		ht.Fatalf("unable to request transaction notifications: %v", err)
 	}
 
 	// Start a chain backend.
-	chainBackend, cleanUp, err := lntest.NewBackend(t, miner)
+	chainBackend, cleanUp, err := lntest.NewBackend(t, miner.Harness)
 	if err != nil {
 		ht.Fatalf("unable to start dcrd: %v", err)
 	}
@@ -179,10 +179,6 @@ func TestLightningNetworkDaemon(t *testing.T) {
 
 		}
 	}()
-
-	// Setup the initial chain.
-	err = lndHarness.SetUpChain()
-	require.NoError(t, err)
 
 	// With the dcrd harness created, we can now complete the
 	// initialization of the network. args - list of lnd arguments,

@@ -33,6 +33,10 @@ type HarnessMiner struct {
 	// Client adapts decred's dcrdtest.Harness interface to lnd's.
 	Client *rpcclient.Client
 
+	// voting wallet used in dcrlnd to keep the chain going.
+	votingWallet       *rpctest.VotingWallet
+	votingWalletCancel func()
+
 	// runCtx is a context with cancel method. It's used to signal when the
 	// node needs to quit, and used as the parent context when spawning
 	runCtx context.Context
@@ -47,7 +51,7 @@ type HarnessMiner struct {
 
 // NewMiner creates a new miner using dcrd backend with the default log file
 // dir and name.
-func NewMinerTemp() (*HarnessMiner, error) { // TODO(yy): rename
+func NewMiner() (*HarnessMiner, error) {
 	return newMiner(minerLogDir, minerLogFilename)
 }
 
@@ -89,6 +93,7 @@ func newMiner(minerDirName, logFilename string) (*HarnessMiner, error) {
 	ctxt, cancel := context.WithCancel(context.Background())
 	m := &HarnessMiner{
 		Harness:     miner,
+		Client:      miner.Node,
 		runCtx:      ctxt,
 		cancel:      cancel,
 		logPath:     baseLogPath,
