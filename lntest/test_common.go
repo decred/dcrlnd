@@ -1,10 +1,14 @@
 package lntest
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net"
 	"sync/atomic"
+
+	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/lnrpc"
 )
 
 const (
@@ -90,4 +94,48 @@ func GetLogDir() string {
 		return *logSubDir
 	}
 	return "."
+}
+
+// MakeOutpoint returns the outpoint of the channel's funding transaction.
+func MakeOutpoint(chanPoint *lnrpc.ChannelPoint) (wire.OutPoint, error) {
+	fundingTxID, err := lnrpc.GetChanPointFundingTxid(chanPoint)
+	if err != nil {
+		return wire.OutPoint{}, err
+	}
+
+	return wire.OutPoint{
+		Hash:  *fundingTxID,
+		Index: chanPoint.OutputIndex,
+	}, nil
+}
+
+// CheckChannelPolicy checks that the policy matches the expected one.
+func CheckChannelPolicy(policy, expectedPolicy *lnrpc.RoutingPolicy) error {
+	if policy.FeeBaseMAtoms != expectedPolicy.FeeBaseMAtoms {
+		return fmt.Errorf("expected base fee %v, got %v",
+			expectedPolicy.FeeBaseMAtoms, policy.FeeBaseMAtoms)
+	}
+	if policy.FeeRateMilliMAtoms != expectedPolicy.FeeRateMilliMAtoms {
+		return fmt.Errorf("expected fee rate %v, got %v",
+			expectedPolicy.FeeRateMilliMAtoms,
+			policy.FeeRateMilliMAtoms)
+	}
+	if policy.TimeLockDelta != expectedPolicy.TimeLockDelta {
+		return fmt.Errorf("expected time lock delta %v, got %v",
+			expectedPolicy.TimeLockDelta,
+			policy.TimeLockDelta)
+	}
+	if policy.MinHtlc != expectedPolicy.MinHtlc {
+		return fmt.Errorf("expected min htlc %v, got %v",
+			expectedPolicy.MinHtlc, policy.MinHtlc)
+	}
+	if policy.MaxHtlcMAtoms != expectedPolicy.MaxHtlcMAtoms {
+		return fmt.Errorf("expected max htlc %v, got %v",
+			expectedPolicy.MaxHtlcMAtoms, policy.MaxHtlcMAtoms)
+	}
+	if policy.Disabled != expectedPolicy.Disabled {
+		return errors.New("edge should be disabled but isn't")
+	}
+
+	return nil
 }

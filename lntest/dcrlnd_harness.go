@@ -3,6 +3,7 @@ package lntest
 import (
 	"context"
 	"fmt"
+	"time"
 
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
@@ -36,4 +37,11 @@ func (n *NetworkHarness) SetUpChain() error {
 // ModifyTestCaseName modifies the current test case name.
 func (n *NetworkHarness) ModifyTestCaseName(testCase string) {
 	n.currentTestCase = testCase
+}
+
+func (hn *HarnessNode) LogPrintf(format string, args ...interface{}) error {
+	now := time.Now().Format("2006-01-02 15:04:05.999")
+	f := now + " ----------: " + format
+	hn.AddToLog(f, args...)
+	return nil
 }
