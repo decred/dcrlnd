@@ -47,6 +47,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"gopkg.in/macaroon.v2"
+	"matheusd.com/testctx"
 )
 
 const (
@@ -544,7 +545,7 @@ func NewMiner(t *testing.T, logDir, logFilename string, netParams *chaincfg.Para
 		"--maxsameip=200",
 	}
 
-	miner, err := testutils.NewSetupRPCTest(t, 5, netParams, handler,
+	miner, err := testutils.NewSetupRPCTest(testctx.New(t), 5, netParams, handler,
 		args, false, 0)
 	if err != nil {
 		return nil, nil, fmt.Errorf(

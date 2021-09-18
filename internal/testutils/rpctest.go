@@ -1,14 +1,13 @@
 package testutils
 
 import (
+	"context"
 	"fmt"
-	"testing"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/rpcclient/v8"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
-	"matheusd.com/testctx"
 )
 
 // NewSetupRPCTest attempts up to maxTries to setup an rpctest harness or
@@ -17,7 +16,7 @@ import (
 // CI servers.
 //
 // The returned rpctest is already setup for use.
-func NewSetupRPCTest(t *testing.T, maxTries int, netParams *chaincfg.Params,
+func NewSetupRPCTest(ctx context.Context, maxTries int, netParams *chaincfg.Params,
 	handlers *rpcclient.NotificationHandlers,
 	args []string, setupChain bool, numMatureOutputs uint32) (*rpctest.Harness, error) {
 
@@ -28,9 +27,9 @@ func NewSetupRPCTest(t *testing.T, maxTries int, netParams *chaincfg.Params,
 	var harness *rpctest.Harness
 	var err error
 	for i := 0; i < maxTries; i++ {
-		harness, err = rpctest.New(t, netParams, handlers, args)
+		harness, err = rpctest.New(nil, netParams, handlers, args)
 		if err == nil {
-			err = harness.SetUp(testctx.New(t), setupChain, numMatureOutputs)
+			err = harness.SetUp(ctx, setupChain, numMatureOutputs)
 			if err == nil {
 				return harness, nil
 			} else {

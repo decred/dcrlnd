@@ -20,6 +20,7 @@ import (
 	"github.com/decred/dcrlnd/internal/testutils"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 var (
@@ -83,7 +84,7 @@ func TestHistoricalConfDetailsTxIndex(t *testing.T) {
 	t.Parallel()
 
 	harness, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, true, 25,
 	)
 	require.NoError(t, err)
 	defer harness.TearDown()
@@ -176,7 +177,7 @@ func TestHistoricalConfDetailsNoTxIndex(t *testing.T) {
 	t.Parallel()
 
 	harness, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, true, 25,
 	)
 	require.NoError(t, err)
 	defer harness.TearDown()
@@ -267,7 +268,7 @@ func TestInneficientRescan(t *testing.T) {
 	t.Parallel()
 
 	harness, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, true, 25,
 	)
 	require.NoError(t, err)
 	defer harness.TearDown()

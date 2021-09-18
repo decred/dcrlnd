@@ -19,6 +19,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"google.golang.org/grpc"
+	"matheusd.com/testctx"
 
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -1107,7 +1108,7 @@ func testReorgConf(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Set up a new miner that we can use to cause a reorg.
 	miner2, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, false, 0,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -1291,7 +1292,7 @@ func testReorgSpend(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Set up a new miner that we can use to cause a reorg.
 	miner2, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, false, 0,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -1631,7 +1632,7 @@ func testCatchUpOnMissedBlocksWithReorg(miner1 *rpctest.Harness, vw *rpctest.Vot
 
 	// Set up a new miner that we can use to cause a reorg.
 	miner2, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, false, 0,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -1951,7 +1952,7 @@ func TestInterfaces(t *testing.T, notifierType, syncerType string) {
 		minerArgs := []string{"--debuglevel=debug", "--logdir=" + minerLogDir}
 
 		miner, err := testutils.NewSetupRPCTest(
-			t, 5, netParams, nil, minerArgs, false, 0,
+			testctx.New(t), 5, netParams, nil, minerArgs, false, 0,
 		)
 		if err != nil {
 			t.Fatalf("unable to create backend node: %v", err)

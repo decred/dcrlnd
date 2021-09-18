@@ -22,6 +22,7 @@ import (
 	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 	"golang.org/x/exp/slices"
+	"matheusd.com/testctx"
 
 	_ "decred.org/dcrwallet/v3/wallet/drivers/bdb"
 
@@ -2269,7 +2270,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Now we cause a reorganization as follows.
 	// Step 1: create a new miner and start it.
-	r2, err := testutils.NewSetupRPCTest(t, 5, r.ActiveNet, nil, []string{"--txindex"}, false, 0)
+	r2, err := testutils.NewSetupRPCTest(testctx.New(t), 5, r.ActiveNet, nil, []string{"--txindex"}, false, 0)
 	if err != nil {
 		t.Fatalf("unable to create temp miner: %v", err)
 	}
@@ -3258,7 +3259,7 @@ func TestLightningWallet(t *testing.T, driverName, backEnd string) {
 	minerArgs := []string{"--txindex", "--debuglevel=debug",
 		"--logdir=" + minerLogDir}
 	miningNode, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, minerArgs, true, 0,
+		testctx.New(t), 5, netParams, nil, minerArgs, true, 0,
 	)
 	require.NoError(t, err)
 

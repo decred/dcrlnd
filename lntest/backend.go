@@ -9,6 +9,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/internal/testutils"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
+	"matheusd.com/testctx"
 )
 
 // logDirPattern is the pattern of the temporary log directory.
@@ -34,7 +35,7 @@ func newBackend(t *testing.T, miner *rpctest.Harness) (*rpctest.Harness, func() 
 	}
 	netParams := chaincfg.SimNetParams()
 	chainBackend, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, args, false, 0,
+		testctx.New(t), 5, netParams, nil, args, false, 0,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create dcrd node: %v", err)

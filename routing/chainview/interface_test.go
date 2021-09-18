@@ -25,6 +25,7 @@ import (
 	"github.com/decred/dcrlnd/internal/testutils"
 	"github.com/decred/dcrlnd/lntest/wait"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
+	"matheusd.com/testctx"
 )
 
 var (
@@ -548,7 +549,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	// Create a node that has a shorter chain than the main chain, so we
 	// can trigger a reorg.
 	reorgNode, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, true, 5,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, true, 5,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
@@ -876,7 +877,7 @@ func TestFilteredChainView(t *testing.T) {
 			// this node with a chain length of 25, so we have plenty of DCR to
 			// play around with.
 			miner, err := testutils.NewSetupRPCTest(
-				t, 5, netParams, nil, []string{"--txindex"}, true, 25,
+				testctx.New(t), 5, netParams, nil, []string{"--txindex"}, true, 25,
 			)
 			if err != nil {
 				t.Fatalf("unable to create mining node: %v", err)
