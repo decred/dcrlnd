@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/dcrjson/v3"
+	"github.com/decred/dcrd/dcrjson/v4"
 	jsontypes "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
 	"github.com/decred/dcrd/wire"
 )

@@ -1,4 +1,4 @@
-FROM golang:1.14-alpine as builder
+FROM golang:1.17-alpine as builder
 
 # Install dependencies.
 RUN apk add --no-cache --update git make

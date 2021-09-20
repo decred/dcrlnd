@@ -1065,7 +1065,7 @@ func checkLnTransactionSanity(tx *wire.MsgTx, utxos map[wire.OutPoint]*wire.TxOu
 	var inputSum int64
 	var outputSum int64
 
-	txType := stake.DetermineTxType(tx, true)
+	txType := stake.DetermineTxType(tx, true, false)
 	if txType != stake.TxTypeRegular {
 		return fmt.Errorf("transaction is not of the regular type")
 	}
