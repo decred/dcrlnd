@@ -261,6 +261,19 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		defer pprof.StopCPUProfile()
 	}
 
+	// Write memory profile if requested.
+	if cfg.MemProfile != "" {
+		f, err := os.Create(cfg.MemProfile)
+		if err != nil {
+			err := fmt.Errorf("unable to create memory profile: %v",
+				err)
+			ltndLog.Error(err)
+			return err
+		}
+		defer f.Close()
+		defer pprof.WriteHeapProfile(f)
+	}
+
 	if cfg.DB.Backend != "bolt" && network == "mainnet" {
 		err := fmt.Errorf("Only bbolt db backend has been tested in production " +
 			"for dcrlnd.")

@@ -27,6 +27,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+*.pprof
 
 /dcrlnd
 /dcrlnd-debug
