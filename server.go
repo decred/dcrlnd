@@ -223,6 +223,8 @@ type server struct {
 
 	chanStateDB *channeldb.DB
 
+	addrSource chanbackup.AddressSource
+
 	htlcSwitch *htlcswitch.Switch
 
 	interceptableSwitch *htlcswitch.InterceptableSwitch
@@ -432,6 +434,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		cfg:            cfg,
 		graphDB:        dbs.graphDB.ChannelGraph(),
 		chanStateDB:    dbs.chanStateDB,
+		addrSource:     dbs.chanStateDB,
 		cc:             cc,
 		sigPool:        lnwallet.NewSigPool(cfg.Workers.Sig, cc.Signer),
 		writePool:      writePool,
@@ -1239,7 +1242,9 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		addrs:        s.chanStateDB,
 	}
 	backupFile := chanbackup.NewMultiFile(cfg.BackupFilePath)
-	startingChans, err := chanbackup.FetchStaticChanBackups(s.chanStateDB)
+	startingChans, err := chanbackup.FetchStaticChanBackups(
+		s.chanStateDB, s.addrSource,
+	)
 	if err != nil {
 		return nil, err
 	}
