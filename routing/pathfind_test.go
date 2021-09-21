@@ -308,6 +308,16 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 		}
 	}
 
+	aliasForNode := func(node route.Vertex) string {
+		for alias, pubKey := range aliasMap {
+			if pubKey == node {
+				return alias
+			}
+		}
+
+		return ""
+	}
+
 	// With all the vertexes inserted, we can now insert the edges into the
 	// test graph.
 	for _, edge := range g.Edges {
@@ -357,10 +367,17 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 			return nil, err
 		}
 
+		channelFlags := lnwire.ChanUpdateChanFlags(edge.ChannelFlags)
+		isUpdate1 := channelFlags&lnwire.ChanUpdateDirection == 0
+		targetNode := edgeInfo.NodeKey1Bytes
+		if isUpdate1 {
+			targetNode = edgeInfo.NodeKey2Bytes
+		}
+
 		edgePolicy := &channeldb.ChannelEdgePolicy{
 			SigBytes:                  testSig.Serialize(),
 			MessageFlags:              lnwire.ChanUpdateMsgFlags(edge.MessageFlags),
-			ChannelFlags:              lnwire.ChanUpdateChanFlags(edge.ChannelFlags),
+			ChannelFlags:              channelFlags,
 			ChannelID:                 edge.ChannelID,
 			LastUpdate:                testTime,
 			TimeLockDelta:             edge.Expiry,
@@ -368,6 +385,10 @@ func parseTestGraph(path string) (*testGraphInstance, error) {
 			MaxHTLC:                   lnwire.MilliAtom(edge.MaxHTLC),
 			FeeBaseMAtoms:             lnwire.MilliAtom(edge.FeeBaseMAtoms),
 			FeeProportionalMillionths: lnwire.MilliAtom(edge.FeeRate),
+			Node: &channeldb.LightningNode{
+				Alias:       aliasForNode(targetNode),
+				PubKeyBytes: targetNode,
+			},
 		}
 		if err := graph.UpdateEdgePolicy(edgePolicy); err != nil {
 			return nil, err
@@ -639,6 +660,11 @@ func createTestGraphFromChannels(testChannels []*testChannel, source string) (
 				channelFlags |= lnwire.ChanUpdateDisabled
 			}
 
+			node2Features := lnwire.EmptyFeatureVector()
+			if node2.testChannelPolicy != nil {
+				node2Features = node2.Features
+			}
+
 			edgePolicy := &channeldb.ChannelEdgePolicy{
 				SigBytes:                  testSig.Serialize(),
 				MessageFlags:              msgFlags,
@@ -650,6 +676,11 @@ func createTestGraphFromChannels(testChannels []*testChannel, source string) (
 				MaxHTLC:                   node1.MaxHTLC,
 				FeeBaseMAtoms:             node1.FeeBaseMAtoms,
 				FeeProportionalMillionths: node1.FeeRate,
+				Node: &channeldb.LightningNode{
+					Alias:       node2.Alias,
+					PubKeyBytes: node2Vertex,
+					Features:    node2Features,
+				},
 			}
 			if err := graph.UpdateEdgePolicy(edgePolicy); err != nil {
 				return nil, err
@@ -667,6 +698,11 @@ func createTestGraphFromChannels(testChannels []*testChannel, source string) (
 			}
 			channelFlags |= lnwire.ChanUpdateDirection
 
+			node1Features := lnwire.EmptyFeatureVector()
+			if node1.testChannelPolicy != nil {
+				node1Features = node1.Features
+			}
+
 			edgePolicy := &channeldb.ChannelEdgePolicy{
 				SigBytes:                  testSig.Serialize(),
 				MessageFlags:              msgFlags,
@@ -678,6 +714,11 @@ func createTestGraphFromChannels(testChannels []*testChannel, source string) (
 				MaxHTLC:                   node2.MaxHTLC,
 				FeeBaseMAtoms:             node2.FeeBaseMAtoms,
 				FeeProportionalMillionths: node2.FeeRate,
+				Node: &channeldb.LightningNode{
+					Alias:       node1.Alias,
+					PubKeyBytes: node1Vertex,
+					Features:    node1Features,
+				},
 			}
 			if err := graph.UpdateEdgePolicy(edgePolicy); err != nil {
 				return nil, err
@@ -2977,12 +3018,6 @@ func dbFindPath(graph *channeldb.ChannelGraph,
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err := routingTx.close()
-		if err != nil {
-			log.Errorf("Error closing db tx: %v", err)
-		}
-	}()
 
 	return findPath(
 		&graphParams{
