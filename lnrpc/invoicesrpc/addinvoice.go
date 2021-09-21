@@ -57,7 +57,7 @@ type AddInvoiceConfig struct {
 
 	// ChanDB is a global bboltdb instance which is needed to access the
 	// channel graph.
-	ChanDB *channeldb.DB
+	ChanDB *channeldb.ChannelStateDB
 
 	// Graph holds a reference to the ChannelGraph database.
 	Graph *channeldb.ChannelGraph

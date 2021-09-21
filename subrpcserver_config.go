@@ -92,7 +92,7 @@ func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainreg.Cha
 	routerBackend *routerrpc.RouterBackend,
 	nodeSigner *netann.NodeSigner,
 	graphDB *channeldb.ChannelGraph,
-	chanStateDB *channeldb.DB,
+	chanStateDB *channeldb.ChannelStateDB,
 	sweeper *sweep.UtxoSweeper,
 	tower *watchtower.Standalone,
 	towerClient wtclient.Client,

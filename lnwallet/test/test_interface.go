@@ -339,14 +339,14 @@ func loadTestCredits(miner *rpctest.Harness, w *lnwallet.LightningWallet,
 
 // createTestWallet creates a test LightningWallet will a total of 20DCR
 // available for funding channels.
-func createTestWallet(cdb *channeldb.DB, miningNode *rpctest.Harness,
+func createTestWallet(fullDb *channeldb.DB, miningNode *rpctest.Harness,
 	netParams *chaincfg.Params, notifier chainntnfs.ChainNotifier,
 	wc lnwallet.WalletController, keyRing keychain.SecretKeyRing,
 	signer input.Signer, bio lnwallet.BlockChainIO,
 	vw *rpctest.VotingWallet) (*lnwallet.LightningWallet, error) {
 
 	cfg := lnwallet.Config{
-		Database:         cdb,
+		Database:         fullDb.ChannelStateDB(),
 		Notifier:         notifier,
 		SecretKeyRing:    keyRing,
 		WalletController: wc,
@@ -3004,11 +3004,11 @@ func clearWalletStates(a, b *lnwallet.LightningWallet) error {
 	a.ResetReservations()
 	b.ResetReservations()
 
-	if err := a.Cfg.Database.Wipe(); err != nil {
+	if err := a.Cfg.Database.GetParentDB().Wipe(); err != nil {
 		return err
 	}
 
-	return b.Cfg.Database.Wipe()
+	return b.Cfg.Database.GetParentDB().Wipe()
 }
 
 func waitForMempoolTx(r *rpctest.Harness, txid *chainhash.Hash) error {

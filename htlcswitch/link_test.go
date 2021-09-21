@@ -1928,7 +1928,7 @@ func newSingleLinkTestHarness(chanAmt, chanReserve dcrutil.Amount) (
 
 	pCache := newMockPreimageCache()
 
-	aliceDb := aliceLc.channel.State().Db
+	aliceDb := aliceLc.channel.State().Db.GetParentDB()
 	aliceSwitch, err := initSwitchWithDB(testStartingHeight, aliceDb)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
@@ -1975,8 +1975,8 @@ func newSingleLinkTestHarness(chanAmt, chanReserve dcrutil.Amount) (
 		NotifyInactiveChannel: func(wire.OutPoint) {},
 		HtlcNotifier:          aliceSwitch.cfg.HtlcNotifier,
 
-		ResetChanReestablishWaitTime: aliceDb.ResetChanReestablishWaitTime,
-		AddToChanReestablishWaitTime: aliceDb.AddToChanReestablishWaitTime,
+		ResetChanReestablishWaitTime: aliceDb.ChannelStateDB().ResetChanReestablishWaitTime,
+		AddToChanReestablishWaitTime: aliceDb.ChannelStateDB().AddToChanReestablishWaitTime,
 	}
 
 	aliceLink := NewChannelLink(aliceCfg, aliceLc.channel)
@@ -4431,7 +4431,7 @@ func (h *persistentLinkHarness) restartLink(
 		pCache = newMockPreimageCache()
 	)
 
-	aliceDb := aliceChannel.State().Db
+	aliceDb := aliceChannel.State().Db.GetParentDB()
 	aliceSwitch := h.coreLink.cfg.Switch
 	if restartSwitch {
 		var err error
@@ -4485,8 +4485,8 @@ func (h *persistentLinkHarness) restartLink(
 		HtlcNotifier:          aliceSwitch.cfg.HtlcNotifier,
 		SyncStates:            syncStates,
 
-		ResetChanReestablishWaitTime: aliceDb.ResetChanReestablishWaitTime,
-		AddToChanReestablishWaitTime: aliceDb.AddToChanReestablishWaitTime,
+		ResetChanReestablishWaitTime: aliceDb.ChannelStateDB().ResetChanReestablishWaitTime,
+		AddToChanReestablishWaitTime: aliceDb.ChannelStateDB().AddToChanReestablishWaitTime,
 	}
 
 	aliceLink := NewChannelLink(aliceCfg, aliceChannel)

@@ -57,13 +57,16 @@ type Config struct {
 	// DcrwMode defines settings for connecting to a dcrwallet instance.
 	DcrwMode *lncfg.DcrwalletConfig
 
+	// FullDB is the full DB (the parent of ChanStateDB).
+	FullDB *channeldb.DB
+
 	// HeightHintDB is a pointer to the database that stores the height
 	// hints.
 	HeightHintDB kvdb.Backend
 
 	// ChanStateDB is a pointer to the database that stores the channel
 	// state.
-	ChanStateDB *channeldb.DB
+	ChanStateDB *channeldb.ChannelStateDB
 
 	// BlockCacheSize is the size (in bytes) of blocks kept in memory.
 	BlockCacheSize uint64
@@ -383,7 +386,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		dcrwConfig := &remotedcrwallet.Config{
 			PrivatePass:   cfg.PrivateWalletPw,
 			NetParams:     cfg.ActiveNetParams.Params,
-			DB:            cfg.ChanStateDB,
+			DB:            cfg.FullDB,
 			Conn:          cfg.WalletConn,
 			AccountNumber: cfg.WalletAccountNb,
 			ChainIO:       cc.ChainIO,
@@ -453,7 +456,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			Wallet:         cfg.Wallet,
 			Loader:         cfg.WalletLoader,
 			BlockCache:     blockCache,
-			DB:             cfg.ChanStateDB,
+			DB:             cfg.FullDB,
 		}
 
 		wc, err := dcrwallet.New(*dcrwConfig)

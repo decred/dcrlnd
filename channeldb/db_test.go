@@ -86,15 +86,18 @@ func TestWipe(t *testing.T) {
 	}
 	defer cleanup()
 
-	cdb, err := CreateWithBackend(backend)
+	fullDB, err := CreateWithBackend(backend)
 	if err != nil {
 		t.Fatalf("unable to create channeldb: %v", err)
 	}
-	defer cdb.Close()
+	defer fullDB.Close()
 
-	if err := cdb.Wipe(); err != nil {
+	if err := fullDB.Wipe(); err != nil {
 		t.Fatalf("unable to wipe channeldb: %v", err)
 	}
+
+	cdb := fullDB.ChannelStateDB()
+
 	// Check correct errors are returned
 	openChannels, err := cdb.FetchAllOpenChannels()
 	require.NoError(t, err, "fetching open channels")
@@ -112,11 +115,13 @@ func TestFetchClosedChannelForID(t *testing.T) {
 
 	const numChans = 101
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	// Create the test channel state, that we will mutate the index of the
 	// funding point.
@@ -183,18 +188,18 @@ func TestFetchClosedChannelForID(t *testing.T) {
 func TestAddrsForNode(t *testing.T) {
 	t.Parallel()
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
 
-	graph := cdb.ChannelGraph()
+	graph := fullDB.ChannelGraph()
 
 	// We'll make a test vertex to insert into the database, as the source
 	// node, but this node will only have half the number of addresses it
 	// usually does.
-	testNode, err := createTestVertex(cdb)
+	testNode, err := createTestVertex(fullDB)
 	if err != nil {
 		t.Fatalf("unable to create test node: %v", err)
 	}
@@ -210,7 +215,8 @@ func TestAddrsForNode(t *testing.T) {
 		t.Fatalf("unable to recv node pub: %v", err)
 	}
 	linkNode := NewLinkNode(
-		cdb.linkNodeDB, wire.MainNet, nodePub, anotherAddr,
+		fullDB.channelStateDB.linkNodeDB, wire.MainNet, nodePub,
+		anotherAddr,
 	)
 	if err := linkNode.Sync(); err != nil {
 		t.Fatalf("unable to sync link node: %v", err)
@@ -218,7 +224,7 @@ func TestAddrsForNode(t *testing.T) {
 
 	// Now that we've created a link node, as well as a vertex for the
 	// node, we'll query for all its addresses.
-	nodeAddrs, err := cdb.AddrsForNode(nodePub)
+	nodeAddrs, err := fullDB.AddrsForNode(nodePub)
 	if err != nil {
 		t.Fatalf("unable to obtain node addrs: %v", err)
 	}
@@ -244,11 +250,13 @@ func TestAddrsForNode(t *testing.T) {
 func TestFetchChannel(t *testing.T) {
 	t.Parallel()
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	// Create an open channel.
 	channelState := createTestChannel(t, cdb, openChannelOption())
@@ -346,11 +354,13 @@ func genRandomChannelShell() (*ChannelShell, error) {
 func TestRestoreChannelShells(t *testing.T) {
 	t.Parallel()
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	// First, we'll make our channel shell, it will only have the minimal
 	// amount of information required for us to initiate the data loss
@@ -420,7 +430,7 @@ func TestRestoreChannelShells(t *testing.T) {
 
 	// We should also be able to find the link node that was inserted by
 	// its public key.
-	linkNode, err := cdb.linkNodeDB.FetchLinkNode(
+	linkNode, err := fullDB.channelStateDB.linkNodeDB.FetchLinkNode(
 		channelShell.Chan.IdentityPub,
 	)
 	if err != nil {
@@ -442,11 +452,13 @@ func TestRestoreChannelShells(t *testing.T) {
 func TestAbandonChannel(t *testing.T) {
 	t.Parallel()
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	// If we attempt to abandon the state of a channel that doesn't exist
 	// in the open or closed channel bucket, then we should receive an
@@ -615,12 +627,14 @@ func TestFetchChannels(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			cdb, cleanUp, err := MakeTestDB()
+			fullDB, cleanUp, err := MakeTestDB()
 			if err != nil {
 				t.Fatalf("unable to make test "+
 					"database: %v", err)
 			}
 			defer cleanUp()
+
+			cdb := fullDB.ChannelStateDB()
 
 			// Create a pending channel that is not awaiting close.
 			createTestChannel(
@@ -684,11 +698,13 @@ func TestFetchChannels(t *testing.T) {
 
 // TestFetchHistoricalChannel tests lookup of historical channels.
 func TestFetchHistoricalChannel(t *testing.T) {
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	// Create a an open channel in the database.
 	channel := createTestChannel(t, cdb, openChannelOption())

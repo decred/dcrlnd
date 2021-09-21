@@ -64,7 +64,7 @@ func (s *Server) runForceCloseStaleChanReestablish() {
 		log.Debugf("Time to check channels for force close due to stale " +
 			"chan reestablish messages")
 
-		chans, err := s.cfg.DB.FetchAllOpenChannels()
+		chans, err := s.cfg.DB.ChannelStateDB().FetchAllOpenChannels()
 		if err != nil {
 			log.Errorf("Unable to list open channels: %v", err)
 			continue
@@ -72,7 +72,7 @@ func (s *Server) runForceCloseStaleChanReestablish() {
 
 		for _, c := range chans {
 			sid := c.ShortChannelID
-			waitTime, err := s.cfg.DB.GetChanReestablishWaitTime(sid)
+			waitTime, err := s.cfg.DB.ChannelStateDB().GetChanReestablishWaitTime(sid)
 			if err != nil {
 				log.Errorf("Unable to get chan reestablish msg "+
 					"times for %s: %v", sid, err)

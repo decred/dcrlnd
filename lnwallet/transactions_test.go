@@ -962,7 +962,7 @@ func createTestChannelsForVectors(tc *testContext, chanType channeldb.ChannelTyp
 		RevocationStore:         shachain.NewRevocationStore(),
 		LocalCommitment:         remoteCommit,
 		RemoteCommitment:        remoteCommit,
-		Db:                      dbRemote,
+		Db:                      dbRemote.ChannelStateDB(),
 		Packager:                channeldb.NewChannelPackager(shortChanID),
 		FundingTxn:              tc.fundingTx.MsgTx(),
 	}
@@ -980,7 +980,7 @@ func createTestChannelsForVectors(tc *testContext, chanType channeldb.ChannelTyp
 		RevocationStore:         shachain.NewRevocationStore(),
 		LocalCommitment:         localCommit,
 		RemoteCommitment:        localCommit,
-		Db:                      dbLocal,
+		Db:                      dbLocal.ChannelStateDB(),
 		Packager:                channeldb.NewChannelPackager(shortChanID),
 		FundingTxn:              tc.fundingTx.MsgTx(),
 	}

@@ -12,11 +12,13 @@ import (
 func TestLinkNodeEncodeDecode(t *testing.T) {
 	t.Parallel()
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	// First we'll create some initial data to use for populating our test
 	// LinkNode instances.
@@ -109,11 +111,13 @@ func TestLinkNodeEncodeDecode(t *testing.T) {
 func TestDeleteLinkNode(t *testing.T) {
 	t.Parallel()
 
-	cdb, cleanUp, err := MakeTestDB()
+	fullDB, cleanUp, err := MakeTestDB()
 	if err != nil {
 		t.Fatalf("unable to make test database: %v", err)
 	}
 	defer cleanUp()
+
+	cdb := fullDB.ChannelStateDB()
 
 	_, pubKey := privKeyFromBytes(key[:])
 	addr := &net.TCPAddr{

@@ -43,8 +43,8 @@ func putChanReestablishWaitTime(bucket walletdb.ReadWriteBucket, key []byte, v t
 // AddToChanReestablishWaitTime adds the passed waitTime interval to the
 // total time that a peer has been online without reestablishing the passed
 // channel.
-func (d *DB) AddToChanReestablishWaitTime(chanID lnwire.ShortChannelID, waitTime time.Duration) error {
-	return kvdb.Update(d, func(tx kvdb.RwTx) error {
+func (d *ChannelStateDB) AddToChanReestablishWaitTime(chanID lnwire.ShortChannelID, waitTime time.Duration) error {
+	return kvdb.Update(d.backend, func(tx kvdb.RwTx) error {
 		bucket := tx.ReadWriteBucket(chanReestablishWaitTimeBucket)
 		if bucket == nil {
 			var err error
@@ -67,8 +67,8 @@ func (d *DB) AddToChanReestablishWaitTime(chanID lnwire.ShortChannelID, waitTime
 // ResetChanReestablishWaitTime zeros the time that a peer has spent online
 // while not reestablishing a channel.  This is called when a channel has been
 // successfully reestablished.
-func (d *DB) ResetChanReestablishWaitTime(chanID lnwire.ShortChannelID) error {
-	return kvdb.Update(d, func(tx kvdb.RwTx) error {
+func (d *ChannelStateDB) ResetChanReestablishWaitTime(chanID lnwire.ShortChannelID) error {
+	return kvdb.Update(d.backend, func(tx kvdb.RwTx) error {
 		var err error
 		bucket := tx.ReadWriteBucket(chanReestablishWaitTimeBucket)
 		if bucket == nil {
@@ -85,8 +85,8 @@ func (d *DB) ResetChanReestablishWaitTime(chanID lnwire.ShortChannelID) error {
 
 // GetChanReestablishWaitTime returns the total time (across all connections)
 // that a peer has been online while NOT reestablishing a channel.
-func (d *DB) GetChanReestablishWaitTime(chanID lnwire.ShortChannelID) (waitTime time.Duration, err error) {
-	err = kvdb.View(d, func(tx kvdb.RTx) error {
+func (d *ChannelStateDB) GetChanReestablishWaitTime(chanID lnwire.ShortChannelID) (waitTime time.Duration, err error) {
+	err = kvdb.View(d.backend, func(tx kvdb.RTx) error {
 		bucket := tx.ReadBucket(chanReestablishWaitTimeBucket)
 		if bucket == nil {
 			return nil
