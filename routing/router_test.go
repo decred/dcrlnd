@@ -126,8 +126,7 @@ func createTestCtxFromGraphInstanceAssumeValid(t *testing.T,
 	}
 
 	mc, err := NewMissionControl(
-		graphInstance.graph.Database(), route.Vertex{},
-		mcConfig,
+		graphInstance.graphBackend, route.Vertex{}, mcConfig,
 	)
 	require.NoError(t, err, "failed to create missioncontrol")
 
@@ -190,7 +189,6 @@ func createTestCtxFromGraphInstanceAssumeValid(t *testing.T,
 
 	cleanUp := func() {
 		ctx.router.Stop()
-		graphInstance.cleanUp()
 	}
 
 	return ctx, cleanUp
@@ -199,17 +197,10 @@ func createTestCtxFromGraphInstanceAssumeValid(t *testing.T,
 func createTestCtxSingleNode(t *testing.T,
 	startingHeight uint32) (*testCtx, func()) {
 
-	var (
-		graph      *channeldb.ChannelGraph
-		sourceNode *channeldb.LightningNode
-		cleanup    func()
-		err        error
-	)
-
-	graph, cleanup, err = makeTestGraph()
+	graph, graphBackend, cleanup, err := makeTestGraph()
 	require.NoError(t, err, "failed to make test graph")
 
-	sourceNode, err = createTestNode()
+	sourceNode, err := createTestNode()
 	require.NoError(t, err, "failed to create test node")
 
 	require.NoError(t,
@@ -217,8 +208,9 @@ func createTestCtxSingleNode(t *testing.T,
 	)
 
 	graphInstance := &testGraphInstance{
-		graph:   graph,
-		cleanUp: cleanup,
+		graph:        graph,
+		graphBackend: graphBackend,
+		cleanUp:      cleanup,
 	}
 
 	return createTestCtxFromGraphInstance(
@@ -1578,7 +1570,7 @@ func TestAddEdgeUnknownVertexes(t *testing.T) {
 		t.Fatalf("unable to find any routes: %v", err)
 	}
 
-	copy1, err := ctx.graph.FetchLightningNode(nil, pub1)
+	copy1, err := ctx.graph.FetchLightningNode(pub1)
 	if err != nil {
 		t.Fatalf("unable to fetch node: %v", err)
 	}
@@ -1587,7 +1579,7 @@ func TestAddEdgeUnknownVertexes(t *testing.T) {
 		t.Fatalf("fetched node not equal to original")
 	}
 
-	copy2, err := ctx.graph.FetchLightningNode(nil, pub2)
+	copy2, err := ctx.graph.FetchLightningNode(pub2)
 	if err != nil {
 		t.Fatalf("unable to fetch node: %v", err)
 	}

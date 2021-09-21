@@ -22,6 +22,7 @@ import (
 	"github.com/decred/dcrlnd/clock"
 	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwire"
+	"github.com/decred/dcrlnd/routing/route"
 	"github.com/go-errors/errors"
 )
 
@@ -290,10 +291,14 @@ func CreateWithBackend(backend kvdb.Backend, modifiers ...OptionModifier) (*DB, 
 	// Set the parent pointer (only used in tests).
 	chanDB.channelStateDB.parent = chanDB
 
-	chanDB.graph = newChannelGraph(
+	var err error
+	chanDB.graph, err = NewChannelGraph(
 		backend, opts.RejectCacheSize, opts.ChannelCacheSize,
 		opts.BatchCommitInterval,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Synchronize the version of database and apply migrations if needed.
 	if err := chanDB.syncVersions(dbVersions); err != nil {
@@ -315,7 +320,7 @@ func (d *DB) Path() string {
 	return d.dbPath
 }
 
-var topLevelBuckets = [][]byte{
+var dbTopLevelBuckets = [][]byte{
 	openChannelBucket,
 	closedChannelBucket,
 	chanReestablishWaitTimeBucket, // DCR only
@@ -327,10 +332,6 @@ var topLevelBuckets = [][]byte{
 	paymentsIndexBucket,
 	peersBucket,
 	nodeInfoBucket,
-	nodeBucket,
-	edgeBucket,
-	edgeIndexBucket,
-	graphMetaBucket,
 	metaBucket,
 	closeSummaryBucket,
 	outpointBucket,
@@ -341,7 +342,7 @@ var topLevelBuckets = [][]byte{
 // operation is fully atomic.
 func (d *DB) Wipe() error {
 	err := kvdb.Update(d, func(tx kvdb.RwTx) error {
-		for _, tlb := range topLevelBuckets {
+		for _, tlb := range dbTopLevelBuckets {
 			err := tx.DeleteTopLevelBucket(tlb)
 			if err != nil && err != kvdb.ErrBucketNotFound {
 				return err
@@ -369,40 +370,10 @@ func initChannelDB(db kvdb.Backend) error {
 			return nil
 		}
 
-		for _, tlb := range topLevelBuckets {
+		for _, tlb := range dbTopLevelBuckets {
 			if _, err := tx.CreateTopLevelBucket(tlb); err != nil {
 				return err
 			}
-		}
-
-		nodes := tx.ReadWriteBucket(nodeBucket)
-		_, err = nodes.CreateBucket(aliasIndexBucket)
-		if err != nil {
-			return err
-		}
-		_, err = nodes.CreateBucket(nodeUpdateIndexBucket)
-		if err != nil {
-			return err
-		}
-
-		edges := tx.ReadWriteBucket(edgeBucket)
-		if _, err := edges.CreateBucket(edgeIndexBucket); err != nil {
-			return err
-		}
-		if _, err := edges.CreateBucket(edgeUpdateIndexBucket); err != nil {
-			return err
-		}
-		if _, err := edges.CreateBucket(channelPointBucket); err != nil {
-			return err
-		}
-		if _, err := edges.CreateBucket(zombieBucket); err != nil {
-			return err
-		}
-
-		graphMeta := tx.ReadWriteBucket(graphMetaBucket)
-		_, err = graphMeta.CreateBucket(pruneLogBucket)
-		if err != nil {
-			return err
 		}
 
 		meta.DbVersionNumber = getLatestDBVersion(dbVersions)
@@ -1168,29 +1139,20 @@ func (d *DB) AddrsForNode(nodePub *secp256k1.PublicKey) ([]net.Addr,
 		return nil, err
 	}
 
-	var graphNode LightningNode
-	err = kvdb.View(d, func(tx kvdb.RTx) error {
-		// We'll also query the graph for this peer to see if they have
-		// any addresses that we don't currently have stored within the
-		// link node database.
-		nodes := tx.ReadBucket(nodeBucket)
-		if nodes == nil {
-			return ErrGraphNotFound
-		}
-		compressedPubKey := nodePub.SerializeCompressed()
-		graphNode, err = fetchLightningNode(nodes, compressedPubKey)
-		if err != nil && err != ErrGraphNodeNotFound {
-			// If the node isn't found, then that's OK, as we still
-			// have the link node data.
-			return err
-		}
-
-		return nil
-	}, func() {
-		linkNode = nil
-	})
+	// We'll also query the graph for this peer to see if they have any
+	// addresses that we don't currently have stored within the link node
+	// database.
+	pubKey, err := route.NewVertexFromBytes(nodePub.SerializeCompressed())
 	if err != nil {
 		return nil, err
+	}
+	graphNode, err := d.graph.FetchLightningNode(pubKey)
+	if err != nil && err != ErrGraphNodeNotFound {
+		return nil, err
+	} else if err == ErrGraphNodeNotFound {
+		// If the node isn't found, then that's OK, as we still have the
+		// link node data. But any other error needs to be returned.
+		graphNode = &LightningNode{}
 	}
 
 	// Now that we have both sources of addrs for this node, we'll use a

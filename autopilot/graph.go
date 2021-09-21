@@ -152,7 +152,7 @@ func (d *databaseChannelGraph) addRandChannel(node1, node2 *secp256k1.PublicKey,
 				return nil, err
 			}
 
-			dbNode, err := d.db.FetchLightningNode(nil, vertex)
+			dbNode, err := d.db.FetchLightningNode(vertex)
 			switch {
 			case err == channeldb.ErrGraphNodeNotFound:
 				fallthrough
