@@ -3018,7 +3018,7 @@ func dbFindPath(graph *channeldb.ChannelGraph,
 	source, target route.Vertex, amt lnwire.MilliAtom,
 	finalHtlcExpiry int32) ([]*channeldb.CachedEdgePolicy, error) {
 
-	routingTx, err := newDbRoutingTx(graph)
+	routingGraph, err := NewCachedGraph(graph)
 	if err != nil {
 		return nil, err
 	}
@@ -3027,7 +3027,7 @@ func dbFindPath(graph *channeldb.ChannelGraph,
 		&graphParams{
 			additionalEdges: additionalEdges,
 			bandwidthHints:  bandwidthHints,
-			graph:           routingTx,
+			graph:           routingGraph,
 		},
 		r, cfg, source, target, amt, finalHtlcExpiry,
 	)
