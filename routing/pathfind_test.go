@@ -1101,20 +1101,23 @@ func TestPathFindingWithAdditionalEdges(t *testing.T) {
 
 	// Create the channel edge going from songoku to doge and include it in
 	// our map of additional edges.
-	songokuToDoge := &channeldb.ChannelEdgePolicy{
-		Node:                      doge,
+	songokuToDoge := &channeldb.CachedEdgePolicy{
+		ToNodePubKey: func() route.Vertex {
+			return doge.PubKeyBytes
+		},
+		ToNodeFeatures:            lnwire.EmptyFeatureVector(),
 		ChannelID:                 1337,
 		FeeBaseMAtoms:             1,
 		FeeProportionalMillionths: 1000,
 		TimeLockDelta:             9,
 	}
 
-	additionalEdges := map[route.Vertex][]*channeldb.ChannelEdgePolicy{
+	additionalEdges := map[route.Vertex][]*channeldb.CachedEdgePolicy{
 		graph.aliasMap["songoku"]: {songokuToDoge},
 	}
 
 	find := func(r *RestrictParams) (
-		[]*channeldb.ChannelEdgePolicy, error) {
+		[]*channeldb.CachedEdgePolicy, error) {
 
 		return dbFindPath(
 			graph.graph, additionalEdges, nil,
@@ -1181,14 +1184,13 @@ func TestNewRoute(t *testing.T) {
 	createHop := func(baseFee lnwire.MilliAtom,
 		feeRate lnwire.MilliAtom,
 		bandwidth lnwire.MilliAtom,
-		timeLockDelta uint16) *channeldb.ChannelEdgePolicy {
+		timeLockDelta uint16) *channeldb.CachedEdgePolicy {
 
-		return &channeldb.ChannelEdgePolicy{
-			Node: &channeldb.LightningNode{
-				Features: lnwire.NewFeatureVector(
-					nil, nil,
-				),
+		return &channeldb.CachedEdgePolicy{
+			ToNodePubKey: func() route.Vertex {
+				return route.Vertex{}
 			},
+			ToNodeFeatures:            lnwire.NewFeatureVector(nil, nil),
 			FeeProportionalMillionths: feeRate,
 			FeeBaseMAtoms:             baseFee,
 			TimeLockDelta:             timeLockDelta,
@@ -1201,7 +1203,7 @@ func TestNewRoute(t *testing.T) {
 
 		// hops is the list of hops (the route) that gets passed into
 		// the call to newRoute.
-		hops []*channeldb.ChannelEdgePolicy
+		hops []*channeldb.CachedEdgePolicy
 
 		// paymentAmount is the amount that is send into the route
 		// indicated by hops.
@@ -1250,7 +1252,7 @@ func TestNewRoute(t *testing.T) {
 			// For a single hop payment, no fees are expected to be paid.
 			name:          "single hop",
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(100, 1000, 1000000, 10),
 			},
 			expectedFees:          []lnwire.MilliAtom{0},
@@ -1263,7 +1265,7 @@ func TestNewRoute(t *testing.T) {
 			// a fee to receive the payment.
 			name:          "two hop",
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(0, 1000, 1000000, 10),
 				createHop(30, 1000, 1000000, 5),
 			},
@@ -1278,7 +1280,7 @@ func TestNewRoute(t *testing.T) {
 			name:          "two hop tlv onion feature",
 			destFeatures:  tlvFeatures,
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(0, 1000, 1000000, 10),
 				createHop(30, 1000, 1000000, 5),
 			},
@@ -1295,7 +1297,7 @@ func TestNewRoute(t *testing.T) {
 			destFeatures:  tlvPayAddrFeatures,
 			paymentAddr:   &testPaymentAddr,
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(0, 1000, 1000000, 10),
 				createHop(30, 1000, 1000000, 5),
 			},
@@ -1315,7 +1317,7 @@ func TestNewRoute(t *testing.T) {
 			// gets rounded down to 1.
 			name:          "three hop",
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(0, 10, 1000000, 10),
 				createHop(0, 10, 1000000, 5),
 				createHop(0, 10, 1000000, 3),
@@ -1330,7 +1332,7 @@ func TestNewRoute(t *testing.T) {
 			// because of the increase amount to forward.
 			name:          "three hop with fee carry over",
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(0, 10000, 1000000, 10),
 				createHop(0, 10000, 1000000, 5),
 				createHop(0, 10000, 1000000, 3),
@@ -1345,7 +1347,7 @@ func TestNewRoute(t *testing.T) {
 			// effect.
 			name:          "three hop with minimal fees for carry over",
 			paymentAmount: 100000,
-			hops: []*channeldb.ChannelEdgePolicy{
+			hops: []*channeldb.CachedEdgePolicy{
 				createHop(0, 10000, 1000000, 10),
 
 				// First hop charges 0.1% so the second hop fee
@@ -1369,7 +1371,7 @@ func TestNewRoute(t *testing.T) {
 		// custom feature vector.
 		if testCase.destFeatures != nil {
 			finalHop := testCase.hops[len(testCase.hops)-1]
-			finalHop.Node.Features = testCase.destFeatures
+			finalHop.ToNodeFeatures = testCase.destFeatures
 		}
 
 		assertRoute := func(t *testing.T, route *route.Route) {
@@ -1596,7 +1598,7 @@ func TestDestTLVGraphFallback(t *testing.T) {
 	}
 
 	find := func(r *RestrictParams,
-		target route.Vertex) ([]*channeldb.ChannelEdgePolicy, error) {
+		target route.Vertex) ([]*channeldb.CachedEdgePolicy, error) {
 
 		return dbFindPath(
 			ctx.graph, nil, nil,
@@ -2327,16 +2329,16 @@ func TestPathFindSpecExample(t *testing.T) {
 }
 
 func assertExpectedPath(t *testing.T, aliasMap map[string]route.Vertex,
-	path []*channeldb.ChannelEdgePolicy, nodeAliases ...string) {
+	path []*channeldb.CachedEdgePolicy, nodeAliases ...string) {
 
 	if len(path) != len(nodeAliases) {
 		t.Fatal("number of hops and number of aliases do not match")
 	}
 
 	for i, hop := range path {
-		if hop.Node.PubKeyBytes != aliasMap[nodeAliases[i]] {
+		if hop.ToNodePubKey() != aliasMap[nodeAliases[i]] {
 			t.Fatalf("expected %v to be pos #%v in hop, instead "+
-				"%v was", nodeAliases[i], i, hop.Node.Alias)
+				"%v was", nodeAliases[i], i, hop.ToNodePubKey())
 		}
 	}
 }
@@ -2982,7 +2984,7 @@ func (c *pathFindingTestContext) cleanup() {
 }
 
 func (c *pathFindingTestContext) findPath(target route.Vertex,
-	amt lnwire.MilliAtom) ([]*channeldb.ChannelEdgePolicy,
+	amt lnwire.MilliAtom) ([]*channeldb.CachedEdgePolicy,
 	error) {
 
 	return dbFindPath(
@@ -2991,7 +2993,9 @@ func (c *pathFindingTestContext) findPath(target route.Vertex,
 	)
 }
 
-func (c *pathFindingTestContext) assertPath(path []*channeldb.ChannelEdgePolicy, expected []uint64) {
+func (c *pathFindingTestContext) assertPath(path []*channeldb.CachedEdgePolicy,
+	expected []uint64) {
+
 	if len(path) != len(expected) {
 		c.t.Fatalf("expected path of length %v, but got %v",
 			len(expected), len(path))
@@ -3008,11 +3012,11 @@ func (c *pathFindingTestContext) assertPath(path []*channeldb.ChannelEdgePolicy,
 // dbFindPath calls findPath after getting a db transaction from the database
 // graph.
 func dbFindPath(graph *channeldb.ChannelGraph,
-	additionalEdges map[route.Vertex][]*channeldb.ChannelEdgePolicy,
+	additionalEdges map[route.Vertex][]*channeldb.CachedEdgePolicy,
 	bandwidthHints map[uint64]lnwire.MilliAtom,
 	r *RestrictParams, cfg *PathFindingConfig,
 	source, target route.Vertex, amt lnwire.MilliAtom,
-	finalHtlcExpiry int32) ([]*channeldb.ChannelEdgePolicy, error) {
+	finalHtlcExpiry int32) ([]*channeldb.CachedEdgePolicy, error) {
 
 	routingTx, err := newDbRoutingTx(graph)
 	if err != nil {

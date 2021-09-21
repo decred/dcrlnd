@@ -126,7 +126,7 @@ func testQueryRoutes(t *testing.T, useMissionControl bool, useMAtoms bool,
 	findRoute := func(source, target route.Vertex,
 		amt lnwire.MilliAtom, restrictions *routing.RestrictParams,
 		_ record.CustomSet,
-		routeHints map[route.Vertex][]*channeldb.ChannelEdgePolicy,
+		routeHints map[route.Vertex][]*channeldb.CachedEdgePolicy,
 		finalExpiry uint16) (*route.Route, error) {
 
 		if int64(amt) != amtAtoms*1000 {
