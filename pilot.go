@@ -137,8 +137,8 @@ var _ autopilot.ChannelController = (*chanController)(nil)
 // interfaces needed to drive it won't be launched before the Manager's
 // StartAgent method is called.
 func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
-	c *Config, netParams chainreg.DecredNetParams) (*autopilot.ManagerCfg,
-	error) {
+	minHTLCIn lnwire.MilliAtom, netParams chainreg.DecredNetParams) (
+	*autopilot.ManagerCfg, error) {
 
 	atplLog.Infof("Instantiating autopilot with active=%v, "+
 		"max_channels=%d, allocation=%f, min_chan_size=%d, "+
@@ -177,7 +177,7 @@ func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
 			private:       cfg.Private,
 			minConfs:      cfg.MinConfs,
 			confTarget:    cfg.ConfTarget,
-			chanMinHtlcIn: c.Decred.MinHTLCIn,
+			chanMinHtlcIn: minHTLCIn,
 			netParams:     netParams,
 		},
 		WalletBalance: func() (dcrutil.Amount, error) {
