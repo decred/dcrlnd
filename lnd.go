@@ -34,6 +34,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrlnd/automation"
 	"github.com/decred/dcrlnd/autopilot"
+	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/cert"
 	"github.com/decred/dcrlnd/chainreg"
@@ -310,6 +311,9 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	}
 
 	defer cleanUp()
+
+	// Initialize a new block cache.
+	blockCache := blockcache.NewBlockCache(cfg.BlockCacheSize)
 
 	var (
 		walletInitParams = WalletUnlockParams{
@@ -739,8 +743,8 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		Dialer: func(addr string) (net.Conn, error) {
 			return cfg.net.Dial("tcp", addr, cfg.ConnectionTimeout)
 		},
-		BlockCacheSize: cfg.BlockCacheSize,
-		LoaderOptions:  []walletloader.LoaderOption{dbs.walletDB},
+		BlockCache:    blockCache,
+		LoaderOptions: []walletloader.LoaderOption{dbs.walletDB},
 	}
 
 	// Parse coin selection strategy.
@@ -753,7 +757,9 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 			cfg.CoinSelectionStrategy)
 	}
 
-	activeChainControl, cleanup, err := chainreg.NewChainControl(chainControlCfg)
+	activeChainControl, cleanup, err := chainreg.NewChainControl(
+		chainControlCfg,
+	)
 	if cleanup != nil {
 		defer cleanup()
 	}
