@@ -316,7 +316,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	blockCache := blockcache.NewBlockCache(cfg.BlockCacheSize)
 
 	var (
-		walletInitParams = WalletUnlockParams{
+		walletInitParams = walletunlocker.WalletUnlockParams{
 			// In case we do auto-unlock, we need to be able to send
 			// into the channel without blocking so we buffer it.
 			MacResponseChan: make(chan []byte, 1),
@@ -1286,53 +1286,6 @@ func adminPermissions() []bakery.Op {
 	return admin
 }
 
-// WalletUnlockParams holds the variables used to parameterize the unlocking of
-// lnd's wallet after it has already been created.
-type WalletUnlockParams struct {
-	// Password is the public and private wallet passphrase.
-	Password []byte
-
-	// Birthday specifies the approximate time that this wallet was created.
-	// This is used to bound any rescans on startup.
-	Birthday time.Time
-
-	// RecoveryWindow specifies the address lookahead when entering recovery
-	// mode. A recovery will be attempted if this value is non-zero.
-	RecoveryWindow uint32
-
-	// Wallet is the loaded and unlocked Wallet. This is returned
-	// from the unlocker service to avoid it being unlocked twice (once in
-	// the unlocker service to check if the password is correct and again
-	// later when lnd actually uses it). Because unlocking involves scrypt
-	// which is resource intensive, we want to avoid doing it twice.
-	Wallet *wallet.Wallet
-
-	// Loader is the wallet loader used to create or open the corresponding
-	// wallet.
-	Loader *walletloader.Loader
-
-	// Conn is the connection to the remote wallet when that is used
-	// instead of an embedded dcrwallet instance.
-	Conn *grpc.ClientConn
-
-	// ChansToRestore a set of static channel backups that should be
-	// restored before the main server instance starts up.
-	ChansToRestore walletunlocker.ChannelsToRecover
-
-	// UnloadWallet is a function for unloading the wallet, which should
-	// be called on shutdown.
-	UnloadWallet func() error
-
-	// StatelessInit signals that the user requested the daemon to be
-	// initialized stateless, which means no unencrypted macaroons should be
-	// written to disk.
-	StatelessInit bool
-
-	// MacResponseChan is the channel for sending back the admin macaroon to
-	// the WalletUnlocker service.
-	MacResponseChan chan []byte
-}
-
 // createWalletUnlockerService creates a WalletUnlockerService from the passed
 // config.
 func createWalletUnlockerService(cfg *Config) *walletunlocker.UnlockerService {
@@ -1532,7 +1485,7 @@ func startRestProxy(cfg *Config, rpcServer *rpcServer, restDialOpts []grpc.DialO
 func waitForWalletPassword(cfg *Config,
 	pwService *walletunlocker.UnlockerService,
 	loaderOpts []walletloader.LoaderOption, shutdownChan <-chan struct{}) (
-	*WalletUnlockParams, error) {
+	*walletunlocker.WalletUnlockParams, error) {
 
 	// Wait for user to provide the password.
 	ltndLog.Infof("Waiting for wallet encryption password. Use `dcrlncli " +
@@ -1617,7 +1570,7 @@ func waitForWalletPassword(cfg *Config,
 			return nil, err
 		}
 
-		return &WalletUnlockParams{
+		return &walletunlocker.WalletUnlockParams{
 			Password:        password,
 			Birthday:        birthday,
 			RecoveryWindow:  recoveryWindow,
@@ -1632,7 +1585,7 @@ func waitForWalletPassword(cfg *Config,
 	// The wallet has already been created in the past, and is simply being
 	// unlocked. So we'll just return these passphrases.
 	case unlockMsg := <-pwService.UnlockMsgs:
-		return &WalletUnlockParams{
+		return &walletunlocker.WalletUnlockParams{
 			Password:        unlockMsg.Passphrase,
 			RecoveryWindow:  unlockMsg.RecoveryWindow,
 			Wallet:          unlockMsg.Wallet,
