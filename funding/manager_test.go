@@ -312,7 +312,7 @@ func createTestWallet(cdb *channeldb.DB, netParams *chaincfg.Params,
 		ChainIO:            bio,
 		FeeEstimator:       estimator,
 		NetParams:          *netParams,
-		DefaultConstraints: chainreg.DefaultDcrChannelConstraints,
+		DefaultConstraints: chainreg.GenDefaultDcrConstraints(),
 	})
 	if err != nil {
 		return nil, err

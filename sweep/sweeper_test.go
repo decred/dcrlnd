@@ -137,12 +137,8 @@ func createSweeperTestContext(t *testing.T) *sweeperTestContext {
 		Store:  store,
 		Signer: &mock.DummySigner{},
 		GenSweepScript: func() ([]byte, error) {
-			// This needs to be a valid script, otherwise it fails
-			// checkTransactionSanity(). We use a simple OP_RETURN, given the
-			// tests don't check for spendability of the generated sweep output.
-			script := []byte{0x6a, 0x01, outputScriptCount}
 			outputScriptCount++
-			return script, nil
+			return input.GenerateP2PKH([]byte{outputScriptCount})
 		},
 		FeeEstimator:     estimator,
 		MaxInputsPerTx:   testMaxInputsPerTx,
@@ -1836,6 +1832,15 @@ func TestRequiredTxOuts(t *testing.T) {
 	locktime2 := uint32(52)
 	locktime3 := uint32(53)
 
+	aPkScript := make([]byte, input.P2PKHPkScriptSize)
+	aPkScript[0] = 'a'
+
+	bPkScript := make([]byte, input.P2SHPkScriptSize)
+	bPkScript[0] = 'b'
+
+	ePkScript := make([]byte, 25)
+	ePkScript[0] = 'e'
+
 	testCases := []struct {
 		name         string
 		inputs       []*testInput
@@ -1850,7 +1855,7 @@ func TestRequiredTxOuts(t *testing.T) {
 				{
 					BaseInput: inputs[0],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("aaa"),
+						PkScript: aPkScript,
 						Value:    100000,
 					},
 				},
@@ -1871,7 +1876,7 @@ func TestRequiredTxOuts(t *testing.T) {
 				// output must be the first one.
 				require.Equal(t, 2, len(tx.TxOut))
 				out := tx.TxOut[0]
-				require.Equal(t, []byte("aaa"), out.PkScript)
+				require.Equal(t, aPkScript, out.PkScript)
 				require.Equal(t, int64(100000), out.Value)
 			},
 		},
@@ -1883,13 +1888,13 @@ func TestRequiredTxOuts(t *testing.T) {
 				{
 					BaseInput: inputs[0],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("aaa"),
+						PkScript: aPkScript,
 
 						// Fee will be about 5340 sats.
 						// Subtract a bit more to
 						// ensure no dust change output
 						// is manifested.
-						Value: inputs[0].SignDesc().Output.Value - 5600,
+						Value: inputs[0].SignDesc().Output.Value - 6300,
 					},
 				},
 			},
@@ -1906,10 +1911,10 @@ func TestRequiredTxOuts(t *testing.T) {
 
 				require.Equal(t, 1, len(tx.TxOut))
 				out := tx.TxOut[0]
-				require.Equal(t, []byte("aaa"), out.PkScript)
+				require.Equal(t, aPkScript, out.PkScript)
 				require.Equal(
 					t,
-					inputs[0].SignDesc().Output.Value-5600,
+					inputs[0].SignDesc().Output.Value-6300,
 					out.Value,
 				)
 			},
@@ -1932,7 +1937,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					// The second input requires a TxOut.
 					BaseInput: inputs[0],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("aaa"),
+						PkScript: aPkScript,
 						Value:    inputs[0].SignDesc().Output.Value,
 					},
 				},
@@ -1951,7 +1956,7 @@ func TestRequiredTxOuts(t *testing.T) {
 
 				// The required TxOut should be the first one.
 				out := tx.TxOut[0]
-				require.Equal(t, []byte("aaa"), out.PkScript)
+				require.Equal(t, aPkScript, out.PkScript)
 				require.Equal(
 					t, inputs[0].SignDesc().Output.Value,
 					out.Value,
@@ -1982,7 +1987,7 @@ func TestRequiredTxOuts(t *testing.T) {
 				{
 					BaseInput: inputs[0],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("aaa"),
+						PkScript: aPkScript,
 						Value:    inputs[0].SignDesc().Output.Value,
 					},
 				},
@@ -2000,7 +2005,7 @@ func TestRequiredTxOuts(t *testing.T) {
 
 				require.Equal(t, 2, len(tx.TxOut))
 				out := tx.TxOut[0]
-				require.Equal(t, []byte("aaa"), out.PkScript)
+				require.Equal(t, aPkScript, out.PkScript)
 				require.Equal(
 					t, inputs[0].SignDesc().Output.Value,
 					out.Value,
@@ -2015,21 +2020,21 @@ func TestRequiredTxOuts(t *testing.T) {
 				{
 					BaseInput: inputs[0],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("aaa"),
+						PkScript: aPkScript,
 						Value:    inputs[0].SignDesc().Output.Value,
 					},
 				},
 				{
 					BaseInput: inputs[1],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("bbb"),
+						PkScript: bPkScript,
 						Value:    inputs[1].SignDesc().Output.Value,
 					},
 				},
 				{
 					BaseInput: inputs[2],
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("ccc"),
+						PkScript: ePkScript,
 						Value:    inputs[2].SignDesc().Output.Value,
 					},
 				},
@@ -2076,7 +2081,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					BaseInput: inputs[0],
 					locktime:  &locktime1,
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("aaa"),
+						PkScript: aPkScript,
 						Value:    inputs[0].SignDesc().Output.Value,
 					},
 				},
@@ -2084,7 +2089,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					BaseInput: inputs[1],
 					locktime:  &locktime1,
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("bbb"),
+						PkScript: bPkScript,
 						Value:    inputs[1].SignDesc().Output.Value,
 					},
 				},
@@ -2092,7 +2097,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					BaseInput: inputs[2],
 					locktime:  &locktime2,
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("ccc"),
+						PkScript: ePkScript,
 						Value:    inputs[2].SignDesc().Output.Value,
 					},
 				},
@@ -2100,7 +2105,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					BaseInput: inputs[3],
 					locktime:  &locktime2,
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("ddd"),
+						PkScript: aPkScript,
 						Value:    inputs[3].SignDesc().Output.Value,
 					},
 				},
@@ -2108,7 +2113,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					BaseInput: inputs[4],
 					locktime:  &locktime3,
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("eee"),
+						PkScript: bPkScript,
 						Value:    inputs[4].SignDesc().Output.Value,
 					},
 				},
@@ -2116,7 +2121,7 @@ func TestRequiredTxOuts(t *testing.T) {
 					BaseInput: inputs[5],
 					locktime:  &locktime3,
 					reqTxOut: &wire.TxOut{
-						PkScript: []byte("fff"),
+						PkScript: ePkScript,
 						Value:    inputs[5].SignDesc().Output.Value,
 					},
 				},

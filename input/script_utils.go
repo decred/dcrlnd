@@ -79,6 +79,32 @@ func ScriptHashPkScript(redeemScript []byte) ([]byte, error) {
 	return bldr.Script()
 }
 
+// GenerateP2SH generates a pay-to-script-hash public key script paying to the
+// passed redeem script.
+func GenerateP2SH(script []byte) ([]byte, error) {
+	bldr := txscript.NewScriptBuilder()
+
+	bldr.AddOp(txscript.OP_HASH160)
+	scripthash := dcrutil.Hash160(script)
+	bldr.AddData(scripthash)
+	bldr.AddOp(txscript.OP_EQUAL)
+	return bldr.Script()
+}
+
+// GenerateP2PKH generates a pay-to-public-key-hash public key script paying to
+// the passed serialized public key.
+func GenerateP2PKH(pubkey []byte) ([]byte, error) {
+	bldr := txscript.NewScriptBuilder()
+
+	bldr.AddOp(txscript.OP_DUP)
+	bldr.AddOp(txscript.OP_HASH160)
+	pkhash := dcrutil.Hash160(pubkey)
+	bldr.AddData(pkhash)
+	bldr.AddOp(txscript.OP_EQUALVERIFY)
+	bldr.AddOp(txscript.OP_CHECKSIG)
+	return bldr.Script()
+}
+
 // GenMultiSigScript generates the non-p2sh'd multisig script for 2 of 2
 // pubkeys.
 func GenMultiSigScript(aPub, bPub []byte) ([]byte, error) {

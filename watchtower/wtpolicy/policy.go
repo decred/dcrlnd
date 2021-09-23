@@ -6,6 +6,7 @@ import (
 
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/watchtower/blob"
@@ -167,10 +168,9 @@ func (p *Policy) ComputeAltruistOutput(totalAmt dcrutil.Amount,
 	sweepAmt := totalAmt - txFee
 
 	// TODO(conner): replace w/ configurable dust limit
-	dustLimit := lnwallet.DefaultDustLimit()
-
-	// Check that the created outputs won't be dusty.
-	if sweepAmt <= dustLimit {
+	// Check that the created outputs won't be dusty. The sweep pkscript is
+	// currently a p2pkh, so we'll use that script's dust limit.
+	if sweepAmt < lnwallet.DustLimitForSize(input.P2PKHPkScriptSize) {
 		return 0, ErrCreatesDust
 	}
 
@@ -201,10 +201,9 @@ func (p *Policy) ComputeRewardOutputs(totalAmt dcrutil.Amount,
 	sweepAmt := totalAmt - rewardAmt - txFee
 
 	// TODO(conner): replace w/ configurable dust limit
-	dustLimit := lnwallet.DefaultDustLimit()
-
-	// Check that the created outputs won't be dusty.
-	if sweepAmt <= dustLimit {
+	// Check that the created outputs won't be dusty. The sweep pkscript is
+	// currently a p2pkh, so we'll use that script's dust limit.
+	if sweepAmt < lnwallet.DustLimitForSize(input.P2PKHPkScriptSize) {
 		return 0, 0, ErrCreatesDust
 	}
 

@@ -14,15 +14,9 @@ import (
 func TestTxInputSet(t *testing.T) {
 	const (
 		feeRate   = 5e4
-		relayFee  = 1e4
 		maxInputs = 10
 	)
-	set := newTxInputSet(nil, feeRate, relayFee, maxInputs)
-
-	wantDust := dcrutil.Amount(6030)
-	if set.dustLimit != 6030 {
-		t.Fatalf("incorrect dust limit; want=%d got=%d", wantDust, set.dustLimit)
-	}
+	set := newTxInputSet(nil, feeRate, maxInputs)
 
 	// Create a 10001 atom input. The fee to sweep this input to a P2PKH
 	// output is 10850 atoms. That means that this input yields -849 atoms
@@ -69,12 +63,11 @@ func TestTxInputSet(t *testing.T) {
 func TestTxInputSetFromWallet(t *testing.T) {
 	const (
 		feeRate   = 2e4
-		relayFee  = 1e4
 		maxInputs = 10
 	)
 
 	wallet := &mockWallet{}
-	set := newTxInputSet(wallet, feeRate, relayFee, maxInputs)
+	set := newTxInputSet(wallet, feeRate, maxInputs)
 
 	// Add a 10000 atoms input to the set. It yields positively, but
 	// doesn't reach the output dust limit.
@@ -141,13 +134,9 @@ func (r *reqInput) RequiredTxOut() *wire.TxOut {
 func TestTxInputSetRequiredOutput(t *testing.T) {
 	const (
 		feeRate   = 50000
-		relayFee  = 10000
 		maxInputs = 10
 	)
-	set := newTxInputSet(nil, feeRate, relayFee, maxInputs)
-	if set.dustLimit != 6030 {
-		t.Fatalf("incorrect dust limit")
-	}
+	set := newTxInputSet(nil, feeRate, maxInputs)
 
 	// Attempt to add an input with a required txout below the dust limit.
 	// This should fail since we cannot trim such outputs.
@@ -155,7 +144,7 @@ func TestTxInputSetRequiredOutput(t *testing.T) {
 		Input: createP2PKHInput(10001),
 		txOut: &wire.TxOut{
 			Value:    10001,
-			PkScript: make([]byte, 33),
+			PkScript: make([]byte, 25),
 		},
 	}
 	require.False(t, set.add(inp, constraintsRegular),
@@ -167,14 +156,14 @@ func TestTxInputSetRequiredOutput(t *testing.T) {
 		Input: createP2PKHInput(15001),
 		txOut: &wire.TxOut{
 			Value:    15001,
-			PkScript: make([]byte, 22),
+			PkScript: make([]byte, 25),
 		},
 	}
 	require.True(t, set.add(inp, constraintsRegular), "failed adding input")
 
-	// The fee needed to pay for this input and output should be 10700 atoms.
+	// The fee needed to pay for this input and output should be 10850 atoms.
 	fee := set.sizeEstimate(false).fee()
-	require.Equal(t, dcrutil.Amount(10700), fee)
+	require.Equal(t, dcrutil.Amount(10850), fee)
 
 	// Since the tx set currently pays no fees, we expect the current
 	// change to actually be negative, since this is what it would cost us

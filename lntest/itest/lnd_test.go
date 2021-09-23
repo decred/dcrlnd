@@ -5001,7 +5001,7 @@ func testListChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	defaultConstraints := &lnrpc.ChannelConstraints{
 		CsvDelay:            4,
 		ChanReserveAtoms:    6030,
-		DustLimitAtoms:      uint64(lnwallet.DefaultDustLimit()),
+		DustLimitAtoms:      uint64(lnwallet.DustLimitForSize(input.P2PKHPkScriptSize)),
 		MaxPendingAmtMAtoms: 99000000,
 		MinHtlcMAtoms:       1000,
 		MaxAcceptedHtlcs:    bobRemoteMaxHtlcs,
@@ -5017,7 +5017,7 @@ func testListChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	customizedConstraints := &lnrpc.ChannelConstraints{
 		CsvDelay:            4,
 		ChanReserveAtoms:    6030,
-		DustLimitAtoms:      uint64(lnwallet.DefaultDustLimit()),
+		DustLimitAtoms:      uint64(lnwallet.DustLimitForSize(input.P2PKHPkScriptSize)),
 		MaxPendingAmtMAtoms: 99000000,
 		MinHtlcMAtoms:       customizedMinHtlc,
 		MaxAcceptedHtlcs:    aliceRemoteMaxHtlcs,

@@ -90,6 +90,16 @@ const (
 	// Total: 25 bytes
 	P2PKHPkScriptSize int64 = 1 + 1 + 1 + 20 + 1 + 1
 
+	// P2PKHOutputSize is the size of an output that pays to a P2PKH script.
+	// It is calculated as:
+	//
+	//		- Output 		10 bytes
+	//		- Script Size varint	 1 byte
+	//		- P2PKScript		25 bytes
+	//
+	// Total: 36 bytes.
+	P2PKHOutputSize int64 = OutputSize + 1 + P2PKHPkScriptSize
+
 	// P2SHPkScriptSize is the size of a transaction output script that
 	// pays to a script hash.  It is calculated as:
 	//
@@ -100,6 +110,22 @@ const (
 	//
 	// Total: 23 bytes
 	P2SHPkScriptSize int64 = 1 + 1 + 20 + 1
+
+	// P2SHOutputSize is the size of a transaction output that pays to a P2SH
+	// script.  It is calculated as:
+	//
+	//		- Output		10 bytes
+	//		- Script Size varint	 1 byte
+	//		- P2SH script		23 bytes
+	//
+	// Total: 34 bytes.
+	P2SHOutputSize int64 = OutputSize + 1 + P2SHPkScriptSize
+
+	// P2UnknownScriptOutputSize is the max size of a transaction output
+	// that pays to an unknwon but still standard output script. This is
+	// set to the same value as a P2PKH script as that is the largest size
+	// of a standard output script.
+	P2UnknownScriptOutputSize int64 = P2PKHOutputSize
 
 	// The Following *SigScriptSize constants record the worst possible
 	// size of the standard signature scripts used to redeem the corresponding

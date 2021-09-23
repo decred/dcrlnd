@@ -148,15 +148,6 @@ const (
 	DefaultDecredStaticMinRelayFeeRate = chainfee.FeePerKBFloor
 )
 
-// DefaultDcrChannelConstraints is the default set of channel constraints that are
-// meant to be used when initially funding a Decred channel.
-//
-// TODO(halseth): make configurable at startup?
-var DefaultDcrChannelConstraints = channeldb.ChannelConstraints{
-	DustLimit:        lnwallet.DefaultDustLimit(),
-	MaxAcceptedHtlcs: input.MaxHTLCNumber / 2,
-}
-
 // checkDcrdNode checks whether the dcrd node reachable using the provided
 // config is usable as source of chain information, given the requirements of a
 // dcrlnd node.
@@ -235,10 +226,20 @@ type ChainControl struct {
 	MinHtlcIn lnwire.MilliAtom
 }
 
+// GenDefaultDcrChannelConstraints generates the default set of channel
+// constraints that are to be used when funding a Decred channel.
+func GenDefaultDcrConstraints() channeldb.ChannelConstraints {
+	dustLimit := lnwallet.DustLimitForSize(input.P2PKHPkScriptSize)
+
+	return channeldb.ChannelConstraints{
+		DustLimit:        dustLimit,
+		MaxAcceptedHtlcs: input.MaxHTLCNumber / 2,
+	}
+}
+
 // NewChainControl attempts to create a ChainControl instance according to the
 // parameters in the passed configuration.
 func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
-
 	// Set the RPC config from the "home" chain. Multi-chain isn't yet
 	// active, so we'll restrict usage to a particular chain for now.
 	log.Infof("Primary chain is set to: %v",
@@ -574,7 +575,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 	}
 
 	// Select the default channel constraints for the primary chain.
-	channelConstraints := DefaultDcrChannelConstraints
+	channelConstraints := GenDefaultDcrConstraints()
 
 	// Set the chain IO healthcheck.
 	cc.HealthCheck = func() error {

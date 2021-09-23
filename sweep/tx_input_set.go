@@ -108,9 +108,6 @@ func (t *txInputSetState) clone() txInputSetState {
 type txInputSet struct {
 	txInputSetState
 
-	// dustLimit is the minimum output value of the tx.
-	dustLimit dcrutil.Amount
-
 	// maxInputs is the maximum number of inputs that will be accepted in
 	// the set.
 	maxInputs int
@@ -120,22 +117,15 @@ type txInputSet struct {
 	wallet Wallet
 }
 
-func dustLimit(relayFee chainfee.AtomPerKByte) dcrutil.Amount {
-	return lnwallet.DustThresholdForRelayFee(relayFee)
-}
-
 // newTxInputSet constructs a new, empty input set.
-func newTxInputSet(wallet Wallet, feePerKB,
-	relayFee chainfee.AtomPerKByte, maxInputs int) *txInputSet {
-
-	dustLimit := dustLimit(relayFee)
+func newTxInputSet(wallet Wallet, feePerKB chainfee.AtomPerKByte,
+	maxInputs int) *txInputSet {
 
 	state := txInputSetState{
 		feeRate: feePerKB,
 	}
 
 	b := txInputSet{
-		dustLimit:       dustLimit,
 		maxInputs:       maxInputs,
 		wallet:          wallet,
 		txInputSetState: state,
@@ -149,7 +139,7 @@ func newTxInputSet(wallet Wallet, feePerKB,
 func (t *txInputSet) enoughInput() bool {
 	// If we have a change output above dust, then we certainly have enough
 	// inputs to the transaction.
-	if t.changeOutput >= t.dustLimit {
+	if t.changeOutput >= lnwallet.DustLimitForSize(input.P2PKHPkScriptSize) {
 		return true
 	}
 
@@ -188,8 +178,12 @@ func (t *txInputSet) addToState(inp input.Input, constraints addConstraints) *tx
 	// If the input comes with a required tx out that is below dust, we
 	// won't add it.
 	reqOut := inp.RequiredTxOut()
-	if reqOut != nil && dcrutil.Amount(reqOut.Value) < t.dustLimit {
-		return nil
+	if reqOut != nil {
+		// Fetch the dust limit for this output.
+		dustLimit := lnwallet.DustLimitForSize(int64(len(reqOut.PkScript)))
+		if dcrutil.Amount(reqOut.Value) < dustLimit {
+			return nil
+		}
 	}
 
 	// Clone the current set state.
