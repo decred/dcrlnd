@@ -558,16 +558,19 @@ func testSpendValidation(t *testing.T, tweakless bool) {
 		Privkeys: []*secp256k1.PrivateKey{aliceKeyPriv},
 	}
 
+	// Calculate the dust limit we'll use for the test.
+	dustLimit := DustLimitForSize(input.P2PKHPkScriptSize)
+
 	aliceChanCfg := &channeldb.ChannelConfig{
 		ChannelConstraints: channeldb.ChannelConstraints{
-			DustLimit: DefaultDustLimit(),
+			DustLimit: dustLimit,
 			CsvDelay:  csvTimeout,
 		},
 	}
 
 	bobChanCfg := &channeldb.ChannelConfig{
 		ChannelConstraints: channeldb.ChannelConstraints{
-			DustLimit: DefaultDustLimit(),
+			DustLimit: dustLimit,
 			CsvDelay:  csvTimeout,
 		},
 	}

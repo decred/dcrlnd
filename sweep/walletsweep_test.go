@@ -184,7 +184,7 @@ var testUtxos = []*lnwallet.Utxo{
 			0x7d, 0x57, 0x33, 0x6e, 0x51, 0xdf, 0xfd, 0x38, 0xe3,
 			0x0e, 0x6e, 0xf7, 0xef, 0x20, 0x88, 0xac,
 		},
-		Value: 1000,
+		Value: 10000,
 		OutPoint: wire.OutPoint{
 			Index: 1,
 		},
@@ -197,7 +197,7 @@ var testUtxos = []*lnwallet.Utxo{
 			0x07, 0xe3, 0x58, 0x43, 0x19, 0xb9, 0x7e, 0xa9, 0x20,
 			0x18, 0xc3, 0x17, 0xd7, 0x87, 0x88, 0xac,
 		},
-		Value: 2000,
+		Value: 20000,
 		OutPoint: wire.OutPoint{
 			Index: 2,
 		},
@@ -214,7 +214,7 @@ var testUtxos = []*lnwallet.Utxo{
 			0x9f, 0xa2, 0x16, 0xc8, 0xbc, 0x5b, 0x9f, 0xc6, 0x3d, 0x62,
 			0x2f, 0xf8, 0xc5, 0x8c,
 		},
-		Value: 3000,
+		Value: 30000,
 		OutPoint: wire.OutPoint{
 			Index: 3,
 		},
@@ -284,8 +284,8 @@ func TestCraftSweepAllTxCoinSelectFail(t *testing.T) {
 	utxoLocker := newMockOutpointLocker()
 
 	_, err := CraftSweepAllTx(
-		0, 100, 10, nil, nil, coinSelectLocker, utxoSource,
-		utxoLocker, nil, nil, chaincfg.TestNet3Params(), 0,
+		0, 10, nil, nil, coinSelectLocker, utxoSource, utxoLocker, nil,
+		nil, chaincfg.TestNet3Params(), 0,
 	)
 
 	// Since we instructed the coin select locker to fail above, we should
@@ -310,8 +310,8 @@ func TestCraftSweepAllTxUnknownWitnessType(t *testing.T) {
 	utxoLocker := newMockOutpointLocker()
 
 	_, err := CraftSweepAllTx(
-		0, 100, 10, nil, nil, coinSelectLocker, utxoSource,
-		utxoLocker, nil, nil, chaincfg.TestNet3Params(), 0,
+		0, 10, nil, nil, coinSelectLocker, utxoSource, utxoLocker, nil,
+		nil, chaincfg.TestNet3Params(), 0,
 	)
 
 	// Since passed in a p2wsh output, which is unknown, we should fail to
@@ -345,7 +345,7 @@ func TestCraftSweepAllTx(t *testing.T) {
 	utxoLocker := newMockOutpointLocker()
 
 	sweepPkg, err := CraftSweepAllTx(
-		0, 100, 10, nil, deliveryAddr, coinSelectLocker, utxoSource,
+		0, 10, nil, deliveryAddr, coinSelectLocker, utxoSource,
 		utxoLocker, feeEstimator, signer, chaincfg.TestNet3Params(), 0,
 	)
 	if err != nil {
@@ -368,7 +368,7 @@ func TestCraftSweepAllTx(t *testing.T) {
 
 	// We should have a single output that pays to our sweep script
 	// generated above.
-	expectedSweepValue := int64(3000)
+	expectedSweepValue := int64(30000)
 	if len(sweepTx.TxOut) != 1 {
 		t.Fatalf("should have %v outputs, instead have %v", 1,
 			len(sweepTx.TxOut))

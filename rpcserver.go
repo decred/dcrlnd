@@ -1194,8 +1194,7 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 		// pay to the change address created above if we needed to
 		// reserve any value, the rest will go to targetAddr.
 		sweepTxPkg, err := sweep.CraftSweepAllTx(
-			feePerKB, lnwallet.DefaultDustLimit(),
-			uint32(bestHeight), nil, targetAddr, wallet,
+			feePerKB, uint32(bestHeight), nil, targetAddr, wallet,
 			wallet, wallet.WalletController,
 			r.server.cc.FeeEstimator, r.server.cc.Signer,
 			r.cfg.ActiveNetParams.Params,
@@ -1247,9 +1246,9 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 			}
 
 			sweepTxPkg, err = sweep.CraftSweepAllTx(
-				feePerKB, lnwallet.DefaultDustLimit(),
-				uint32(bestHeight), outputs, targetAddr, wallet,
-				wallet, wallet.WalletController,
+				feePerKB, uint32(bestHeight), outputs,
+				targetAddr, wallet, wallet,
+				wallet.WalletController,
 				r.server.cc.FeeEstimator, r.server.cc.Signer,
 				r.cfg.ActiveNetParams.Params,
 				minConfs,
