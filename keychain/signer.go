@@ -1,6 +1,7 @@
 package keychain
 
 import (
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
@@ -23,10 +24,10 @@ func (p *PubKeyDigestSigner) PubKey() *secp256k1.PublicKey {
 	return p.keyDesc.PubKey
 }
 
-func (p *PubKeyDigestSigner) SignDigest(digest [32]byte) (*ecdsa.Signature,
-	error) {
+func (p *PubKeyDigestSigner) SignMessage(message []byte,
+	doubleHash bool) (*ecdsa.Signature, error) {
 
-	return p.digestSigner.SignDigest(p.keyDesc, digest)
+	return p.digestSigner.SignMessage(p.keyDesc, message, doubleHash)
 }
 
 func (p *PubKeyDigestSigner) SignDigestCompact(digest [32]byte) ([]byte,
@@ -43,10 +44,17 @@ func (p *PrivKeyDigestSigner) PubKey() *secp256k1.PublicKey {
 	return p.PrivKey.PubKey()
 }
 
-func (p *PrivKeyDigestSigner) SignDigest(digest [32]byte) (*ecdsa.Signature,
-	error) {
+func (p *PrivKeyDigestSigner) SignMessage(msg []byte,
+	doubleHash bool) (*ecdsa.Signature, error) {
 
-	return ecdsa.Sign(p.PrivKey, digest[:]), nil
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
+	return ecdsa.Sign(p.PrivKey, digest), nil
 }
 
 func (p *PrivKeyDigestSigner) SignDigestCompact(digest [32]byte) ([]byte,

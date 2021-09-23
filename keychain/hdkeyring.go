@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/hdkeychain/v3"
@@ -228,12 +229,12 @@ func (kr *HDKeyRing) ECDH(keyDesc KeyDescriptor,
 
 }
 
-// SignDigest signs the given SHA256 message digest with the private key
-// described in the key descriptor.
+// SignMessage signs the given message, single or double chainhashsing it
+// first, with the private key described in the key descriptor.
 //
 // NOTE: This is part of the keychain.DigestSignerRing interface.
-func (kr *HDKeyRing) SignDigest(keyDesc KeyDescriptor,
-	digest [32]byte) (*ecdsa.Signature, error) {
+func (kr *HDKeyRing) SignMessage(keyDesc KeyDescriptor,
+	msg []byte, doubleHash bool) (*ecdsa.Signature, error) {
 
 	privKey, err := kr.DerivePrivKey(keyDesc)
 	if err != nil {
@@ -241,7 +242,14 @@ func (kr *HDKeyRing) SignDigest(keyDesc KeyDescriptor,
 
 	}
 
-	return ecdsa.Sign(privKey, digest[:]), nil
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
+	return ecdsa.Sign(privKey, digest), nil
 }
 
 // SignDigestCompact signs the given SHA256 message digest with the private key

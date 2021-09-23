@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 
@@ -42,11 +43,18 @@ func (s *SecretKeyRing) ECDH(_ keychain.KeyDescriptor, pubKey *secp256k1.PublicK
 	return [32]byte{}, nil
 }
 
-// SignDigest signs the passed digest and ignores the KeyDescriptor.
-func (s *SecretKeyRing) SignDigest(_ keychain.KeyDescriptor,
-	digest [32]byte) (*ecdsa.Signature, error) {
+// SignMessage signs the passed message and ignores the KeyDescriptor.
+func (s *SecretKeyRing) SignMessage(_ keychain.KeyDescriptor,
+	msg []byte, doubleHash bool) (*ecdsa.Signature, error) {
 
-	return ecdsa.Sign(s.RootKey, digest[:]), nil
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
+	return ecdsa.Sign(s.RootKey, digest), nil
 }
 
 // SignDigestCompact signs the passed digest.

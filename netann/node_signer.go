@@ -37,9 +37,7 @@ func (n *NodeSigner) SignMessage(pubKey *secp256k1.PublicKey,
 	}
 
 	// Otherwise, we'll sign the chainhash of the target message.
-	var digest [32]byte
-	copy(digest[:], chainhash.HashB(msg))
-	sig, err := n.keySigner.SignDigest(digest)
+	sig, err := n.keySigner.SignMessage(msg, false)
 	if err != nil {
 		return nil, fmt.Errorf("can't sign the message: %v", err)
 	}
