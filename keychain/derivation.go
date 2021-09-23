@@ -192,7 +192,7 @@ type SecretKeyRing interface {
 
 	ECDHRing
 
-	DigestSignerRing
+	MessageSignerRing
 
 	// DerivePrivKey attempts to derive the private key that corresponds to
 	// the passed key descriptor.  If the public key is set, then this
@@ -202,24 +202,26 @@ type SecretKeyRing interface {
 	DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.PrivateKey, error)
 }
 
-// DigestSignerRing is an interface that abstracts away basic low-level ECDSA
+// MessageSignerRing is an interface that abstracts away basic low-level ECDSA
 // signing on keys within a key ring.
-type DigestSignerRing interface {
+type MessageSignerRing interface {
 	// SignMessage signs the given message, single or double SHA256 hashing
 	// it first, with the private key described in the key descriptor.
 	SignMessage(keyDesc KeyDescriptor, message []byte,
 		doubleHash bool) (*ecdsa.Signature, error)
 
-	// SignDigestCompact signs the given SHA256 message digest with the
-	// private key described in the key descriptor and returns the signature
-	// in the compact, public key recoverable format.
-	SignDigestCompact(keyDesc KeyDescriptor, digest [32]byte) ([]byte, error)
+	// SignMessageCompact signs the given message, single or double SHA256
+	// hashing it first, with the private key described in the key
+	// descriptor and returns the signature in the compact, public key
+	// recoverable format.
+	SignMessageCompact(keyDesc KeyDescriptor, message []byte,
+		doubleHash bool) ([]byte, error)
 }
 
-// SingleKeyDigestSigner is an abstraction interface that hides the
+// SingleKeyMessageSigner is an abstraction interface that hides the
 // implementation of the low-level ECDSA signing operations by wrapping a
 // single, specific private key.
-type SingleKeyDigestSigner interface {
+type SingleKeyMessageSigner interface {
 	// PubKey returns the public key of the wrapped private key.
 	PubKey() *secp256k1.PublicKey
 
@@ -227,10 +229,10 @@ type SingleKeyDigestSigner interface {
 	// it first, with the wrapped private key.
 	SignMessage(message []byte, doubleHash bool) (*ecdsa.Signature, error)
 
-	// SignDigestCompact signs the given SHA256 message digest with the
-	// wrapped private key and returns the signature in the compact, public
-	// key recoverable format.
-	SignDigestCompact(digest [32]byte) ([]byte, error)
+	// SignMessageCompact signs the given message, single or double SHA256
+	// hashing it first, with the wrapped private key and returns the
+	// signature in the compact, public key recoverable format.
+	SignMessageCompact(message []byte, doubleHash bool) ([]byte, error)
 }
 
 // ECDHRing is an interface that abstracts away basic low-level ECDH shared key

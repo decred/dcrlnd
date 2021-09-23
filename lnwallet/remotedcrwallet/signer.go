@@ -259,12 +259,8 @@ var _ input.Signer = (*DcrWallet)(nil)
 // chainhash (blake256r14) of the passed message.
 //
 // NOTE: This is a part of the Messageinput.Signer interface.
-func (b *DcrWallet) SignMessage(pubKey *secp256k1.PublicKey,
-	msg []byte) (input.Signature, error) {
-
-	keyDesc := keychain.KeyDescriptor{
-		PubKey: pubKey,
-	}
+func (b *DcrWallet) SignMessage(keyDesc keychain.KeyDescriptor,
+	msg []byte, double bool) (*ecdsa.Signature, error) {
 
 	// First attempt to fetch the private key which corresponds to the
 	// specified public key.
@@ -274,8 +270,14 @@ func (b *DcrWallet) SignMessage(pubKey *secp256k1.PublicKey,
 	}
 
 	// Double hash and sign the data.
-	msgDigest := chainhash.HashB(msg)
-	sign := ecdsa.Sign(privKey, msgDigest)
+	var digest []byte
+	if double {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
+	sign := ecdsa.Sign(privKey, digest)
 
 	return sign, nil
 }
@@ -291,7 +293,3 @@ func (b *DcrWallet) FundPsbt(_ *psbt.Packet,
 func (b *DcrWallet) FinalizePsbt(_ *psbt.Packet) error {
 	return fmt.Errorf("FinalizePsbt not supported")
 }
-
-// A compile time check to ensure that DcrWallet implements the Messageinput.Signer
-// interface.
-var _ lnwallet.MessageSigner = (*DcrWallet)(nil)

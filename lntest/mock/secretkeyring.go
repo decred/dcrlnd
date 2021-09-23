@@ -57,9 +57,16 @@ func (s *SecretKeyRing) SignMessage(_ keychain.KeyDescriptor,
 	return ecdsa.Sign(s.RootKey, digest), nil
 }
 
-// SignDigestCompact signs the passed digest.
-func (s *SecretKeyRing) SignDigestCompact(_ keychain.KeyDescriptor,
-	digest [32]byte) ([]byte, error) {
+// SignMessageCompact signs the passed message.
+func (s *SecretKeyRing) SignMessageCompact(_ keychain.KeyDescriptor,
+	msg []byte, doubleHash bool) ([]byte, error) {
 
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
 	return ecdsa.SignCompact(s.RootKey, digest[:], true), nil
 }

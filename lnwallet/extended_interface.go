@@ -6,8 +6,11 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/keychain"
 )
 
 type WalletTransaction struct {
@@ -44,4 +47,27 @@ type LockedOutput struct {
 	LockID     LockID
 	Outpoint   wire.OutPoint
 	Expiration time.Time
+}
+
+// KeyChainMessageSigner is a subset of the keychain.MessageSignerRing
+// interface.
+type KeyChainMessageSigner interface {
+	SignMessage(keyDesc keychain.KeyDescriptor, message []byte,
+		doubleHash bool) (*ecdsa.Signature, error)
+}
+
+type signerAdapter struct {
+	kc KeyChainMessageSigner
+}
+
+func (sa signerAdapter) SignMessage(pub *secp256k1.PublicKey, msg []byte) (input.Signature, error) {
+	keyDesc := keychain.KeyDescriptor{PubKey: pub}
+	return sa.kc.SignMessage(keyDesc, msg, false)
+}
+
+// MessageSignerFromKeychainSigner adapts a keychain SecretKeyRing to an
+// lnwallet.MessageSigner interface. This is needed because the two are not
+// exactly the same.
+func MessageSignerFromKeychainSigner(kc KeyChainMessageSigner) MessageSigner {
+	return signerAdapter{kc: kc}
 }

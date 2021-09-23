@@ -6,45 +6,45 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
 
-func NewPubKeyDigestSigner(keyDesc KeyDescriptor,
-	signer DigestSignerRing) *PubKeyDigestSigner {
+func NewPubKeyMessageSigner(keyDesc KeyDescriptor,
+	signer MessageSignerRing) *PubKeyMessageSigner {
 
-	return &PubKeyDigestSigner{
+	return &PubKeyMessageSigner{
 		keyDesc:      keyDesc,
 		digestSigner: signer,
 	}
 }
 
-type PubKeyDigestSigner struct {
+type PubKeyMessageSigner struct {
 	keyDesc      KeyDescriptor
-	digestSigner DigestSignerRing
+	digestSigner MessageSignerRing
 }
 
-func (p *PubKeyDigestSigner) PubKey() *secp256k1.PublicKey {
+func (p *PubKeyMessageSigner) PubKey() *secp256k1.PublicKey {
 	return p.keyDesc.PubKey
 }
 
-func (p *PubKeyDigestSigner) SignMessage(message []byte,
+func (p *PubKeyMessageSigner) SignMessage(message []byte,
 	doubleHash bool) (*ecdsa.Signature, error) {
 
 	return p.digestSigner.SignMessage(p.keyDesc, message, doubleHash)
 }
 
-func (p *PubKeyDigestSigner) SignDigestCompact(digest [32]byte) ([]byte,
-	error) {
+func (p *PubKeyMessageSigner) SignMessageCompact(msg []byte,
+	doubleHash bool) ([]byte, error) {
 
-	return p.digestSigner.SignDigestCompact(p.keyDesc, digest)
+	return p.digestSigner.SignMessageCompact(p.keyDesc, msg, doubleHash)
 }
 
-type PrivKeyDigestSigner struct {
+type PrivKeyMessageSigner struct {
 	PrivKey *secp256k1.PrivateKey
 }
 
-func (p *PrivKeyDigestSigner) PubKey() *secp256k1.PublicKey {
+func (p *PrivKeyMessageSigner) PubKey() *secp256k1.PublicKey {
 	return p.PrivKey.PubKey()
 }
 
-func (p *PrivKeyDigestSigner) SignMessage(msg []byte,
+func (p *PrivKeyMessageSigner) SignMessage(msg []byte,
 	doubleHash bool) (*ecdsa.Signature, error) {
 
 	var digest []byte
@@ -57,11 +57,18 @@ func (p *PrivKeyDigestSigner) SignMessage(msg []byte,
 	return ecdsa.Sign(p.PrivKey, digest), nil
 }
 
-func (p *PrivKeyDigestSigner) SignDigestCompact(digest [32]byte) ([]byte,
-	error) {
+func (p *PrivKeyMessageSigner) SignMessageCompact(msg []byte,
+	doubleHash bool) ([]byte, error) {
 
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
 	return ecdsa.SignCompact(p.PrivKey, digest[:], true), nil
 }
 
-var _ SingleKeyDigestSigner = (*PubKeyDigestSigner)(nil)
-var _ SingleKeyDigestSigner = (*PrivKeyDigestSigner)(nil)
+var _ SingleKeyMessageSigner = (*PubKeyMessageSigner)(nil)
+var _ SingleKeyMessageSigner = (*PrivKeyMessageSigner)(nil)

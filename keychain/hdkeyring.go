@@ -252,13 +252,13 @@ func (kr *HDKeyRing) SignMessage(keyDesc KeyDescriptor,
 	return ecdsa.Sign(privKey, digest), nil
 }
 
-// SignDigestCompact signs the given SHA256 message digest with the private key
-// described in the key descriptor and returns the signature in the compact,
-// public key recoverable format.
+// SignMessageCompact signs the given message, single or double chainhash hashing
+// it first, with the private key described in the key descriptor and returns
+// the signature in the compact, public key recoverable format.
 //
 // NOTE: This is part of the keychain.DigestSignerRing interface.
-func (kr *HDKeyRing) SignDigestCompact(keyDesc KeyDescriptor,
-	digest [32]byte) ([]byte, error) {
+func (kr *HDKeyRing) SignMessageCompact(keyDesc KeyDescriptor,
+	msg []byte, doubleHash bool) ([]byte, error) {
 
 	privKey, err := kr.DerivePrivKey(keyDesc)
 	if err != nil {
@@ -266,6 +266,12 @@ func (kr *HDKeyRing) SignDigestCompact(keyDesc KeyDescriptor,
 
 	}
 
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
 	return ecdsa.SignCompact(privKey, digest[:], true), nil
-
 }

@@ -99,7 +99,8 @@ var (
 
 	testMessageSigner = MessageSigner{
 		SignCompact: func(msg []byte) ([]byte, error) {
-			return ecdsa.SignCompact(testPrivKey, chainhash.HashB(msg), true), nil
+			hash := chainhash.HashB(msg)
+			return ecdsa.SignCompact(testPrivKey, hash, true), nil
 		},
 	}
 

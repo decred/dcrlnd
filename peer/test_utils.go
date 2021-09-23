@@ -60,9 +60,8 @@ func createTestPeer(notifier chainntnfs.ChainNotifier,
 	*Brontide, *lnwallet.LightningChannel, func(), error) {
 
 	chainParams := chaincfg.RegNetParams()
-
 	aliceKeyPriv, aliceKeyPub := channels.PrivKeyFromBytes(channels.AlicesPrivKey)
-	aliceKeySigner := &keychain.PrivKeyDigestSigner{PrivKey: aliceKeyPriv}
+	aliceKeySigner := &keychain.PrivKeyMessageSigner{PrivKey: aliceKeyPriv}
 	bobKeyPriv, bobKeyPub := channels.PrivKeyFromBytes(channels.BobsPrivKey)
 
 	channelCapacity := dcrutil.Amount(10 * 1e8)

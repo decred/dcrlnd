@@ -1309,7 +1309,7 @@ func testNodeSignVerify(net *lntest.NetworkHarness, t *harnessTest) {
 	aliceMsg := []byte("alice msg")
 
 	// alice signs "alice msg" and sends her signature to bob.
-	sigReq := &lnrpc.SignMessageRequest{Msg: aliceMsg}
+	sigReq := &lnrpc.SignMessageRequest{Msg: aliceMsg, SingleHash: true}
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
 	sigResp, err := net.Alice.SignMessage(ctxt, sigReq)
 	if err != nil {
@@ -1339,7 +1339,7 @@ func testNodeSignVerify(net *lntest.NetworkHarness, t *harnessTest) {
 	carolMsg := []byte("carol msg")
 
 	// carol signs "carol msg" and sends her signature to bob.
-	sigReq = &lnrpc.SignMessageRequest{Msg: carolMsg}
+	sigReq = &lnrpc.SignMessageRequest{Msg: carolMsg, SingleHash: true}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	sigResp, err = carol.SignMessage(ctxt, sigReq)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
@@ -428,14 +427,11 @@ func AddInvoice(ctx context.Context, cfg *AddInvoiceConfig,
 		return nil, nil, err
 	}
 
-	payReqString, err := payReq.Encode(
-		zpay32.MessageSigner{
-			SignCompact: func(msg []byte) ([]byte, error) {
-				hash := chainhash.HashB(msg)
-				return cfg.NodeSigner.SignDigestCompact(hash)
-			},
+	payReqString, err := payReq.Encode(zpay32.MessageSigner{
+		SignCompact: func(msg []byte) ([]byte, error) {
+			return cfg.NodeSigner.SignMessageCompact(msg, false)
 		},
-	)
+	})
 	if err != nil {
 		return nil, nil, err
 	}

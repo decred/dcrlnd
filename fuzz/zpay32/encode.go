@@ -6,6 +6,7 @@ package zpay32fuzz
 import (
 	"encoding/hex"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
@@ -31,7 +32,8 @@ func Fuzz_encode(data []byte) int {
 	// Then, initialize the testMessageSigner so we can encode out
 	// invoices with this private key.
 	testMessageSigner := zpay32.MessageSigner{
-		SignCompact: func(hash []byte) ([]byte, error) {
+		SignCompact: func(msg []byte) ([]byte, error) {
+			hash := chainhash.HashB(msg)
 			sig := ecdsa.SignCompact(
 				testPrivKey, hash, true)
 			return sig, nil

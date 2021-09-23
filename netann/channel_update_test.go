@@ -32,7 +32,7 @@ var _ lnwallet.MessageSigner = (*mockSigner)(nil)
 
 var (
 	privKey, _    = secp256k1.GeneratePrivateKey()
-	privKeySigner = &keychain.PrivKeyDigestSigner{PrivKey: privKey}
+	privKeySigner = &keychain.PrivKeyMessageSigner{PrivKey: privKey}
 
 	pubKey = privKey.PubKey()
 

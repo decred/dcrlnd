@@ -417,7 +417,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		}
 
 		secretKeyRing = wc
-		cc.MsgSigner = wc
+		cc.MsgSigner = lnwallet.MessageSignerFromKeychainSigner(wc)
 		cc.Signer = wc
 		cc.Wc = wc
 		cc.KeyRing = wc
@@ -538,7 +538,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		}
 
 		secretKeyRing = wc
-		cc.MsgSigner = wc
+		cc.MsgSigner = lnwallet.MessageSignerFromKeychainSigner(wc)
 		cc.Signer = wc
 		cc.Wc = wc
 		cc.KeyRing = wc
