@@ -6,34 +6,36 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
 
-func NewPubKeyMessageSigner(keyDesc KeyDescriptor,
+func NewPubKeyMessageSigner(pubKey *secp256k1.PublicKey, keyLoc KeyLocator,
 	signer MessageSignerRing) *PubKeyMessageSigner {
 
 	return &PubKeyMessageSigner{
-		keyDesc:      keyDesc,
+		pubKey:       pubKey,
+		keyLoc:       keyLoc,
 		digestSigner: signer,
 	}
 }
 
 type PubKeyMessageSigner struct {
-	keyDesc      KeyDescriptor
+	pubKey       *secp256k1.PublicKey
+	keyLoc       KeyLocator
 	digestSigner MessageSignerRing
 }
 
 func (p *PubKeyMessageSigner) PubKey() *secp256k1.PublicKey {
-	return p.keyDesc.PubKey
+	return p.pubKey
 }
 
 func (p *PubKeyMessageSigner) SignMessage(message []byte,
 	doubleHash bool) (*ecdsa.Signature, error) {
 
-	return p.digestSigner.SignMessage(p.keyDesc, message, doubleHash)
+	return p.digestSigner.SignMessage(p.keyLoc, message, doubleHash)
 }
 
 func (p *PubKeyMessageSigner) SignMessageCompact(msg []byte,
 	doubleHash bool) ([]byte, error) {
 
-	return p.digestSigner.SignMessageCompact(p.keyDesc, msg, doubleHash)
+	return p.digestSigner.SignMessageCompact(p.keyLoc, msg, doubleHash)
 }
 
 type PrivKeyMessageSigner struct {

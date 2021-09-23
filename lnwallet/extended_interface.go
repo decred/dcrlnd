@@ -52,7 +52,7 @@ type LockedOutput struct {
 // KeyChainMessageSigner is a subset of the keychain.MessageSignerRing
 // interface.
 type KeyChainMessageSigner interface {
-	SignMessage(keyDesc keychain.KeyDescriptor, message []byte,
+	SignMessage(keyLoc keychain.KeyLocator, message []byte,
 		doubleHash bool) (*ecdsa.Signature, error)
 }
 
@@ -61,8 +61,9 @@ type signerAdapter struct {
 }
 
 func (sa signerAdapter) SignMessage(pub *secp256k1.PublicKey, msg []byte) (input.Signature, error) {
-	keyDesc := keychain.KeyDescriptor{PubKey: pub}
-	return sa.kc.SignMessage(keyDesc, msg, false)
+	panic("not fully implemented")
+	// keyDesc := keychain.KeyLocator{PubKey: pub}
+	// return sa.kc.SignMessage(keyDesc, msg, false)
 }
 
 // MessageSignerFromKeychainSigner adapts a keychain SecretKeyRing to an

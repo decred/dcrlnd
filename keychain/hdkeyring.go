@@ -233,10 +233,12 @@ func (kr *HDKeyRing) ECDH(keyDesc KeyDescriptor,
 // first, with the private key described in the key descriptor.
 //
 // NOTE: This is part of the keychain.DigestSignerRing interface.
-func (kr *HDKeyRing) SignMessage(keyDesc KeyDescriptor,
+func (kr *HDKeyRing) SignMessage(keyLoc KeyLocator,
 	msg []byte, doubleHash bool) (*ecdsa.Signature, error) {
 
-	privKey, err := kr.DerivePrivKey(keyDesc)
+	privKey, err := kr.DerivePrivKey(KeyDescriptor{
+		KeyLocator: keyLoc,
+	})
 	if err != nil {
 		return nil, err
 
@@ -257,10 +259,12 @@ func (kr *HDKeyRing) SignMessage(keyDesc KeyDescriptor,
 // the signature in the compact, public key recoverable format.
 //
 // NOTE: This is part of the keychain.DigestSignerRing interface.
-func (kr *HDKeyRing) SignMessageCompact(keyDesc KeyDescriptor,
+func (kr *HDKeyRing) SignMessageCompact(keyLoc KeyLocator,
 	msg []byte, doubleHash bool) ([]byte, error) {
 
-	privKey, err := kr.DerivePrivKey(keyDesc)
+	privKey, err := kr.DerivePrivKey(KeyDescriptor{
+		KeyLocator: keyLoc,
+	})
 	if err != nil {
 		return nil, err
 

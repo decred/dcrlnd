@@ -264,12 +264,12 @@ var _ input.Signer = (*DcrWallet)(nil)
 // chainhash (blake256r14) of the passed message.
 //
 // NOTE: This is a part of the Messageinput.Signer interface.
-func (b *DcrWallet) SignMessage(keyDesc keychain.KeyDescriptor,
+func (b *DcrWallet) SignMessage(keyDesc keychain.KeyLocator,
 	msg []byte, double bool) (*ecdsa.Signature, error) {
 
 	// First attempt to fetch the private key which corresponds to the
 	// specified public key.
-	privKey, err := b.DerivePrivKey(keyDesc)
+	privKey, err := b.DerivePrivKey(keychain.KeyDescriptor{KeyLocator: keyDesc})
 	if err != nil {
 		return nil, err
 	}

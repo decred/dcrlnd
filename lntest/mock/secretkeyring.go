@@ -14,8 +14,8 @@ type SecretKeyRing struct {
 }
 
 // DeriveNextKey currently returns dummy values.
-func (s *SecretKeyRing) DeriveNextKey(keyFam keychain.KeyFamily) (
-	keychain.KeyDescriptor, error) {
+func (s *SecretKeyRing) DeriveNextKey(
+	_ keychain.KeyFamily) (keychain.KeyDescriptor, error) {
 
 	return keychain.KeyDescriptor{
 		PubKey: s.RootKey.PubKey(),
@@ -23,28 +23,30 @@ func (s *SecretKeyRing) DeriveNextKey(keyFam keychain.KeyFamily) (
 }
 
 // DeriveKey currently returns dummy values.
-func (s *SecretKeyRing) DeriveKey(keyLoc keychain.KeyLocator) (keychain.KeyDescriptor,
-	error) {
+func (s *SecretKeyRing) DeriveKey(
+	_ keychain.KeyLocator) (keychain.KeyDescriptor, error) {
+
 	return keychain.KeyDescriptor{
 		PubKey: s.RootKey.PubKey(),
 	}, nil
 }
 
 // DerivePrivKey currently returns dummy values.
-func (s *SecretKeyRing) DerivePrivKey(keyDesc keychain.KeyDescriptor) (*secp256k1.PrivateKey,
-	error) {
+func (s *SecretKeyRing) DerivePrivKey(
+	_ keychain.KeyDescriptor) (*secp256k1.PrivateKey, error) {
+
 	return s.RootKey, nil
 }
 
 // ECDH currently returns dummy values.
-func (s *SecretKeyRing) ECDH(_ keychain.KeyDescriptor, pubKey *secp256k1.PublicKey) ([32]byte,
-	error) {
+func (s *SecretKeyRing) ECDH(_ keychain.KeyDescriptor,
+	_ *secp256k1.PublicKey) ([32]byte, error) {
 
 	return [32]byte{}, nil
 }
 
 // SignMessage signs the passed message and ignores the KeyDescriptor.
-func (s *SecretKeyRing) SignMessage(_ keychain.KeyDescriptor,
+func (s *SecretKeyRing) SignMessage(_ keychain.KeyLocator,
 	msg []byte, doubleHash bool) (*ecdsa.Signature, error) {
 
 	var digest []byte
@@ -58,7 +60,7 @@ func (s *SecretKeyRing) SignMessage(_ keychain.KeyDescriptor,
 }
 
 // SignMessageCompact signs the passed message.
-func (s *SecretKeyRing) SignMessageCompact(_ keychain.KeyDescriptor,
+func (s *SecretKeyRing) SignMessageCompact(_ keychain.KeyLocator,
 	msg []byte, doubleHash bool) ([]byte, error) {
 
 	var digest []byte
