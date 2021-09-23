@@ -23,6 +23,7 @@ import (
 	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnpeer"
 	"github.com/decred/dcrlnd/lntest/mock"
@@ -42,8 +43,13 @@ var (
 	testAddrs    = []net.Addr{testAddr}
 	testFeatures = lnwire.NewRawFeatureVector()
 
+	testKeyLoc = keychain.KeyLocator{Family: keychain.KeyFamilyNodeKey}
+
 	selfKeyPriv, _ = secp256k1.GeneratePrivateKey()
-	selfKeyPub     = selfKeyPriv.PubKey()
+	selfKeyDesc    = &keychain.KeyDescriptor{
+		PubKey:     selfKeyPriv.PubKey(),
+		KeyLocator: testKeyLoc,
+	}
 
 	decredKeyPriv1, _ = secp256k1.GeneratePrivateKey()
 	decredKeyPub1     = decredKeyPriv1.PubKey()
@@ -549,7 +555,7 @@ func createNodeAnnouncement(priv *secp256k1.PrivateKey,
 	}
 
 	signer := mock.SingleSigner{Privkey: priv}
-	sig, err := netann.SignAnnouncement(&signer, priv.PubKey(), a)
+	sig, err := netann.SignAnnouncement(&signer, testKeyLoc, a)
 	if err != nil {
 		return nil, err
 	}
@@ -599,9 +605,8 @@ func createUpdateAnnouncement(blockHeight uint32,
 }
 
 func signUpdate(nodeKey *secp256k1.PrivateKey, a *lnwire.ChannelUpdate) error {
-	pub := nodeKey.PubKey()
 	signer := mock.SingleSigner{Privkey: nodeKey}
-	sig, err := netann.SignAnnouncement(&signer, pub, a)
+	sig, err := netann.SignAnnouncement(&signer, testKeyLoc, a)
 	if err != nil {
 		return err
 	}
@@ -648,9 +653,8 @@ func createChannelAnnouncement(blockHeight uint32, key1, key2 *secp256k1.Private
 
 	a := createAnnouncementWithoutProof(blockHeight, key1.PubKey(), key2.PubKey(), extraBytes...)
 
-	pub := key1.PubKey()
 	signer := mock.SingleSigner{Privkey: key1}
-	sig, err := netann.SignAnnouncement(&signer, pub, a)
+	sig, err := netann.SignAnnouncement(&signer, testKeyLoc, a)
 	if err != nil {
 		return nil, err
 	}
@@ -659,9 +663,8 @@ func createChannelAnnouncement(blockHeight uint32, key1, key2 *secp256k1.Private
 		return nil, err
 	}
 
-	pub = key2.PubKey()
 	signer = mock.SingleSigner{Privkey: key2}
-	sig, err = netann.SignAnnouncement(&signer, pub, a)
+	sig, err = netann.SignAnnouncement(&signer, testKeyLoc, a)
 	if err != nil {
 		return nil, err
 	}
@@ -670,9 +673,8 @@ func createChannelAnnouncement(blockHeight uint32, key1, key2 *secp256k1.Private
 		return nil, err
 	}
 
-	pub = decredKeyPriv1.PubKey()
 	signer = mock.SingleSigner{Privkey: decredKeyPriv1}
-	sig, err = netann.SignAnnouncement(&signer, pub, a)
+	sig, err = netann.SignAnnouncement(&signer, testKeyLoc, a)
 	if err != nil {
 		return nil, err
 	}
@@ -681,9 +683,8 @@ func createChannelAnnouncement(blockHeight uint32, key1, key2 *secp256k1.Private
 		return nil, err
 	}
 
-	pub = decredKeyPriv2.PubKey()
 	signer = mock.SingleSigner{Privkey: decredKeyPriv2}
-	sig, err = netann.SignAnnouncement(&signer, pub, a)
+	sig, err = netann.SignAnnouncement(&signer, testKeyLoc, a)
 	if err != nil {
 		return nil, err
 	}
@@ -767,7 +768,7 @@ func createTestCtx(startHeight uint32) (*testCtx, func(), error) {
 		MinimumBatchSize:      10,
 		MaxChannelUpdateBurst: DefaultMaxChannelUpdateBurst,
 		ChannelUpdateInterval: DefaultChannelUpdateInterval,
-	}, selfKeyPub)
+	}, selfKeyDesc)
 
 	if err := gossiper.Start(); err != nil {
 		cleanUpDb()
@@ -1462,7 +1463,10 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 		NumActiveSyncers:     3,
 		MinimumBatchSize:     10,
 		SubBatchDelay:        time.Second * 5,
-	}, ctx.gossiper.selfKey)
+	}, &keychain.KeyDescriptor{
+		PubKey:     ctx.gossiper.selfKey,
+		KeyLocator: ctx.gossiper.selfKeyLoc,
+	})
 	if err != nil {
 		t.Fatalf("unable to recreate gossiper: %v", err)
 	}
@@ -2038,7 +2042,9 @@ func TestForwardPrivateNodeAnnouncement(t *testing.T) {
 	// We'll start off by processing a channel announcement without a proof
 	// (i.e., an unadvertised channel), followed by a node announcement for
 	// this same channel announcement.
-	chanAnn := createAnnouncementWithoutProof(startingHeight-2, selfKeyPub, remoteKeyPub1)
+	chanAnn := createAnnouncementWithoutProof(
+		startingHeight-2, selfKeyDesc.PubKey, remoteKeyPub1,
+	)
 	pubKey := remoteKeyPriv1.PubKey()
 
 	select {
@@ -3651,8 +3657,12 @@ func TestProcessChannelAnnouncementOptionalMsgFields(t *testing.T) {
 	}
 	defer cleanup()
 
-	chanAnn1 := createAnnouncementWithoutProof(100, selfKeyPub, remoteKeyPub1)
-	chanAnn2 := createAnnouncementWithoutProof(101, selfKeyPub, remoteKeyPub1)
+	chanAnn1 := createAnnouncementWithoutProof(
+		100, selfKeyDesc.PubKey, remoteKeyPub1,
+	)
+	chanAnn2 := createAnnouncementWithoutProof(
+		101, selfKeyDesc.PubKey, remoteKeyPub1,
+	)
 
 	// assertOptionalMsgFields is a helper closure that ensures the optional
 	// message fields were set as intended.

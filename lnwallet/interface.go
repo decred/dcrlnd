@@ -10,12 +10,13 @@ import (
 	"decred.org/dcrwallet/v3/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/internal/psbt"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
 
@@ -449,10 +450,11 @@ type BlockChainIO interface {
 // to attest to some message.
 type MessageSigner interface {
 	// SignMessage attempts to sign a target message with the private key
-	// that corresponds to the passed public key. If the target private key
-	// is unable to be found, then an error will be returned. The actual
-	// digest signed is the double SHA-256 of the passed message.
-	SignMessage(pubKey *secp256k1.PublicKey, msg []byte) (input.Signature, error)
+	// described in the key locator. If the target private key is unable to
+	// be found, then an error will be returned. The actual digest signed is
+	// the chainhash of the passed message.
+	SignMessage(keyLoc keychain.KeyLocator, msg []byte) (*ecdsa.Signature,
+		error)
 }
 
 // WalletDriver represents a "driver" for a particular concrete

@@ -17,6 +17,7 @@ import (
 	"github.com/decred/dcrlnd/batch"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnpeer"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -321,6 +322,10 @@ type AuthenticatedGossiper struct {
 	// selfKey is the identity public key of the backing Lightning node.
 	selfKey *secp256k1.PublicKey
 
+	// selfKeyLoc is the locator for the identity public key of the backing
+	// Lightning node.
+	selfKeyLoc keychain.KeyLocator
+
 	// channelMtx is used to restrict the database access to one
 	// goroutine per channel ID. This is done to ensure that when
 	// the gossiper is handling an announcement, the db state stays
@@ -360,9 +365,10 @@ type AuthenticatedGossiper struct {
 
 // New creates a new AuthenticatedGossiper instance, initialized with the
 // passed configuration parameters.
-func New(cfg Config, selfKey *secp256k1.PublicKey) *AuthenticatedGossiper {
+func New(cfg Config, selfKeyDesc *keychain.KeyDescriptor) *AuthenticatedGossiper {
 	gossiper := &AuthenticatedGossiper{
-		selfKey:                 selfKey,
+		selfKey:                 selfKeyDesc.PubKey,
+		selfKeyLoc:              selfKeyDesc.KeyLocator,
 		cfg:                     &cfg,
 		networkMsgs:             make(chan *networkMsg),
 		quit:                    make(chan struct{}),
@@ -2582,7 +2588,7 @@ func (d *AuthenticatedGossiper) updateChannel(info *channeldb.ChannelEdgeInfo,
 	// We'll generate a new signature over a digest of the channel
 	// announcement itself and update the timestamp to ensure it propagate.
 	err := netann.SignChannelUpdate(
-		d.cfg.AnnSigner, d.selfKey, chanUpdate,
+		d.cfg.AnnSigner, d.selfKeyLoc, chanUpdate,
 		netann.ChanUpdSetTimestamp,
 	)
 	if err != nil {

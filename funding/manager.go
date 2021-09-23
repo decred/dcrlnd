@@ -12,6 +12,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -293,6 +294,10 @@ type Config struct {
 	// Lightning Network.
 	IDKey *secp256k1.PublicKey
 
+	// IDKeyLoc is the locator for the key that is used to identify this
+	// node within the LightningNetwork.
+	IDKeyLoc keychain.KeyLocator
+
 	// Wallet handles the parts of the funding process that involves moving
 	// funds from on-chain transaction outputs into Lightning channels.
 	Wallet *lnwallet.LightningWallet
@@ -321,8 +326,8 @@ type Config struct {
 	//
 	// TODO(roasbeef): should instead pass on this responsibility to a
 	// distinct sub-system?
-	SignMessage func(pubKey *secp256k1.PublicKey,
-		msg []byte) (input.Signature, error)
+	SignMessage func(keyLoc keychain.KeyLocator,
+		msg []byte) (*ecdsa.Signature, error)
 
 	// CurrentNodeAnnouncement should return the latest, fully signed node
 	// announcement from the backing Lightning Network node.
@@ -2529,7 +2534,7 @@ func (f *Manager) addToRouterGraph(completeChan *channeldb.OpenChannel,
 
 	ann, err := f.newChanAnnouncement(
 		f.cfg.IDKey, completeChan.IdentityPub,
-		completeChan.LocalChanCfg.MultiSigKey.PubKey,
+		&completeChan.LocalChanCfg.MultiSigKey,
 		completeChan.RemoteChanCfg.MultiSigKey.PubKey, *shortChanID,
 		chanID, fwdMinHTLC, fwdMaxHTLC,
 	)
@@ -2692,7 +2697,7 @@ func (f *Manager) annAfterSixConfs(completeChan *channeldb.OpenChannel,
 		// channel public and usable for other nodes for routing.
 		err = f.announceChannel(
 			f.cfg.IDKey, completeChan.IdentityPub,
-			completeChan.LocalChanCfg.MultiSigKey.PubKey,
+			&completeChan.LocalChanCfg.MultiSigKey,
 			completeChan.RemoteChanCfg.MultiSigKey.PubKey,
 			*shortChanID, chanID,
 		)
@@ -2832,10 +2837,11 @@ type chanAnnouncement struct {
 // identity pub keys of both parties to the channel, and the second segment is
 // authenticated only by us and contains our directional routing policy for the
 // channel.
-func (f *Manager) newChanAnnouncement(localPubKey, remotePubKey,
-	localFundingKey, remoteFundingKey *secp256k1.PublicKey,
-	shortChanID lnwire.ShortChannelID, chanID lnwire.ChannelID,
-	fwdMinHTLC, fwdMaxHTLC lnwire.MilliAtom) (*chanAnnouncement, error) {
+func (f *Manager) newChanAnnouncement(localPubKey,
+	remotePubKey *secp256k1.PublicKey, localFundingKey *keychain.KeyDescriptor,
+	remoteFundingKey *secp256k1.PublicKey, shortChanID lnwire.ShortChannelID,
+	chanID lnwire.ChannelID, fwdMinHTLC,
+	fwdMaxHTLC lnwire.MilliAtom) (*chanAnnouncement, error) {
 
 	chainHash := f.cfg.Wallet.Cfg.NetParams.GenesisHash
 
@@ -2863,7 +2869,7 @@ func (f *Manager) newChanAnnouncement(localPubKey, remotePubKey,
 	if bytes.Compare(selfBytes, remoteBytes) == -1 {
 		copy(chanAnn.NodeID1[:], localPubKey.SerializeCompressed())
 		copy(chanAnn.NodeID2[:], remotePubKey.SerializeCompressed())
-		copy(chanAnn.DecredKey1[:], localFundingKey.SerializeCompressed())
+		copy(chanAnn.DecredKey1[:], localFundingKey.PubKey.SerializeCompressed())
 		copy(chanAnn.DecredKey2[:], remoteFundingKey.SerializeCompressed())
 
 		// If we're the first node then update the chanFlags to
@@ -2873,7 +2879,7 @@ func (f *Manager) newChanAnnouncement(localPubKey, remotePubKey,
 		copy(chanAnn.NodeID1[:], remotePubKey.SerializeCompressed())
 		copy(chanAnn.NodeID2[:], localPubKey.SerializeCompressed())
 		copy(chanAnn.DecredKey1[:], remoteFundingKey.SerializeCompressed())
-		copy(chanAnn.DecredKey2[:], localFundingKey.SerializeCompressed())
+		copy(chanAnn.DecredKey2[:], localFundingKey.PubKey.SerializeCompressed())
 
 		// If we're the second node then update the chanFlags to
 		// indicate the "direction" of the update.
@@ -2912,7 +2918,7 @@ func (f *Manager) newChanAnnouncement(localPubKey, remotePubKey,
 	if err != nil {
 		return nil, err
 	}
-	sig, err := f.cfg.SignMessage(f.cfg.IDKey, chanUpdateMsg)
+	sig, err := f.cfg.SignMessage(f.cfg.IDKeyLoc, chanUpdateMsg)
 	if err != nil {
 		return nil, errors.Errorf("unable to generate channel "+
 			"update announcement signature: %v", err)
@@ -2934,12 +2940,14 @@ func (f *Manager) newChanAnnouncement(localPubKey, remotePubKey,
 	if err != nil {
 		return nil, err
 	}
-	nodeSig, err := f.cfg.SignMessage(f.cfg.IDKey, chanAnnMsg)
+	nodeSig, err := f.cfg.SignMessage(f.cfg.IDKeyLoc, chanAnnMsg)
 	if err != nil {
 		return nil, errors.Errorf("unable to generate node "+
 			"signature for channel announcement: %v", err)
 	}
-	decredSig, err := f.cfg.SignMessage(localFundingKey, chanAnnMsg)
+	decredSig, err := f.cfg.SignMessage(
+		localFundingKey.KeyLocator, chanAnnMsg,
+	)
 	if err != nil {
 		return nil, errors.Errorf("unable to generate decred "+
 			"signature for node public key: %v", err)
@@ -2975,7 +2983,8 @@ func (f *Manager) newChanAnnouncement(localPubKey, remotePubKey,
 // the network during its next trickle.
 // This method is synchronous and will return when all the network requests
 // finish, either successfully or with an error.
-func (f *Manager) announceChannel(localIDKey, remoteIDKey, localFundingKey,
+func (f *Manager) announceChannel(localIDKey, remoteIDKey *secp256k1.PublicKey,
+	localFundingKey *keychain.KeyDescriptor,
 	remoteFundingKey *secp256k1.PublicKey, shortChanID lnwire.ShortChannelID,
 	chanID lnwire.ChannelID) error {
 

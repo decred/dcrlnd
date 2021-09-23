@@ -3,8 +3,7 @@ package netann
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 )
@@ -23,16 +22,16 @@ func NewNodeSigner(keySigner keychain.SingleKeyMessageSigner) *NodeSigner {
 	}
 }
 
-// SignMessage signs a chainhash digest of the passed msg under the
-// resident node's private key. If the target public key is _not_ the node's
-// private key, then an error will be returned.
-func (n *NodeSigner) SignMessage(pubKey *secp256k1.PublicKey,
-	msg []byte) (input.Signature, error) {
+// SignMessage signs a double-sha256 digest of the passed msg under the
+// resident node's private key described in the key locator. If the target key
+// locator is _not_ the node's private key, then an error will be returned.
+func (n *NodeSigner) SignMessage(keyLoc keychain.KeyLocator,
+	msg []byte) (*ecdsa.Signature, error) {
 
 	// If this isn't our identity public key, then we'll exit early with an
 	// error as we can't sign with this key.
-	if !pubKey.IsEqual(n.keySigner.PubKey()) {
-		return nil, fmt.Errorf("unknown public key")
+	if keyLoc != n.keySigner.KeyLocator() {
+		return nil, fmt.Errorf("unknown public key locator")
 	}
 
 	// Otherwise, we'll sign the chainhash of the target message.

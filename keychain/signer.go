@@ -26,6 +26,10 @@ func (p *PubKeyMessageSigner) PubKey() *secp256k1.PublicKey {
 	return p.pubKey
 }
 
+func (p *PubKeyMessageSigner) KeyLocator() KeyLocator {
+	return p.keyLoc
+}
+
 func (p *PubKeyMessageSigner) SignMessage(message []byte,
 	doubleHash bool) (*ecdsa.Signature, error) {
 
@@ -38,12 +42,26 @@ func (p *PubKeyMessageSigner) SignMessageCompact(msg []byte,
 	return p.digestSigner.SignMessageCompact(p.keyLoc, msg, doubleHash)
 }
 
+func NewPrivKeyMessageSigner(privKey *secp256k1.PrivateKey,
+	keyLoc KeyLocator) *PrivKeyMessageSigner {
+
+	return &PrivKeyMessageSigner{
+		privKey: privKey,
+		keyLoc:  keyLoc,
+	}
+}
+
 type PrivKeyMessageSigner struct {
-	PrivKey *secp256k1.PrivateKey
+	keyLoc  KeyLocator
+	privKey *secp256k1.PrivateKey
 }
 
 func (p *PrivKeyMessageSigner) PubKey() *secp256k1.PublicKey {
-	return p.PrivKey.PubKey()
+	return p.privKey.PubKey()
+}
+
+func (p *PrivKeyMessageSigner) KeyLocator() KeyLocator {
+	return p.keyLoc
 }
 
 func (p *PrivKeyMessageSigner) SignMessage(msg []byte,
@@ -56,7 +74,7 @@ func (p *PrivKeyMessageSigner) SignMessage(msg []byte,
 	} else {
 		digest = chainhash.HashB(msg)
 	}
-	return ecdsa.Sign(p.PrivKey, digest), nil
+	return ecdsa.Sign(p.privKey, digest), nil
 }
 
 func (p *PrivKeyMessageSigner) SignMessageCompact(msg []byte,
@@ -69,7 +87,7 @@ func (p *PrivKeyMessageSigner) SignMessageCompact(msg []byte,
 	} else {
 		digest = chainhash.HashB(msg)
 	}
-	return ecdsa.SignCompact(p.PrivKey, digest[:], true), nil
+	return ecdsa.SignCompact(p.privKey, digest[:], true), nil
 }
 
 var _ SingleKeyMessageSigner = (*PubKeyMessageSigner)(nil)

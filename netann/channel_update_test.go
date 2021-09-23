@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -18,8 +18,8 @@ type mockSigner struct {
 	err error
 }
 
-func (m *mockSigner) SignMessage(pk *secp256k1.PublicKey,
-	msg []byte) (input.Signature, error) {
+func (m *mockSigner) SignMessage(_ keychain.KeyLocator,
+	_ []byte) (*ecdsa.Signature, error) {
 
 	if m.err != nil {
 		return nil, m.err
@@ -32,7 +32,7 @@ var _ lnwallet.MessageSigner = (*mockSigner)(nil)
 
 var (
 	privKey, _    = secp256k1.GeneratePrivateKey()
-	privKeySigner = &keychain.PrivKeyMessageSigner{PrivKey: privKey}
+	privKeySigner = keychain.NewPrivKeyMessageSigner(privKey, testKeyLoc)
 
 	pubKey = privKey.PubKey()
 
@@ -130,7 +130,7 @@ func TestUpdateDisableFlag(t *testing.T) {
 			// Attempt to update and sign the new update, specifying
 			// disabled or enabled as prescribed in the test case.
 			err := netann.SignChannelUpdate(
-				tc.signer, pubKey, newUpdate,
+				tc.signer, testKeyLoc, newUpdate,
 				netann.ChanUpdSetDisable(tc.disable),
 				netann.ChanUpdSetTimestamp,
 			)

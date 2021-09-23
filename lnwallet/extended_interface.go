@@ -9,7 +9,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
 )
 
@@ -60,10 +59,10 @@ type signerAdapter struct {
 	kc KeyChainMessageSigner
 }
 
-func (sa signerAdapter) SignMessage(pub *secp256k1.PublicKey, msg []byte) (input.Signature, error) {
-	panic("not fully implemented")
-	// keyDesc := keychain.KeyLocator{PubKey: pub}
-	// return sa.kc.SignMessage(keyDesc, msg, false)
+func (sa signerAdapter) SignMessage(keyLoc keychain.KeyLocator, msg []byte) (*ecdsa.Signature, error) {
+	// Decred's chainhash.Hash does not double hash by default.
+	const doubleHash = false
+	return sa.kc.SignMessage(keyLoc, msg, doubleHash)
 }
 
 // MessageSignerFromKeychainSigner adapts a keychain SecretKeyRing to an

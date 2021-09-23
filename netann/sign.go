@@ -3,15 +3,15 @@ package netann
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
 
 // SignAnnouncement signs any type of gossip message that is announced on the
 // network.
-func SignAnnouncement(signer lnwallet.MessageSigner, pubKey *secp256k1.PublicKey,
+func SignAnnouncement(signer lnwallet.MessageSigner, keyLoc keychain.KeyLocator,
 	msg lnwire.Message) (input.Signature, error) {
 
 	var (
@@ -33,5 +33,5 @@ func SignAnnouncement(signer lnwallet.MessageSigner, pubKey *secp256k1.PublicKey
 		return nil, fmt.Errorf("unable to get data to sign: %v", err)
 	}
 
-	return signer.SignMessage(pubKey, data)
+	return signer.SignMessage(keyLoc, data)
 }

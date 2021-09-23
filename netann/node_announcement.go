@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
@@ -40,7 +40,7 @@ func NodeAnnSetTimestamp(nodeAnn *lnwire.NodeAnnouncement) {
 // update should be the most recent, valid update, otherwise the timestamp may
 // not monotonically increase from the prior.
 func SignNodeAnnouncement(signer lnwallet.MessageSigner,
-	pubKey *secp256k1.PublicKey, nodeAnn *lnwire.NodeAnnouncement,
+	keyLoc keychain.KeyLocator, nodeAnn *lnwire.NodeAnnouncement,
 	mods ...NodeAnnModifier) error {
 
 	// Apply the requested changes to the node announcement.
@@ -49,7 +49,7 @@ func SignNodeAnnouncement(signer lnwallet.MessageSigner,
 	}
 
 	// Create the DER-encoded ECDSA signature over the message digest.
-	sig, err := SignAnnouncement(signer, pubKey, nodeAnn)
+	sig, err := SignAnnouncement(signer, keyLoc, nodeAnn)
 	if err != nil {
 		return err
 	}

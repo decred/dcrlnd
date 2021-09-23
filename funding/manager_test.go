@@ -112,6 +112,8 @@ var (
 		modNScalar(sBytes),
 	)
 
+	testKeyLoc = keychain.KeyLocator{Family: keychain.KeyFamilyNodeKey}
+
 	fundingNetParams = chainreg.DecredTestNetParams
 )
 
@@ -391,11 +393,12 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 
 	fundingCfg := Config{
 		IDKey:        privKey.PubKey(),
+		IDKeyLoc:     testKeyLoc,
 		Wallet:       lnw,
 		Notifier:     chainNotifier,
 		FeeEstimator: estimator,
-		SignMessage: func(pubKey *secp256k1.PublicKey,
-			msg []byte) (input.Signature, error) {
+		SignMessage: func(_ keychain.KeyLocator,
+			_ []byte) (*ecdsa.Signature, error) {
 
 			return testSig, nil
 		},
@@ -538,11 +541,13 @@ func recreateAliceFundingManager(t *testing.T, alice *testNode) {
 
 	f, err := NewFundingManager(Config{
 		IDKey:        oldCfg.IDKey,
+		IDKeyLoc:     oldCfg.IDKeyLoc,
 		Wallet:       oldCfg.Wallet,
 		Notifier:     oldCfg.Notifier,
 		FeeEstimator: oldCfg.FeeEstimator,
-		SignMessage: func(pubKey *secp256k1.PublicKey,
-			msg []byte) (input.Signature, error) {
+		SignMessage: func(_ keychain.KeyLocator,
+			_ []byte) (*ecdsa.Signature, error) {
+
 			return testSig, nil
 		},
 		SendAnnouncement: func(msg lnwire.Message,

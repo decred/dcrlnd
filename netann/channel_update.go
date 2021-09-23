@@ -7,6 +7,7 @@ import (
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
@@ -55,7 +56,7 @@ func ChanUpdSetTimestamp(update *lnwire.ChannelUpdate) {
 // monotonically increase from the prior.
 //
 // NOTE: This method modifies the given update.
-func SignChannelUpdate(signer lnwallet.MessageSigner, pubKey *secp256k1.PublicKey,
+func SignChannelUpdate(signer lnwallet.MessageSigner, keyLoc keychain.KeyLocator,
 	update *lnwire.ChannelUpdate, mods ...ChannelUpdateModifier) error {
 
 	// Apply the requested changes to the channel update.
@@ -64,7 +65,7 @@ func SignChannelUpdate(signer lnwallet.MessageSigner, pubKey *secp256k1.PublicKe
 	}
 
 	// Create the DER-encoded ECDSA signature over the message digest.
-	sig, err := SignAnnouncement(signer, pubKey, update)
+	sig, err := SignAnnouncement(signer, keyLoc, update)
 	if err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrd/wire"
 
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/keychain"
 )
 
 // DummySignature is a dummy Signature implementation.
@@ -48,6 +49,7 @@ func (d *DummySigner) ComputeInputScript(tx *wire.MsgTx,
 // everything with a single private key.
 type SingleSigner struct {
 	Privkey *secp256k1.PrivateKey
+	KeyLoc  keychain.KeyLocator
 }
 
 // SignOutputRaw generates a signature for the passed transaction using the
@@ -111,10 +113,15 @@ func (s *SingleSigner) ComputeInputScript(tx *wire.MsgTx,
 
 // SignMessage takes a public key and a message and only signs the message
 // with the stored private key if the public key matches the private key.
-func (s *SingleSigner) SignMessage(pubKey *secp256k1.PublicKey,
-	msg []byte) (input.Signature, error) {
+func (s *SingleSigner) SignMessage(keyLoc keychain.KeyLocator,
+	msg []byte) (*ecdsa.Signature, error) {
 
-	if !pubKey.IsEqual(s.Privkey.PubKey()) {
+	mockKeyLoc := s.KeyLoc
+	if s.KeyLoc.IsEmpty() {
+		mockKeyLoc = keyLoc
+	}
+
+	if keyLoc != mockKeyLoc {
 		return nil, fmt.Errorf("unknown public key")
 	}
 

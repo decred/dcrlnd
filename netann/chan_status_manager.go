@@ -8,6 +8,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
+	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
@@ -42,6 +43,10 @@ var (
 type ChanStatusConfig struct {
 	// OurPubKey is the public key identifying this node on the network.
 	OurPubKey *secp256k1.PublicKey
+
+	// OurKeyLoc is the locator for the public key identifying this node on
+	// the network.
+	OurKeyLoc keychain.KeyLocator
 
 	// MessageSigner signs messages that validate under OurPubKey.
 	MessageSigner lnwallet.MessageSigner
@@ -623,7 +628,7 @@ func (m *ChanStatusManager) signAndSendNextUpdate(outpoint wire.OutPoint,
 	}
 
 	err = SignChannelUpdate(
-		m.cfg.MessageSigner, m.cfg.OurPubKey, chanUpdate,
+		m.cfg.MessageSigner, m.cfg.OurKeyLoc, chanUpdate,
 		ChanUpdSetDisable(disabled), ChanUpdSetTimestamp,
 	)
 	if err != nil {
