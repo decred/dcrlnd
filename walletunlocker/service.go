@@ -423,15 +423,13 @@ func (u *UnlockerService) InitWallet(ctx context.Context,
 		return nil, fmt.Errorf("recovery window %d must be "+
 			"non-negative", recoveryWindow)
 	}
-
-	gapLimit := wallet.DefaultGapLimit
-	if recoveryWindow > int32(gapLimit) {
-		gapLimit = uint32(recoveryWindow)
+	if recoveryWindow == 0 {
+		recoveryWindow = int32(wallet.DefaultGapLimit)
 	}
 
 	// We'll then open up the directory that will be used to store the
 	// wallet's files so we can check if the wallet already exists.
-	loader, err := u.newLoader(gapLimit)
+	loader, err := u.newLoader(uint32(recoveryWindow))
 	if err != nil {
 		return nil, err
 	}

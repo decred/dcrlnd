@@ -289,6 +289,8 @@ type Config struct {
 	WalletUnlockPasswordFile string `long:"wallet-unlock-password-file" description:"The full path to a file (or pipe/device) that contains the password for unlocking the wallet; if set, no unlocking through RPC is possible and lnd will exit if no wallet exists or the password is incorrect; if wallet-unlock-allow-create is also set then lnd will ignore this flag if no wallet exists and allow a wallet to be created through RPC."`
 	WalletUnlockAllowCreate  bool   `long:"wallet-unlock-allow-create" description:"Don't fail with an error if wallet-unlock-password-file is set but no wallet exists yet."`
 
+	resetWalletTransactions bool `long:"reset-wallet-transaction" description:"Not supported in dcrlnd"`
+
 	CoinSelectionStrategy string `long:"coin-selection-strategy" description:"The strategy to use for selecting coins for wallet transactions." choice:"random"`
 
 	PaymentsExpirationGracePeriod time.Duration `long:"payments-expiration-grace-period" description:"A period to wait before force closing channels with outgoing htlcs that have timed-out and are a result of this node initiated payments."`
@@ -1366,6 +1368,21 @@ func (c *Config) graphDatabaseDir() string {
 		c.DataDir, defaultGraphSubDirname,
 		lncfg.NormalizeNetwork(c.ActiveNetParams.Name),
 	)
+}
+
+// ImplementationConfig returns the configuration of what actual implementations
+// should be used when creating the main lnd instance.
+func (c *Config) ImplementationConfig(
+	interceptor signal.Interceptor) *ImplementationCfg {
+
+	defaultImpl := NewDefaultWalletImpl(c, ltndLog, interceptor)
+	return &ImplementationCfg{
+		GrpcRegistrar:       defaultImpl,
+		RestRegistrar:       defaultImpl,
+		ExternalValidator:   defaultImpl,
+		DatabaseBuilder:     NewDefaultDatabaseBuilder(c, ltndLog),
+		ChainControlBuilder: defaultImpl,
+	}
 }
 
 // CleanAndExpandPath expands environment variables and leading ~ in the

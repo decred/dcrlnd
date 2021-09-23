@@ -5,7 +5,6 @@
 package dcrlnd
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -15,14 +14,11 @@ import (
 	"net/http"
 	_ "net/http/pprof" // Blank import to set up profiling HTTP handlers.
 	"os"
-	"path/filepath"
 	"runtime/pprof"
 	"strings"
 	"sync"
 	"time"
 
-	"decred.org/dcrwallet/v3/wallet"
-	"github.com/decred/dcrd/chaincfg/v3"
 	proxy "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
@@ -34,20 +30,15 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrlnd/automation"
 	"github.com/decred/dcrlnd/autopilot"
-	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/cert"
-	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/keychain"
-	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
 	"github.com/decred/dcrlnd/lnwallet"
-	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
-	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 	"github.com/decred/dcrlnd/macaroons"
 	"github.com/decred/dcrlnd/monitoring"
 	"github.com/decred/dcrlnd/rpcperms"
@@ -55,8 +46,6 @@ import (
 	"github.com/decred/dcrlnd/tor"
 	"github.com/decred/dcrlnd/walletunlocker"
 	"github.com/decred/dcrlnd/watchtower"
-	"github.com/decred/dcrlnd/watchtower/wtclient"
-	"github.com/decred/dcrlnd/watchtower/wtdb"
 )
 
 const (
@@ -120,29 +109,6 @@ func AdminAuthOptions(cfg *Config, skipMacaroons bool) ([]grpc.DialOption, error
 	return opts, nil
 }
 
-// GrpcRegistrar is an interface that must be satisfied by an external subserver
-// that wants to be able to register its own gRPC server onto lnd's main
-// grpc.Server instance.
-type GrpcRegistrar interface {
-	// RegisterGrpcSubserver is called for each net.Listener on which lnd
-	// creates a grpc.Server instance. External subservers implementing this
-	// method can then register their own gRPC server structs to the main
-	// server instance.
-	RegisterGrpcSubserver(*grpc.Server) error
-}
-
-// RestRegistrar is an interface that must be satisfied by an external subserver
-// that wants to be able to register its own REST mux onto lnd's main
-// proxy.ServeMux instance.
-type RestRegistrar interface {
-	// RegisterRestSubserver is called after lnd creates the main
-	// proxy.ServeMux instance. External subservers implementing this method
-	// can then register their own REST proxy stubs to the main server
-	// instance.
-	RegisterRestSubserver(context.Context, *proxy.ServeMux, string,
-		[]grpc.DialOption) error
-}
-
 // RPCSubserverConfig is a struct that can be used to register an external
 // subserver with the custom permissions that map to the gRPC server that is
 // going to be registered with the GrpcRegistrar.
@@ -185,14 +151,6 @@ type ListenerCfg struct {
 	// RPCListeners can be set to the listeners to use for the RPC server.
 	// If empty a regular network listener will be created.
 	RPCListeners []*ListenerWithSignal
-
-	// ExternalRPCSubserverCfg is optional and specifies the registration
-	// callback and permissions to register external gRPC subservers.
-	ExternalRPCSubserverCfg *RPCSubserverConfig
-
-	// ExternalRestRegistrar is optional and specifies the registration
-	// callback to register external REST subservers.
-	ExternalRestRegistrar RestRegistrar
 }
 
 var errStreamIsolationWithProxySkip = errors.New(
@@ -203,7 +161,9 @@ var errStreamIsolationWithProxySkip = errors.New(
 // validated main configuration struct and an optional listener config struct.
 // This function starts all main system components then blocks until a signal
 // is received on the shutdownChan at which point everything is shut down again.
-func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error {
+func Main(cfg *Config, lisCfg ListenerCfg, implCfg *ImplementationCfg,
+	interceptor signal.Interceptor) error {
+
 	defer func() {
 		ltndLog.Info("Shutdown complete\n")
 		err := cfg.LogWriter.Close()
@@ -312,26 +272,6 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 
 	defer cleanUp()
 
-	// Initialize a new block cache.
-	blockCache := blockcache.NewBlockCache(cfg.BlockCacheSize)
-
-	var (
-		walletInitParams = walletunlocker.WalletUnlockParams{
-			// In case we do auto-unlock, we need to be able to send
-			// into the channel without blocking so we buffer it.
-			MacResponseChan: make(chan []byte, 1),
-		}
-		privateWalletPw = lnwallet.DefaultPrivatePassphrase
-		publicWalletPw  = lnwallet.DefaultPublicPassphrase
-	)
-
-	// If the user didn't request a seed, then we'll manually assume a
-	// wallet birthday of now, as otherwise the seed would've specified
-	// this information.
-	walletInitParams.Birthday = time.Now()
-
-	isRemoteWallet := cfg.Dcrwallet.GRPCHost != "" && cfg.Dcrwallet.CertPath != ""
-
 	// If we have chosen to start with a dedicated listener for the
 	// rpc server, we set it directly.
 	var grpcListeners []*ListenerWithSignal
@@ -385,24 +325,16 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// it can be used to query for the current state of the wallet.
 	lnrpc.RegisterStateServer(grpcServer, interceptorChain)
 
-	// Register the WalletUnlockerService with the GRPC server.
-	pwService := createWalletUnlockerService(cfg)
-	lnrpc.RegisterWalletUnlockerServer(grpcServer, pwService)
-
 	// Initialize, and register our implementation of the gRPC interface
 	// exported by the rpcServer.
-	rpcServer := newRPCServer(
-		cfg, interceptorChain, lisCfg.ExternalRPCSubserverCfg,
-		lisCfg.ExternalRestRegistrar,
-		interceptor,
-	)
-
+	rpcServer := newRPCServer(cfg, interceptorChain, implCfg, interceptor)
 	err = rpcServer.RegisterWithGrpcServer(grpcServer)
 	if err != nil {
 		return err
 	}
 
-	// Initialize and register the syncer gRPC server.
+	// Initialize and register the syncer gRPC server. This is a dcrlnd
+	// only service.
 	syncerServer := initchainsyncrpc.New()
 	initchainsyncrpc.RegisterInitialChainSyncServer(grpcServer, syncerServer)
 	for k, v := range initChainSyncPermissions {
@@ -479,7 +411,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		ltndLog.Infof("Elected as leader (%v)", cfg.Cluster.ID)
 	}
 
-	dbs, cleanUp, err := initializeDatabases(ctx, cfg)
+	dbs, cleanUp, err := implCfg.DatabaseBuilder.BuildDatabase(ctx)
 	switch {
 	case err == channeldb.ErrDryRunMigrationOK:
 		ltndLog.Infof("%v, exiting", err)
@@ -490,284 +422,13 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 
 	defer cleanUp()
 
-	pwService.SetDB(dbs.chanStateDB)
-	pwService.SetLoaderOpts([]walletloader.LoaderOption{dbs.walletDB})
-	pwService.SetMacaroonDB(dbs.macaroonDB)
-	walletExists, err := pwService.WalletExists()
-	if err != nil {
-		return err
-	}
-
-	if !walletExists {
-		interceptorChain.SetWalletNotCreated()
-	} else {
-		interceptorChain.SetWalletLocked()
-	}
-
-	// If we've started in auto unlock mode, then a wallet should already
-	// exist because we don't want to enable the RPC unlocker in that case
-	// for security reasons (an attacker could inject their seed since the
-	// RPC is unauthenticated). Only if the user explicitly wants to allow
-	// wallet creation we don't error out here.
-	if cfg.WalletUnlockPasswordFile != "" && !walletExists && !isRemoteWallet &&
-		!cfg.WalletUnlockAllowCreate {
-
-		return fmt.Errorf("wallet unlock password file was specified " +
-			"but wallet does not exist; initialize the wallet " +
-			"before using auto unlocking")
-	}
-
-	// What wallet mode are we running in? We've already made sure the no
-	// seed backup and auto unlock aren't both set during config parsing.
-	switch {
-	// No seed backup means we're also using the default password.
-	case cfg.NoSeedBackup && !isRemoteWallet:
-		// We continue normally, the default password has already been
-		// set above.
-
-	// A password for unlocking is provided in a file.
-	case cfg.WalletUnlockPasswordFile != "" && walletExists:
-		ltndLog.Infof("Attempting automatic wallet unlock with " +
-			"password provided in file")
-		pwBytes, err := os.ReadFile(cfg.WalletUnlockPasswordFile)
-		if err != nil {
-			return fmt.Errorf("error reading password from file "+
-				"%s: %v", cfg.WalletUnlockPasswordFile, err)
-		}
-
-		// Remove any newlines at the end of the file. The lndinit tool
-		// won't ever write a newline but maybe the file was provisioned
-		// by another process or user.
-		pwBytes = bytes.TrimRight(pwBytes, "\r\n")
-
-		// We have the password now, we can ask the unlocker service to
-		// do the unlock for us.
-		unlockedWallet, unloadWalletFn, err := pwService.LoadAndUnlock(
-			ctx, pwBytes, 0,
-		)
-		if err != nil {
-			return fmt.Errorf("error unlocking wallet with "+
-				"password from file: %v", err)
-		}
-
-		defer func() {
-			if err := unloadWalletFn(); err != nil {
-				ltndLog.Errorf("Could not unload wallet: %v",
-					err)
-			}
-		}()
-
-		privateWalletPw = pwBytes
-		publicWalletPw = pwBytes
-		walletInitParams.Wallet = unlockedWallet
-		walletInitParams.UnloadWallet = unloadWalletFn
-
-	// If none of the automatic startup options are selected, we fall back
-	// to the default behavior of waiting for the wallet creation/unlocking
-	// over RPC.
-	default:
-		if err := interceptor.Notifier.NotifyReady(false); err != nil {
-			return err
-		}
-
-		params, err := waitForWalletPassword(
-			cfg, pwService, []walletloader.LoaderOption{dbs.walletDB},
-			interceptor.ShutdownChannel(),
-		)
-		if err != nil {
-			err := fmt.Errorf("unable to set up wallet password "+
-				"listeners: %v", err)
-			ltndLog.Error(err)
-			return err
-		}
-
-		walletInitParams = *params
-		privateWalletPw = walletInitParams.Password
-		publicWalletPw = walletInitParams.Password
-		defer func() {
-			if err := walletInitParams.UnloadWallet(); err != nil {
-				ltndLog.Errorf("Could not unload wallet: %v", err)
-			}
-		}()
-
-		if walletInitParams.RecoveryWindow > 0 {
-			ltndLog.Infof("Wallet recovery mode enabled with "+
-				"address lookahead of %d addresses",
-				walletInitParams.RecoveryWindow)
-		}
-	}
-
-	var macaroonService *macaroons.Service
-	if !cfg.NoMacaroons {
-		// Create the macaroon authentication/authorization service.
-		macaroonService, err = macaroons.NewService(
-			dbs.macaroonDB, "lnd", walletInitParams.StatelessInit,
-			macaroons.IPLockChecker,
-			macaroons.CustomChecker(interceptorChain),
-		)
-		if err != nil {
-			err := fmt.Errorf("unable to set up macaroon "+
-				"authentication: %v", err)
-			ltndLog.Error(err)
-			return err
-		}
-		defer macaroonService.Close()
-
-		// Try to unlock the macaroon store with the private password.
-		// Ignore ErrAlreadyUnlocked since it could be unlocked by the
-		// wallet unlocker.
-		err = macaroonService.CreateUnlock(&privateWalletPw)
-		if err != nil && err != macaroons.ErrAlreadyUnlocked {
-			err := fmt.Errorf("unable to unlock macaroons: %v", err)
-			ltndLog.Error(err)
-			return err
-		}
-
-		// In case we actually needed to unlock the wallet, we now need
-		// to create an instance of the admin macaroon and send it to
-		// the unlocker so it can forward it to the user. In no seed
-		// backup mode, there's nobody listening on the channel and we'd
-		// block here forever.
-		if !cfg.NoSeedBackup || isRemoteWallet {
-			adminMacBytes, err := bakeMacaroon(
-				ctx, macaroonService, adminPermissions(),
-			)
-			if err != nil {
-				return err
-			}
-
-			// The channel is buffered by one element so writing
-			// should not block here.
-			walletInitParams.MacResponseChan <- adminMacBytes
-
-			for _, lis := range grpcListeners {
-				if lis.MacChan != nil {
-					lis.MacChan <- adminMacBytes
-				}
-			}
-		}
-
-		// If the user requested a stateless initialization, no macaroon
-		// files should be created.
-		if !walletInitParams.StatelessInit &&
-			!fileExists(cfg.AdminMacPath) &&
-			!fileExists(cfg.ReadMacPath) &&
-			!fileExists(cfg.InvoiceMacPath) {
-
-			// Create macaroon files for lncli to use if they don't
-			// exist.
-			err = genMacaroons(
-				ctx, macaroonService, cfg.AdminMacPath,
-				cfg.ReadMacPath, cfg.InvoiceMacPath,
-			)
-			if err != nil {
-				err := fmt.Errorf("unable to create macaroons "+
-					"%v", err)
-				ltndLog.Error(err)
-				return err
-			}
-		}
-
-		// As a security service to the user, if they requested
-		// stateless initialization and there are macaroon files on disk
-		// we log a warning.
-		if walletInitParams.StatelessInit {
-			msg := "Found %s macaroon on disk (%s) even though " +
-				"--stateless_init was requested. Unencrypted " +
-				"state is accessible by the host system. You " +
-				"should change the password and use " +
-				"--new_mac_root_key with --stateless_init to " +
-				"clean up and invalidate old macaroons."
-
-			if fileExists(cfg.AdminMacPath) {
-				ltndLog.Warnf(msg, "admin", cfg.AdminMacPath)
-			}
-			if fileExists(cfg.ReadMacPath) {
-				ltndLog.Warnf(msg, "readonly", cfg.ReadMacPath)
-			}
-			if fileExists(cfg.InvoiceMacPath) {
-				ltndLog.Warnf(msg, "invoice", cfg.InvoiceMacPath)
-			}
-		}
-
-		// We add the macaroon service to our RPC interceptor. This
-		// will start checking macaroons against permissions on every
-		// RPC invocation.
-		interceptorChain.AddMacaroonService(macaroonService)
-	}
-
-	// Now that the wallet password has been provided, transition the RPC
-	// state into Unlocked.
-	interceptorChain.SetWalletUnlocked()
-
-	// Since calls to the WalletUnlocker service wait for a response on the
-	// macaroon channel, we close it here to make sure they return in case
-	// we did not return the admin macaroon above. This will be the case if
-	// --no-macaroons is used.
-	close(walletInitParams.MacResponseChan)
-
-	// We'll also close all the macaroon channels since lnd is done sending
-	// macaroon data over it.
-	for _, lis := range grpcListeners {
-		if lis.MacChan != nil {
-			close(lis.MacChan)
-		}
-	}
-
-	// With the information parsed from the configuration, create valid
-	// instances of the pertinent interfaces required to operate the
-	// Lightning Network Daemon.
-	//
-	// When we create the chain control, we need storage for the height
-	// hints and also the wallet itself, for these two we want them to be
-	// replicated, so we'll pass in the remote channel DB instance.
-	chainControlCfg := &chainreg.Config{
-		Decred:                      cfg.Decred,
-		PrimaryChain:                cfg.registeredChains.PrimaryChain,
-		HeightHintCacheQueryDisable: cfg.HeightHintCacheQueryDisable,
-		DcrdMode:                    cfg.DcrdMode,
-		DcrwMode:                    cfg.Dcrwallet,
-		FullDB:                      dbs.chanStateDB,
-		HeightHintDB:                dbs.heightHintDB,
-		ChanStateDB:                 dbs.chanStateDB.ChannelStateDB(),
-		PrivateWalletPw:             privateWalletPw,
-		PublicWalletPw:              publicWalletPw,
-		Birthday:                    walletInitParams.Birthday,
-		RecoveryWindow:              walletInitParams.RecoveryWindow,
-		WalletLoader:                walletInitParams.Loader,
-		Wallet:                      walletInitParams.Wallet,
-		WalletConn:                  walletInitParams.Conn,
-		WalletAccountNb:             cfg.Dcrwallet.AccountNumber,
-		ActiveNetParams:             cfg.ActiveNetParams,
-		FeeURL:                      cfg.FeeURL,
-		Dialer: func(addr string) (net.Conn, error) {
-			return cfg.net.Dial("tcp", addr, cfg.ConnectionTimeout)
-		},
-		BlockCache:    blockCache,
-		LoaderOptions: []walletloader.LoaderOption{dbs.walletDB},
-	}
-
-	// Parse coin selection strategy.
-	switch cfg.CoinSelectionStrategy {
-	case "random":
-		chainControlCfg.CoinSelectionStrategy = lnwallet.CoinSelectionRandom
-
-	default:
-		return fmt.Errorf("unknown coin selection strategy %v",
-			cfg.CoinSelectionStrategy)
-	}
-
-	activeChainControl, cleanup, err := chainreg.NewChainControl(
-		chainControlCfg,
+	activeChainControl, cleanUp, err := implCfg.BuildChainControl(
+		ctx, dbs, interceptorChain, grpcListeners,
 	)
-	if cleanup != nil {
-		defer cleanup()
-	}
 	if err != nil {
-		err := fmt.Errorf("unable to create chain control: %v", err)
-		ltndLog.Error(err)
-		return err
+		return fmt.Errorf("error loading chain control: %v", err)
 	}
+	defer cleanUp()
 
 	// Wait until we're fully synced to continue the start up of the remainder
 	// of the daemon. This ensures that we don't accept any possibly invalid
@@ -775,30 +436,14 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	//
 	// This is also required on decred due to various things dcrwallet does at
 	// startup (mainly, slip0044 upgrade, account and address discovery) which
-	// may deadlock if we try to start using it to (e.g.) derive the node's id
+	// may race if we try to start using it to (e.g.) derive the node's id
 	// private key before the wallet is fully synced for the first time.
-	_, bestHeight, err := activeChainControl.ChainIO.GetBestBlock()
-	if err != nil {
-		return err
-	}
-
-	ltndLog.Infof("Waiting for chain backend to finish sync, "+
-		"start_height=%v", bestHeight)
-
 	err = waitForInitialChainSync(activeChainControl, &interceptor, syncerServer)
 	if errors.Is(err, errShutdownRequested) {
 		return nil
 	} else if err != nil {
 		return err
 	}
-
-	_, bestHeight, err = activeChainControl.ChainIO.GetBestBlock()
-	if err != nil {
-		return err
-	}
-
-	ltndLog.Infof("Chain backend is fully synced (end_height=%v)!",
-		bestHeight)
 
 	// Finally before we start the server, we'll register the "holy
 	// trinity" of interface for our current "home chain" with the active
@@ -873,7 +518,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		wtCfg := &watchtower.Config{
 			NetParams:      cfg.ActiveNetParams.Params,
 			BlockFetcher:   activeChainControl.ChainIO,
-			DB:             dbs.towerServerDB,
+			DB:             dbs.TowerServerDB,
 			EpochRegistrar: activeChainControl.ChainNotifier,
 			Net:            cfg.net,
 			NewAddress: func() (stdaddr.Address, error) {
@@ -926,7 +571,8 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// connections.
 	server, err := newServer(
 		cfg, cfg.Listeners, dbs, activeChainControl, &idKeyDesc,
-		walletInitParams.ChansToRestore, chainedAcceptor, torController,
+		activeChainControl.Cfg.WalletUnlockParams.ChansToRestore,
+		chainedAcceptor, torController,
 	)
 	if err != nil {
 		err := fmt.Errorf("unable to create server: %v", err)
@@ -976,6 +622,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		ltndLog.Error(err)
 		return err
 	}
+
 	defer rpcServer.Stop()
 
 	// We transition the RPC state to Active, as the RPC server is up.
@@ -1022,7 +669,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	autoServer := automation.NewServer(&automation.Config{
 		Automation:   cfg.Automation,
 		CloseChannel: rpcServer.CloseChannel,
-		DB:           dbs.chanStateDB,
+		DB:           dbs.ChanStateDB,
 	})
 	if err := autoServer.Start(); err != nil {
 		return err
@@ -1478,284 +1125,4 @@ func startRestProxy(cfg *Config, rpcServer *rpcServer, restDialOpts []grpc.DialO
 	wg.Wait()
 
 	return shutdown, nil
-}
-
-// waitForWalletPassword blocks until a password is provided by the user to
-// this RPC server.
-func waitForWalletPassword(cfg *Config,
-	pwService *walletunlocker.UnlockerService,
-	loaderOpts []walletloader.LoaderOption, shutdownChan <-chan struct{}) (
-	*walletunlocker.WalletUnlockParams, error) {
-
-	// Wait for user to provide the password.
-	ltndLog.Infof("Waiting for wallet encryption password. Use `dcrlncli " +
-		"create` to create a wallet, `dcrlncli unlock` to unlock an " +
-		"existing wallet, or `dcrlncli changepassword` to change the " +
-		"password of an existing wallet and unlock it.")
-
-	// We currently don't distinguish between getting a password to be used
-	// for creation or unlocking, as a new wallet db will be created if
-	// none exists when creating the chain control.
-	select {
-
-	// The wallet is being created for the first time, we'll check to see
-	// if the user provided any entropy for seed creation. If so, then
-	// we'll create the wallet early to load the seed.
-	case initMsg := <-pwService.InitMsgs:
-		password := initMsg.Passphrase
-		cipherSeed := initMsg.WalletSeed
-		extendedKey := initMsg.WalletExtendedKey
-		recoveryWindow := initMsg.RecoveryWindow
-
-		// Before we proceed, we'll check the internal version of the
-		// seed. If it's greater than the current key derivation
-		// version, then we'll return an error as we don't understand
-		// this.
-		const latestVersion = keychain.KeyDerivationVersion
-		if cipherSeed != nil &&
-			cipherSeed.InternalVersion != latestVersion {
-
-			return nil, fmt.Errorf("invalid internal "+
-				"seed version %v, current version is %v",
-				cipherSeed.InternalVersion,
-				keychain.KeyDerivationVersion)
-		}
-
-		netDir := dcrwallet.NetworkDir(
-			cfg.Decred.ChainDir, cfg.ActiveNetParams.Params,
-		)
-		loader := walletloader.NewLoader(cfg.ActiveNetParams.Params, netDir,
-			wallet.DefaultGapLimit)
-
-		// With the seed, we can now use the wallet loader to create
-		// the wallet, then pass it back to avoid unlocking it again.
-		ctx := context.Background()
-		var (
-			birthday  time.Time
-			newWallet *wallet.Wallet
-			err       error
-		)
-		switch {
-		// A normal cipher seed was given, use the birthday encoded in
-		// it and create the wallet from that.
-		case cipherSeed != nil:
-			birthday = cipherSeed.BirthdayTime()
-			newWallet, err = loader.CreateNewWallet(
-				ctx, password, password, cipherSeed.Entropy[:],
-			)
-
-		// No seed was given, we're importing a wallet from its extended
-		// private key.
-		case extendedKey != nil:
-			birthday = initMsg.ExtendedKeyBirthday
-			newWallet, err = loader.CreateNewWalletExtendedKey(
-				ctx, password, password, extendedKey,
-			)
-
-		default:
-			// The unlocker service made sure either the cipher seed
-			// or the extended key is set so, we shouldn't get here.
-			// The default case is just here for readability and
-			// completeness.
-			err = fmt.Errorf("cannot create wallet, neither seed " +
-				"nor extended key was given")
-		}
-		if err != nil {
-			// Don't leave the file open in case the new wallet
-			// could not be created for whatever reason.
-			if err := loader.UnloadWallet(); err != nil {
-				ltndLog.Errorf("Could not unload new "+
-					"wallet: %v", err)
-			}
-			return nil, err
-		}
-
-		return &walletunlocker.WalletUnlockParams{
-			Password:        password,
-			Birthday:        birthday,
-			RecoveryWindow:  recoveryWindow,
-			Wallet:          newWallet,
-			Loader:          loader,
-			ChansToRestore:  initMsg.ChanBackups,
-			UnloadWallet:    loader.UnloadWallet,
-			StatelessInit:   initMsg.StatelessInit,
-			MacResponseChan: pwService.MacResponseChan,
-		}, nil
-
-	// The wallet has already been created in the past, and is simply being
-	// unlocked. So we'll just return these passphrases.
-	case unlockMsg := <-pwService.UnlockMsgs:
-		return &walletunlocker.WalletUnlockParams{
-			Password:        unlockMsg.Passphrase,
-			RecoveryWindow:  unlockMsg.RecoveryWindow,
-			Wallet:          unlockMsg.Wallet,
-			Loader:          unlockMsg.Loader,
-			ChansToRestore:  unlockMsg.ChanBackups,
-			Conn:            unlockMsg.Conn,
-			UnloadWallet:    unlockMsg.UnloadWallet,
-			StatelessInit:   unlockMsg.StatelessInit,
-			MacResponseChan: pwService.MacResponseChan,
-		}, nil
-
-	// If we got a shutdown signal we just return with an error immediately
-	case <-shutdownChan:
-		return nil, fmt.Errorf("shutting down")
-	}
-}
-
-// databaseInstances is a struct that holds all instances to the actual
-// databases that are used in lnd.
-type databaseInstances struct {
-	graphDB       *channeldb.DB
-	chanStateDB   *channeldb.DB
-	heightHintDB  kvdb.Backend
-	macaroonDB    kvdb.Backend
-	decayedLogDB  kvdb.Backend
-	towerClientDB wtclient.DB
-	towerServerDB watchtower.DB
-	walletDB      walletloader.LoaderOption
-}
-
-// initializeDatabases extracts the current databases that we'll use for normal
-// operation in the daemon. A function closure that closes all opened databases
-// is also returned.
-func initializeDatabases(ctx context.Context,
-	cfg *Config) (*databaseInstances, func(), error) {
-
-	ltndLog.Infof("Opening the main database, this might take a few " +
-		"minutes...")
-
-	if cfg.DB.Backend == lncfg.BoltBackend {
-		ltndLog.Infof("Opening bbolt database, sync_freelist=%v, "+
-			"auto_compact=%v", !cfg.DB.Bolt.NoFreelistSync,
-			cfg.DB.Bolt.AutoCompact)
-	}
-
-	startOpenTime := time.Now()
-
-	databaseBackends, err := cfg.DB.GetBackends(
-		ctx, cfg.graphDatabaseDir(), cfg.networkDir, filepath.Join(
-			cfg.Watchtower.TowerDir,
-			cfg.registeredChains.PrimaryChain().String(),
-			lncfg.NormalizeNetwork(cfg.ActiveNetParams.Name),
-		), cfg.WtClient.Active, cfg.Watchtower.Active,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to obtain database "+
-			"backends: %v", err)
-	}
-
-	// With the full remote mode we made sure both the graph and channel
-	// state DB point to the same local or remote DB and the same namespace
-	// within that DB.
-	dbs := &databaseInstances{
-		heightHintDB: databaseBackends.HeightHintDB,
-		macaroonDB:   databaseBackends.MacaroonDB,
-		decayedLogDB: databaseBackends.DecayedLogDB,
-		walletDB:     databaseBackends.WalletDB,
-	}
-	cleanUp := func() {
-		// We can just close the returned close functions directly. Even
-		// if we decorate the channel DB with an additional struct, its
-		// close function still just points to the kvdb backend.
-		for name, closeFunc := range databaseBackends.CloseFuncs {
-			if err := closeFunc(); err != nil {
-				ltndLog.Errorf("Error closing %s "+
-					"database: %v", name, err)
-			}
-		}
-	}
-	if databaseBackends.Remote {
-		ltndLog.Infof("Using remote %v database! Creating "+
-			"graph and channel state DB instances", cfg.DB.Backend)
-	} else {
-		ltndLog.Infof("Creating local graph and channel state DB " +
-			"instances")
-	}
-
-	dbOptions := []channeldb.OptionModifier{
-		channeldb.OptionSetRejectCacheSize(cfg.Caches.RejectCacheSize),
-		channeldb.OptionSetChannelCacheSize(cfg.Caches.ChannelCacheSize),
-		channeldb.OptionSetBatchCommitInterval(cfg.DB.BatchCommitInterval),
-		channeldb.OptionDryRunMigration(cfg.DryRunMigration),
-	}
-
-	// We want to pre-allocate the channel graph cache according to what we
-	// expect for mainnet to speed up memory allocation.
-	if cfg.ActiveNetParams.Name == chaincfg.MainNetParams().Name {
-		dbOptions = append(
-			dbOptions, channeldb.OptionSetPreAllocCacheNumNodes(
-				channeldb.DefaultPreAllocCacheNumNodes,
-			),
-		)
-	}
-
-	// Otherwise, we'll open two instances, one for the state we only need
-	// locally, and the other for things we want to ensure are replicated.
-	dbs.graphDB, err = channeldb.CreateWithBackend(
-		databaseBackends.GraphDB, dbOptions...,
-	)
-	switch {
-	// Give the DB a chance to dry run the migration. Since we know that
-	// both the channel state and graph DBs are still always behind the same
-	// backend, we know this would be applied to both of those DBs.
-	case err == channeldb.ErrDryRunMigrationOK:
-		ltndLog.Infof("Graph DB dry run migration successful")
-		return nil, nil, err
-
-	case err != nil:
-		cleanUp()
-
-		err := fmt.Errorf("unable to open graph DB: %v", err)
-		ltndLog.Error(err)
-		return nil, nil, err
-	}
-
-	// For now, we don't _actually_ split the graph and channel state DBs on
-	// the code level. Since they both are based upon the *channeldb.DB
-	// struct it will require more refactoring to fully separate them. With
-	// the full remote mode we at least know for now that they both point to
-	// the same DB backend (and also namespace within that) so we only need
-	// to apply any migration once.
-	//
-	// TODO(guggero): Once the full separation of anything graph related
-	// from the channeldb.DB is complete, the decorated instance of the
-	// channel state DB should be created here individually instead of just
-	// using the same struct (and DB backend) instance.
-	dbs.chanStateDB = dbs.graphDB
-
-	// Wrap the watchtower client DB and make sure we clean up.
-	if cfg.WtClient.Active {
-		dbs.towerClientDB, err = wtdb.OpenClientDB(
-			databaseBackends.TowerClientDB,
-		)
-		if err != nil {
-			cleanUp()
-
-			err := fmt.Errorf("unable to open %s database: %v",
-				lncfg.NSTowerClientDB, err)
-			ltndLog.Error(err)
-			return nil, nil, err
-		}
-	}
-
-	// Wrap the watchtower server DB and make sure we clean up.
-	if cfg.Watchtower.Active {
-		dbs.towerServerDB, err = wtdb.OpenTowerDB(
-			databaseBackends.TowerServerDB,
-		)
-		if err != nil {
-			cleanUp()
-
-			err := fmt.Errorf("unable to open %s database: %v",
-				lncfg.NSTowerServerDB, err)
-			ltndLog.Error(err)
-			return nil, nil, err
-		}
-	}
-
-	openTime := time.Since(startOpenTime)
-	ltndLog.Infof("Database(s) now open (time_to_open=%v)!", openTime)
-
-	return dbs, cleanUp, nil
 }

@@ -1,7 +1,6 @@
 package chainreg
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -10,12 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
-	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/rpcclient/v8"
-	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
@@ -30,11 +26,10 @@ import (
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
-	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 	"github.com/decred/dcrlnd/lnwallet/remotedcrwallet"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing/chainview"
-	"google.golang.org/grpc"
+	"github.com/decred/dcrlnd/walletunlocker"
 )
 
 // Config houses necessary fields that a chainControl instance needs to
@@ -71,34 +66,9 @@ type Config struct {
 	// BlockCache is the main cache for storing block information.
 	BlockCache *blockcache.BlockCache
 
-	// PrivateWalletPw is the private wallet password to the underlying
-	// btcwallet instance.
-	PrivateWalletPw []byte
-
-	// PublicWalletPw is the public wallet password to the underlying btcwallet
-	// instance.
-	PublicWalletPw []byte
-
-	// Birthday specifies the time the wallet was initially created.
-	Birthday time.Time
-
-	// RecoveryWindow specifies the address look-ahead for which to scan when
-	// restoring a wallet.
-	RecoveryWindow uint32
-
-	// WalletLoader is a pointer to an embedded wallet loader.
-	WalletLoader *walletloader.Loader
-
-	// Wallet is a pointer to the backing wallet instance.
-	Wallet *wallet.Wallet
-
-	// WalletConn is the grpc connection to a remote wallet when the chain
-	// is running based on a remote wallet.
-	WalletConn *grpc.ClientConn
-
-	// WalletAccountNb is the root account from which the dcrlnd keys are
-	// derived when running based on a remote wallet.
-	WalletAccountNb int32
+	// WalletUnlockParams are the parameters that were used for unlocking
+	// the main wallet.
+	WalletUnlockParams *walletunlocker.WalletUnlockParams
 
 	// ActiveNetParams details the current chain we are on.
 	ActiveNetParams DecredNetParams
@@ -111,13 +81,6 @@ type Config struct {
 	// TCP connections to chain network peers in the event of a pruned block being
 	// requested.
 	Dialer func(string) (net.Conn, error)
-
-	// LoaderOptions holds functional wallet db loader options.
-	LoaderOptions []walletloader.LoaderOption
-
-	// CoinSelectionStrategy is the strategy that is used for selecting
-	// coins when funding a transaction.
-	CoinSelectionStrategy lnwallet.CoinSelectionStrategy
 }
 
 const (
@@ -154,76 +117,29 @@ const (
 	DefaultDecredStaticMinRelayFeeRate = chainfee.FeePerKBFloor
 )
 
-// checkDcrdNode checks whether the dcrd node reachable using the provided
-// config is usable as source of chain information, given the requirements of a
-// dcrlnd node.
-func checkDcrdNode(wantNet wire.CurrencyNet, rpcConfig rpcclient.ConnConfig) error {
-	connectTimeout := 30 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
-	defer cancel()
-
-	rpcConfig.DisableConnectOnNew = true
-	rpcConfig.DisableAutoReconnect = false
-	chainConn, err := rpcclient.New(&rpcConfig, nil)
-	if err != nil {
-		return err
-	}
-
-	// Try to connect to the given node.
-	if err := chainConn.Connect(ctx, true); err != nil {
-		return err
-	}
-	defer chainConn.Shutdown()
-
-	// Verify whether the node is on the correct network.
-	net, err := chainConn.GetCurrentNet(ctx)
-	if err != nil {
-		return err
-	}
-	if net != wantNet {
-		return fmt.Errorf("dcrd node network mismatch")
-	}
-
-	return nil
-}
-
-// ChainControl couples the three primary interfaces lnd utilizes for a
-// particular chain together. A single ChainControl instance will exist for all
-// the chains lnd is currently active on.
-type ChainControl struct {
-	// ChainIO represents an abstraction over a source that can query the blockchain.
-	ChainIO lnwallet.BlockChainIO
+// PartialChainControl contains all the primary interfaces of the chain control
+// that can be purely constructed from the global configuration. No wallet
+// instance is required for constructing this partial state.
+type PartialChainControl struct {
+	// Cfg is the configuration that was used to create the partial chain
+	// control.
+	Cfg *Config
 
 	// HealthCheck is a function which can be used to send a low-cost, fast
 	// query to the chain backend to ensure we still have access to our
 	// node.
 	HealthCheck func() error
 
-	// FeeEstimator is used to estimate an optimal fee for transactions important to us.
+	// FeeEstimator is used to estimate an optimal fee for transactions
+	// important to us.
 	FeeEstimator chainfee.Estimator
 
-	// Signer is used to provide signatures over things like transactions.
-	Signer input.Signer
-
-	// KeyRing represents a set of keys that we have the private keys to.
-	KeyRing keychain.SecretKeyRing
-
-	// Wc is an abstraction over some basic wallet commands. This base set of commands
-	// will be provided to the Wallet *LightningWallet raw pointer below.
-	Wc lnwallet.WalletController
-
-	// MsgSigner is used to sign arbitrary messages.
-	MsgSigner lnwallet.MessageSigner
-
-	// ChainNotifier is used to receive blockchain events that we are interested in.
+	// ChainNotifier is used to receive blockchain events that we are
+	// interested in.
 	ChainNotifier chainntnfs.ChainNotifier
 
 	// ChainView is used in the router for maintaining an up-to-date graph.
 	ChainView chainview.FilteredChainView
-
-	// Wallet is our LightningWallet that also contains the abstract Wc above. This wallet
-	// handles all of the lightning operations.
-	Wallet *lnwallet.LightningWallet
 
 	// RoutingPolicy is the routing policy we have decided to use.
 	RoutingPolicy htlcswitch.ForwardingPolicy
@@ -234,6 +150,42 @@ type ChainControl struct {
 	// ChannelConstraints is the set of default constraints that will be
 	// used for any incoming or outgoing channel reservation requests.
 	ChannelConstraints channeldb.ChannelConstraints
+
+	// RPCConfig is the config to the remote dcrd instance when using a
+	// sync mode that requires it.
+	RPCConfig *rpcclient.ConnConfig
+}
+
+// ChainControl couples the three primary interfaces lnd utilizes for a
+// particular chain together. A single ChainControl instance will exist for all
+// the chains lnd is currently active on.
+type ChainControl struct {
+	// PartialChainControl is the part of the chain control that was
+	// initialized purely from the configuration and doesn't contain any
+	// wallet related elements.
+	*PartialChainControl
+
+	// ChainIO represents an abstraction over a source that can query the
+	// blockchain.
+	ChainIO lnwallet.BlockChainIO
+
+	// Signer is used to provide signatures over things like transactions.
+	Signer input.Signer
+
+	// KeyRing represents a set of keys that we have the private keys to.
+	KeyRing keychain.SecretKeyRing
+
+	// Wc is an abstraction over some basic wallet commands. This base set
+	// of commands will be provided to the Wallet *LightningWallet raw
+	// pointer below.
+	Wc lnwallet.WalletController
+
+	// MsgSigner is used to sign arbitrary messages.
+	MsgSigner lnwallet.MessageSigner
+
+	// Wallet is our LightningWallet that also contains the abstract Wc
+	// above. This wallet handles all of the lightning operations.
+	Wallet *lnwallet.LightningWallet
 }
 
 // GenDefaultDcrChannelConstraints generates the default set of channel
@@ -247,15 +199,17 @@ func GenDefaultDcrConstraints() channeldb.ChannelConstraints {
 	}
 }
 
-// NewChainControl attempts to create a ChainControl instance according to the
-// parameters in the passed configuration.
-func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
+// NewPartialChainControl creates a new partial chain control that contains all
+// the parts that can be purely constructed from the passed in global
+// configuration and doesn't need any wallet instance yet.
+func NewPartialChainControl(cfg *Config) (*PartialChainControl, func(), error) {
 	// Set the RPC config from the "home" chain. Multi-chain isn't yet
 	// active, so we'll restrict usage to a particular chain for now.
-	log.Infof("Primary chain is set to: %v",
-		cfg.PrimaryChain())
+	log.Infof("Primary chain is set to: %v", cfg.PrimaryChain())
 
-	cc := &ChainControl{}
+	cc := &PartialChainControl{
+		Cfg: cfg,
+	}
 
 	switch cfg.PrimaryChain() {
 	case DecredChain:
@@ -275,11 +229,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 			"unknown", cfg.PrimaryChain())
 	}
 
-	var (
-		err       error
-		rpcConfig *rpcclient.ConnConfig
-	)
-
+	var err error
 	heightHintCacheConfig := chainntnfs.CacheConfig{
 		QueryDisable: cfg.HeightHintCacheQueryDisable,
 	}
@@ -298,21 +248,23 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 
 	// When running in remote wallet mode, we only support running in dcrw
 	// mode (using the wallet for chain operations).
-	if cfg.WalletConn != nil && cfg.Decred.Node != "dcrw" {
+	walletConn := cfg.WalletUnlockParams.Conn
+	wallet := cfg.WalletUnlockParams.Wallet
+	if walletConn != nil && cfg.Decred.Node != "dcrw" {
 		return nil, nil, fmt.Errorf("remote wallet mode only supports " +
 			"'node=dcrw' config")
 	}
 
 	// When running in embedded wallet mode with spv on, we only support
 	// running in dcrw mode.
-	if cfg.WalletConn == nil && cfg.DcrwMode.SPV && cfg.Decred.Node != "dcrw" {
+	if walletConn == nil && cfg.DcrwMode.SPV && cfg.Decred.Node != "dcrw" {
 		return nil, nil, fmt.Errorf("embedded wallet in SPV mode only " +
 			"supports 'node=dcrw' config")
 	}
 
 	// We only require a dcrd connection when running in embedded mode and
 	// not in SPV mode.
-	needsDcrd := cfg.WalletConn == nil && !cfg.DcrwMode.SPV
+	needsDcrd := walletConn == nil && !cfg.DcrwMode.SPV
 	if needsDcrd {
 		// Load dcrd's TLS cert for the RPC connection.  If a raw cert
 		// was specified in the config, then we'll set that directly.
@@ -353,7 +305,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 
 		dcrdUser := dcrdMode.RPCUser
 		dcrdPass := dcrdMode.RPCPass
-		rpcConfig = &rpcclient.ConnConfig{
+		cc.RPCConfig = &rpcclient.ConnConfig{
 			Host:                 dcrdHost,
 			Endpoint:             "ws",
 			User:                 dcrdUser,
@@ -367,182 +319,99 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		// Verify that the provided dcrd instance exists, is reachable,
 		// it's on the correct network and has the features required
 		// for dcrlnd to perform its work.
-		if err = checkDcrdNode(cfg.ActiveNetParams.Net, *rpcConfig); err != nil {
+		if err = checkDcrdNode(cfg.ActiveNetParams.Net, *cc.RPCConfig); err != nil {
 			log.Errorf("unable to use specified dcrd node: %v",
 				err)
 			return nil, nil, err
 		}
 	}
 
-	var secretKeyRing keychain.SecretKeyRing
-
 	// Initialize the appopriate wallet controller (either the embedded
 	// dcrwallet or a remote one).
 	switch {
-	case cfg.WalletConn != nil:
+	case walletConn != nil:
 		log.Info("Using the remote wallet for chain operations")
-
-		// Initialize an RPC syncer for this wallet and use it as
-		// blockchain IO source.
-		dcrwConfig := &remotedcrwallet.Config{
-			PrivatePass:   cfg.PrivateWalletPw,
-			NetParams:     cfg.ActiveNetParams.Params,
-			DB:            cfg.FullDB,
-			Conn:          cfg.WalletConn,
-			AccountNumber: cfg.WalletAccountNb,
-			ChainIO:       cc.ChainIO,
-			BlockCache:    cfg.BlockCache,
-		}
-
-		wc, err := remotedcrwallet.New(*dcrwConfig)
-		if err != nil {
-			fmt.Printf("unable to create remote wallet controller: %v\n", err)
-			return nil, nil, err
-		}
 
 		// Remote wallet mode currently always use the wallet for chain
 		// notifications and chain IO.
 		cc.ChainNotifier, err = remotedcrwnotify.New(
-			cfg.WalletConn, cfg.ActiveNetParams.Params, hintCache,
+			walletConn, cfg.ActiveNetParams.Params, hintCache,
 			hintCache, cfg.BlockCache,
 		)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		cc.ChainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn,
+		cc.ChainView, err = chainview.NewRemoteWalletFilteredChainView(walletConn,
 			cfg.BlockCache)
 		if err != nil {
 			log.Errorf("unable to create chain view: %v", err)
 			return nil, nil, err
 		}
 
-		secretKeyRing = wc
-		cc.MsgSigner = lnwallet.MessageSignerFromKeychainSigner(wc)
-		cc.Signer = wc
-		cc.Wc = wc
-		cc.KeyRing = wc
-		cc.ChainIO = wc
+	case cfg.Decred.Node == "dcrw":
+		// Use the wallet itself for chain IO.
+		log.Info("Using the wallet for chain operations")
+
+		cc.ChainNotifier, err = dcrwnotify.New(
+			wallet, cfg.ActiveNetParams.Params, hintCache,
+			hintCache, cfg.BlockCache,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		cc.ChainView, err = chainview.NewDcrwalletFilteredChainView(
+			wallet, cfg.BlockCache,
+		)
+		if err != nil {
+			log.Errorf("unable to create chain view: %v", err)
+			return nil, nil, err
+		}
+
+	case cfg.Decred.Node == "dcrd":
+		// Use the dcrd node for chain IO.
+		log.Info("Using dcrd for chain operations")
+
+		cc.ChainNotifier, err = dcrdnotify.New(
+			cc.RPCConfig, cfg.ActiveNetParams.Params, hintCache,
+			hintCache, cfg.BlockCache,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Finally, we'll create an instance of the default
+		// chain view to be used within the routing layer.
+		cc.ChainView, err = chainview.NewDcrdFilteredChainView(*cc.RPCConfig)
+		if err != nil {
+			log.Errorf("unable to create chain view: %v", err)
+			return nil, nil, err
+		}
+
+		// If we're not in simnet or regtest mode, then we'll
+		// attempt to use a proper fee estimator.
+		if !cfg.Decred.SimNet && !cfg.Decred.RegTest {
+			log.Infof("Initializing dcrd backed fee estimator")
+
+			// Finally, we'll re-initialize the fee estimator, as
+			// if we're using dcrd as a backend, then we can use
+			// live fee estimates, rather than a statically coded
+			// value.
+			//
+			// TODO(decred) Review if fallbackFeeRate should be higher than
+			// the default relay fee.
+			fallBackFeeRate := chainfee.AtomPerKByte(1e4)
+			cc.FeeEstimator, err = chainfee.NewDcrdEstimator(
+				*cc.RPCConfig, fallBackFeeRate,
+			)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
 
 	default:
-		// Initialize the appropriate syncer.
-		var syncer dcrwallet.WalletSyncer
-		switch cfg.DcrwMode.SPV {
-		case false:
-			syncer, err = dcrwallet.NewRPCSyncer(*rpcConfig,
-				cfg.ActiveNetParams.Params)
-		case true:
-			spvCfg := &dcrwallet.SPVSyncerConfig{
-				Peers:      cfg.DcrwMode.SPVConnect,
-				Net:        cfg.ActiveNetParams.Params,
-				AppDataDir: filepath.Join(cfg.Decred.ChainDir),
-				DialFunc:   cfg.DcrwMode.DialFunc,
-			}
-			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
-		}
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		dcrwConfig := &dcrwallet.Config{
-			Syncer:         syncer,
-			ChainIO:        cc.ChainIO,
-			PrivatePass:    cfg.PrivateWalletPw,
-			PublicPass:     cfg.PublicWalletPw,
-			Birthday:       cfg.Birthday,
-			RecoveryWindow: cfg.RecoveryWindow,
-			DataDir:        cfg.Decred.ChainDir,
-			NetParams:      cfg.ActiveNetParams.Params,
-			Wallet:         cfg.Wallet,
-			Loader:         cfg.WalletLoader,
-			BlockCache:     cfg.BlockCache,
-			DB:             cfg.FullDB,
-		}
-
-		wc, err := dcrwallet.New(*dcrwConfig)
-		if err != nil {
-			fmt.Printf("unable to create wallet controller: %v\n", err)
-			return nil, nil, err
-		}
-
-		// When running with an embedded wallet we can run in either
-		// dcrw or dcrd node modes.
-		switch cfg.Decred.Node {
-		case "dcrw":
-			// Use the wallet itself for chain IO.
-			log.Info("Using the wallet for chain operations")
-
-			cc.ChainNotifier, err = dcrwnotify.New(
-				wc.InternalWallet(), cfg.ActiveNetParams.Params,
-				hintCache, hintCache, cfg.BlockCache,
-			)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			cc.ChainView, err = chainview.NewDcrwalletFilteredChainView(wc.InternalWallet(),
-				cfg.BlockCache)
-			if err != nil {
-				log.Errorf("unable to create chain view: %v", err)
-				return nil, nil, err
-			}
-
-			cc.ChainIO = wc
-
-		case "dcrd":
-			// Use the dcrd node for chain IO.
-			log.Info("Using dcrd for chain operations")
-
-			cc.ChainNotifier, err = dcrdnotify.New(
-				rpcConfig, cfg.ActiveNetParams.Params, hintCache,
-				hintCache, cfg.BlockCache,
-			)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			// Finally, we'll create an instance of the default
-			// chain view to be used within the routing layer.
-			cc.ChainView, err = chainview.NewDcrdFilteredChainView(*rpcConfig)
-			if err != nil {
-				log.Errorf("unable to create chain view: %v", err)
-				return nil, nil, err
-			}
-
-			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig,
-				cfg.ActiveNetParams.Params, cfg.BlockCache)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			// If we're not in simnet or regtest mode, then we'll
-			// attempt to use a proper fee estimator.
-			if !cfg.Decred.SimNet && !cfg.Decred.RegTest {
-				log.Infof("Initializing dcrd backed fee estimator")
-
-				// Finally, we'll re-initialize the fee estimator, as
-				// if we're using dcrd as a backend, then we can use
-				// live fee estimates, rather than a statically coded
-				// value.
-				//
-				// TODO(decred) Review if fallbackFeeRate should be higher than
-				// the default relay fee.
-				fallBackFeeRate := chainfee.AtomPerKByte(1e4)
-				cc.FeeEstimator, err = chainfee.NewDcrdEstimator(
-					*rpcConfig, fallBackFeeRate,
-				)
-				if err != nil {
-					return nil, nil, err
-				}
-			}
-		}
-
-		secretKeyRing = wc
-		cc.MsgSigner = lnwallet.MessageSignerFromKeychainSigner(wc)
-		cc.Signer = wc
-		cc.Wc = wc
-		cc.KeyRing = wc
+		return nil, nil, fmt.Errorf("unknown sync mode")
 	}
 
 	// Override default fee estimator if an external service is specified.
@@ -563,12 +432,6 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 	}
 
 	ccCleanup := func() {
-		if cc.Wallet != nil {
-			if err := cc.Wallet.Shutdown(); err != nil {
-				log.Errorf("Failed to shutdown wallet: %v", err)
-			}
-		}
-
 		if cc.FeeEstimator != nil {
 			if err := cc.FeeEstimator.Stop(); err != nil {
 				log.Errorf("Failed to stop feeEstimator: %v", err)
@@ -584,8 +447,128 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 	// Select the default channel constraints for the primary chain.
 	cc.ChannelConstraints = GenDefaultDcrConstraints()
 
+	return cc, ccCleanup, nil
+}
+
+// NewChainControl attempts to create a ChainControl instance according
+// to the parameters in the passed configuration. Currently three
+// branches of ChainControl instances exist: one backed by a running btcd
+// full-node, another backed by a running bitcoind full-node, and the other
+// backed by a running neutrino light client instance. When running with a
+// neutrino light client instance, `neutrinoCS` must be non-nil.
+func NewChainControl(walletConfig *WalletConfig,
+	pcc *PartialChainControl) (*ChainControl, func(), error) {
+
+	cc := &ChainControl{
+		PartialChainControl: pcc,
+	}
+
+	ccCleanup := func() {
+		if cc.Wallet != nil {
+			if err := cc.Wallet.Shutdown(); err != nil {
+				log.Errorf("Failed to shutdown wallet: %v", err)
+			}
+		}
+	}
+
+	cfg := pcc.Cfg
+	wlCfg := pcc.Cfg.WalletUnlockParams
+	walletConn := pcc.Cfg.WalletUnlockParams.Conn
+	var secretKeyRing keychain.SecretKeyRing
+	if walletConn != nil {
+		// Initialize an RPC syncer for this wallet and use it as
+		// blockchain IO source.
+		dcrwConfig := &remotedcrwallet.Config{
+			PrivatePass:   walletConfig.PrivatePass,
+			NetParams:     cfg.ActiveNetParams.Params,
+			DB:            cfg.FullDB,
+			Conn:          wlCfg.Conn,
+			AccountNumber: walletConfig.AccountNb,
+			ChainIO:       cc.ChainIO,
+			BlockCache:    cfg.BlockCache,
+		}
+
+		wc, err := remotedcrwallet.New(*dcrwConfig)
+		if err != nil {
+			err := fmt.Errorf("unable to create remote wallet "+
+				"controller: %v\n", err)
+			return nil, nil, err
+		}
+
+		secretKeyRing = wc
+		cc.MsgSigner = lnwallet.MessageSignerFromKeychainSigner(wc)
+		cc.Signer = wc
+		cc.Wc = wc
+		cc.KeyRing = wc
+		cc.ChainIO = wc
+
+	} else {
+		// Initialize the appropriate syncer.
+		var syncer dcrwallet.WalletSyncer
+		var err error
+		switch cfg.DcrwMode.SPV {
+		case false:
+			syncer, err = dcrwallet.NewRPCSyncer(*pcc.RPCConfig,
+				cfg.ActiveNetParams.Params)
+		case true:
+			spvCfg := &dcrwallet.SPVSyncerConfig{
+				Peers:      cfg.DcrwMode.SPVConnect,
+				Net:        cfg.ActiveNetParams.Params,
+				AppDataDir: filepath.Join(cfg.Decred.ChainDir),
+				DialFunc:   cfg.DcrwMode.DialFunc,
+			}
+			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
+		}
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if cfg.Decred.Node == "dcrd" {
+			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*cc.RPCConfig,
+				cfg.ActiveNetParams.Params, cfg.BlockCache)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+
+		dcrwConfig := &dcrwallet.Config{
+			Syncer:         syncer,
+			ChainIO:        cc.ChainIO,
+			PrivatePass:    walletConfig.PrivatePass,
+			PublicPass:     walletConfig.PublicPass,
+			Birthday:       walletConfig.Birthday,
+			RecoveryWindow: walletConfig.RecoveryWindow,
+			DataDir:        cfg.Decred.ChainDir,
+			NetParams:      cfg.ActiveNetParams.Params,
+			Wallet:         wlCfg.Wallet,
+			Loader:         wlCfg.Loader,
+			BlockCache:     cfg.BlockCache,
+			DB:             cfg.FullDB,
+		}
+
+		wc, err := dcrwallet.New(*dcrwConfig)
+		if err != nil {
+			err := fmt.Errorf("unable to create wallet controller: "+
+				"%v\n", err)
+			return nil, nil, err
+		}
+
+		secretKeyRing = wc
+		cc.MsgSigner = lnwallet.MessageSignerFromKeychainSigner(wc)
+		cc.Signer = wc
+		cc.Wc = wc
+		cc.KeyRing = wc
+
+		if cfg.Decred.Node != "dcrd" {
+			cc.ChainIO = wc
+		}
+	}
+
 	// Set the chain IO healthcheck.
-	cc.HealthCheck = func() error {
+	//
+	// NOTE: in lnd this is done in NewPartialChainControl().
+	pcc.HealthCheck = func() error {
 		_, _, err := cc.ChainIO.GetBestBlock()
 		return err
 	}
@@ -593,7 +576,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 	// Create, and start the lnwallet, which handles the core payment
 	// channel logic, and exposes control via proxy state machines.
 	walletCfg := lnwallet.Config{
-		Database:           cfg.ChanStateDB,
+		Database:           pcc.Cfg.ChanStateDB,
 		Notifier:           cc.ChainNotifier,
 		WalletController:   cc.Wc,
 		Signer:             cc.Signer,
