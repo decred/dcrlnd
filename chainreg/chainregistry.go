@@ -230,6 +230,10 @@ type ChainControl struct {
 
 	// MinHtlcIn is the minimum HTLC we will accept.
 	MinHtlcIn lnwire.MilliAtom
+
+	// ChannelConstraints is the set of default constraints that will be
+	// used for any incoming or outgoing channel reservation requests.
+	ChannelConstraints channeldb.ChannelConstraints
 }
 
 // GenDefaultDcrChannelConstraints generates the default set of channel
@@ -578,7 +582,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 	}
 
 	// Select the default channel constraints for the primary chain.
-	channelConstraints := GenDefaultDcrConstraints()
+	cc.ChannelConstraints = GenDefaultDcrConstraints()
 
 	// Set the chain IO healthcheck.
 	cc.HealthCheck = func() error {
@@ -596,7 +600,7 @@ func NewChainControl(cfg *Config) (*ChainControl, func(), error) {
 		FeeEstimator:       cc.FeeEstimator,
 		SecretKeyRing:      secretKeyRing,
 		ChainIO:            cc.ChainIO,
-		DefaultConstraints: channelConstraints,
+		DefaultConstraints: cc.ChannelConstraints,
 		NetParams:          *cfg.ActiveNetParams.Params,
 	}
 	lnWallet, err := lnwallet.NewLightningWallet(walletCfg)
