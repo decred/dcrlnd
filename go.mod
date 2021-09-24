@@ -64,6 +64,7 @@ require (
 	golang.org/x/net v0.18.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/sys v0.14.0
+	golang.org/x/term v0.14.0
 	golang.org/x/time v0.1.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/grpc v1.59.0
@@ -158,7 +159,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.15.0 // indirect
 	google.golang.org/genproto v0.0.0-20231030173426-d783a09b4405 // indirect
