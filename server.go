@@ -3555,32 +3555,31 @@ func (s *server) peerTerminationWatcher(p *peer.Brontide, ready chan struct{}) {
 	// within the peer's address for reconnection purposes.
 	//
 	// TODO(roasbeef): use them all?
-	if p.Inbound() {
-		advertisedAddr, err := s.fetchNodeAdvertisedAddr(pubKey)
-		switch {
-		// We found an advertised address, so use it.
-		case err == nil:
-			p.SetAddress(advertisedAddr)
+	advertisedAddr, err := s.fetchNodeAdvertisedAddr(pubKey)
+	switch {
+	// We found an advertised address, so use it.
+	case err == nil:
+		p.SetAddress(advertisedAddr)
 
-		// The peer doesn't have an advertised address.
-		case err == errNoAdvertisedAddr:
-			// Do not attempt to re-connect if the only
-			// address we have for this peer was due to an
-			// inbound connection, since this is unlikely
-			// to succeed.
-			srvrLog.Debugf("Ignoring reconnection attempt "+
-				"to inbound peer %v without "+
-				"advertised address", p)
-			return
+	// The peer doesn't have an advertised address.
+	case err == errNoAdvertisedAddr:
+		// Do not attempt to re-connect if the only
+		// address we have for this peer was due to an
+		// inbound connection, since this is unlikely
+		// to succeed.
+		srvrLog.Debugf("Ignoring reconnection attempt "+
+			"to inbound peer %v without "+
+			"advertised address", p)
+		return
 
-		// We came across an error retrieving an advertised
-		// address, log it, and fall back to the existing peer
-		// address.
-		default:
-			srvrLog.Errorf("Unable to retrieve advertised "+
-				"address for node %x: %v", p.PubKey(),
-				err)
-		}
+	// We came across an error retrieving an advertised
+	// address, log it, and fall back to the existing peer
+	// address.
+	default:
+		srvrLog.Errorf("Unable to retrieve advertised "+
+			"address for node %x: %v", p.PubKey(),
+			err)
+		return
 	}
 
 	// Otherwise, we'll launch a new connection request in order to
