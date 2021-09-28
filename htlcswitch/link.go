@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/slog"
 
@@ -2161,6 +2162,36 @@ func (l *channelLink) Bandwidth() lnwire.MilliAtom {
 // this channel.
 func (l *channelLink) MayAddOutgoingHtlc() error {
 	return l.channel.MayAddOutgoingHtlc()
+}
+
+// dustClosure is a function that evaluates whether an HTLC is dust. It returns
+// true if the HTLC is dust. It takes in a feerate, a boolean denoting whether
+// the HTLC is incoming (i.e. one that the remote sent), a boolean denoting
+// whether to evaluate on the local or remote commit, and finally an HTLC
+// amount to test.
+type dustClosure func(chainfee.AtomPerKByte, bool, bool, dcrutil.Amount) bool
+
+// dustHelper is used to construct the dustClosure.
+func dustHelper(chantype channeldb.ChannelType, localDustLimit,
+	remoteDustLimit dcrutil.Amount) dustClosure {
+
+	isDust := func(feerate chainfee.AtomPerKByte, incoming,
+		localCommit bool, amt dcrutil.Amount) bool {
+
+		if localCommit {
+			return lnwallet.HtlcIsDust(
+				chantype, incoming, true, feerate, amt,
+				localDustLimit,
+			)
+		}
+
+		return lnwallet.HtlcIsDust(
+			chantype, incoming, false, feerate, amt,
+			remoteDustLimit,
+		)
+	}
+
+	return isDust
 }
 
 // AttachMailBox updates the current mailbox used by this link, and hooks up
