@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
@@ -720,6 +721,21 @@ func (f *mockChannelLink) HandleLocalAddPacket(pkt *htlcPacket) error {
 	return nil
 }
 
+func (f *mockChannelLink) getDustSum(remote bool) lnwire.MilliAtom {
+	return 0
+}
+
+func (f *mockChannelLink) getFeeRate() chainfee.AtomPerKByte {
+	return 0
+}
+
+func (f *mockChannelLink) getDustClosure() dustClosure {
+	dustLimit := dcrutil.Amount(6030)
+	return dustHelper(
+		channeldb.SingleFunderTweaklessBit, dustLimit, dustLimit,
+	)
+}
+
 func (f *mockChannelLink) HandleChannelUpdate(lnwire.Message) {
 }
 
@@ -745,6 +761,7 @@ func (f *mockChannelLink) Stats() (uint64, lnwire.MilliAtom, lnwire.MilliAtom) {
 func (f *mockChannelLink) AttachMailBox(mailBox MailBox) {
 	f.mailBox = mailBox
 	f.packets = mailBox.PacketOutBox()
+	mailBox.SetDustClosure(f.getDustClosure())
 }
 
 func (f *mockChannelLink) Start() error {
