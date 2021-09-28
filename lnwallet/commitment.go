@@ -447,7 +447,7 @@ func (cb *CommitmentBuilder) createUnsignedCommitmentTx(ourBalance,
 
 	numHTLCs := int64(0)
 	for _, htlc := range filteredHTLCView.ourUpdates {
-		if htlcIsDust(
+		if HtlcIsDust(
 			cb.chanState.ChanType, false, isOurs, feePerKB,
 			htlc.Amount.ToAtoms(), dustLimit,
 		) {
@@ -457,7 +457,7 @@ func (cb *CommitmentBuilder) createUnsignedCommitmentTx(ourBalance,
 		numHTLCs++
 	}
 	for _, htlc := range filteredHTLCView.theirUpdates {
-		if htlcIsDust(
+		if HtlcIsDust(
 			cb.chanState.ChanType, true, isOurs, feePerKB,
 			htlc.Amount.ToAtoms(), dustLimit,
 		) {
@@ -536,7 +536,7 @@ func (cb *CommitmentBuilder) createUnsignedCommitmentTx(ourBalance,
 	// purposes of sorting.
 	cltvs := make([]uint32, len(commitTx.TxOut))
 	for _, htlc := range filteredHTLCView.ourUpdates {
-		if htlcIsDust(
+		if HtlcIsDust(
 			cb.chanState.ChanType, false, isOurs, feePerKB,
 			htlc.Amount.ToAtoms(), dustLimit,
 		) {
@@ -553,7 +553,7 @@ func (cb *CommitmentBuilder) createUnsignedCommitmentTx(ourBalance,
 		cltvs = append(cltvs, htlc.Timeout)
 	}
 	for _, htlc := range filteredHTLCView.theirUpdates {
-		if htlcIsDust(
+		if HtlcIsDust(
 			cb.chanState.ChanType, true, isOurs, feePerKB,
 			htlc.Amount.ToAtoms(), dustLimit,
 		) {
