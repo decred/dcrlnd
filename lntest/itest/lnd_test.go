@@ -12074,6 +12074,7 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	// TODO(roasbeef): create master balanced channel with all the monies?
 	aliceBobArgs := []string{
 		"--default-remote-max-htlcs=150",
+		"--dust-threshold=5000000",
 	}
 
 	err = lndHarness.SetUp(t, "", aliceBobArgs)
