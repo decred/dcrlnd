@@ -23,6 +23,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -200,8 +201,22 @@ func (n *NetworkHarness) SetUp(t *testing.T,
 
 	// Start the initial seeder nodes within the test network, then connect
 	// their respective RPC clients.
-	n.Alice = n.NewNode(t, "Alice", lndArgs)
-	n.Bob = n.NewNode(t, "Bob", lndArgs)
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		var err error
+		n.Alice, err = n.newNode(
+			"Alice", lndArgs, false, nil, n.dbBackend, true,
+		)
+		return err
+	})
+	eg.Go(func() error {
+		var err error
+		n.Bob, err = n.newNode(
+			"Bob", lndArgs, false, nil, n.dbBackend, true,
+		)
+		return err
+	})
+	require.NoError(t, eg.Wait())
 
 	// First, make a connection between the two nodes. This will wait until
 	// both nodes are fully started since the Connect RPC is guarded behind
