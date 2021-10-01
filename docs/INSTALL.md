@@ -107,6 +107,14 @@ running multiple versions simultaneously) you can use `make`:
 
 ```
 make install
+
+On FreeBSD, use gmake instead of make.
+
+Alternatively, if one doesn't wish to use `make`, then the `go` commands can be
+used directly:
+```shell
+⛰  go install -v ./...
+>>>>>>> f99cf4f7c (multi: Remove GO111MODULE env variable in Makefile)
 ```
 
 **Updating**
