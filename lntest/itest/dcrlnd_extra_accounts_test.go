@@ -89,6 +89,7 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 	require.Len(t.t, accounts.Accounts, 2)
 
 	// Gather the required data to build the SpendUTXOs request.
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	_, minerHeight, err := net.Miner.Node.GetBestBlock(ctxt)
 	require.NoError(t.t, err)
 	utxo := unspent.Utxos[0]

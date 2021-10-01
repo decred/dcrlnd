@@ -34,7 +34,7 @@ var (
 		"lndexec", itestLndBinary, "full path to lnd binary",
 	)
 
-	slowMineDelay = 50 * time.Millisecond
+	slowMineDelay = 20 * time.Millisecond
 )
 
 const (
@@ -217,7 +217,7 @@ func waitForNTxsInMempool(miner *rpcclient.Client, n int,
 // mineBlocks mine 'num' of blocks and check that blocks are present in
 // node blockchain. numTxs should be set to the number of transactions
 // (excluding the coinbase) we expect to be included in the first mined block.
-func mineBlocks(t *harnessTest, net *lntest.NetworkHarness,
+func mineBlocksFast(t *harnessTest, net *lntest.NetworkHarness,
 	num uint32, numTxs int) []*wire.MsgBlock {
 
 	// If we expect transactions to be included in the blocks we'll mine,
@@ -263,6 +263,19 @@ func mineBlocks(t *harnessTest, net *lntest.NetworkHarness,
 // transactions (excluding the coinbase) we expect to be included in the first
 // mined block. Between each mined block an artificial delay is introduced to
 // give all network participants time to catch up.
+//
+// NOTE: This function currently is just an alias for mineBlocksSlow.
+func mineBlocks(t *harnessTest, net *lntest.NetworkHarness,
+	num uint32, numTxs int) []*wire.MsgBlock {
+
+	return mineBlocksSlow(t, net, num, numTxs)
+}
+
+// mineBlocksSlow mines 'num' of blocks and checks that blocks are present in
+// the mining node's blockchain. numTxs should be set to the number of
+// transactions (excluding the coinbase) we expect to be included in the first
+// mined block. Between each mined block an artificial delay is introduced to
+// give all network participants time to catch up.
 func mineBlocksSlow(t *harnessTest, net *lntest.NetworkHarness,
 	num uint32, numTxs int) []*wire.MsgBlock {
 
@@ -283,7 +296,7 @@ func mineBlocksSlow(t *harnessTest, net *lntest.NetworkHarness,
 	blockHashes := make([]*chainhash.Hash, 0, num)
 
 	for i := uint32(0); i < num; i++ {
-		generatedHashes, err := net.Miner.Node.Generate(testctx.New(t), 1)
+		generatedHashes, err := net.Generate(1)
 		require.NoError(t.t, err, "generate blocks")
 		blockHashes = append(blockHashes, generatedHashes...)
 
