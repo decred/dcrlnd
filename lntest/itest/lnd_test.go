@@ -4996,12 +4996,15 @@ func testListChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	// Check the returned response is correct.
 	aliceChannel := resp.Channels[0]
 
+	// Calculate the dust limit we'll use for the test.
+	dustLimit := lnwallet.DustLimitForSize(input.P2PKHPkScriptSize)
+
 	// defaultConstraints is a ChannelConstraints with default values. It is
 	// used to test against Alice's local channel constraints.
 	defaultConstraints := &lnrpc.ChannelConstraints{
 		CsvDelay:            4,
 		ChanReserveAtoms:    6030,
-		DustLimitAtoms:      uint64(lnwallet.DustLimitForSize(input.P2PKHPkScriptSize)),
+		DustLimitAtoms:      uint64(dustLimit),
 		MaxPendingAmtMAtoms: 99000000,
 		MinHtlcMAtoms:       1000,
 		MaxAcceptedHtlcs:    bobRemoteMaxHtlcs,
@@ -5017,7 +5020,7 @@ func testListChannels(net *lntest.NetworkHarness, t *harnessTest) {
 	customizedConstraints := &lnrpc.ChannelConstraints{
 		CsvDelay:            4,
 		ChanReserveAtoms:    6030,
-		DustLimitAtoms:      uint64(lnwallet.DustLimitForSize(input.P2PKHPkScriptSize)),
+		DustLimitAtoms:      uint64(dustLimit),
 		MaxPendingAmtMAtoms: 99000000,
 		MinHtlcMAtoms:       customizedMinHtlc,
 		MaxAcceptedHtlcs:    aliceRemoteMaxHtlcs,
