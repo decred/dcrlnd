@@ -46,6 +46,11 @@ func (s *RPCSyncer) start(w *DcrWallet) error {
 		CA:      s.rpcConfig.Certificates,
 	}
 
+	disableDiscoverAccts, err := w.cfg.DB.AccountDiscoveryDisabled()
+	if err != nil {
+		return err
+	}
+
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
@@ -61,6 +66,10 @@ func (s *RPCSyncer) start(w *DcrWallet) error {
 			syncer.SetCallbacks(&chain.Callbacks{
 				Synced: w.onSyncerSynced,
 			})
+
+			if disableDiscoverAccts {
+				syncer.DisableDiscoverAccounts()
+			}
 
 			dcrwLog.Debugf("Starting rpc syncer")
 			err := syncer.Run(ctx)

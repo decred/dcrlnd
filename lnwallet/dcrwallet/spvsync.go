@@ -46,6 +46,11 @@ func (s *SPVSyncer) start(w *DcrWallet) error {
 
 	lookup := net.LookupIP
 
+	disableDiscoverAccts, err := w.cfg.DB.AccountDiscoveryDisabled()
+	if err != nil {
+		return err
+	}
+
 	addr := &net.TCPAddr{IP: net.ParseIP("::1"), Port: 0}
 	amgrDir := filepath.Join(s.cfg.AppDataDir, s.cfg.Net.Name)
 	amgr := addrmgr.New(amgrDir, lookup)
@@ -55,6 +60,10 @@ func (s *SPVSyncer) start(w *DcrWallet) error {
 		syncer.SetPersistentPeers(s.cfg.Peers)
 	}
 	w.wallet.SetNetworkBackend(syncer)
+
+	if disableDiscoverAccts {
+		syncer.DisableDiscoverAccounts()
+	}
 
 	syncer.SetNotifications(&spv.Notifications{
 		Synced: w.onSyncerSynced,

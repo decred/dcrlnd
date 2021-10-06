@@ -906,11 +906,17 @@ func (b *DcrWallet) onSyncerSynced(synced bool) {
 		return
 	}
 
+	// Record in the DB that the wallet doesn't need account discovery
+	// anymore.
+	err := b.cfg.DB.DisableAccountDiscovery()
+	if err != nil {
+		dcrwLog.Errorf("Unable to disable future account discoveries: %v", err)
+	}
+
 	// Now that the wallet is synced and address discovery has ended, we
 	// can create the keyring. We can only do this here (after sync)
 	// because address discovery might upgrade the underlying dcrwallet
 	// coin type.
-	var err error
 	b.walletKeyRing, err = newWalletKeyRing(b.wallet, b.cfg.DB)
 	if err != nil {
 		// Sign operations will fail, so signal the error and prevent
