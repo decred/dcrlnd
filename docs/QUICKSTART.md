@@ -2,9 +2,10 @@
 
 Super quick start, for knowledgeable individuals.
 
-- Use Go >= 1.13
-- Git clone as usual
-- Install as usual:
+- Use Go >= 1.16
+- Clone repo
+  - `git clone https://github.com/decred/dcrlnd`
+- Install:
   - `go install ./cmd/dcrlnd`
   - `go install ./cmd/dcrlncli`
 - These should now work:
@@ -20,21 +21,13 @@ Create the config file ( `~/.dcrlnd/dcrlnd.conf` on linux,
 ```
 [Application Options]
 
-debuglevel = debug
-# alias = "add a descriptive name and uncomment"
-
-[Decred]
-node = "dcrd"
+node = "dcrw"
 testnet = 1
 
-[dcrd]
-dcrd.rpchost = localhost:19109
-dcrd.rpcuser = USER
-dcrd.rpcpass = PASSWORD
-dcrd.rpccert = /home/user/.dcrd/rpc.cert
-```
+[dcrwallet]
 
-Modify as needed.
+dcrwallet.spv = 1
+```
 
 # Running
 
@@ -44,7 +37,13 @@ Create the wallet: `$ dcrlncli create`. Use a minimum of 8 char password. Save t
 
 # Interacting
 
-To make it easier: `$ alias ln=dcrlncli --testnet` (the important bit is to always specify `--testnet` when invoking `dcrlncli`).
+To make it easier to interact to the node (The important bit is to always
+specify `--testnet` when invoking `dcrlncli`):
+
+```
+$ alias ln=dcrlncli --testnet`
+```
+
 
 Get a new wallet address: `$ ln newaddress`.
 
@@ -52,9 +51,10 @@ Send funds to it (hint: [faucet.decred.org](https://faucet.decred.org)).
 
 Get the balance: `$ ln walletbalance`
 
-Connect to an online node: `$ ln connect 0374ee2dec7de3732c42b4f8229c001c4297b4858fac27069b4bdba854348916a8@207.246.122.217`
+Connect to an online node: `$ ln connect
+038fde001dbe4d6286ab168cfd1e9711ad0cbb8fc4e3c2312f2b42063b72af8e71@207.246.122.217:9735`
 
-Open a channel: `$ ln openchannel --node_key=0374ee2dec7de3732c42b4f8229c001c4297b4858fac27069b4bdba854348916a8 --local_amt=100000000 --push_amt 50000000`
+Open a channel: `$ ln openchannel --node_key=038fde001dbe4d6286ab168cfd1e9711ad0cbb8fc4e3c2312f2b42063b72af8e71 --local_amt=100000000 --push_amt 50000000`
 
 Check on channel status:
 
@@ -63,7 +63,7 @@ $ ln pendingchannels
 $ ln listchannels
 ```
 
-Create a payment request (invoice): `$ ln addinvoice --amt=6969 --memo="Time_to_ pay_the_piper!"`
+Create a payment request (invoice): `$ ln addinvoice --amt=6969 --memo="Time_to_pay_the_piper!"`
 
 Pay a payment request:
 

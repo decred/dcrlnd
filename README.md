@@ -85,12 +85,16 @@ https://decred.org/community
 
 ## Installation
 
-  Knowledgeable users may use the [quickstart guide](/docs/QUICKSTART.md).
+Knowledgeable users may use the [quickstart guide](/docs/QUICKSTART.md).
 
-  For more detailed instructions, please see [the installation
-  instructions](docs/INSTALL.md).
+For more detailed instructions, please see [the installation
+instructions](docs/INSTALL.md).
 
-  And a sample config file with annotated options is [also available here](sample-dcrlnd.conf).
+The [operation modes](docs/operation_modes.md) document lists how `dcrlnd` may
+connect to the Decred network to run its operations.
+
+And a sample config file with annotated options is [also available
+here](sample-dcrlnd.conf).
 
 ## Quick Simnet Network
 
