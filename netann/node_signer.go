@@ -26,7 +26,7 @@ func NewNodeSigner(keySigner keychain.SingleKeyMessageSigner) *NodeSigner {
 // resident node's private key described in the key locator. If the target key
 // locator is _not_ the node's private key, then an error will be returned.
 func (n *NodeSigner) SignMessage(keyLoc keychain.KeyLocator,
-	msg []byte) (*ecdsa.Signature, error) {
+	msg []byte, doubleHash bool) (*ecdsa.Signature, error) {
 
 	// If this isn't our identity public key, then we'll exit early with an
 	// error as we can't sign with this key.
@@ -35,7 +35,7 @@ func (n *NodeSigner) SignMessage(keyLoc keychain.KeyLocator,
 	}
 
 	// Otherwise, we'll sign the chainhash of the target message.
-	sig, err := n.keySigner.SignMessage(msg, false)
+	sig, err := n.keySigner.SignMessage(msg, doubleHash)
 	if err != nil {
 		return nil, fmt.Errorf("can't sign the message: %v", err)
 	}

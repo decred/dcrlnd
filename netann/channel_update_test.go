@@ -19,7 +19,7 @@ type mockSigner struct {
 }
 
 func (m *mockSigner) SignMessage(_ keychain.KeyLocator,
-	_ []byte) (*ecdsa.Signature, error) {
+	_ []byte, _ bool) (*ecdsa.Signature, error) {
 
 	if m.err != nil {
 		return nil, m.err

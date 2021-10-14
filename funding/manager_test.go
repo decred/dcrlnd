@@ -398,7 +398,7 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 		Notifier:     chainNotifier,
 		FeeEstimator: estimator,
 		SignMessage: func(_ keychain.KeyLocator,
-			_ []byte) (*ecdsa.Signature, error) {
+			_ []byte, _ bool) (*ecdsa.Signature, error) {
 
 			return testSig, nil
 		},
@@ -546,7 +546,7 @@ func recreateAliceFundingManager(t *testing.T, alice *testNode) {
 		Notifier:     oldCfg.Notifier,
 		FeeEstimator: oldCfg.FeeEstimator,
 		SignMessage: func(_ keychain.KeyLocator,
-			_ []byte) (*ecdsa.Signature, error) {
+			_ []byte, _ bool) (*ecdsa.Signature, error) {
 
 			return testSig, nil
 		},

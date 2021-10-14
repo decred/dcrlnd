@@ -453,8 +453,8 @@ type MessageSigner interface {
 	// described in the key locator. If the target private key is unable to
 	// be found, then an error will be returned. The actual digest signed is
 	// the chainhash of the passed message.
-	SignMessage(keyLoc keychain.KeyLocator, msg []byte) (*ecdsa.Signature,
-		error)
+	SignMessage(keyLoc keychain.KeyLocator, msg []byte,
+		doubleHash bool) (*ecdsa.Signature, error)
 }
 
 // WalletDriver represents a "driver" for a particular concrete

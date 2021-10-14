@@ -114,7 +114,7 @@ func (s *SingleSigner) ComputeInputScript(tx *wire.MsgTx,
 // SignMessage takes a public key and a message and only signs the message
 // with the stored private key if the public key matches the private key.
 func (s *SingleSigner) SignMessage(keyLoc keychain.KeyLocator,
-	msg []byte) (*ecdsa.Signature, error) {
+	msg []byte, doubleHash bool) (*ecdsa.Signature, error) {
 
 	mockKeyLoc := s.KeyLoc
 	if s.KeyLoc.IsEmpty() {
@@ -125,7 +125,13 @@ func (s *SingleSigner) SignMessage(keyLoc keychain.KeyLocator,
 		return nil, fmt.Errorf("unknown public key")
 	}
 
-	digest := chainhash.HashB(msg)
+	var digest []byte
+	if doubleHash {
+		digest1 := chainhash.HashB(msg)
+		digest = chainhash.HashB(digest1)
+	} else {
+		digest = chainhash.HashB(msg)
+	}
 	sign := ecdsa.Sign(s.Privkey, digest)
 	return sign, nil
 }
