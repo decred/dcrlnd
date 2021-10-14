@@ -362,6 +362,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		createCommand,
+		createWatchOnlyCommand,
 		unlockCommand,
 		changePasswordCommand,
 		newAddressCommand,
