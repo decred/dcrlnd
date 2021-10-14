@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrlnd/btcwalletcompat"
+	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
 )
 
 // WalletConfig encapsulates the config parameters needed to init a wallet
@@ -27,6 +28,8 @@ type WalletConfig struct {
 	// AccountNb is the root account from which the dcrlnd keys are
 	// derived when running based on a remote wallet.
 	AccountNb int32
+
+	Syncer dcrwallet.WalletSyncer
 
 	// CoinSelectionStrategy is the coin selection strategy to use when
 	// sending coins on-chain.

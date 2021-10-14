@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -25,8 +24,6 @@ import (
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
-	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
-	"github.com/decred/dcrlnd/lnwallet/remotedcrwallet"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing/chainview"
 	"github.com/decred/dcrlnd/walletunlocker"
@@ -456,11 +453,17 @@ func NewPartialChainControl(cfg *Config) (*PartialChainControl, func(), error) {
 // full-node, another backed by a running bitcoind full-node, and the other
 // backed by a running neutrino light client instance. When running with a
 // neutrino light client instance, `neutrinoCS` must be non-nil.
-func NewChainControl(walletConfig *WalletConfig,
+func NewChainControl(walletConfig lnwallet.Config,
+	msgSigner lnwallet.MessageSigner,
 	pcc *PartialChainControl) (*ChainControl, func(), error) {
 
 	cc := &ChainControl{
 		PartialChainControl: pcc,
+		MsgSigner:           msgSigner,
+		Signer:              walletConfig.Signer,
+		ChainIO:             walletConfig.ChainIO,
+		Wc:                  walletConfig.WalletController,
+		KeyRing:             walletConfig.SecretKeyRing,
 	}
 
 	ccCleanup := func() {
@@ -468,100 +471,6 @@ func NewChainControl(walletConfig *WalletConfig,
 			if err := cc.Wallet.Shutdown(); err != nil {
 				log.Errorf("Failed to shutdown wallet: %v", err)
 			}
-		}
-	}
-
-	cfg := pcc.Cfg
-	wlCfg := pcc.Cfg.WalletUnlockParams
-	walletConn := pcc.Cfg.WalletUnlockParams.Conn
-	var secretKeyRing keychain.SecretKeyRing
-	if walletConn != nil {
-		// Initialize an RPC syncer for this wallet and use it as
-		// blockchain IO source.
-		dcrwConfig := &remotedcrwallet.Config{
-			PrivatePass:   walletConfig.PrivatePass,
-			NetParams:     cfg.ActiveNetParams.Params,
-			DB:            cfg.FullDB,
-			Conn:          wlCfg.Conn,
-			AccountNumber: walletConfig.AccountNb,
-			ChainIO:       cc.ChainIO,
-			BlockCache:    cfg.BlockCache,
-		}
-
-		wc, err := remotedcrwallet.New(*dcrwConfig)
-		if err != nil {
-			err := fmt.Errorf("unable to create remote wallet "+
-				"controller: %v\n", err)
-			return nil, nil, err
-		}
-
-		secretKeyRing = wc
-		cc.MsgSigner = wc
-		cc.Signer = wc
-		cc.Wc = wc
-		cc.KeyRing = wc
-		cc.ChainIO = wc
-
-	} else {
-		// Initialize the appropriate syncer.
-		var syncer dcrwallet.WalletSyncer
-		var err error
-		switch cfg.DcrwMode.SPV {
-		case false:
-			syncer, err = dcrwallet.NewRPCSyncer(*pcc.RPCConfig,
-				cfg.ActiveNetParams.Params)
-		case true:
-			spvCfg := &dcrwallet.SPVSyncerConfig{
-				Peers:      cfg.DcrwMode.SPVConnect,
-				Net:        cfg.ActiveNetParams.Params,
-				AppDataDir: filepath.Join(cfg.Decred.ChainDir),
-				DialFunc:   cfg.DcrwMode.DialFunc,
-			}
-			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
-		}
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if cfg.Decred.Node == "dcrd" {
-			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*cc.RPCConfig,
-				cfg.ActiveNetParams.Params, cfg.BlockCache)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-
-		dcrwConfig := &dcrwallet.Config{
-			Syncer:         syncer,
-			ChainIO:        cc.ChainIO,
-			PrivatePass:    walletConfig.PrivatePass,
-			PublicPass:     walletConfig.PublicPass,
-			Birthday:       walletConfig.Birthday,
-			RecoveryWindow: walletConfig.RecoveryWindow,
-			DataDir:        cfg.Decred.ChainDir,
-			NetParams:      cfg.ActiveNetParams.Params,
-			Wallet:         wlCfg.Wallet,
-			Loader:         wlCfg.Loader,
-			BlockCache:     cfg.BlockCache,
-			DB:             cfg.FullDB,
-		}
-
-		wc, err := dcrwallet.New(*dcrwConfig)
-		if err != nil {
-			err := fmt.Errorf("unable to create wallet controller: "+
-				"%v\n", err)
-			return nil, nil, err
-		}
-
-		secretKeyRing = wc
-		cc.MsgSigner = wc
-		cc.Signer = wc
-		cc.Wc = wc
-		cc.KeyRing = wc
-
-		if cfg.Decred.Node != "dcrd" {
-			cc.ChainIO = wc
 		}
 	}
 
@@ -573,26 +482,13 @@ func NewChainControl(walletConfig *WalletConfig,
 		return err
 	}
 
-	// Create, and start the lnwallet, which handles the core payment
-	// channel logic, and exposes control via proxy state machines.
-	walletCfg := lnwallet.Config{
-		Database:           pcc.Cfg.ChanStateDB,
-		Notifier:           cc.ChainNotifier,
-		WalletController:   cc.Wc,
-		Signer:             cc.Signer,
-		FeeEstimator:       cc.FeeEstimator,
-		SecretKeyRing:      secretKeyRing,
-		ChainIO:            cc.ChainIO,
-		DefaultConstraints: cc.ChannelConstraints,
-		NetParams:          *cfg.ActiveNetParams.Params,
-	}
-	lnWallet, err := lnwallet.NewLightningWallet(walletCfg)
+	lnWallet, err := lnwallet.NewLightningWallet(walletConfig)
 	if err != nil {
-		fmt.Printf("unable to create wallet: %v\n", err)
+		err := fmt.Errorf("unable to create wallet: %v", err)
 		return nil, ccCleanup, err
 	}
 	if err := lnWallet.Startup(); err != nil {
-		fmt.Printf("unable to start wallet: %v\n", err)
+		err := fmt.Errorf("unable to start wallet: %v", err)
 		return nil, ccCleanup, err
 	}
 

@@ -1391,12 +1391,20 @@ func (c *Config) ImplementationConfig(
 	interceptor signal.Interceptor) *ImplementationCfg {
 
 	defaultImpl := NewDefaultWalletImpl(c, ltndLog, interceptor)
+
+	// Switch to remote wallet mode if needed.
+	var chainCC ChainControlBuilder = defaultImpl
+	if c.Dcrwallet.GRPCHost != "" && c.Dcrwallet.CertPath != "" {
+		chainCC = &RemoteWalletBuilder{logger: ltndLog}
+	}
+
 	return &ImplementationCfg{
 		GrpcRegistrar:       defaultImpl,
 		RestRegistrar:       defaultImpl,
 		ExternalValidator:   defaultImpl,
 		DatabaseBuilder:     NewDefaultDatabaseBuilder(c, ltndLog),
-		ChainControlBuilder: defaultImpl,
+		WalletConfigBuilder: defaultImpl,
+		ChainControlBuilder: chainCC,
 	}
 }
 

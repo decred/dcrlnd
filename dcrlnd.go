@@ -4,14 +4,18 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"io"
 
 	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
+	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
 	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
+	"github.com/decred/dcrlnd/lnwallet/remotedcrwallet"
 	"github.com/decred/dcrlnd/signal"
+	"github.com/decred/slog"
 	"gopkg.in/macaroon-bakery.v2/bakery"
 )
 
@@ -78,4 +82,60 @@ func noSeedBackupWalletInit(ctx context.Context, cfg *Config, privPass, pubPass 
 		return nil, err
 	}
 	return loader.CreateNewWallet(ctx, pubPass, privPass, seed[:])
+}
+
+type RemoteWalletBuilder struct {
+	logger slog.Logger
+}
+
+func (rb *RemoteWalletBuilder) BuildChainControl(
+	partialChainControl *chainreg.PartialChainControl,
+	walletConfig *chainreg.WalletConfig) (*chainreg.ChainControl, func(), error) {
+
+	cfg := partialChainControl.Cfg
+
+	// Initialize an RPC syncer for this wallet and use it as
+	// blockchain IO source.
+	dcrwConfig := &remotedcrwallet.Config{
+		PrivatePass:   walletConfig.PrivatePass,
+		NetParams:     cfg.ActiveNetParams.Params,
+		DB:            cfg.FullDB,
+		Conn:          partialChainControl.Cfg.WalletUnlockParams.Conn,
+		AccountNumber: walletConfig.AccountNb,
+		BlockCache:    cfg.BlockCache,
+	}
+
+	walletController, err := remotedcrwallet.New(*dcrwConfig)
+	if err != nil {
+		err := fmt.Errorf("unable to create remote wallet "+
+			"controller: %v\n", err)
+		return nil, nil, err
+	}
+
+	// Create, and start the lnwallet, which handles the core payment
+	// channel logic, and exposes control via proxy state machines.
+	lnWalletConfig := lnwallet.Config{
+		Database:           partialChainControl.Cfg.ChanStateDB,
+		Notifier:           partialChainControl.ChainNotifier,
+		WalletController:   walletController,
+		Signer:             walletController,
+		FeeEstimator:       partialChainControl.FeeEstimator,
+		SecretKeyRing:      walletController,
+		ChainIO:            walletController,
+		DefaultConstraints: partialChainControl.ChannelConstraints,
+		NetParams:          *partialChainControl.Cfg.ActiveNetParams.Params,
+	}
+
+	// We've created the wallet configuration now, so we can finish
+	// initializing the main chain control.
+	activeChainControl, cleanUp, err := chainreg.NewChainControl(
+		lnWalletConfig, walletController, partialChainControl,
+	)
+	if err != nil {
+		err := fmt.Errorf("unable to create chain control: %v", err)
+		rb.logger.Error(err)
+		return nil, nil, err
+	}
+
+	return activeChainControl, cleanUp, nil
 }

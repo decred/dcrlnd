@@ -80,15 +80,24 @@ type DatabaseBuilder interface {
 	BuildDatabase(ctx context.Context) (*DatabaseInstances, func(), error)
 }
 
+// WalletConfigBuilder is an interface that must be satisfied by a custom wallet
+// implementation.
+type WalletConfigBuilder interface {
+	// BuildWalletConfig is responsible for creating or unlocking and then
+	// fully initializing a wallet.
+	BuildWalletConfig(context.Context, *DatabaseInstances,
+		*rpcperms.InterceptorChain,
+		[]*ListenerWithSignal) (*chainreg.PartialChainControl,
+		*chainreg.WalletConfig, func(), error)
+}
+
 // ChainControlBuilder is an interface that must be satisfied by a custom wallet
 // implementation.
 type ChainControlBuilder interface {
-	// BuildChainControl is responsible for creating or unlocking and then
-	// fully initializing a wallet and returning it as part of a fully
-	// populated chain control instance.
-	BuildChainControl(context.Context, *DatabaseInstances,
-		*rpcperms.InterceptorChain,
-		[]*ListenerWithSignal) (*chainreg.ChainControl, func(), error)
+	// BuildChainControl is responsible for creating a fully populated chain
+	// control instance from a wallet.
+	BuildChainControl(*chainreg.PartialChainControl,
+		*chainreg.WalletConfig) (*chainreg.ChainControl, func(), error)
 }
 
 // ImplementationCfg is a struct that holds all configuration items for
@@ -109,6 +118,10 @@ type ImplementationCfg struct {
 	// DatabaseBuilder is a type that can provide lnd's main database
 	// backend instances.
 	DatabaseBuilder
+
+	// WalletConfigBuilder is a type that can provide a wallet configuration
+	// with a fully loaded and unlocked wallet.
+	WalletConfigBuilder
 
 	// ChainControlBuilder is a type that can provide a custom wallet
 	// implementation.
@@ -189,15 +202,14 @@ func (d *DefaultWalletImpl) Permissions() map[string][]bakery.Op {
 	return nil
 }
 
-// BuildChainControl is responsible for creating or unlocking and then fully
-// initializing a wallet and returning it as part of a fully populated chain
-// control instance.
+// BuildWalletConfig is responsible for creating or unlocking and then
+// fully initializing a wallet.
 //
-// NOTE: This is part of the ChainControlBuilder interface.
-func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
+// NOTE: This is part of the WalletConfigBuilder interface.
+func (d *DefaultWalletImpl) BuildWalletConfig(ctx context.Context,
 	dbs *DatabaseInstances, interceptorChain *rpcperms.InterceptorChain,
-	grpcListeners []*ListenerWithSignal) (*chainreg.ChainControl, func(),
-	error) {
+	grpcListeners []*ListenerWithSignal) (*chainreg.PartialChainControl,
+	*chainreg.WalletConfig, func(), error) {
 
 	// Keep track of our various cleanup functions. We use a defer function
 	// as well to not repeat ourselves with every return statement.
@@ -246,7 +258,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 	d.pwService.SetMacaroonDB(dbs.MacaroonDB)
 	walletExists, err := d.pwService.WalletExists()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	if !walletExists {
@@ -263,9 +275,9 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 	if d.cfg.WalletUnlockPasswordFile != "" && !walletExists &&
 		!d.cfg.WalletUnlockAllowCreate && !isRemoteWallet {
 
-		return nil, nil, fmt.Errorf("wallet unlock password file was " +
-			"specified but wallet does not exist; initialize the " +
-			"wallet before using auto unlocking")
+		return nil, nil, nil, fmt.Errorf("wallet unlock password file " +
+			"was specified but wallet does not exist; initialize " +
+			"the wallet before using auto unlocking")
 	}
 
 	// What wallet mode are we running in? We've already made sure the no
@@ -278,7 +290,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 		d.logger.Warnf("RUNNING IN NO SEED BACKUP MODE")
 		wallet, err := noSeedBackupWalletInit(ctx, d.cfg, privateWalletPw, publicWalletPw)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		walletInitParams.Wallet = wallet
 		walletInitParams.Password = privateWalletPw
@@ -289,8 +301,8 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 			"password provided in file")
 		pwBytes, err := ioutil.ReadFile(d.cfg.WalletUnlockPasswordFile)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error reading password "+
-				"from file %s: %v",
+			return nil, nil, nil, fmt.Errorf("error reading "+
+				"password from file %s: %v",
 				d.cfg.WalletUnlockPasswordFile, err)
 		}
 
@@ -305,8 +317,8 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 			ctx, pwBytes, 0,
 		)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error unlocking wallet "+
-				"with password from file: %v", err)
+			return nil, nil, nil, fmt.Errorf("error unlocking "+
+				"wallet with password from file: %v", err)
 		}
 
 		cleanUpTasks = append(cleanUpTasks, func() {
@@ -326,7 +338,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 	// over RPC.
 	default:
 		if err := d.interceptor.Notifier.NotifyReady(false); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		params, err := waitForWalletPassword(
@@ -337,7 +349,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 			err := fmt.Errorf("unable to set up wallet password "+
 				"listeners: %v", err)
 			d.logger.Error(err)
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		walletInitParams = *params
@@ -369,7 +381,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 			err := fmt.Errorf("unable to set up macaroon "+
 				"authentication: %v", err)
 			d.logger.Error(err)
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		cleanUpTasks = append(cleanUpTasks, func() {
 			if err := macaroonService.Close(); err != nil {
@@ -385,7 +397,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 		if err != nil && err != macaroons.ErrAlreadyUnlocked {
 			err := fmt.Errorf("unable to unlock macaroons: %v", err)
 			d.logger.Error(err)
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		// In case we actually needed to unlock the wallet, we now need
@@ -398,7 +410,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 				ctx, macaroonService, adminPermissions(),
 			)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 
 			// The channel is buffered by one element so writing
@@ -429,7 +441,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 				err := fmt.Errorf("unable to create macaroons "+
 					"%v", err)
 				d.logger.Error(err)
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 		}
 
@@ -517,7 +529,7 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 		err := fmt.Errorf("unable to create partial chain control: %v",
 			err)
 		d.logger.Error(err)
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	walletConfig := &chainreg.WalletConfig{
@@ -544,23 +556,105 @@ func (d *DefaultWalletImpl) BuildChainControl(ctx context.Context,
 		walletConfig.CoinSelectionStrategy = btcwalletcompat.CoinSelectionRandom
 
 	default:
-		return nil, nil, fmt.Errorf("unknown coin selection strategy "+
-			"%v", d.cfg.CoinSelectionStrategy)
+		return nil, nil, nil, fmt.Errorf("unknown coin selection "+
+			"strategy %v", d.cfg.CoinSelectionStrategy)
+	}
+
+	// Initialize the appropriate syncer.
+	switch {
+	case !isRemoteWallet && !d.cfg.Dcrwallet.SPV:
+		walletConfig.Syncer, err = dcrwallet.NewRPCSyncer(*partialChainControl.RPCConfig,
+			d.cfg.ActiveNetParams.Params)
+	case !isRemoteWallet && d.cfg.Dcrwallet.SPV:
+		spvCfg := &dcrwallet.SPVSyncerConfig{
+			Peers:      d.cfg.Dcrwallet.SPVConnect,
+			Net:        d.cfg.ActiveNetParams.Params,
+			AppDataDir: filepath.Join(d.cfg.Decred.ChainDir),
+			DialFunc:   d.cfg.Dcrwallet.DialFunc,
+		}
+		walletConfig.Syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
+	}
+
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	earlyExit = false
+	return partialChainControl, walletConfig, cleanUp, nil
+}
+
+// BuildChainControl is responsible for creating a fully populated chain
+// control instance from a wallet.
+//
+// NOTE: This is part of the ChainControlBuilder interface.
+func (d *DefaultWalletImpl) BuildChainControl(
+	partialChainControl *chainreg.PartialChainControl,
+	walletConfig *chainreg.WalletConfig) (*chainreg.ChainControl, func(), error) {
+
+	cfg := partialChainControl.Cfg
+
+	var chainIO lnwallet.BlockChainIO
+	if partialChainControl.Cfg.Decred.Node == "dcrd" {
+		var err error
+		chainIO, err = dcrwallet.NewRPCChainIO(*partialChainControl.RPCConfig,
+			cfg.ActiveNetParams.Params, cfg.BlockCache)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	dcrwConfig := &dcrwallet.Config{
+		Syncer:         walletConfig.Syncer,
+		ChainIO:        chainIO,
+		PrivatePass:    walletConfig.PrivatePass,
+		PublicPass:     walletConfig.PublicPass,
+		Birthday:       walletConfig.Birthday,
+		RecoveryWindow: walletConfig.RecoveryWindow,
+		DataDir:        cfg.Decred.ChainDir,
+		NetParams:      cfg.ActiveNetParams.Params,
+		Wallet:         partialChainControl.Cfg.WalletUnlockParams.Wallet,
+		Loader:         partialChainControl.Cfg.WalletUnlockParams.Loader,
+		BlockCache:     cfg.BlockCache,
+		DB:             cfg.FullDB,
+	}
+
+	walletController, err := dcrwallet.New(*dcrwConfig)
+	if err != nil {
+		err := fmt.Errorf("unable to create wallet controller: %v\n", err)
+		return nil, nil, err
+	}
+
+	// When using dcrwallet mode, set the the chainIO to be the wallet
+	// itself.
+	if chainIO == nil {
+		chainIO = walletController
+	}
+
+	// Create, and start the lnwallet, which handles the core payment
+	// channel logic, and exposes control via proxy state machines.
+	lnWalletConfig := lnwallet.Config{
+		Database:           partialChainControl.Cfg.ChanStateDB,
+		Notifier:           partialChainControl.ChainNotifier,
+		WalletController:   walletController,
+		Signer:             walletController,
+		FeeEstimator:       partialChainControl.FeeEstimator,
+		SecretKeyRing:      walletController,
+		ChainIO:            chainIO,
+		DefaultConstraints: partialChainControl.ChannelConstraints,
+		NetParams:          *partialChainControl.Cfg.ActiveNetParams.Params,
 	}
 
 	// We've created the wallet configuration now, so we can finish
 	// initializing the main chain control.
-	activeChainControl, ccCleanup, err := chainreg.NewChainControl(
-		walletConfig, partialChainControl,
+	activeChainControl, cleanUp, err := chainreg.NewChainControl(
+		lnWalletConfig, walletController, partialChainControl,
 	)
-	cleanUpTasks = append(cleanUpTasks, ccCleanup)
 	if err != nil {
 		err := fmt.Errorf("unable to create chain control: %v", err)
 		d.logger.Error(err)
 		return nil, nil, err
 	}
 
-	earlyExit = false
 	return activeChainControl, cleanUp, nil
 }
 
