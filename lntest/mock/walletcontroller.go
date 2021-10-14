@@ -167,8 +167,8 @@ func (w *WalletController) ListLeasedOutputs() ([]*lnwallet.LockedOutput, error)
 }
 
 // FundPsbt currently does nothing.
-func (w *WalletController) FundPsbt(_ *psbt.Packet,
-	_ chainfee.AtomPerKByte) (int32, error) {
+func (w *WalletController) FundPsbt(_ *psbt.Packet, _ int32,
+	_ chainfee.AtomPerKByte, _ string) (int32, error) {
 
 	return 0, nil
 }

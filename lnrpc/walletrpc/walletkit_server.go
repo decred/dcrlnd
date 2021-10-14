@@ -1358,7 +1358,9 @@ func (w *WalletKit) FundPsbt(_ context.Context,
 		// We can now ask the wallet to fund the TX. This will not yet
 		// lock any coins but might still change the wallet DB by
 		// generating a new change address.
-		changeIndex, err = w.cfg.Wallet.FundPsbt(packet, feeAtomsPerKB)
+		changeIndex, err = w.cfg.Wallet.FundPsbt(
+			packet, minConfs, feeAtomsPerKB, req.Account,
+		)
 		if err != nil {
 			return fmt.Errorf("wallet couldn't fund PSBT: %v", err)
 		}

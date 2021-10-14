@@ -287,8 +287,8 @@ func (b *DcrWallet) SignMessage(keyDesc keychain.KeyLocator,
 }
 
 // FundPsbt currently does nothing.
-func (b *DcrWallet) FundPsbt(_ *psbt.Packet,
-	_ chainfee.AtomPerKByte) (int32, error) {
+func (b *DcrWallet) FundPsbt(_ *psbt.Packet, _ int32,
+	_ chainfee.AtomPerKByte, _ string) (int32, error) {
 
 	return 0, fmt.Errorf("FundPSBT not supported")
 }

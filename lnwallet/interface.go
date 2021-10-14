@@ -345,15 +345,16 @@ type WalletController interface {
 	// is returned.
 	//
 	// NOTE: If the packet doesn't contain any inputs, coin selection is
-	// performed automatically. If the packet does contain any inputs, it is
-	// assumed that full coin selection happened externally and no
-	// additional inputs are added. If the specified inputs aren't enough to
-	// fund the outputs with the given fee rate, an error is returned.
-	// No lock lease is acquired for any of the selected/validated inputs.
-	// It is in the caller's responsibility to lock the inputs before
-	// handing them out.
-	FundPsbt(packet *psbt.Packet, feeRate chainfee.AtomPerKByte) (int32,
-		error)
+	// performed automatically. The account parameter must be non-empty as
+	// it determines which set of coins are eligible for coin selection. If
+	// the packet does contain any inputs, it is assumed that full coin
+	// selection happened externally and no additional inputs are added. If
+	// the specified inputs aren't enough to fund the outputs with the given
+	// fee rate, an error is returned. No lock lease is acquired for any of
+	// the selected/validated inputs. It is in the caller's responsibility
+	// to lock the inputs before handing them out.
+	FundPsbt(packet *psbt.Packet, minConfs int32,
+		feeRate chainfee.AtomPerKByte, account string) (int32, error)
 
 	// FinalizePsbt expects a partial transaction with all inputs and
 	// outputs fully declared and tries to sign all inputs that belong to
