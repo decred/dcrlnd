@@ -1,3 +1,4 @@
+//go:build no_signrpc
 // +build no_signrpc
 
 package signrpc

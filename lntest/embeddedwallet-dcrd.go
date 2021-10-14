@@ -1,3 +1,4 @@
+//go:build !remotewallet && !embeddedwallet_dcrw
 // +build !remotewallet,!embeddedwallet_dcrw
 
 package lntest

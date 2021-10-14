@@ -1,3 +1,4 @@
+//go:build no_invoicesrpc
 // +build no_invoicesrpc
 
 package invoicesrpc

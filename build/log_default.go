@@ -1,3 +1,4 @@
+//go:build !stdlog && !nolog && !filelog
 // +build !stdlog,!nolog,!filelog
 
 package build

@@ -1,3 +1,4 @@
+//go:build no_chainrpc
 // +build no_chainrpc
 
 package chainrpc

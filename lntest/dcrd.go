@@ -1,3 +1,4 @@
+//go:build dcrd
 // +build dcrd
 
 package lntest
