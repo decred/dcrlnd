@@ -228,8 +228,8 @@ func psbtSendFromImportedAccount(t *harnessTest, srcNode, destNode,
 				},
 			},
 		},
-		Fees: &walletrpc.FundPsbtRequest_SatPerVbyte{
-			SatPerVbyte: 1,
+		Fees: &walletrpc.FundPsbtRequest_AtomsPerByte{
+			AtomsPerByte: 1,
 		},
 		Account: account,
 	}
@@ -358,8 +358,8 @@ func fundChanAndCloseFromImportedAccount(t *harnessTest, srcNode, destNode,
 		Template: &walletrpc.FundPsbtRequest_Psbt{
 			Psbt: rawPsbt,
 		},
-		Fees: &walletrpc.FundPsbtRequest_SatPerVbyte{
-			SatPerVbyte: 1,
+		Fees: &walletrpc.FundPsbtRequest_AtomsPerByte{
+			AtomsPerByte: 1,
 		},
 		Account: account,
 	}
@@ -596,9 +596,6 @@ func testWalletImportAccount(net *lntest.NetworkHarness, t *harnessTest) {
 func testWalletImportAccountScenario(net *lntest.NetworkHarness, t *harnessTest,
 	addrType walletrpc.AddressType) {
 
-	ctxb := context.Background()
-	const utxoAmt int64 = dcrutil.AtomsPerCoin
-
 	// We'll start our test by having two nodes, Carol and Dave. Carol's
 	// default wallet account will be imported into Dave's node.
 	carol := net.NewNode(t.t, "carol", nil)
@@ -606,6 +603,15 @@ func testWalletImportAccountScenario(net *lntest.NetworkHarness, t *harnessTest,
 
 	dave := net.NewNode(t.t, "dave", nil)
 	defer shutdownAndAssert(net, t, dave)
+
+	runWalletImportAccountScenario(net, t, addrType, carol, dave)
+}
+
+func runWalletImportAccountScenario(net *lntest.NetworkHarness, t *harnessTest,
+	addrType walletrpc.AddressType, carol, dave *lntest.HarnessNode) {
+
+	ctxb := context.Background()
+	const utxoAmt int64 = dcrutil.AtomsPerCoin
 
 	ctxt, cancel := context.WithTimeout(ctxb, defaultTimeout)
 	defer cancel()

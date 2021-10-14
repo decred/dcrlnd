@@ -23,7 +23,6 @@ import (
 func testPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	t.Skipf("psbt is not currently implemented in dcrlnd")
 
-	ctxb := context.Background()
 	const chanSize = defaultChanAmt
 
 	// First, we'll create two new nodes that we'll use to open channels
@@ -35,6 +34,18 @@ func testPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	dave := net.NewNode(t.t, "dave", nil)
 	defer shutdownAndAssert(net, t, dave)
 
+	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
+	runPsbtChanFunding(net, t, carol, dave)
+}
+
+// runPsbtChanFunding makes sure a channel can be opened between carol and dave
+// by using a Partially Signed Bitcoin Transaction that funds the channel
+// multisig funding output.
+func runPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest, carol,
+	dave *lntest.HarnessNode) {
+
+	ctxb := context.Background()
+	const chanSize = funding.MaxDecredFundingAmount
 	net.SendCoins(t.t, dcrutil.AtomsPerCoin, dave)
 
 	// Before we start the test, we'll ensure both sides are connected so
