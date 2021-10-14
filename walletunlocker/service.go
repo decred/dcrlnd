@@ -116,6 +116,14 @@ type WalletInitMsg struct {
 	// through an extended key instead of an aezeed.
 	ExtendedKeyBirthday time.Time
 
+	// WatchOnlyBirthday is the birthday of the master root key the above
+	// watch-only account xpubs were derived from.
+	WatchOnlyBirthday time.Time
+
+	// WatchOnlyMasterFingerprint is the fingerprint of the master root key
+	// the above watch-only account xpubs were derived from.
+	WatchOnlyMasterFingerprint uint32
+
 	// RecoveryWindow is the address look-ahead used when restoring a seed
 	// with existing funds. A recovery window zero indicates that no
 	// recovery should be attempted, such as after the wallet's initial
@@ -525,6 +533,16 @@ func (u *UnlockerService) InitWallet(ctx context.Context,
 		}
 
 		initMsg.WalletExtendedKey = extendedKey
+
+	// The third option for creating a wallet is the watch-only mode:
+	// Instead of providing the master root key directly, each individual
+	// account is passed as an extended public key only. Because of the
+	// hardened derivation path up to the account (depth 3), it is not
+	// possible to create a master root extended _public_ key. Therefore, an
+	// xpub must be derived and passed into the unlocker for _every_ account
+	// lnd expects.
+	case in.WatchOnly != nil && len(in.WatchOnly.Accounts) > 0:
+		return nil, fmt.Errorf("watch-only wallets are not supported in dcrlnd")
 
 	// No key material was set, no wallet can be created.
 	default:
