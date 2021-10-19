@@ -134,12 +134,8 @@ func createTestCtxFromGraphInstanceAssumeValid(t *testing.T,
 	require.NoError(t, err)
 
 	sessionSource := &SessionSource{
-		Graph: cachedGraph,
-		QueryBandwidth: func(
-			c *channeldb.DirectedChannel) lnwire.MilliAtom {
-
-			return lnwire.NewMAtomsFromAtoms(c.Capacity)
-		},
+		Graph:             cachedGraph,
+		GetLink:           graphInstance.getLink,
 		PathFindingConfig: pathFindingConfig,
 		MissionControl:    mc,
 	}
@@ -161,11 +157,7 @@ func createTestCtxFromGraphInstanceAssumeValid(t *testing.T,
 		SessionSource:      sessionSource,
 		ChannelPruneExpiry: time.Hour * 24,
 		GraphPruneInterval: time.Hour * 2,
-		QueryBandwidth: func(
-			e *channeldb.DirectedChannel) lnwire.MilliAtom {
-
-			return lnwire.NewMAtomsFromAtoms(e.Capacity)
-		},
+		GetLink:            graphInstance.getLink,
 		NextPaymentID: func() (uint64, error) {
 			next := atomic.AddUint64(&uniquePaymentID, 1)
 			return next, nil
@@ -2469,7 +2461,7 @@ func TestFindPathFeeWeighting(t *testing.T) {
 	// the edge weighting, we should select the direct path over the 2 hop
 	// path even though the direct path has a higher potential time lock.
 	path, err := dbFindPath(
-		ctx.graph, nil, nil,
+		ctx.graph, nil, &mockBandwidthHints{},
 		noRestrictions,
 		testPathFindingConfig,
 		sourceNode.PubKeyBytes, target, amt, 0,

@@ -472,9 +472,6 @@ func testPaymentLifecycle(t *testing.T, test paymentLifecycleTestCase,
 			Payer:              payer,
 			ChannelPruneExpiry: time.Hour * 24,
 			GraphPruneInterval: time.Hour * 2,
-			QueryBandwidth: func(c *channeldb.DirectedChannel) lnwire.MilliAtom {
-				return lnwire.NewMAtomsFromAtoms(c.Capacity)
-			},
 			NextPaymentID: func() (uint64, error) {
 				next := atomic.AddUint64(&uniquePaymentID, 1)
 				return next, nil
