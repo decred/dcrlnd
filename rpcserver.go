@@ -5950,7 +5950,9 @@ func (r *rpcServer) GetNetworkInfo(ctx context.Context,
 	// network, tallying up the total number of nodes, and also gathering
 	// each node so we can measure the graph diameter and degree stats
 	// below.
-	if err := graph.ForEachNode(func(tx kvdb.RTx, node *channeldb.LightningNode) error {
+	err := graph.ForEachNodeCached(func(node route.Vertex,
+		edges map[uint64]*channeldb.DirectedChannel) error {
+
 		// Increment the total number of nodes with each iteration.
 		numNodes++
 
@@ -5960,9 +5962,7 @@ func (r *rpcServer) GetNetworkInfo(ctx context.Context,
 		// through the db transaction from the outer view so we can
 		// re-use it within this inner view.
 		var outDegree uint32
-		if err := node.ForEachChannel(tx, func(_ kvdb.RTx,
-			edge *channeldb.ChannelEdgeInfo, _, _ *channeldb.ChannelEdgePolicy) error {
-
+		for _, edge := range edges {
 			// Bump up the out degree for this node for each
 			// channel encountered.
 			outDegree++
@@ -5993,9 +5993,6 @@ func (r *rpcServer) GetNetworkInfo(ctx context.Context,
 
 			seenChans[edge.ChannelID] = struct{}{}
 			allChans = append(allChans, edge.Capacity)
-			return nil
-		}); err != nil {
-			return err
 		}
 
 		// Finally, if the out degree of this node is greater than what
@@ -6005,7 +6002,8 @@ func (r *rpcServer) GetNetworkInfo(ctx context.Context,
 		}
 
 		return nil
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
