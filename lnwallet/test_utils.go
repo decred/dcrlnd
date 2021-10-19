@@ -107,6 +107,8 @@ var (
 
 	aliceDustLimit = dcrutil.Amount(6030)
 	bobDustLimit   = dcrutil.Amount(12060)
+
+	testChannelCapacity float64 = 10
 )
 
 // CreateTestChannels creates to fully populated channels to be used within
@@ -120,7 +122,7 @@ var (
 func CreateTestChannels(chanType channeldb.ChannelType) (
 	*LightningChannel, *LightningChannel, func(), error) {
 
-	channelCapacity, err := dcrutil.NewAmount(10)
+	channelCapacity, err := dcrutil.NewAmount(testChannelCapacity)
 	if err != nil {
 		return nil, nil, nil, err
 	}

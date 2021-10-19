@@ -22,8 +22,8 @@ type mockBandwidthHints struct {
 	hints map[uint64]lnwire.MilliAtom
 }
 
-func (m *mockBandwidthHints) availableChanBandwidth(channelID uint64) (
-	lnwire.MilliAtom, bool) {
+func (m *mockBandwidthHints) availableChanBandwidth(channelID uint64,
+	_ lnwire.MilliAtom) (lnwire.MilliAtom, bool) {
 
 	if m.hints == nil {
 		return 0, false
