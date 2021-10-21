@@ -200,7 +200,6 @@ func NewChannelGraph(db kvdb.Backend, rejectCacheSize, chanCacheSize int,
 		db:          db,
 		rejectCache: newRejectCache(rejectCacheSize),
 		chanCache:   newChannelCache(chanCacheSize),
-		graphCache:  NewGraphCache(preAllocCacheNumNodes),
 	}
 	g.chanScheduler = batch.NewTimeScheduler(
 		db, &g.cacheMu, batchCommitInterval,
@@ -209,18 +208,25 @@ func NewChannelGraph(db kvdb.Backend, rejectCacheSize, chanCacheSize int,
 		db, nil, batchCommitInterval,
 	)
 
-	startTime := time.Now()
-	log.Debugf("Populating in-memory channel graph, this might take a " +
-		"while...")
-	err := g.ForEachNodeCacheable(func(tx kvdb.RTx, node GraphCacheNode) error {
-		return g.graphCache.AddNode(tx, node)
-	})
-	if err != nil {
-		return nil, err
-	}
+	// The graph cache can be turned off (e.g. for mobile users) for a
+	// speed/memory usage tradeoff.
+	if useGraphCache {
+		g.graphCache = NewGraphCache(preAllocCacheNumNodes)
+		startTime := time.Now()
+		log.Debugf("Populating in-memory channel graph, this might " +
+			"take a while...")
+		err := g.ForEachNodeCacheable(
+			func(tx kvdb.RTx, node GraphCacheNode) error {
+				return g.graphCache.AddNode(tx, node)
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
 
-	log.Debugf("Finished populating in-memory channel graph (took %v, %s)",
-		time.Since(startTime), g.graphCache.Stats())
+		log.Debugf("Finished populating in-memory channel graph (took "+
+			"%v, %s)", time.Since(startTime), g.graphCache.Stats())
+	}
 
 	return g, nil
 }
@@ -374,7 +380,42 @@ func (c *ChannelGraph) ForEachChannel(cb func(*ChannelEdgeInfo,
 func (c *ChannelGraph) ForEachNodeChannel(node route.Vertex,
 	cb func(channel *DirectedChannel) error) error {
 
-	return c.graphCache.ForEachChannel(node, cb)
+	if c.graphCache != nil {
+		return c.graphCache.ForEachChannel(node, cb)
+	}
+
+	// Fallback that uses the database.
+	toNodeCallback := func() route.Vertex {
+		return node
+	}
+	toNodeFeatures, err := c.FetchNodeFeatures(node)
+	if err != nil {
+		return err
+	}
+
+	dbCallback := func(tx kvdb.RTx, e *ChannelEdgeInfo, p1,
+		p2 *ChannelEdgePolicy) error {
+
+		cachedInPolicy := NewCachedPolicy(p2)
+		cachedInPolicy.ToNodePubKey = toNodeCallback
+		cachedInPolicy.ToNodeFeatures = toNodeFeatures
+
+		directedChannel := &DirectedChannel{
+			ChannelID:    e.ChannelID,
+			IsNode1:      node == e.NodeKey1Bytes,
+			OtherNode:    e.NodeKey2Bytes,
+			Capacity:     e.Capacity,
+			OutPolicySet: p1 != nil,
+			InPolicy:     cachedInPolicy,
+		}
+
+		if node == e.NodeKey2Bytes {
+			directedChannel.OtherNode = e.NodeKey1Bytes
+		}
+
+		return cb(directedChannel)
+	}
+	return nodeTraversal(nil, node[:], c.db, dbCallback)
 }
 
 // FetchNodeFeatures returns the features of a given node. If no features are
@@ -382,7 +423,27 @@ func (c *ChannelGraph) ForEachNodeChannel(node route.Vertex,
 func (c *ChannelGraph) FetchNodeFeatures(
 	node route.Vertex) (*lnwire.FeatureVector, error) {
 
-	return c.graphCache.GetFeatures(node), nil
+	if c.graphCache != nil {
+		return c.graphCache.GetFeatures(node), nil
+	}
+
+	// Fallback that uses the database.
+	targetNode, err := c.FetchLightningNode(node)
+	switch err {
+
+	// If the node exists and has features, return them directly.
+	case nil:
+		return targetNode.Features, nil
+
+	// If we couldn't find a node announcement, populate a blank feature
+	// vector.
+	case ErrGraphNodeNotFound:
+		return lnwire.EmptyFeatureVector(), nil
+
+	// Otherwise, bubble the error up.
+	default:
+		return nil, err
+	}
 }
 
 // DisabledChannelIDs returns the channel ids of disabled channels.
@@ -602,11 +663,14 @@ func (c *ChannelGraph) AddLightningNode(node *LightningNode,
 
 	r := &batch.Request{
 		Update: func(tx kvdb.RwTx) error {
-			cNode := newGraphCacheNode(
-				node.PubKeyBytes, node.Features,
-			)
-			if err := c.graphCache.AddNode(tx, cNode); err != nil {
-				return err
+			if c.graphCache != nil {
+				cNode := newGraphCacheNode(
+					node.PubKeyBytes, node.Features,
+				)
+				err := c.graphCache.AddNode(tx, cNode)
+				if err != nil {
+					return err
+				}
 			}
 
 			return addLightningNode(tx, node)
@@ -687,7 +751,9 @@ func (c *ChannelGraph) DeleteLightningNode(nodePub route.Vertex) error {
 			return ErrGraphNodeNotFound
 		}
 
-		c.graphCache.RemoveNode(nodePub)
+		if c.graphCache != nil {
+			c.graphCache.RemoveNode(nodePub)
+		}
 
 		return c.deleteLightningNode(nodes, nodePub[:])
 	}, func() {})
@@ -815,7 +881,9 @@ func (c *ChannelGraph) addChannelEdge(tx kvdb.RwTx, edge *ChannelEdgeInfo) error
 		return ErrEdgeAlreadyExist
 	}
 
-	c.graphCache.AddChannel(edge, nil, nil)
+	if c.graphCache != nil {
+		c.graphCache.AddChannel(edge, nil, nil)
+	}
 
 	// Before we insert the channel into the database, we'll ensure that
 	// both nodes already exist in the channel graph. If either node
@@ -1016,7 +1084,9 @@ func (c *ChannelGraph) UpdateChannelEdge(edge *ChannelEdgeInfo) error {
 			return ErrEdgeNotFound
 		}
 
-		c.graphCache.UpdateChannel(edge)
+		if c.graphCache != nil {
+			c.graphCache.UpdateChannel(edge)
+		}
 
 		return putChanEdgeInfo(edgeIndex, edge, chanKey)
 	}, func() {})
@@ -1154,7 +1224,10 @@ func (c *ChannelGraph) PruneGraph(spentOutputs []*wire.OutPoint,
 		c.chanCache.remove(channel.ChannelID)
 	}
 
-	log.Debugf("Pruned graph, cache now has %s", c.graphCache.Stats())
+	if c.graphCache != nil {
+		log.Debugf("Pruned graph, cache now has %s",
+			c.graphCache.Stats())
+	}
 
 	return chansClosed, nil
 }
@@ -1256,7 +1329,9 @@ func (c *ChannelGraph) pruneGraphNodes(nodes kvdb.RwBucket,
 			continue
 		}
 
-		c.graphCache.RemoveNode(nodePubKey)
+		if c.graphCache != nil {
+			c.graphCache.RemoveNode(nodePubKey)
+		}
 
 		// If we reach this point, then there are no longer any edges
 		// that connect this node, so we can delete it.
@@ -2101,10 +2176,12 @@ func (c *ChannelGraph) delChannelEdge(edges, edgeIndex, chanIndex, zombieIndex,
 		return err
 	}
 
-	c.graphCache.RemoveChannel(
-		edgeInfo.NodeKey1Bytes, edgeInfo.NodeKey2Bytes,
-		edgeInfo.ChannelID,
-	)
+	if c.graphCache != nil {
+		c.graphCache.RemoveChannel(
+			edgeInfo.NodeKey1Bytes, edgeInfo.NodeKey2Bytes,
+			edgeInfo.ChannelID,
+		)
+	}
 
 	// We'll also remove the entry in the edge update index bucket before
 	// we delete the edges themselves so we can access their last update
@@ -2361,7 +2438,12 @@ func updateEdgePolicy(tx kvdb.RwTx, edge *ChannelEdgePolicy,
 	)
 	copy(fromNodePubKey[:], fromNode)
 	copy(toNodePubKey[:], toNode)
-	graphCache.UpdatePolicy(edge, fromNodePubKey, toNodePubKey, isUpdate1)
+
+	if graphCache != nil {
+		graphCache.UpdatePolicy(
+			edge, fromNodePubKey, toNodePubKey, isUpdate1,
+		)
+	}
 
 	return isUpdate1, nil
 }
@@ -3627,7 +3709,9 @@ func (c *ChannelGraph) MarkEdgeZombie(chanID uint64,
 				"bucket: %w", err)
 		}
 
-		c.graphCache.RemoveChannel(pubKey1, pubKey2, chanID)
+		if c.graphCache != nil {
+			c.graphCache.RemoveChannel(pubKey1, pubKey2, chanID)
+		}
 
 		return markEdgeZombie(zombieIndex, chanID, pubKey1, pubKey2)
 	})
@@ -3689,10 +3773,13 @@ func (c *ChannelGraph) MarkEdgeLive(chanID uint64) error {
 	if err != nil {
 		return err
 	}
-	for _, edgeInfo := range edgeInfos {
-		c.graphCache.AddChannel(
-			edgeInfo.Info, edgeInfo.Policy1, edgeInfo.Policy2,
-		)
+	if c.graphCache != nil {
+		for _, edgeInfo := range edgeInfos {
+			c.graphCache.AddChannel(
+				edgeInfo.Info, edgeInfo.Policy1,
+				edgeInfo.Policy2,
+			)
+		}
 	}
 
 	return nil
