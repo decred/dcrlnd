@@ -3057,10 +3057,21 @@ func dbFindPath(graph *channeldb.ChannelGraph,
 	source, target route.Vertex, amt lnwire.MilliAtom,
 	finalHtlcExpiry int32) ([]*channeldb.CachedEdgePolicy, error) {
 
-	routingGraph, err := NewCachedGraph(graph)
+	sourceNode, err := graph.SourceNode()
 	if err != nil {
 		return nil, err
 	}
+
+	routingGraph, err := NewCachedGraph(sourceNode, graph)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := routingGraph.close(); err != nil {
+			log.Errorf("Error closing db tx: %v", err)
+		}
+	}()
 
 	return findPath(
 		&graphParams{
