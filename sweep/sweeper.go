@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 )
@@ -1287,7 +1288,9 @@ func (s *UtxoSweeper) sweep(inputs inputSet, feeRate chainfee.AtomPerKByte,
 		}),
 	)
 
-	err = s.cfg.Wallet.PublishTransaction(tx, "")
+	err = s.cfg.Wallet.PublishTransaction(
+		tx, labels.MakeLabel(labels.LabelTypeSweepTransaction, nil),
+	)
 
 	// In case of an unexpected error, don't try to recover.
 	if err != nil && err != lnwallet.ErrDoubleSpend {
