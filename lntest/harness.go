@@ -1696,7 +1696,9 @@ func (n *NetworkHarness) sendCoins(amt dcrutil.Amount, target *HarnessNode,
 	}
 
 	// Ensure the balance is as expected.
-	expectedBalance := dcrutil.Amount(initialBalance.ConfirmedBalance) + amt
+	fullInitialBalance := initialBalance.ConfirmedBalance +
+		initialBalance.UnconfirmedBalance
+	expectedBalance := dcrutil.Amount(fullInitialBalance) + amt
 	return target.WaitForBalance(expectedBalance, true)
 }
 
