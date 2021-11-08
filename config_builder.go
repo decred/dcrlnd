@@ -621,7 +621,8 @@ func (d *DefaultWalletImpl) BuildChainControl(
 
 	walletController, err := dcrwallet.New(*dcrwConfig)
 	if err != nil {
-		err := fmt.Errorf("unable to create wallet controller: %v\n", err)
+		err := fmt.Errorf("unable to create wallet controller: %v", err)
+		d.logger.Error(err)
 		return nil, nil, err
 	}
 

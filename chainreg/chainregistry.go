@@ -222,8 +222,8 @@ func NewPartialChainControl(cfg *Config) (*PartialChainControl, func(), error) {
 			DefaultDecredStaticMinRelayFeeRate,
 		)
 	default:
-		return nil, nil, fmt.Errorf("default routing policy for chain %v is "+
-			"unknown", cfg.PrimaryChain())
+		return nil, nil, fmt.Errorf("default routing policy for chain "+
+			"%v is unknown", cfg.PrimaryChain())
 	}
 
 	var err error
@@ -431,7 +431,8 @@ func NewPartialChainControl(cfg *Config) (*PartialChainControl, func(), error) {
 	ccCleanup := func() {
 		if cc.FeeEstimator != nil {
 			if err := cc.FeeEstimator.Stop(); err != nil {
-				log.Errorf("Failed to stop feeEstimator: %v", err)
+				log.Errorf("Failed to stop feeEstimator: %v",
+					err)
 			}
 		}
 	}
@@ -581,7 +582,9 @@ func (c *ChainRegistry) LookupChain(targetChain ChainCode) (*ChainControl, bool)
 
 // LookupChainByHash attempts to look up an active ChainControl which
 // corresponds to the passed genesis hash.
-func (c *ChainRegistry) LookupChainByHash(chainHash chainhash.Hash) (*ChainControl, bool) {
+func (c *ChainRegistry) LookupChainByHash(
+	chainHash chainhash.Hash) (*ChainControl, bool) {
+
 	c.RLock()
 	defer c.RUnlock()
 

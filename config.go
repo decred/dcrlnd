@@ -5,7 +5,6 @@
 package dcrlnd
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -613,15 +612,34 @@ func LoadConfig(interceptor signal.Interceptor) (*Config, error) {
 	}
 
 	// Make sure everything we just loaded makes sense.
-	cleanCfg, err := ValidateConfig(cfg, usageMessage, interceptor,
-		fileParser, flagParser)
+	cleanCfg, err := ValidateConfig(
+		cfg, interceptor, fileParser, flagParser,
+	)
+	if usageErr, ok := err.(*usageError); ok {
+		// The logging system might not yet be initialized, so we also
+		// write to stderr to make sure the error appears somewhere.
+		_, _ = fmt.Fprintln(os.Stderr, usageMessage)
+		ltndLog.Warnf("Incorrect usage: %v", usageMessage)
+
+		// The log subsystem might not yet be initialized. But we still
+		// try to log the error there since some packaging solutions
+		// might only look at the log and not stdout/stderr.
+		ltndLog.Warnf("Error validating config: %v", usageErr.err)
+
+		return nil, usageErr.err
+	}
 	if err != nil {
+		// The log subsystem might not yet be initialized. But we still
+		// try to log the error there since some packaging solutions
+		// might only look at the log and not stdout/stderr.
+		ltndLog.Warnf("Error validating config: %v", err)
+
 		return nil, err
 	}
 
 	// Warn about missing config file only after all other configuration is
-	// done.  This prevents the warning on help messages and invalid
-	// options.  Note this should go directly before the return.
+	// done. This prevents the warning on help messages and invalid options.
+	// Note this should go directly before the return.
 	if configFileError != nil {
 		ltndLog.Warnf("%v", configFileError)
 	}
@@ -629,12 +647,24 @@ func LoadConfig(interceptor signal.Interceptor) (*Config, error) {
 	return cleanCfg, nil
 }
 
+// usageError is an error type that signals a problem with the supplied flags.
+type usageError struct {
+	err error
+}
+
+// Error returns the error string.
+//
+// NOTE: This is part of the error interface.
+func (u *usageError) Error() string {
+	return u.err.Error()
+}
+
 // ValidateConfig check the given configuration to be sane. This makes sure no
 // illegal values or combination of values are set. All file system paths are
 // normalized. The cleaned up config is returned on success.
-func ValidateConfig(cfg Config, usageMessage string,
-	interceptor signal.Interceptor, fileParser,
+func ValidateConfig(cfg Config, interceptor signal.Interceptor, fileParser,
 	flagParser *flags.Parser) (*Config, error) {
+
 	// If the provided lnd directory is not the default, we'll modify the
 	// path to all of the files and directories that will live within it.
 	lndDir := CleanAndExpandPath(cfg.LndDir)
@@ -651,12 +681,16 @@ func ValidateConfig(cfg Config, usageMessage string,
 		// user has not requested a different location, we'll move the
 		// location to be relative to the specified lnd directory.
 		if cfg.Watchtower.TowerDir == defaultTowerDir {
-			cfg.Watchtower.TowerDir =
-				filepath.Join(cfg.DataDir, defaultTowerSubDirname)
+			cfg.Watchtower.TowerDir = filepath.Join(
+				cfg.DataDir, defaultTowerSubDirname,
+			)
 		}
 	}
 
-	funcName := "loadConfig"
+	funcName := "ValidateConfig"
+	mkErr := func(format string, args ...interface{}) error {
+		return fmt.Errorf(funcName+": "+format, args...)
+	}
 	makeDirectory := func(dir string) error {
 		err := os.MkdirAll(dir, 0700)
 		if err != nil {
@@ -671,10 +705,8 @@ func ValidateConfig(cfg Config, usageMessage string,
 				}
 			}
 
-			str := "%s: Failed to create lnd directory: %v"
-			err := fmt.Errorf(str, funcName, err)
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			return err
+			str := "Failed to create lnd directory: %v"
+			return mkErr(str, err)
 		}
 
 		return nil
@@ -682,21 +714,17 @@ func ValidateConfig(cfg Config, usageMessage string,
 
 	// IsSet returns true if an option has been set in either the config
 	// file or by a flag.
-	isSet := func(field string) bool {
+	isSet := func(field string) (bool, error) {
 		fieldName, ok := reflect.TypeOf(Config{}).FieldByName(field)
 		if !ok {
-			str := "%s: could not find field %s"
-			err := fmt.Errorf(str, funcName, field)
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			return false
+			str := "could not find field %s"
+			return false, mkErr(str, field)
 		}
 
 		long, ok := fieldName.Tag.Lookup("long")
 		if !ok {
-			str := "%s: field %s does not have a long tag"
-			err := fmt.Errorf(str, funcName, field)
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			return false
+			str := "field %s does not have a long tag"
+			return false, mkErr(str, field)
 		}
 
 		// The user has the option to set the flag in either the config
@@ -717,9 +745,10 @@ func ValidateConfig(cfg Config, usageMessage string,
 		)
 
 		return (fileOption != nil && fileOption.IsSet()) ||
-			(fileOptionNested != nil && fileOptionNested.IsSet()) ||
-			(flagOption != nil && flagOption.IsSet()) ||
-			(flagOptionNested != nil && flagOptionNested.IsSet())
+				(fileOptionNested != nil && fileOptionNested.IsSet()) ||
+				(flagOption != nil && flagOption.IsSet()) ||
+				(flagOptionNested != nil && flagOptionNested.IsSet()),
+			nil
 	}
 
 	// As soon as we're done parsing configuration options, ensure all paths
@@ -765,40 +794,28 @@ func ValidateConfig(cfg Config, usageMessage string,
 	// Ensure that the user didn't attempt to specify negative values for
 	// any of the autopilot params.
 	if cfg.Autopilot.MaxChannels < 0 {
-		str := "%s: autopilot.maxchannels must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.maxchannels must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.Allocation < 0 {
-		str := "%s: autopilot.allocation must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.allocation must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.MinChannelSize < 0 {
-		str := "%s: autopilot.minchansize must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.minchansize must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.MaxChannelSize < 0 {
-		str := "%s: autopilot.maxchansize must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.maxchansize must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.MinConfs < 0 {
-		str := "%s: autopilot.minconfs must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.minconfs must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.ConfTarget < 1 {
-		str := "%s: autopilot.conftarget must be positive"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.conftarget must be positive"
+		return nil, mkErr(str)
 	}
 
 	// Ensure that the specified values for the min and max channel size
@@ -811,7 +828,7 @@ func ValidateConfig(cfg Config, usageMessage string,
 	}
 
 	if _, err := validateAtplCfg(cfg.Autopilot); err != nil {
-		return nil, err
+		return nil, mkErr("error validating autopilot: %v", err)
 	}
 
 	// Ensure that --maxchansize is properly handled when set by user.  For
@@ -830,32 +847,33 @@ func ValidateConfig(cfg Config, usageMessage string,
 	// Ensure that the user specified values for the min and max channel
 	// size make sense.
 	if cfg.MaxChanSize < cfg.MinChanSize {
-		return nil, fmt.Errorf("invalid channel size parameters: "+
-			"max channel size %v, must be no less than min chan size %v",
-			cfg.MaxChanSize, cfg.MinChanSize,
+		return nil, mkErr("invalid channel size parameters: "+
+			"max channel size %v, must be no less than min chan "+
+			"size %v", cfg.MaxChanSize, cfg.MinChanSize,
 		)
 	}
 
 	// Don't allow superflous --maxchansize greater than
 	// BOLT 02 soft-limit for non-wumbo channel
-	if !cfg.ProtocolOptions.Wumbo() && cfg.MaxChanSize > int64(MaxFundingAmount) {
-		return nil, fmt.Errorf("invalid channel size parameters: "+
-			"maximum channel size %v is greater than maximum non-wumbo"+
-			" channel size %v",
-			cfg.MaxChanSize, MaxFundingAmount,
+	if !cfg.ProtocolOptions.Wumbo() &&
+		cfg.MaxChanSize > int64(MaxFundingAmount) {
+
+		return nil, mkErr("invalid channel size parameters: "+
+			"maximum channel size %v is greater than maximum "+
+			"non-wumbo channel size %v", cfg.MaxChanSize,
+			MaxFundingAmount,
 		)
 	}
 
 	// Ensure a valid max channel fee allocation was set.
 	if cfg.MaxChannelFeeAllocation <= 0 || cfg.MaxChannelFeeAllocation > 1 {
-		return nil, fmt.Errorf("invalid max channel fee allocation: "+
-			"%v, must be within (0, 1]",
-			cfg.MaxChannelFeeAllocation)
+		return nil, mkErr("invalid max channel fee allocation: %v, "+
+			"must be within (0, 1]", cfg.MaxChannelFeeAllocation)
 	}
 
 	if cfg.MaxCommitFeeRateAnchors < 1 {
-		return nil, fmt.Errorf("invalid max commit fee rate anchors: "+
-			"%v, must be at least 1 sat/vbyte",
+		return nil, mkErr("invalid max commit fee rate anchors: %v, "+
+			"must be at least 1 sat/vByte",
 			cfg.MaxCommitFeeRateAnchors)
 	}
 
@@ -877,7 +895,7 @@ func ValidateConfig(cfg Config, usageMessage string,
 			cfg.net.ResolveTCPAddr,
 		)
 		if err != nil {
-			return nil, err
+			return nil, mkErr("error parsing tor dns: %v", err)
 		}
 		cfg.Tor.DNS = dns.String()
 	}
@@ -887,25 +905,24 @@ func ValidateConfig(cfg Config, usageMessage string,
 		cfg.net.ResolveTCPAddr,
 	)
 	if err != nil {
-		return nil, err
+		return nil, mkErr("error parsing tor control address: %v", err)
 	}
 	cfg.Tor.Control = control.String()
 
 	// Ensure that tor socks host:port is not equal to tor control
 	// host:port. This would lead to lnd not starting up properly.
 	if cfg.Tor.SOCKS == cfg.Tor.Control {
-		str := "%s: tor.socks and tor.control can not use " +
-			"the same host:port"
-		return nil, fmt.Errorf(str, funcName)
+		str := "tor.socks and tor.control can not us the same host:port"
+		return nil, mkErr(str)
 	}
 
 	switch {
 	case cfg.Tor.V2 && cfg.Tor.V3:
-		return nil, errors.New("either tor.v2 or tor.v3 can be set, " +
+		return nil, mkErr("either tor.v2 or tor.v3 can be set, " +
 			"but not both")
 	case cfg.DisableListen && (cfg.Tor.V2 || cfg.Tor.V3):
-		return nil, errors.New("listening must be enabled when " +
-			"enabling inbound connections over Tor")
+		return nil, mkErr("listening must be enabled when enabling " +
+			"inbound connections over Tor")
 	}
 
 	if cfg.Tor.PrivateKeyPath == "" {
@@ -925,11 +942,13 @@ func ValidateConfig(cfg Config, usageMessage string,
 		switch {
 		case cfg.Tor.V2:
 			cfg.Tor.WatchtowerKeyPath = filepath.Join(
-				cfg.Watchtower.TowerDir, defaultTorV2PrivateKeyFilename,
+				cfg.Watchtower.TowerDir,
+				defaultTorV2PrivateKeyFilename,
 			)
 		case cfg.Tor.V3:
 			cfg.Tor.WatchtowerKeyPath = filepath.Join(
-				cfg.Watchtower.TowerDir, defaultTorV3PrivateKeyFilename,
+				cfg.Watchtower.TowerDir,
+				defaultTorV3PrivateKeyFilename,
 			)
 		}
 	}
@@ -949,11 +968,11 @@ func ValidateConfig(cfg Config, usageMessage string,
 	}
 
 	if cfg.DisableListen && cfg.NAT {
-		return nil, errors.New("NAT traversal cannot be used when " +
+		return nil, mkErr("NAT traversal cannot be used when " +
 			"listening is disabled")
 	}
 	if cfg.NAT && len(cfg.ExternalHosts) != 0 {
-		return nil, errors.New("NAT support and externalhosts are " +
+		return nil, mkErr("NAT support and externalhosts are " +
 			"mutually exclusive, only one should be selected")
 	}
 
@@ -974,10 +993,9 @@ func ValidateConfig(cfg Config, usageMessage string,
 		cfg.ActiveNetParams = chainreg.DecredSimNetParams
 	}
 	if numNets > 1 {
-		str := "%s: The testnet, regtest, and simnet params" +
-			"can't be used together -- choose one of the three"
-		err := fmt.Errorf(str, funcName)
-		return nil, err
+		return nil, mkErr("%s: The testnet, regtest, and simnet params"+
+			"can't be used together -- choose one of the three",
+			funcName)
 	}
 
 	// We default to mainnet if none are specified.
@@ -993,8 +1011,8 @@ func ValidateConfig(cfg Config, usageMessage string,
 	switch cfg.Decred.Node {
 	case "dcrd":
 		err := parseRPCParams(
-			cfg.DcrdMode, chainreg.DecredChain, cfg.Decred.SimNet,
-			cfg.Decred.Node, funcName,
+			cfg.Decred, cfg.DcrdMode, chainreg.DecredChain,
+			cfg.ActiveNetParams,
 		)
 		if err != nil {
 			err := fmt.Errorf("unable to load RPC "+
@@ -1048,28 +1066,20 @@ func ValidateConfig(cfg Config, usageMessage string,
 	// Ensure that the user didn't attempt to specify negative values for
 	// any of the autopilot params.
 	if cfg.Autopilot.MaxChannels < 0 {
-		str := "%s: autopilot.maxchannels must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.maxchannels must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.Allocation < 0 {
-		str := "%s: autopilot.allocation must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.allocation must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.MinChannelSize < 0 {
-		str := "%s: autopilot.minchansize must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.minchansize must be non-negative"
+		return nil, mkErr(str)
 	}
 	if cfg.Autopilot.MaxChannelSize < 0 {
-		str := "%s: autopilot.maxchansize must be non-negative"
-		err := fmt.Errorf(str, funcName)
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "autopilot.maxchansize must be non-negative"
+		return nil, mkErr(str)
 	}
 
 	// Ensure that the specified values for the min and max channel size
@@ -1091,19 +1101,13 @@ func ValidateConfig(cfg Config, usageMessage string,
 			// Determine if the port is valid.
 			profilePort, err := strconv.Atoi(hostPort)
 			if err != nil || profilePort < 1024 || profilePort > 65535 {
-				err = fmt.Errorf(str, funcName)
-				_, _ = fmt.Fprintln(os.Stderr, err)
-				_, _ = fmt.Fprintln(os.Stderr, usageMessage)
-				return nil, err
+				return nil, &usageError{mkErr(str)}
 			}
 		} else {
 			// Try to parse Profile as a port.
 			profilePort, err := strconv.Atoi(cfg.Profile)
 			if err != nil || profilePort < 1024 || profilePort > 65535 {
-				err = fmt.Errorf(str, funcName)
-				_, _ = fmt.Fprintln(os.Stderr, err)
-				_, _ = fmt.Fprintln(os.Stderr, usageMessage)
-				return nil, err
+				return nil, &usageError{mkErr(str)}
 			}
 
 			// Since the user just set a port, we will serve debugging
@@ -1155,14 +1159,15 @@ func ValidateConfig(cfg Config, usageMessage string,
 
 	// Append the network type to the log directory so it is "namespaced"
 	// per network in the same fashion as the data directory.
-	cfg.LogDir = filepath.Join(cfg.LogDir,
-		cfg.registeredChains.PrimaryChain().String(),
-		lncfg.NormalizeNetwork(cfg.ActiveNetParams.Name))
+	cfg.LogDir = filepath.Join(
+		cfg.LogDir, cfg.registeredChains.PrimaryChain().String(),
+		lncfg.NormalizeNetwork(cfg.ActiveNetParams.Name),
+	)
 
 	// A log writer must be passed in, otherwise we can't function and would
 	// run into a panic later on.
 	if cfg.LogWriter == nil {
-		return nil, fmt.Errorf("log writer missing in config")
+		return nil, mkErr("log writer missing in config")
 	}
 
 	// Special show command to list supported subsystems and exit.
@@ -1179,19 +1184,15 @@ func ValidateConfig(cfg Config, usageMessage string,
 		cfg.MaxLogFileSize, cfg.MaxLogFiles,
 	)
 	if err != nil {
-		str := "%s: log rotation setup failed: %v"
-		err = fmt.Errorf(str, funcName, err.Error())
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		return nil, err
+		str := "log rotation setup failed: %v"
+		return nil, mkErr(str, err)
 	}
 
 	// Parse, validate, and set debug log level(s).
 	err = build.ParseAndSetDebugLevels(cfg.DebugLevel, cfg.LogWriter)
 	if err != nil {
-		err = fmt.Errorf("%s: %v", funcName, err.Error())
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		_, _ = fmt.Fprintln(os.Stderr, usageMessage)
-		return nil, err
+		str := "error parsing debug level: %v"
+		return nil, &usageError{mkErr(str, err)}
 	}
 
 	// At least one RPCListener is required. So listen on localhost per
@@ -1227,7 +1228,7 @@ func ValidateConfig(cfg Config, usageMessage string,
 		cfg.net.ResolveTCPAddr,
 	)
 	if err != nil {
-		return nil, err
+		return nil, mkErr("error normalizing RPC listen addrs: %v", err)
 	}
 
 	// Add default port to all REST listener addresses if needed and remove
@@ -1237,25 +1238,25 @@ func ValidateConfig(cfg Config, usageMessage string,
 		cfg.net.ResolveTCPAddr,
 	)
 	if err != nil {
-		return nil, err
+		return nil, mkErr("error normalizing REST listen addrs: %v", err)
 	}
 
 	switch {
 	// The no seed backup and auto unlock are mutually exclusive.
 	case cfg.NoSeedBackup && cfg.WalletUnlockPasswordFile != "":
-		return nil, fmt.Errorf("cannot set noseedbackup and " +
+		return nil, mkErr("cannot set noseedbackup and " +
 			"wallet-unlock-password-file at the same time")
 
 	// The "allow-create" flag cannot be set without the auto unlock file.
 	case cfg.WalletUnlockAllowCreate && cfg.WalletUnlockPasswordFile == "":
-		return nil, fmt.Errorf("cannot set wallet-unlock-allow-create " +
+		return nil, mkErr("cannot set wallet-unlock-allow-create " +
 			"without wallet-unlock-password-file")
 
 	// If a password file was specified, we need it to exist.
 	case cfg.WalletUnlockPasswordFile != "" &&
 		!lnrpc.FileExists(cfg.WalletUnlockPasswordFile):
 
-		return nil, fmt.Errorf("wallet unlock password file %s does "+
+		return nil, mkErr("wallet unlock password file %s does "+
 			"not exist", cfg.WalletUnlockPasswordFile)
 	}
 
@@ -1267,7 +1268,8 @@ func ValidateConfig(cfg Config, usageMessage string,
 		cfg.RPCListeners, !cfg.NoMacaroons, true,
 	)
 	if err != nil {
-		return nil, err
+		return nil, mkErr("error enforcing safe authentication on "+
+			"RPC ports: %v", err)
 	}
 
 	if cfg.DisableRest {
@@ -1278,7 +1280,8 @@ func ValidateConfig(cfg Config, usageMessage string,
 			cfg.RESTListeners, !cfg.NoMacaroons, !cfg.DisableRestTLS,
 		)
 		if err != nil {
-			return nil, err
+			return nil, mkErr("error enforcing safe "+
+				"authentication on REST ports: %v", err)
 		}
 	}
 
@@ -1296,7 +1299,8 @@ func ValidateConfig(cfg Config, usageMessage string,
 			cfg.net.ResolveTCPAddr,
 		)
 		if err != nil {
-			return nil, err
+			return nil, mkErr("error normalizing p2p listen "+
+				"addrs: %v", err)
 		}
 
 		// Add default port to all external IP addresses if needed and remove
@@ -1314,10 +1318,9 @@ func ValidateConfig(cfg Config, usageMessage string,
 		// that.
 		for _, p2pListener := range cfg.Listeners {
 			if lncfg.IsUnix(p2pListener) {
-				err := fmt.Errorf("unix socket addresses cannot be "+
-					"used for the p2p connection listener: %s",
-					p2pListener)
-				return nil, err
+				return nil, mkErr("unix socket addresses "+
+					"cannot be used for the p2p "+
+					"connection listener: %s", p2pListener)
 			}
 		}
 	}
@@ -1325,14 +1328,18 @@ func ValidateConfig(cfg Config, usageMessage string,
 	// Ensure that the specified minimum backoff is below or equal to the
 	// maximum backoff.
 	if cfg.MinBackoff > cfg.MaxBackoff {
-		return nil, fmt.Errorf("maxbackoff must be greater than minbackoff")
+		return nil, mkErr("maxbackoff must be greater than minbackoff")
 	}
 
 	// Newer versions of lnd added a new sub-config for bolt-specific
-	// parameters. However we want to also allow existing users to use the
+	// parameters. However, we want to also allow existing users to use the
 	// value on the top-level config. If the outer config value is set,
 	// then we'll use that directly.
-	if isSet("SyncFreelist") {
+	flagSet, err := isSet("SyncFreelist")
+	if err != nil {
+		return nil, mkErr("error parsing freelist sync flag: %v", err)
+	}
+	if flagSet {
 		cfg.DB.Bolt.NoFreelistSync = !cfg.SyncFreelist
 	}
 
@@ -1340,7 +1347,7 @@ func ValidateConfig(cfg Config, usageMessage string,
 	// than the protocol maximum.
 	maxRemoteHtlcs := uint16(input.MaxHTLCNumber / 2)
 	if cfg.DefaultRemoteMaxHtlcs > maxRemoteHtlcs {
-		return nil, fmt.Errorf("default-remote-max-htlcs (%v) must be "+
+		return nil, mkErr("default-remote-max-htlcs (%v) must be "+
 			"less than %v", cfg.DefaultRemoteMaxHtlcs,
 			maxRemoteHtlcs)
 	}
@@ -1357,7 +1364,7 @@ func ValidateConfig(cfg Config, usageMessage string,
 	}
 
 	if err := cfg.Gossip.Parse(); err != nil {
-		return nil, err
+		return nil, mkErr("error parsing gossip syncer: %v", err)
 	}
 
 	// Log a warning if our expiry delta is not greater than our incoming
@@ -1391,11 +1398,11 @@ func ValidateConfig(cfg Config, usageMessage string,
 	// the wallet.
 	_, err = parseHexColor(cfg.Color)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse node color: %v", err)
+		return nil, mkErr("unable to parse node color: %v", err)
 	}
 
 	// All good, return the sanitized result.
-	return &cfg, err
+	return &cfg, nil
 }
 
 // graphDatabaseDir returns the default directory where the local bolt graph db
@@ -1456,8 +1463,8 @@ func CleanAndExpandPath(path string) string {
 	return filepath.Clean(os.ExpandEnv(path))
 }
 
-func parseRPCParams(nodeConfig interface{}, net chainreg.ChainCode,
-	simnet bool, flagNode string, funcName string) error {
+func parseRPCParams(cConfig *lncfg.Chain, nodeConfig interface{},
+	net chainreg.ChainCode, netParams chainreg.DecredNetParams) error {
 
 	// First, we'll check our node config to make sure the RPC parameters
 	// were set correctly. We'll also determine the path to the conf file
@@ -1489,23 +1496,21 @@ func parseRPCParams(nodeConfig interface{}, net chainreg.ChainCode,
 	// If we're in simnet mode, then the running dcrd instance won't read
 	// the RPC credentials from the configuration. So if lnd wasn't
 	// specified the parameters, then we won't be able to start.
-	if simnet {
-		str := "%v: rpcuser and rpcpass must be set to your dcrd " +
-			"node's RPC parameters for simnet mode"
-		return fmt.Errorf(str, funcName)
+	if cConfig.SimNet {
+		return fmt.Errorf("rpcuser and rpcpass must be set to your " +
+			"dcrd node's RPC parameters for simnet mode")
 	}
 
 	fmt.Println("Attempting automatic RPC configuration to " + daemonName)
 
 	confFile = filepath.Join(confDir, fmt.Sprintf("%v.conf", confFile))
-	switch flagNode {
+	switch cConfig.Node {
 	case "dcrd":
 		nConf := nodeConfig.(*lncfg.DcrdConfig)
 		rpcUser, rpcPass, err := extractDcrdRPCParams(confFile)
 		if err != nil {
-			return fmt.Errorf("unable to extract RPC credentials:"+
-				" %v, cannot start w/o RPC connection",
-				err)
+			return fmt.Errorf("unable to extract RPC credentials: "+
+				"%v, cannot start w/o RPC connection", err)
 		}
 		nConf.RPCUser, nConf.RPCPass = rpcUser, rpcPass
 	}
