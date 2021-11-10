@@ -214,6 +214,10 @@ itest-race: build-itest-race itest-only
 
 itest-parallel: dcrd dcrwallet db-instance build-itest itest-parallel-run
 
+itest-clean:
+	@$(call print, "Cleaning old itest processes")
+	killall dcrlnd-itest || echo "no running dcrlnd-itest process found";
+
 unit-only:
 	@$(call print, "Running unit tests.")
 	$(UNIT)
