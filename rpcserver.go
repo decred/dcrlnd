@@ -3451,6 +3451,7 @@ func (r *rpcServer) PendingChannels(ctx context.Context,
 			CommitmentType:         rpcCommitmentType(waitingClose.ChanType),
 			ShortChanId:            waitingClose.ShortChannelID.String(),
 			NumForwardingPackages:  int64(len(fwdPkgs)),
+			ChanStatusFlags:        waitingClose.ChanStatus().String(),
 		}
 
 		waitingCloseResp := &lnrpc.PendingChannelsResponse_WaitingCloseChannel{
