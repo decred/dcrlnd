@@ -90,7 +90,7 @@ func (d *DecayedLog) Start() error {
 	// Open the bboltdb for use.
 	var err error
 	d.db, err = kvdb.Create(
-		kvdb.BoltBackendName, d.dbPath, true,
+		kvdb.BoltBackendName, d.dbPath, true, kvdb.DefaultDBTimeout,
 	)
 	if err != nil {
 		return fmt.Errorf("could not open boltdb: %v", err)

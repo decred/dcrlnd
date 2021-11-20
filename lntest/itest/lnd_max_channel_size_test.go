@@ -86,7 +86,7 @@ func testMaxChannelSize(net *lntest.NetworkHarness, t *harnessTest) {
 		},
 	)
 	if err == nil {
-		t.Fatalf("expected channel funding to fail as it exceeds 0.16 BTC limit")
+		t.Fatalf("expected channel funding to fail as it exceeds 10.7 DCR limit")
 	}
 
 	// The test should show failure due to the channel exceeding our max size.

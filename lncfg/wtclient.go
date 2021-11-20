@@ -27,7 +27,7 @@ func (c *WtClient) Validate() error {
 			"been deprecated as of v0.8.0-beta and will be " +
 			"removed in v0.9.0-beta. To setup watchtowers for " +
 			"the client, set `wtclient.active` and run " +
-			"`lncli wtclient -h` for more information.")
+			"`dcrlncli wtclient -h` for more information.")
 	}
 
 	return nil

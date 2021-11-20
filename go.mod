@@ -7,7 +7,7 @@ require (
 	git.schwanenlied.me/yawning/bsaes.git v0.0.0-20180720073208-c0276d75487e // indirect
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20180408160647-ec7426b44926
-	github.com/btcsuite/btcwallet/walletdb v1.3.3
+	github.com/btcsuite/btcwallet/walletdb v1.4.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd v1.2.1-0.20210816181553-5444fa50b93d
 	github.com/decred/dcrd/addrmgr/v2 v2.0.0-20210914212651-723d86274b0d

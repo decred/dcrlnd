@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 
-	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/decred/dcrd/dcrec/secp256k1/v3"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
@@ -181,37 +180,6 @@ type DB struct {
 	graph  *ChannelGraph
 	clock  clock.Clock
 	dryRun bool
-}
-
-// Update is a wrapper around walletdb.Update which calls into the extended
-// backend when available. This call is needed to be able to cast DB to
-// ExtendedBackend.
-func (db *DB) Update(f func(tx walletdb.ReadWriteTx) error) error {
-	if v, ok := db.Backend.(kvdb.ExtendedBackend); ok {
-		return v.Update(f)
-	}
-	return walletdb.Update(db, f)
-}
-
-// View is a wrapper around walletdb.View which calls into the extended
-// backend when available. This call is needed to be able to cast DB to
-// ExtendedBackend.
-func (db *DB) View(f func(tx walletdb.ReadTx) error) error {
-	if v, ok := db.Backend.(kvdb.ExtendedBackend); ok {
-		return v.View(f)
-	}
-
-	return walletdb.View(db, f)
-}
-
-// PrintStats calls into the extended backend if available. This call is needed
-// to be able to cast DB to ExtendedBackend.
-func (db *DB) PrintStats() string {
-	if v, ok := db.Backend.(kvdb.ExtendedBackend); ok {
-		return v.PrintStats()
-	}
-
-	return "unimplemented"
 }
 
 // Open opens or creates channeldb. Any necessary schemas migrations due
@@ -1276,13 +1244,17 @@ func MakeTestDB(modifiers ...OptionModifier) (*DB, func(), error) {
 	// Next, create channeldb for the first time.
 	backend, backendCleanup, err := kvdb.GetTestBackend(tempDirName, "cdb")
 	if err != nil {
-		backendCleanup()
+		if backendCleanup != nil {
+			backendCleanup()
+		}
 		return nil, nil, err
 	}
 
 	cdb, err := CreateWithBackend(backend, modifiers...)
 	if err != nil {
-		backendCleanup()
+		if backendCleanup != nil {
+			backendCleanup()
+		}
 		os.RemoveAll(tempDirName)
 		return nil, nil, err
 	}
