@@ -82,7 +82,7 @@ func NewService(dir, location string, checks ...Checker) (*Service, error) {
 	// Open the database that we'll use to store the primary macaroon key,
 	// and all generated macaroons+caveats.
 	macaroonDB, err := kvdb.Create(
-		kvdb.BoltBackendName, path.Join(dir, DBFilename), true,
+		kvdb.BoltBackendName, path.Join(dir, DBFilename), true, kvdb.DefaultDBTimeout,
 	)
 	if err != nil {
 		return nil, err

@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // Import to register backend.
 )
+
+// DefaultDBTimeout is taken from github.com/btcsuite/btcwallet/wallet/loader.go
+const DefaultDBTimeout = 60 * time.Second
 
 // fileExists returns true if the file exists, and false otherwise.
 func fileExists(path string) bool {
@@ -34,10 +38,9 @@ func GetBoltBackend(path, name string, noFreeListSync bool) (Backend, error) {
 				return nil, err
 			}
 		}
-
-		db, err = Create(BoltBackendName, dbFilePath, noFreeListSync)
+		db, err = Create(BoltBackendName, dbFilePath, noFreeListSync, DefaultDBTimeout)
 	} else {
-		db, err = Open(BoltBackendName, dbFilePath, noFreeListSync)
+		db, err = Open(BoltBackendName, dbFilePath, noFreeListSync, DefaultDBTimeout)
 	}
 
 	if err != nil {

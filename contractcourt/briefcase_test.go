@@ -112,7 +112,7 @@ func makeTestDB() (kvdb.Backend, func(), error) {
 		return nil, nil, err
 	}
 
-	db, err := kvdb.Create(kvdb.BoltBackendName, tempDirName+"/test.db", true)
+	db, err := kvdb.Create(kvdb.BoltBackendName, tempDirName+"/test.db", true, kvdb.DefaultDBTimeout)
 	if err != nil {
 		return nil, nil, err
 	}

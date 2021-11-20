@@ -20,7 +20,7 @@ func MakeDB() (kvdb.Backend, func(), error) {
 	}
 
 	dbPath := file.Name()
-	db, err := kvdb.Open(kvdb.BoltBackendName, dbPath, true)
+	db, err := kvdb.Open(kvdb.BoltBackendName, dbPath, true, kvdb.DefaultDBTimeout)
 	if err != nil {
 		return nil, nil, err
 	}

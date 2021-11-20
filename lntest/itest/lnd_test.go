@@ -71,7 +71,7 @@ const (
 	// channels to be opened among the default test nodes (Alice and Bob)
 	// of the lntest harness, assuming the harness initializes those nodes
 	// with 10 outputs of 1 DCR each.
-	defaultChanAmt = dcrutil.Amount(1<<24) - 1
+	defaultChanAmt = dcrutil.Amount(1<<24) - 1 // 0.16 DCR
 
 	itestLndBinary = "../../dcrlnd-itest"
 

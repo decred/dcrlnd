@@ -14,9 +14,9 @@ type ProtocolOptions struct {
 	ExperimentalProtocol
 
 	// WumboChans should be set if we want to enable support for wumbo
-	// (channels larger than 0.16 BTC) channels, which is the opposite of
+	// (channels larger than 10.7 DCR) channels, which is the opposite of
 	// mini.
-	WumboChans bool `long:"wumbo-channels" description:"if set, then lnd will create and accept requests for channels larger chan 0.16 BTC"`
+	WumboChans bool `long:"wumbo-channels" description:"if set, then lnd will create and accept requests for channels larger chan 10.7 DCR"`
 }
 
 // Wumbo returns true if lnd should permit the creation and acceptance of wumbo
