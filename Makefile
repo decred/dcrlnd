@@ -51,13 +51,12 @@ LINT_COMMIT := v1.18.0
 FALAFEL_COMMIT := v0.7.1
 GOFUZZ_COMMIT := b1f3d6f
 
-DEPGET := cd /tmp && GO111MODULE=on go get -v
 GOBUILD := GO111MODULE=on go build -v
 GOINSTALL := CGO_ENABLED=0 GO111MODULE=on go install -v
 GOTEST := GO111MODULE=on go test -v
 
 GOVERSION := $(shell go version | awk '{print $$3}')
-GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*" -not -name "*pb.go" -not -name "*pb.gw.go")
+GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*" -not -name "*pb.go" -not -name "*pb.gw.go" -not -name "*.pb.json.go")
 
 TESTBINPKG := dcrlnd_testbins.tar.gz
 
@@ -73,8 +72,6 @@ DEV_TAGS := $(if ${tags},$(DEV_TAGS) ${tags},$(DEV_TAGS))
 
 LINT = $(LINT_BIN) run
 
-GOFUZZ_DEP_PKG_FETCH = go get -v $(GOFUZZ_DEP_PKG)@$(GOFUZZ_COMMIT)
-
 GREEN := "\\033[0;32m"
 NC := "\\033[0m"
 define print
@@ -89,12 +86,12 @@ all: scratch check install
 # DEPENDENCIES
 # ============
 $(LINT_BIN):
-	@$(call print, "Fetching linter")
-	$(DEPGET) $(LINT_PKG)@$(LINT_COMMIT)
+	@$(call print, "Installing linter.")
+	go install $(LINT_PKG)
 
 $(GOACC_BIN):
-	@$(call print, "Fetching go-acc")
-	$(DEPGET) $(GOACC_PKG)@$(GOACC_COMMIT)
+	@$(call print, "Installing go-acc.")
+	go install $(GOACC_PKG)
 
 dcrd:
 	@$(call print, "Installing dcrd $(DCRD_COMMIT).")
@@ -118,15 +115,19 @@ falafel:
 
 goimports:
 	@$(call print, "Installing goimports.")
-	$(DEPGET) $(GOIMPORTS_PKG)
+	go install $(GOIMPORTS_PKG)
 
 $(GOFUZZ_BIN):
-	@$(call print, "Fetching go-fuzz")
-	$(DEPGET) $(GOFUZZ_PKG)@$(GOFUZZ_COMMIT)
+	@$(call print, "Installing go-fuzz.")
+	go install $(GOFUZZ_PKG)
 
 $(GOFUZZ_BUILD_BIN):
-	@$(call print, "Fetching go-fuzz-build")
-	$(DEPGET) $(GOFUZZ_BUILD_PKG)@$(GOFUZZ_COMMIT)
+	@$(call print, "Installing go-fuzz-build.")
+	go install $(GOFUZZ_BUILD_PKG)
+
+$(GOFUZZ_DEP_BIN):
+	@$(call print, "Installing go-fuzz-dep.")
+	go install $(GOFUZZ_DEP_PKG)
 
 # ============
 # INSTALLATION
@@ -265,9 +266,7 @@ flakehunter-parallel:
 # =============
 # FUZZING
 # =============
-fuzz-build: $(GOFUZZ_BUILD_BIN)
-	@$(call print, "Fetching go-fuzz-dep package")
-	$(GOFUZZ_DEP_PKG_FETCH)
+fuzz-build: $(GOFUZZ_BUILD_BIN) $(GOFUZZ_DEP_BIN)
 	@$(call print, "Creating fuzz harnesses for packages '$(FUZZPKG)'.")
 	scripts/fuzz.sh build "$(FUZZPKG)"
 
