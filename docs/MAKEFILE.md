@@ -202,4 +202,3 @@ Related: [`unit`](#unit)
 
 [dcrd]: https://github.com/decred/dcrd (github.com/decred/dcrd")
 [gometalinter]: https://gopkg.in/alecthomas/gometalinter.v1 (gopkg.in/alecthomas/gometalinter.v1)
-[goveralls]: https://github.com/mattn/goveralls (github.com/mattn/goveralls)

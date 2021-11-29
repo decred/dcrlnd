@@ -3,7 +3,6 @@ ESCPKG := github.com\/decred\/dcrlnd
 
 DCRD_PKG := github.com/decred/dcrd
 DCRWALLET_PKG := github.com/decred/dcrwallet
-GOVERALLS_PKG := github.com/mattn/goveralls
 LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint
 GOACC_PKG := github.com/ory/go-acc
 FALAFEL_PKG := github.com/lightninglabs/falafel
@@ -15,7 +14,6 @@ GOFUZZ_DEP_PKG := github.com/dvyukov/go-fuzz/go-fuzz-dep
 GO_BIN := ${GOPATH}/bin
 DCRD_BIN := $(GO_BIN)/dcrd
 GOMOBILE_BIN := GO111MODULE=off $(GO_BIN)/gomobile
-GOVERALLS_BIN := $(GO_BIN)/goveralls
 LINT_BIN := $(GO_BIN)/golangci-lint
 GOACC_BIN := $(GO_BIN)/go-acc
 GOFUZZ_BUILD_BIN := $(GO_BIN)/go-fuzz-build
@@ -90,11 +88,6 @@ all: scratch check install
 # ============
 # DEPENDENCIES
 # ============
-
-$(GOVERALLS_BIN):
-	@$(call print, "Fetching goveralls.")
-	go get -u $(GOVERALLS_PKG)
-
 $(LINT_BIN):
 	@$(call print, "Fetching linter")
 	$(DEPGET) $(LINT_PKG)@$(LINT_COMMIT)
@@ -238,13 +231,7 @@ unit-race:
 	@$(call print, "Running unit race tests.")
 	$(UNIT_RACE)
 
-goveralls: $(GOVERALLS_BIN)
-	@$(call print, "Sending coverage report.")
-	$(GOVERALLS_BIN) -coverprofile=coverage.txt -service=travis-ci
-
 ci-race: dcrd dcrwallet unit-race
-
-travis-cover: dcrd dcrwallet unit-cover goveralls
 
 ci-itest: itest
 
@@ -370,9 +357,7 @@ clean-mobile:
 	unit-cover \
 	unit-race \
 	falafel \
-	goveralls \
 	ci-race \
-	travis-cover \
 	ci-itest \
 	flakehunter \
 	flake-unit \
