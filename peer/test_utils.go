@@ -519,3 +519,11 @@ func (m *mockMessageConn) ReadNextHeader() (uint32, error) {
 func (m *mockMessageConn) ReadNextBody(buf []byte) ([]byte, error) {
 	return m.curReadMessage, nil
 }
+
+func (m *mockMessageConn) RemoteAddr() net.Addr {
+	return nil
+}
+
+func (m *mockMessageConn) LocalAddr() net.Addr {
+	return nil
+}

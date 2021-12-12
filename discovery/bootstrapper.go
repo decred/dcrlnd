@@ -165,6 +165,7 @@ func (c *ChannelGraphBootstrapper) SampleNodeAddrs(ctx context.Context,
 	// We'll merge the ignore map with our currently selected map in order
 	// to ensure we don't return any duplicate nodes.
 	for n := range ignore {
+		log.Tracef("Ignored node %x for bootstrapping", n)
 		c.tried[n] = struct{}{}
 	}
 
