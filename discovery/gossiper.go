@@ -520,10 +520,46 @@ func (d *AuthenticatedGossiper) start() error {
 
 	d.syncMgr.Start()
 
-	d.wg.Add(1)
+	// Start receiving blocks in its dedicated goroutine.
+	d.wg.Add(2)
+	go d.syncBlockHeight()
 	go d.networkHandler()
 
 	return nil
+}
+
+// syncBlockHeight syncs the best block height for the gossiper by reading
+// blockEpochs.
+//
+// NOTE: must be run as a goroutine.
+func (d *AuthenticatedGossiper) syncBlockHeight() {
+	defer d.wg.Done()
+
+	for {
+		select {
+		// A new block has arrived, so we can re-process the previously
+		// premature announcements.
+		case newBlock, ok := <-d.blockEpochs.Epochs:
+			// If the channel has been closed, then this indicates
+			// the daemon is shutting down, so we exit ourselves.
+			if !ok {
+				return
+			}
+
+			// Once a new block arrives, we update our running
+			// track of the height of the chain tip.
+			d.Lock()
+			blockHeight := uint32(newBlock.Height)
+			d.bestHeight = blockHeight
+			d.Unlock()
+
+			log.Debugf("New block: height=%d, hash=%s", blockHeight,
+				newBlock.Hash)
+
+		case <-d.quit:
+			return
+		}
+	}
 }
 
 // Stop signals any active goroutines for a graceful closure.
@@ -1172,25 +1208,6 @@ func (d *AuthenticatedGossiper) networkHandler() {
 				}
 
 			}()
-
-		// A new block has arrived, so we can re-process the previously
-		// premature announcements.
-		case newBlock, ok := <-d.blockEpochs.Epochs:
-			// If the channel has been closed, then this indicates
-			// the daemon is shutting down, so we exit ourselves.
-			if !ok {
-				return
-			}
-
-			// Once a new block arrives, we update our running
-			// track of the height of the chain tip.
-			d.Lock()
-			blockHeight := uint32(newBlock.Height)
-			d.bestHeight = blockHeight
-			d.Unlock()
-
-			log.Debugf("New block: height=%d, hash=%s", blockHeight,
-				newBlock.Hash)
 
 		// The trickle timer has ticked, which indicates we should
 		// flush to the network the pending batch of new announcements
