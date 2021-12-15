@@ -27,7 +27,7 @@ const (
 const (
 	appMajor uint = 0
 	appMinor uint = 3
-	appPatch uint = 3
+	appPatch uint = 4
 )
 
 var (
@@ -68,11 +68,15 @@ func Version() string {
 		version = fmt.Sprintf("%s-%s", version, preRelease)
 	}
 
-	// Append build metadata if there is any.  The plus called for
-	// by the semantic versioning spec is automatically appended and should
-	// not be contained in the build metadata string.  The build metadata
-	// string is not appended if it contains invalid characters.
+	// Append build metadata if there is any, otherwise use the go 1.18+
+	// VCS build info as metadata.  The plus called for by the semantic
+	// versioning spec is automatically appended and should not be
+	// contained in the build metadata string.  The build metadata string
+	// is not appended if it contains invalid characters.
 	build := normalizeBuildString(BuildMetadata)
+	if build == "" {
+		build = vcsCommitID()
+	}
 	if build != "" {
 		version = fmt.Sprintf("%s+%s", version, build)
 	}
