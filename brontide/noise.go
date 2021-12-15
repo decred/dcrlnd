@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/hkdf"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/keychain"
 )
 
@@ -889,6 +889,6 @@ func (b *Machine) ReadBody(r io.Reader, buf []byte) ([]byte, error) {
 // SetCurveToNil sets the 'Curve' parameter to nil on the handshakeState keys.
 // This allows us to log the Machine object without spammy log messages.
 //
-// NOTE(decred): this isn't needed starting from secp256k1/v3.
+// NOTE(decred): this isn't needed starting from secp256k1/v4.
 func (b *Machine) SetCurveToNil() {
 }

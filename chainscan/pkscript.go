@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 
 	"github.com/decred/dcrd/chaincfg/v3"
 
@@ -50,7 +52,7 @@ type PkScript struct {
 	// class is the type of the script encoded within the byte array. This
 	// is used to determine the correct length of the script within the byte
 	// array.
-	class txscript.ScriptClass
+	class stdscript.ScriptType
 
 	// script is the script contained within a byte array. If the script is
 	// smaller than the length of the byte array, it will be padded with 0s
@@ -73,14 +75,9 @@ func ParsePkScript(scriptVersion uint16, pkScript []byte) (PkScript, error) {
 	}
 
 	outputScript := PkScript{scriptVersion: scriptVersion}
-	scriptClass, _, _, err := txscript.ExtractPkScriptAddrs(
-		scriptVersion, pkScript, chaincfg.MainNetParams(), false,
+	scriptClass, _ := stdscript.ExtractAddrs(
+		scriptVersion, pkScript, chaincfg.MainNetParams(),
 	)
-	if err != nil {
-		return outputScript, fmt.Errorf("unable to parse script type: "+
-			"%v", err)
-	}
-
 	if !isSupportedScriptType(scriptClass) {
 		return outputScript, ErrUnsupportedScriptType
 	}
@@ -93,9 +90,9 @@ func ParsePkScript(scriptVersion uint16, pkScript []byte) (PkScript, error) {
 
 // isSupportedScriptType determines whether the script type is supported by the
 // PkScript struct.
-func isSupportedScriptType(class txscript.ScriptClass) bool {
+func isSupportedScriptType(class stdscript.ScriptType) bool {
 	switch class {
-	case txscript.PubKeyHashTy, txscript.ScriptHashTy:
+	case stdscript.STPubKeyHashEcdsaSecp256k1, stdscript.STScriptHash:
 		return true
 	default:
 		return false
@@ -103,7 +100,7 @@ func isSupportedScriptType(class txscript.ScriptClass) bool {
 }
 
 // Class returns the script type.
-func (s PkScript) Class() txscript.ScriptClass {
+func (s PkScript) Class() stdscript.ScriptType {
 	return s.class
 }
 
@@ -113,11 +110,11 @@ func (s PkScript) Script() []byte {
 	var script []byte
 
 	switch s.class {
-	case txscript.PubKeyHashTy:
+	case stdscript.STPubKeyHashEcdsaSecp256k1:
 		script = make([]byte, pubKeyHashLen)
 		copy(script, s.script[:pubKeyHashLen])
 
-	case txscript.ScriptHashTy:
+	case stdscript.STScriptHash:
 		script = make([]byte, scriptHashLen)
 		copy(script, s.script[:scriptHashLen])
 
@@ -137,12 +134,12 @@ func (s PkScript) Address(chainParams *chaincfg.Params) (stdaddr.Address, error)
 	)
 
 	switch s.class {
-	case txscript.PubKeyHashTy:
+	case stdscript.STPubKeyHashEcdsaSecp256k1:
 		scriptHash := s.script[3:23]
 		address, err = stdaddr.NewAddressPubKeyHashEcdsaSecp256k1V0(
 			scriptHash, chainParams,
 		)
-	case txscript.ScriptHashTy:
+	case stdscript.STScriptHash:
 		scriptHash := s.script[1:21]
 		address, err = stdaddr.NewAddressScriptHashV0FromHash(
 			scriptHash, chainParams,
@@ -174,9 +171,9 @@ func (s PkScript) Equal(o *PkScript) bool {
 	var slen int
 
 	switch s.class {
-	case txscript.PubKeyHashTy:
+	case stdscript.STPubKeyHashEcdsaSecp256k1:
 		slen = pubKeyHashLen
-	case txscript.ScriptHashTy:
+	case stdscript.STScriptHash:
 		slen = scriptHashLen
 	default:
 		slen = maxLen
@@ -227,7 +224,7 @@ func ComputePkScript(scriptVersion uint16, sigScript []byte) (PkScript, error) {
 		return pkScript, tokenizer.Err()
 	}
 
-	var scriptClass txscript.ScriptClass
+	var scriptClass stdscript.ScriptType
 	var script [maxLen]byte
 
 	// The last opcode of a sigscript will either be a pubkey (for p2kh
@@ -240,7 +237,7 @@ func ComputePkScript(scriptVersion uint16, sigScript []byte) (PkScript, error) {
 	if opcodeCount == 2 && firstDataIsSigLen && lastDataIsPubkeyLen {
 		// The sigScript has the correct structure for spending a
 		// p2pkh, therefore assume it is one.
-		scriptClass = txscript.PubKeyHashTy
+		scriptClass = stdscript.STPubKeyHashEcdsaSecp256k1
 		script = [maxLen]byte{
 			0: txscript.OP_DUP,
 			1: txscript.OP_HASH160,
@@ -252,7 +249,7 @@ func ComputePkScript(scriptVersion uint16, sigScript []byte) (PkScript, error) {
 		copy(script[3:23], lastDataHash)
 	} else {
 		// Assume it's a p2sh.
-		scriptClass = txscript.ScriptHashTy
+		scriptClass = stdscript.STScriptHash
 		script = [maxLen]byte{
 			0: txscript.OP_HASH160,
 			1: txscript.OP_DATA_20,

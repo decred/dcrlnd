@@ -14,8 +14,8 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	jsontypes "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
 	"github.com/decred/dcrd/rpcclient/v7"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainscan"
@@ -745,12 +745,9 @@ func (n *DcrdNotifier) RegisterSpendNtfn(outpoint *wire.OutPoint,
 
 	emptyOutPoint := outpoint == nil || *outpoint == chainntnfs.ZeroOutPoint
 	if emptyOutPoint {
-		_, addrs, _, err = txscript.ExtractPkScriptAddrs(
-			0, pkScript, n.chainParams, false,
+		_, addrs = stdscript.ExtractAddrs(
+			0, pkScript, n.chainParams,
 		)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse address: %v", err)
-		}
 	} else {
 		ops = []wire.OutPoint{*outpoint}
 	}

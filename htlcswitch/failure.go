@@ -6,7 +6,7 @@ import (
 
 	"github.com/decred/dcrlnd/htlcswitch/hop"
 	"github.com/decred/dcrlnd/lnwire"
-	sphinx "github.com/decred/lightning-onion/v3"
+	sphinx "github.com/decred/lightning-onion/v4"
 )
 
 // ClearTextError is an interface which is implemented by errors that occur

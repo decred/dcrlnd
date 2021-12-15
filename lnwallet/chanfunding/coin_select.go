@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -71,11 +71,11 @@ func CoinSelect(feeRate chainfee.AtomPerKByte, amt dcrutil.Amount,
 		var sizeEstimate input.TxSizeEstimator
 
 		for _, utxo := range selectedUtxos {
-			scriptClass := txscript.GetScriptClass(utxo.Version,
-				utxo.PkScript, false)
+			scriptClass := stdscript.DetermineScriptType(utxo.Version,
+				utxo.PkScript)
 
 			switch scriptClass {
-			case txscript.PubKeyHashTy:
+			case stdscript.STPubKeyHashEcdsaSecp256k1:
 				sizeEstimate.AddP2PKHInput()
 			default:
 				return nil, 0, fmt.Errorf("unsupported address type: %v",
@@ -134,11 +134,11 @@ func CoinSelectSubtractFees(feeRate chainfee.AtomPerKByte, amt,
 
 	var sizeEstimate input.TxSizeEstimator
 	for _, utxo := range selectedUtxos {
-		scriptClass := txscript.GetScriptClass(utxo.Version,
-			utxo.PkScript, false)
+		scriptClass := stdscript.DetermineScriptType(utxo.Version,
+			utxo.PkScript)
 
 		switch scriptClass {
-		case txscript.PubKeyHashTy:
+		case stdscript.STPubKeyHashEcdsaSecp256k1:
 			sizeEstimate.AddP2PKHInput()
 		default:
 			return nil, 0, 0, fmt.Errorf("unsupported address type: %v",

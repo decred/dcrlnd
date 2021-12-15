@@ -13,8 +13,8 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 
 	"github.com/decred/dcrlnd/lnwallet"
@@ -381,8 +381,8 @@ func (b *DcrWallet) ListUnspentWitness(minConfs, maxConfs int32) (
 			return nil, err
 		}
 
-		scriptClass := txscript.GetScriptClass(scriptVersion, pkScript, false)
-		if scriptClass != txscript.PubKeyHashTy {
+		scriptClass := stdscript.DetermineScriptType(scriptVersion, pkScript)
+		if scriptClass != stdscript.STPubKeyHashEcdsaSecp256k1 {
 			continue
 		}
 
@@ -588,12 +588,8 @@ func minedTransactionsToDetails(
 
 		var destAddresses []stdaddr.Address
 		for _, txOut := range wireTx.TxOut {
-			_, outAddresses, _, err := txscript.ExtractPkScriptAddrs(
-				txOut.Version, txOut.PkScript, chainParams, false)
-			if err != nil {
-				return nil, err
-			}
-
+			_, outAddresses := stdscript.ExtractAddrs(
+				txOut.Version, txOut.PkScript, chainParams)
 			destAddresses = append(destAddresses, outAddresses...)
 		}
 
@@ -638,13 +634,9 @@ func unminedTransactionsToDetail(
 
 	var destAddresses []stdaddr.Address
 	for _, txOut := range wireTx.TxOut {
-		_, outAddresses, _, err :=
-			txscript.ExtractPkScriptAddrs(txOut.Version,
-				txOut.PkScript, chainParams, false)
-		if err != nil {
-			return nil, err
-		}
-
+		_, outAddresses :=
+			stdscript.ExtractAddrs(txOut.Version,
+				txOut.PkScript, chainParams)
 		destAddresses = append(destAddresses, outAddresses...)
 	}
 

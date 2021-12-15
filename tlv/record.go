@@ -6,7 +6,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // Type is an 64-bit identifier for a TLV Record.

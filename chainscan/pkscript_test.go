@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/decred/dcrd/txscript/v4"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 )
 
 // TestParsePkScript ensures that the supported script types can be parsed
@@ -138,13 +138,13 @@ func TestComputePkScript(t *testing.T) {
 	tests := []struct {
 		name      string
 		sigScript []byte
-		class     txscript.ScriptClass
+		class     stdscript.ScriptType
 		pkScript  []byte
 	}{
 		{
 			name:      "empty sigScript and witness",
 			sigScript: nil,
-			class:     txscript.NonStandardTy,
+			class:     stdscript.STNonStandard,
 			pkScript:  nil,
 		},
 		{
@@ -171,7 +171,7 @@ func TestComputePkScript(t *testing.T) {
 				0x1f, 0x1f, 0x7b, 0x73, 0x7d, 0x9a, 0x24, 0x49,
 				0x90,
 			},
-			class: txscript.PubKeyHashTy,
+			class: stdscript.STPubKeyHashEcdsaSecp256k1,
 			pkScript: []byte{
 				// OP_DUP
 				0x76,
@@ -213,7 +213,7 @@ func TestComputePkScript(t *testing.T) {
 				0xcb, 0x4f, 0x53, 0x6d, 0xbd, 0x1, 0x16, 0x40,
 				0x28,
 			},
-			class: txscript.PubKeyHashTy,
+			class: stdscript.STPubKeyHashEcdsaSecp256k1,
 			pkScript: []byte{
 				// OP_DUP
 				0x76,
@@ -247,7 +247,7 @@ func TestComputePkScript(t *testing.T) {
 				0xcb, 0x4f, 0x53, 0x6d, 0xbd, 0x1, 0x16, 0x40,
 				0x28,
 			},
-			class: txscript.PubKeyHashTy,
+			class: stdscript.STPubKeyHashEcdsaSecp256k1,
 			pkScript: []byte{
 				// OP_DUP
 				0x76,
@@ -309,7 +309,7 @@ func TestComputePkScript(t *testing.T) {
 				0x3e, 0xfd, 0x9d, 0x41, 0x03, 0xb5, 0x59, 0xeb,
 				0x67, 0xcd, 0x52, 0xae,
 			},
-			class: txscript.ScriptHashTy,
+			class: stdscript.STScriptHash,
 			pkScript: []byte{
 				// OP_HASH160
 				0xA9,
@@ -327,7 +327,7 @@ func TestComputePkScript(t *testing.T) {
 		{
 			name:      "invalid P2SH sigScript",
 			sigScript: []byte{0x6b, 0x65, 0x6b}, // kek
-			class:     txscript.NonStandardTy,
+			class:     stdscript.STNonStandard,
 			pkScript:  nil,
 		},
 	}

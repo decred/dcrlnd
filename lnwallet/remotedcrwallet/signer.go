@@ -11,11 +11,12 @@ import (
 	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3/ecdsa"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/sign"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
@@ -64,9 +65,9 @@ func (b *DcrWallet) FetchInputInfo(prevOut *wire.OutPoint) (*lnwallet.Utxo, erro
 
 	// Then, we'll populate all of the information required by the struct.
 	addressType := lnwallet.UnknownAddressType
-	scriptClass := txscript.GetScriptClass(scriptVersion, credit.OutputScript, false)
+	scriptClass := stdscript.DetermineScriptType(scriptVersion, credit.OutputScript)
 	switch scriptClass {
-	case txscript.PubKeyHashTy:
+	case stdscript.STPubKeyHashEcdsaSecp256k1:
 		addressType = lnwallet.PubKeyHash
 	}
 
@@ -183,11 +184,8 @@ func (b *DcrWallet) ComputeInputScript(tx *wire.MsgTx,
 	// Figure out the branch and index of the key needed to sign this
 	// input. This assumes only regular onchain keys are used with
 	// ComputeInputScript.
-	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion, script,
-		b.chainParams, false)
-	if err != nil {
-		return nil, err
-	}
+	_, addrs := stdscript.ExtractAddrs(scriptVersion, script,
+		b.chainParams)
 	if len(addrs) != 1 {
 		return nil, fmt.Errorf("wrong number of addresses decoded")
 	}

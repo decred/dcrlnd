@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -169,13 +169,9 @@ var sweepScript = []byte{
 }
 
 var deliveryAddr = func() stdaddr.Address {
-	_, addrs, _, err := txscript.ExtractPkScriptAddrs(
-		0, sweepScript, chaincfg.TestNet3Params(), false,
+	_, addrs := stdscript.ExtractAddrs(
+		0, sweepScript, chaincfg.TestNet3Params(),
 	)
-	if err != nil {
-		panic(err)
-	}
-
 	return addrs[0]
 }()
 

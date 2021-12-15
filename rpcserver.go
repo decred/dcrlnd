@@ -22,11 +22,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3/ecdsa"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
@@ -67,7 +67,7 @@ import (
 	"github.com/decred/dcrlnd/watchtower"
 	"github.com/decred/dcrlnd/zpay32"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	proxy "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/tv42/zbase32"
 	"google.golang.org/grpc"
@@ -3548,13 +3548,10 @@ func createRPCOpenChannel(r *rpcServer, graph *channeldb.ChannelGraph,
 	if len(dbChannel.LocalShutdownScript) > 0 {
 		// TODO(decred): Store version along with LocalShutdownScript?
 		scriptVersion := uint16(0)
-		_, addresses, _, err := txscript.ExtractPkScriptAddrs(
+		_, addresses := stdscript.ExtractAddrs(
 			scriptVersion, dbChannel.LocalShutdownScript,
-			activeNetParams.Params, false,
+			activeNetParams.Params,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		// We only expect one upfront shutdown address for a channel. If
 		// LocalShutdownScript is non-zero, there should be one payout

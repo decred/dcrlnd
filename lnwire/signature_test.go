@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	secpv2 "github.com/decred/dcrd/dcrec/secp256k1/v2"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 func TestSignatureSerializeDeserialize(t *testing.T) {
@@ -28,7 +28,7 @@ func TestSignatureSerializeDeserialize(t *testing.T) {
 			return err
 		}
 
-		// NOTE(decred) These are commented because the secp256k1/v3
+		// NOTE(decred) These are commented because the secp256k1/v4
 		// doesn't provide access to the internal R and S.
 		/*
 			if e.R.Cmp(e2.R) != 0 {
@@ -79,7 +79,7 @@ func TestSignatureSerializeDeserialize(t *testing.T) {
 
 	// Check R = N-1, S = N-1.
 	sig.S.Sub(sig.S, big.NewInt(1))
-	// NOTE(decred): this is commented because secp256k1/v3 doesn't provide
+	// NOTE(decred): this is commented because secp256k1/v4 doesn't provide
 	// access to R and S for the comparison to be performed.
 	/*
 		err = signatureSerializeDeserialize(sig)

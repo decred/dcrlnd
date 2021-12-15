@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/tlv"
 )
 
@@ -303,7 +303,7 @@ var tlvDecodingFailureTests = []struct {
 			0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x02,
 		},
-		expErr: secp256k1.Error{ErrorCode: secp256k1.ErrPubKeyInvalidFormat,
+		expErr: secp256k1.Error{Err: secp256k1.ErrPubKeyInvalidFormat,
 			Description: "invalid public key: unsupported format: 4"},
 		skipN2: true,
 	},

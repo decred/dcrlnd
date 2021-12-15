@@ -10,7 +10,7 @@ import (
 
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
-	sphinx "github.com/decred/lightning-onion/v3"
+	sphinx "github.com/decred/lightning-onion/v4"
 )
 
 const (

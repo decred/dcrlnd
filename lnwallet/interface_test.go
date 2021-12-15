@@ -24,7 +24,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrjson/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	dcrutilv3 "github.com/decred/dcrd/dcrutil/v4"
@@ -32,6 +32,7 @@ import (
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/stretchr/testify/require"
 
@@ -1274,12 +1275,9 @@ func testListTransactionDetails(miner *rpctest.Harness,
 			var destinationAddresses []stdaddr.Address
 
 			for _, txOut := range txOuts {
-				_, addrs, _, err :=
-					txscript.ExtractPkScriptAddrs(txOut.Version, txOut.PkScript,
-						&alice.Cfg.NetParams, false)
-				if err != nil {
-					t.Fatalf("err extract script addresses: %s", err)
-				}
+				_, addrs :=
+					stdscript.ExtractAddrs(txOut.Version, txOut.PkScript,
+						&alice.Cfg.NetParams)
 				destinationAddresses = append(destinationAddresses, addrs...)
 			}
 

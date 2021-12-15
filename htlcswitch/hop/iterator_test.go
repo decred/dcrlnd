@@ -9,7 +9,7 @@ import (
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
 	"github.com/decred/dcrlnd/tlv"
-	sphinx "github.com/decred/lightning-onion/v3"
+	sphinx "github.com/decred/lightning-onion/v4"
 )
 
 // TestSphinxHopIteratorForwardingInstructions tests that we're able to

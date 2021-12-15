@@ -11,8 +11,8 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/rpctest"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainscan"
@@ -317,11 +317,11 @@ func TestInneficientRescan(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to parse pkscript: %v", err)
 	}
-	_, addrs, _, err := txscript.ExtractPkScriptAddrs(
-		txout.Version, txout.PkScript, chainntnfs.NetParams, false,
+	_, addrs := stdscript.ExtractAddrs(
+		txout.Version, txout.PkScript, chainntnfs.NetParams,
 	)
-	if err != nil {
-		t.Fatalf("unable to parse script type: %v", err)
+	if len(addrs) != 1 {
+		t.Fatalf("wrong nb of addrs: %d", len(addrs))
 	}
 	addr := addrs[0]
 

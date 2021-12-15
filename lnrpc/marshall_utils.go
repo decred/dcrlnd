@@ -7,7 +7,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 )
@@ -133,12 +133,9 @@ func MarshalUtxos(utxos []*lnwallet.Utxo, activeNetParams *chaincfg.Params) (
 		// Finally, we'll attempt to extract the raw address from the
 		// script so we can display a human friendly address to the end
 		// user.
-		_, outAddresses, _, err := txscript.ExtractPkScriptAddrs(
-			scriptVersion, utxo.PkScript, activeNetParams, false,
+		_, outAddresses := stdscript.ExtractAddrs(
+			scriptVersion, utxo.PkScript, activeNetParams,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		// If we can't properly locate a single address, then this was
 		// an error in our mapping, and we'll return an error back to

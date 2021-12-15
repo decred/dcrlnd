@@ -10,7 +10,7 @@ import (
 	"testing"
 	"testing/quick"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/tor"
 	"github.com/decred/dcrlnd/watchtower/wtdb"
 )

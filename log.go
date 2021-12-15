@@ -42,7 +42,7 @@ import (
 	"github.com/decred/dcrlnd/walletunlocker"
 	"github.com/decred/dcrlnd/watchtower"
 	"github.com/decred/dcrlnd/watchtower/wtclient"
-	sphinx "github.com/decred/lightning-onion/v3"
+	sphinx "github.com/decred/lightning-onion/v4"
 	"github.com/decred/slog"
 	"google.golang.org/grpc"
 )

@@ -8,12 +8,13 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3/ecdsa"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/sign"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 )
 
@@ -81,14 +82,16 @@ func (m *MockSigner) SignOutputRaw(tx *wire.MsgTx,
 }
 
 func (m *MockSigner) ComputeInputScript(tx *wire.MsgTx, signDesc *SignDescriptor) (*Script, error) {
-	scriptType, addresses, _, err := txscript.ExtractPkScriptAddrs(
-		signDesc.Output.Version, signDesc.Output.PkScript, m.NetParams, false)
-	if err != nil {
-		return nil, err
+	scriptType, addresses := stdscript.ExtractAddrs(
+		signDesc.Output.Version, signDesc.Output.PkScript, m.NetParams)
+
+	if len(addresses) != 1 {
+		return nil, fmt.Errorf("unexpected nb of addresses (got %d, want %d)",
+			len(addresses), 1)
 	}
 
 	switch scriptType {
-	case txscript.PubKeyHashTy:
+	case stdscript.STPubKeyHashEcdsaSecp256k1:
 		privKey := m.findKey(addresses[0].(stdaddr.Hash160er).Hash160()[:], signDesc.SingleTweak,
 			signDesc.DoubleTweak)
 		if privKey == nil {

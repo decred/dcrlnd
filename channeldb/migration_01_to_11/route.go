@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
 	"github.com/decred/dcrlnd/tlv"
-	sphinx "github.com/decred/lightning-onion/v3"
+	sphinx "github.com/decred/lightning-onion/v4"
 )
 
 // VertexSize is the size of the array to store a vertex.

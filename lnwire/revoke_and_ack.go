@@ -3,7 +3,7 @@ package lnwire
 import (
 	"io"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // RevokeAndAck is sent by either side once a CommitSig message has been

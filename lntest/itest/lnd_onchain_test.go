@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/walletrpc"
 	"github.com/decred/dcrlnd/lntest"
@@ -73,11 +73,11 @@ func testCPFP(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 	bobOutputIdx := -1
 	for i, txOut := range tx.MsgTx().TxOut {
-		_, addrs, _, err := txscript.ExtractPkScriptAddrs(
-			txOut.Version, txOut.PkScript, net.Miner.ActiveNet, false,
+		_, addrs := stdscript.ExtractAddrs(
+			txOut.Version, txOut.PkScript, net.Miner.ActiveNet,
 		)
-		if err != nil {
-			t.Fatalf("unable to extract address from pkScript=%x: "+
+		if len(addrs) != 1 {
+			t.Fatalf("wrong nb of addresses from pkScript=%x: "+
 				"%v", txOut.PkScript, err)
 		}
 		if addrs[0].String() == resp.Address {

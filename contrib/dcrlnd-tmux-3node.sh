@@ -15,7 +15,7 @@
 #  dcrlnd0 < 0.05 --- 0.05 > dcrlnd1 < 0.03 --- 0.07 > dcrlnd2
 
 set -e
-# set -x
+set -x
 
 NODES_ROOT=~/dcrlndsimnetnodes
 DCRLND_BIN="dcrlnd"
@@ -36,6 +36,8 @@ NODE2_SEED="able found student horse wife gas catch jelly blast grab wage strate
 NODE0_PUBID="032b8c752fdcd8da420e6fd5d2317cfc42f51a0928d34511fce7b6ba42e1e353b8"
 NODE1_PUBID="03bb9246b8eaacde90c3b9e7a0539b0b70cde514ec0d2571c68063ac15edac5534"
 NODE2_PUBID="029398ddb14e4b3cb92fc64d61fcaaa2f3b590951b0b05ba1ecc04a7504d333213"
+
+alias tmxsend="tmux send-keys"
 
 if [ -d "${NODES_ROOT}" ] ; then
   rm -R "${NODES_ROOT}"
@@ -249,9 +251,9 @@ function countdown {
 # Start Session.
 
 cd ${NODES_ROOT} && tmux -2 new-session -d -s $SESSION
-tmux send-keys "alias a=${NODES_ROOT}/dcrlnd0/ctl" C-m
-tmux send-keys "alias b=${NODES_ROOT}/dcrlnd1/ctl" C-m
-tmux send-keys "alias c=${NODES_ROOT}/dcrlnd2/ctl" C-m
+tmxsend "alias a=${NODES_ROOT}/dcrlnd0/ctl" C-m
+tmxsend "alias b=${NODES_ROOT}/dcrlnd1/ctl" C-m
+tmxsend "alias c=${NODES_ROOT}/dcrlnd2/ctl" C-m
 
 
 # Setup mining node.
@@ -263,40 +265,42 @@ tmux select-pane -t 0
 tmux split-window -v
 tmux select-pane -t 0
 
-tmux send-keys "cd dcrd" C-m
-tmux send-keys "dcrd -C ../dcrd.conf" C-m
+tmxsend "cd dcrd" C-m
+tmxsend "dcrd -C ../dcrd.conf" C-m
 tmux select-pane -t 1
-tmux send-keys "cd dcrd" C-m
+tmxsend "cd dcrd" C-m
 sleep 3
-tmux send-keys "./ctl generate 32" C-m
+tmxsend "./ctl generate 32" C-m
+sleep 1
 
 # Setup voting wallet.
 
 tmux select-pane -t 2
-tmux send-keys "cd wallet" C-m
-tmux send-keys "echo \"${WALLET_CREATE_CONFIG}\" | dcrwallet -C ../wallet.conf --create; tmux wait-for -S wallet" C-m
+tmxsend "cd wallet" C-m
+tmux send-keys -t $SESSION "echo \"${WALLET_CREATE_CONFIG}\" | dcrwallet -C ../wallet.conf --create; tmux wait-for -S wallet" C-m
 tmux wait-for "wallet"
-tmux send-keys "dcrwallet -C ../wallet.conf" C-m
+sleep 1
+tmxsend "dcrwallet -C ../wallet.conf" C-m
 tmux select-pane -t 3
-tmux send-keys "cd wallet" C-m
+tmxsend "cd wallet" C-m
 
 
 # Bring up ln nodes.
 
 tmux new-window -t $SESSION:2 -n 'dcrlnd0'
-tmux send-keys "${DCRLND_BIN} --configfile ${NODES_ROOT}/dcrlnd0.conf" C-m
+tmxsend "${DCRLND_BIN} --configfile ${NODES_ROOT}/dcrlnd0.conf" C-m
 tmux split-window -v
-tmux send-keys "cd ${NODES_ROOT}/dcrlnd0" C-m
+tmxsend "cd ${NODES_ROOT}/dcrlnd0" C-m
 
 tmux new-window -t $SESSION:3 -n 'dcrlnd1'
-tmux send-keys "${DCRLND_BIN} --configfile ${NODES_ROOT}/dcrlnd1.conf" C-m
+tmxsend "${DCRLND_BIN} --configfile ${NODES_ROOT}/dcrlnd1.conf" C-m
 tmux split-window -v
-tmux send-keys "cd ${NODES_ROOT}/dcrlnd1" C-m
+tmxsend "cd ${NODES_ROOT}/dcrlnd1" C-m
 
 tmux new-window -t $SESSION:4 -n 'dcrlnd2'
-tmux send-keys "${DCRLND_BIN} --configfile ${NODES_ROOT}/dcrlnd2.conf" C-m
+tmxsend "${DCRLND_BIN} --configfile ${NODES_ROOT}/dcrlnd2.conf" C-m
 tmux split-window -v
-tmux send-keys "cd ${NODES_ROOT}/dcrlnd2" C-m
+tmxsend "cd ${NODES_ROOT}/dcrlnd2" C-m
 
 # Wait for nodes to query for pwd.
 echo "Waiting for dcrlnd nodes to initialize"
@@ -305,19 +309,19 @@ countdown 5
 # Create lnd wallets.
 
 tmux select-window -t 2
-tmux send-keys "./ctl create" C-m
+tmxsend "./ctl create" C-m
 sleep 3
-tmux send-keys "12345678" C-m "12345678" C-m
+tmxsend "12345678" C-m "12345678" C-m
 
 tmux select-window -t 3
-tmux send-keys "./ctl create" C-m
+tmxsend "./ctl create" C-m
 sleep 3
-tmux send-keys "12345678" C-m "12345678" C-m
+tmxsend "12345678" C-m "12345678" C-m
 
 tmux select-window -t 4
-tmux send-keys "./ctl create" C-m
+tmxsend "./ctl create" C-m
 sleep 3
-tmux send-keys "12345678" C-m "12345678" C-m
+tmxsend "12345678" C-m "12345678" C-m
 
 # Wait for seed input.
 echo "Waiting to input seed"
@@ -326,17 +330,17 @@ countdown 3
 
 # Seed input lnd wallets.
 tmux select-window -t 2
-tmux send-keys "y" C-m
+tmxsend "y" C-m
 sleep 2
-tmux send-keys "${NODE0_SEED}" C-m C-m C-m
+tmxsend "${NODE0_SEED}" C-m C-m C-m
 tmux select-window -t 3
-tmux send-keys "y" C-m
+tmxsend "y" C-m
 sleep 2
-tmux send-keys "${NODE1_SEED}" C-m C-m C-m
+tmxsend "${NODE1_SEED}" C-m C-m C-m
 tmux select-window -t 4
-tmux send-keys "y" C-m
+tmxsend "y" C-m
 sleep 2
-tmux send-keys "${NODE2_SEED}" C-m C-m C-m
+tmxsend "${NODE2_SEED}" C-m C-m C-m
 
 echo "Waiting for nodes to sync up"
 countdown 5
@@ -346,31 +350,33 @@ addr0=`${NODES_ROOT}/dcrlnd0/ctl newaddress p2pkh | jq .address`
 addr1=`${NODES_ROOT}/dcrlnd1/ctl newaddress p2pkh | jq .address`
 addr2=`${NODES_ROOT}/dcrlnd2/ctl newaddress p2pkh | jq .address`
 tmux select-window -t 1
-tmux send-keys "./ctl sendtoaddress $addr0 10" C-m
-tmux send-keys "./ctl sendtoaddress $addr1 10" C-m
-tmux send-keys "./ctl sendtoaddress $addr2 10" C-m
+tmxsend "./ctl sendtoaddress $addr0 10" C-m
+tmxsend "./ctl sendtoaddress $addr1 10" C-m
+tmxsend "./ctl sendtoaddress $addr2 10" C-m
 tmux select-pane -t 1
-tmux send-keys "./mine 3" C-m
+tmxsend "./mine 3" C-m
 
 echo "Waiting for lnd wallets to catch up"
 countdown 3
 
 # Connect nodes and open a channel node0 => node1.
 tmux select-window -t 2
-tmux send-keys "./ctl connect ${NODE1_PUBID}@127.0.0.1:20102" C-m
-tmux send-keys "./ctl openchannel ${NODE1_PUBID} 10000000 5000000" C-m
+sleep 0.5
+tmxsend "./ctl connect ${NODE1_PUBID}@127.0.0.1:20102" C-m
+tmxsend "./ctl openchannel ${NODE1_PUBID} 10000000 5000000" C-m
 
 # Connect nodes and open a channel node2 => node1.
 tmux select-window -t 4
-tmux send-keys "./ctl connect ${NODE1_PUBID}@127.0.0.1:20102" C-m
-tmux send-keys "./ctl openchannel ${NODE1_PUBID} 10000000 3000000" C-m
+sleep 0.5
+tmxsend "./ctl connect ${NODE1_PUBID}@127.0.0.1:20102" C-m
+tmxsend "./ctl openchannel ${NODE1_PUBID} 10000000 3000000" C-m
 
 echo "Waiting for funding txs to be broadcast"
 countdown 3
 
 # Mine the new channel txs
 tmux select-window -t 1
-tmux send-keys "./mine 8" C-m
+tmxsend "./mine 8" C-m
 
 echo "Attaching to session '$SESSION'"
-tmux attach-session -t $SESSION
+tmux attach-session

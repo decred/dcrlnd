@@ -9,10 +9,10 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec/secp256k1/v3"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
@@ -735,13 +735,10 @@ func (c *chainWatcher) closeObserver(spendNtfn *chainntnfs.SpendEvent) {
 func (c *chainWatcher) toSelfAmount(tx *wire.MsgTx) dcrutil.Amount {
 	var selfAmt dcrutil.Amount
 	for _, txOut := range tx.TxOut {
-		_, addrs, _, err := txscript.ExtractPkScriptAddrs(
+		_, addrs := stdscript.ExtractAddrs(
 			// Doesn't matter what net we actually pass in.
-			txOut.Version, txOut.PkScript, c.cfg.netParams, false,
+			txOut.Version, txOut.PkScript, c.cfg.netParams,
 		)
-		if err != nil {
-			continue
-		}
 
 		for _, addr := range addrs {
 			if c.cfg.isOurAddr(addr) {

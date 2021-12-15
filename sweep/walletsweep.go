@@ -7,6 +7,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet"
@@ -229,8 +230,8 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, blockHeight uint32,
 		}
 
 		pkScript := output.PkScript
-		scriptClass := txscript.GetScriptClass(
-			scriptVersion, pkScript, false,
+		scriptClass := stdscript.DetermineScriptType(
+			scriptVersion, pkScript,
 		)
 
 		// Based on the output type, we'll map it to the proper witness
@@ -241,7 +242,7 @@ func CraftSweepAllTx(feeRate chainfee.AtomPerKByte, blockHeight uint32,
 
 		// We only support redeeming standard p2pkh outputs for the
 		// moment.
-		case scriptClass == txscript.PubKeyHashTy:
+		case scriptClass == stdscript.STPubKeyHashEcdsaSecp256k1:
 			witnessType = input.PublicKeyHash
 
 		// All other output types we count as unknown and will fail to
