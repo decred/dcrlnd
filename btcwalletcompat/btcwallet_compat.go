@@ -14,3 +14,6 @@ const (
 	// utxos over time.
 	CoinSelectionRandom
 )
+
+// ManagedPubKeyAddress is a shim for btcwallet's waddrmgr.ManagedPubKeyAddress.
+type ManagedPubKeyAddress interface{}

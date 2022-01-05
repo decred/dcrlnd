@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 
+	"github.com/decred/dcrlnd/btcwalletcompat"
 	"github.com/decred/dcrlnd/internal/psbt"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -51,6 +52,15 @@ func (w *WalletController) FetchInputInfo(
 		OutPoint:      *prevOut,
 	}
 	return utxo, nil
+}
+
+// ScriptForOutput returns the address, witness program and redeem script for a
+// given UTXO. An error is returned if the UTXO does not belong to our wallet or
+// it is not a managed pubKey address.
+func (w *WalletController) ScriptForOutput(*wire.TxOut) (
+	btcwalletcompat.ManagedPubKeyAddress, []byte, []byte, error) {
+
+	return nil, nil, nil, nil
 }
 
 // ConfirmedBalance currently returns dummy values.

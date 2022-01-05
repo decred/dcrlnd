@@ -15,6 +15,7 @@ import (
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/btcwalletcompat"
 	"github.com/decred/dcrlnd/internal/psbt"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -171,6 +172,12 @@ type WalletController interface {
 	// its control, then the original txout should be returned.  Otherwise,
 	// a non-nil error value of ErrNotMine should be returned instead.
 	FetchInputInfo(prevOut *wire.OutPoint) (*Utxo, error)
+
+	// ScriptForOutput returns the address, witness program and redeem
+	// script for a given UTXO. An error is returned if the UTXO does not
+	// belong to our wallet or it is not a managed pubKey address.
+	ScriptForOutput(output *wire.TxOut) (btcwalletcompat.ManagedPubKeyAddress,
+		[]byte, []byte, error)
 
 	// ConfirmedBalance returns the sum of all the wallet's unspent outputs
 	// that have at least confs confirmations. If confs is set to zero,

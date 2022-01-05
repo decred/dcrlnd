@@ -28,6 +28,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/btcwalletcompat"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
@@ -1311,4 +1312,9 @@ func (b *DcrWallet) ImportAccount(name string, accountPubKey *hdkeychain.Extende
 // This is a part of the WalletController interface.
 func (b *DcrWallet) ImportPublicKey(pubKey *secp256k1.PublicKey) error {
 	return fmt.Errorf("unimplemented in gRPC")
+}
+
+func (b *DcrWallet) ScriptForOutput(*wire.TxOut) (
+	btcwalletcompat.ManagedPubKeyAddress, []byte, []byte, error) {
+	return nil, nil, nil, fmt.Errorf("remotedcrwallet.ScriptForOutput is not implemented")
 }
