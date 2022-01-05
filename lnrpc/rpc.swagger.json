@@ -3722,6 +3722,16 @@
           "type": "boolean",
           "format": "boolean",
           "description": "Whether all server sub-processes have started and the node is ready to be\nused."
+        },
+        "router_prune_target": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Target height of the channel router startup graph pruning process."
+        },
+        "router_prune_height": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Last checked height of the channel router startup graph pruning process."
         }
       }
     },

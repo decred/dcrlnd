@@ -401,6 +401,11 @@ type ChannelRouter struct {
 	// announcements over a window of defaultStatInterval.
 	stats *routerStats
 
+	// Tracking of startup pruning stats.
+	prunedMtx    sync.Mutex
+	prunedTarget uint32
+	prunedHeight uint32
+
 	sync.RWMutex
 
 	quit chan struct{}
@@ -599,6 +604,16 @@ func (r *ChannelRouter) Stop() error {
 	return nil
 }
 
+// StartupPruneProgress returns the progress (respectively, the target height
+// and last checked height) of the graph pruning process that happens during
+// startup.
+func (r *ChannelRouter) StartupPruneProgress() (uint32, uint32) {
+	r.prunedMtx.Lock()
+	target, progress := r.prunedTarget, r.prunedHeight
+	r.prunedMtx.Unlock()
+	return target, progress
+}
+
 // syncGraphWithChain attempts to synchronize the current channel graph with
 // the latest UTXO set state. This process involves pruning from the channel
 // graph any channels which have been closed by spending their funding output
@@ -684,6 +699,13 @@ func (r *ChannelRouter) syncGraphWithChain() error {
 	log.Infof("Syncing channel graph from height=%v (hash=%v) to height=%v "+
 		"(hash=%v)", pruneHeight, pruneHash, bestHeight, bestHash)
 
+	r.prunedMtx.Lock()
+	r.prunedTarget = uint32(bestHeight)
+	r.prunedMtx.Unlock()
+	lastLogTime := time.Now()
+	lastLogHeight := pruneHeight
+	totalPruneBlocks := uint32(bestHeight) - pruneHeight
+
 	// If we're not yet caught up, then we'll walk forward in the chain
 	// pruning the channel graph with each new block that hasn't yet been
 	// consumed by the channel graph.
@@ -717,6 +739,21 @@ func (r *ChannelRouter) syncGraphWithChain() error {
 				spentOutputs = append(spentOutputs,
 					&txIn.PreviousOutPoint)
 			}
+		}
+
+		r.prunedMtx.Lock()
+		r.prunedHeight = nextHeight
+		r.prunedMtx.Unlock()
+
+		// Log progress on startup pruning.
+		now := time.Now()
+		if now.After(lastLogTime.Add(5 * time.Second)) {
+			log.Infof("Checked %d blocks for closed channels in the "+
+				"last %s (%.2f%% complete)",
+				nextHeight-lastLogHeight, now.Sub(lastLogTime).Truncate(time.Millisecond),
+				float64(nextHeight-pruneHeight)/float64(totalPruneBlocks)*100)
+			lastLogHeight = nextHeight
+			lastLogTime = now
 		}
 	}
 

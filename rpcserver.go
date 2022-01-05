@@ -2571,6 +2571,8 @@ func (r *rpcServer) GetInfo(ctx context.Context,
 		}
 	}
 
+	routerPruneTarget, routerPruneHeight := r.server.chanRouter.StartupPruneProgress()
+
 	// TODO(roasbeef): add synced height n stuff
 	return &lnrpc.GetInfoResponse{
 		IdentityPubkey:      encodedIDPub,
@@ -2592,6 +2594,8 @@ func (r *rpcServer) GetInfo(ctx context.Context,
 		SyncedToGraph:       isGraphSynced,
 		Features:            features,
 		ServerActive:        r.server.Started() && !r.server.Stopped(),
+		RouterPruneTarget:   routerPruneTarget,
+		RouterPruneHeight:   routerPruneHeight,
 	}, nil
 }
 
