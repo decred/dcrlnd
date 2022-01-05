@@ -182,7 +182,8 @@ type WalletController interface {
 	// NOTE: Only witness outputs should be included in the computation of
 	// the total spendable balance of the wallet. We require this as only
 	// witness inputs can be used for funding channels.
-	ConfirmedBalance(confs int32, accountFilter string) (dcrutil.Amount, error)
+	ConfirmedBalance(confs int32, accountFilter string) (dcrutil.Amount,
+		error)
 
 	// NewAddress returns the next external or internal address for the
 	// wallet dictated by the value of the `change` parameter. If change is
@@ -232,9 +233,8 @@ type WalletController interface {
 	// be used when crafting the transaction.
 	//
 	// NOTE: This method requires the global coin selection lock to be held.
-	SendOutputs(outputs []*wire.TxOut,
-		feeRate chainfee.AtomPerKByte, minConfs int32, label string,
-		fromAccount string) (*wire.MsgTx, error)
+	SendOutputs(outputs []*wire.TxOut, feeRate chainfee.AtomPerKByte,
+		minConfs int32, label, fromAccount string) (*wire.MsgTx, error)
 
 	// CreateSimpleTx creates a Bitcoin transaction paying to the specified
 	// outputs. The transaction is not broadcasted to the network. In the

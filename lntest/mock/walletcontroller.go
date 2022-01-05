@@ -54,13 +54,15 @@ func (w *WalletController) FetchInputInfo(
 }
 
 // ConfirmedBalance currently returns dummy values.
-func (w *WalletController) ConfirmedBalance(confs int32, account string) (dcrutil.Amount, error) {
+func (w *WalletController) ConfirmedBalance(int32, string) (dcrutil.Amount,
+	error) {
+
 	return 0, nil
 }
 
 // NewAddress is called to get new addresses for delivery, change etc.
-func (w *WalletController) NewAddress(addrType lnwallet.AddressType,
-	change bool, account string) (stdaddr.Address, error) {
+func (w *WalletController) NewAddress(lnwallet.AddressType, bool,
+	string) (stdaddr.Address, error) {
 
 	addr, _ := stdaddr.NewAddressPubKeyEcdsaSecp256k1V0(
 		w.RootKey.PubKey(), chaincfg.RegNetParams(),
@@ -69,26 +71,28 @@ func (w *WalletController) NewAddress(addrType lnwallet.AddressType,
 }
 
 // LastUnusedAddress currently returns dummy values.
-func (w *WalletController) LastUnusedAddress(addrType lnwallet.AddressType,
-	account string) (
-	stdaddr.Address, error) {
+func (w *WalletController) LastUnusedAddress(lnwallet.AddressType,
+	string) (stdaddr.Address, error) {
+
 	return nil, nil
 }
 
 // IsOurAddress currently returns a dummy value.
-func (w *WalletController) IsOurAddress(a stdaddr.Address) bool {
+func (w *WalletController) IsOurAddress(stdaddr.Address) bool {
 	return false
 }
 
-// ListAccountscurrently returns a dummy value.
-func (w *WalletController) ListAccounts(string) ([]wallet.AccountProperties, error) {
+// ListAccounts currently returns a dummy value.
+func (w *WalletController) ListAccounts(string) (
+	[]wallet.AccountProperties, error) {
+
 	return nil, nil
 }
 
-// ImportAccountcurrently returns a dummy value.
-func (w *WalletController) ImportAccount(name string, accountPubKey *hdkeychain.ExtendedKey,
-	dryRun bool) (*wallet.AccountProperties, []stdaddr.Address,
-	[]stdaddr.Address, error) {
+// ImportAccount currently returns a dummy value.
+func (w *WalletController) ImportAccount(string, *hdkeychain.ExtendedKey,
+	bool) (*wallet.AccountProperties,
+	[]stdaddr.Address, []stdaddr.Address, error) {
 
 	return nil, nil, nil, nil
 }
@@ -99,23 +103,23 @@ func (w *WalletController) ImportPublicKey(pubKey *secp256k1.PublicKey) error {
 }
 
 // SendOutputs currently returns dummy values.
-func (w *WalletController) SendOutputs(outputs []*wire.TxOut,
-	_ chainfee.AtomPerKByte, _ int32, _, _ string) (*wire.MsgTx, error) {
+func (w *WalletController) SendOutputs([]*wire.TxOut,
+	chainfee.AtomPerKByte, int32, string, string) (*wire.MsgTx, error) {
 
 	return nil, nil
 }
 
 // CreateSimpleTx currently returns dummy values.
-func (w *WalletController) CreateSimpleTx(outputs []*wire.TxOut,
-	_ chainfee.AtomPerKByte, _ int32, _ bool) (*txauthor.AuthoredTx, error) {
+func (w *WalletController) CreateSimpleTx([]*wire.TxOut,
+	chainfee.AtomPerKByte, int32, bool) (*txauthor.AuthoredTx, error) {
 
 	return nil, nil
 }
 
 // ListUnspentWitness is called by the wallet when doing coin selection. We just
 // need one unspent for the funding transaction.
-func (w *WalletController) ListUnspentWitness(minConfs,
-	maxConfs int32, _ string) ([]*lnwallet.Utxo, error) {
+func (w *WalletController) ListUnspentWitness(int32, int32,
+	string) ([]*lnwallet.Utxo, error) {
 
 	// If the mock already has a list of utxos, return it.
 	if w.Utxos != nil {
@@ -139,8 +143,8 @@ func (w *WalletController) ListUnspentWitness(minConfs,
 }
 
 // ListTransactionDetails currently returns dummy values.
-func (w *WalletController) ListTransactionDetails(_,
-	_ int32, _ string) ([]*lnwallet.TransactionDetail, error) {
+func (w *WalletController) ListTransactionDetails(int32, int32,
+	string) ([]*lnwallet.TransactionDetail, error) {
 
 	return nil, nil
 }
@@ -167,8 +171,8 @@ func (w *WalletController) ListLeasedOutputs() ([]*lnwallet.LockedOutput, error)
 }
 
 // FundPsbt currently does nothing.
-func (w *WalletController) FundPsbt(_ *psbt.Packet, _ int32,
-	_ chainfee.AtomPerKByte, _ string) (int32, error) {
+func (w *WalletController) FundPsbt(*psbt.Packet, int32, chainfee.AtomPerKByte,
+	string) (int32, error) {
 
 	return 0, nil
 }
@@ -185,8 +189,8 @@ func (w *WalletController) PublishTransaction(tx *wire.MsgTx, _ string) error {
 }
 
 // LabelTransaction currently does nothing.
-func (w *WalletController) LabelTransaction(_ chainhash.Hash, _ string,
-	_ bool) error {
+func (w *WalletController) LabelTransaction(chainhash.Hash, string,
+	bool) error {
 
 	return nil
 }
