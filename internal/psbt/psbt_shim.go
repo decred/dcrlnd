@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/wire"
 )
 
@@ -57,12 +58,9 @@ type PInput struct {
 	NonWitnessUtxo     *wire.MsgTx
 	FinalScriptSig     []byte
 	FinalScriptWitness []byte
-	/*
-		PartialSigs        []*PartialSig
-		SighashType        txscript.SigHashType
-		RedeemScript       []byte
-		WitnessScript      []byte
-		Bip32Derivation    []*Bip32Derivation
-		Unknowns           []*Unknown
-	*/
+	Bip32Derivation    []*Bip32Derivation
+	SighashType        txscript.SigHashType
+	PartialSigs        []*PartialSig
+	RedeemScript       []byte
+	WitnessScript      []byte
 }

@@ -1,6 +1,8 @@
 package itest
 
-import "github.com/decred/dcrlnd/lntest"
+import (
+	"github.com/decred/dcrlnd/lntest"
+)
 
 // testRemoteSigner tests that a watch-only wallet can use a remote signing
 // wallet to perform any signing or ECDH operations.
