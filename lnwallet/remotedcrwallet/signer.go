@@ -300,3 +300,8 @@ func (b *DcrWallet) FundPsbt(_ *psbt.Packet, _ int32,
 func (b *DcrWallet) FinalizePsbt(_ *psbt.Packet) error {
 	return fmt.Errorf("FinalizePsbt not supported")
 }
+
+// SignPsbt does nothing.
+func (b *DcrWallet) SignPsbt(*psbt.Packet) error {
+	return fmt.Errorf("SignPsbt not supported")
+}
