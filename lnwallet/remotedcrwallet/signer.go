@@ -1,6 +1,7 @@
 package remotedcrwallet
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -36,7 +37,7 @@ func (b *DcrWallet) FetchInputInfo(prevOut *wire.OutPoint) (*lnwallet.Utxo, erro
 	req := &pb.GetTransactionRequest{
 		TransactionHash: prevOut.Hash[:],
 	}
-	resp, err := b.wallet.GetTransaction(context.Background(), req)
+	resp, err := b.wallet.GetTransaction(b.ctx, req)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, lnwallet.ErrNotMine
@@ -73,6 +74,12 @@ func (b *DcrWallet) FetchInputInfo(prevOut *wire.OutPoint) (*lnwallet.Utxo, erro
 		addressType = lnwallet.PubKeyHash
 	}
 
+	prevTx := wire.NewMsgTx()
+	err = prevTx.Deserialize(bytes.NewBuffer(resp.Transaction.Transaction))
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode raw tx: %v", err)
+	}
+
 	return &lnwallet.Utxo{
 		AddressType: addressType,
 		Value: dcrutil.Amount(
@@ -81,6 +88,7 @@ func (b *DcrWallet) FetchInputInfo(prevOut *wire.OutPoint) (*lnwallet.Utxo, erro
 		PkScript:      credit.OutputScript,
 		Confirmations: int64(resp.Confirmations),
 		OutPoint:      *prevOut,
+		PrevTx:        prevTx,
 	}, nil
 }
 

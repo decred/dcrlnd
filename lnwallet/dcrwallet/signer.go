@@ -82,6 +82,7 @@ func (b *DcrWallet) FetchInputInfo(prevOut *wire.OutPoint) (*lnwallet.Utxo, erro
 		PkScript:      output.PkScript,
 		Confirmations: confs,
 		OutPoint:      *prevOut,
+		PrevTx:        &txDetail.MsgTx,
 	}, nil
 
 }

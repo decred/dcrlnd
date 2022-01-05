@@ -94,6 +94,9 @@ type Utxo struct {
 
 	// TODO(decred) this needs to include ScriptVersion. Then this version needs
 	// to be filled and used everywhere instead of DefaultScriptVersion.
+
+	Derivation *psbt.Bip32Derivation
+	PrevTx     *wire.MsgTx
 }
 
 // TransactionDetail describes a transaction with either inputs which belong to
