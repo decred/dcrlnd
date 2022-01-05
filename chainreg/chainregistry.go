@@ -407,6 +407,17 @@ func NewPartialChainControl(cfg *Config) (*PartialChainControl, func(), error) {
 			}
 		}
 
+	case cfg.Decred.Node == "nochainbackend":
+		backend := &NoChainBackend{}
+
+		cc.ChainNotifier = backend
+		cc.ChainView = backend
+		cc.FeeEstimator = backend
+
+		cc.HealthCheck = func() error {
+			return nil
+		}
+
 	default:
 		return nil, nil, fmt.Errorf("unknown sync mode")
 	}

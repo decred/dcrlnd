@@ -1004,6 +1004,8 @@ func ValidateConfig(cfg Config, interceptor signal.Interceptor, fileParser,
 	case "dcrw":
 		// In dcrw mode we use the underlying wallet for chain
 		// operations.
+	case "nochainbackend":
+		// No chain sync.
 	default:
 		str := "%s: only dcrd and dcrw modes supported for Decred at " +
 			"this time"

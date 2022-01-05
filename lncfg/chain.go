@@ -10,7 +10,7 @@ import (
 type Chain struct {
 	ChainDir string `long:"chaindir" description:"The directory to store the chain's data within."`
 
-	Node string `long:"node" description:"The blockchain interface to use." choice:"dcrd" choice:"dcrw"`
+	Node string `long:"node" description:"The blockchain interface to use." choice:"dcrd" choice:"dcrw" choice:"nochainbackend"`
 
 	TestNet3 bool `long:"testnet" description:"Use the test network"`
 	SimNet   bool `long:"simnet" description:"Use the simulation test network"`
