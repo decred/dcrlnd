@@ -158,9 +158,6 @@ func (d *DecayedLog) Stop() error {
 
 	d.wg.Wait()
 
-	// Close bboltdb.
-	d.db.Close()
-
 	return nil
 }
 
