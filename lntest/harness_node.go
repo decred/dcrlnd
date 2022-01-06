@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -23,7 +21,6 @@ import (
 	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/aezeed"
 	"github.com/decred/dcrlnd/chanbackup"
@@ -73,27 +70,6 @@ func postgresDatabaseDsn(dbName string) string {
 	return fmt.Sprintf(postgresDsn, dbName)
 }
 
-// generateListeningPorts returns four ints representing ports to listen on
-// designated for the current lightning network test. This returns the next
-// available ports for the p2p, rpc, rest and profiling services.
-func generateListeningPorts(cfg *NodeConfig) {
-	if cfg.P2PPort == 0 {
-		cfg.P2PPort = NextAvailablePort()
-	}
-	if cfg.RPCPort == 0 {
-		cfg.RPCPort = NextAvailablePort()
-	}
-	if cfg.RESTPort == 0 {
-		cfg.RESTPort = NextAvailablePort()
-	}
-	if cfg.ProfilePort == 0 {
-		cfg.ProfilePort = NextAvailablePort()
-	}
-	if cfg.WalletPort == 0 {
-		cfg.WalletPort = NextAvailablePort()
-	}
-}
-
 // BackendConfig is an interface that abstracts away the specific chain backend
 // node implementation.
 type BackendConfig interface {
@@ -115,10 +91,25 @@ type BackendConfig interface {
 	Name() string
 }
 
-type NodeConfig struct {
+// NodeConfig is the basic interface a node configuration must implement.
+type NodeConfig interface {
+	// BaseConfig returns the base node configuration struct.
+	BaseConfig() *BaseNodeConfig
+
+	// GenerateListeningPorts generates the ports to listen on designated
+	// for the current lightning network test.
+	GenerateListeningPorts()
+
+	// GenArgs generates a slice of command line arguments from the
+	// lightning node config struct.
+	GenArgs() []string
+}
+
+// BaseNodeConfig is the base node configuration.
+type BaseNodeConfig struct {
 	Name string
 
-	// LogFilenamePrefix is is used to prefix node log files. Can be used
+	// LogFilenamePrefix is used to prefix node log files. Can be used
 	// to store the current test case for simpler postmortem debugging.
 	LogFilenamePrefix string
 
@@ -155,28 +146,28 @@ type NodeConfig struct {
 	PostgresDsn string
 }
 
-func (cfg NodeConfig) P2PAddr() string {
+func (cfg BaseNodeConfig) P2PAddr() string {
 	return fmt.Sprintf(ListenerFormat, cfg.P2PPort)
 }
 
-func (cfg NodeConfig) RPCAddr() string {
+func (cfg BaseNodeConfig) RPCAddr() string {
 	return fmt.Sprintf(ListenerFormat, cfg.RPCPort)
 }
 
-func (cfg NodeConfig) RESTAddr() string {
+func (cfg BaseNodeConfig) RESTAddr() string {
 	return fmt.Sprintf(ListenerFormat, cfg.RESTPort)
 }
 
 // DBDir returns the holding directory path of the graph database.
-func (cfg NodeConfig) DBDir() string {
+func (cfg BaseNodeConfig) DBDir() string {
 	return filepath.Join(cfg.DataDir, "graph", cfg.NetParams.Name)
 }
 
-func (cfg NodeConfig) DBPath() string {
+func (cfg BaseNodeConfig) DBPath() string {
 	return filepath.Join(cfg.DBDir(), "channel.db")
 }
 
-func (cfg NodeConfig) ChanBackupPath() string {
+func (cfg BaseNodeConfig) ChanBackupPath() string {
 	return filepath.Join(
 		cfg.DataDir, "chain", "decred",
 		fmt.Sprintf(
@@ -186,9 +177,34 @@ func (cfg NodeConfig) ChanBackupPath() string {
 	)
 }
 
-// genArgs generates a slice of command line arguments from the lightning node
+// GenerateListeningPorts generates the ports to listen on designated for the
+// current lightning network test.
+func (cfg *BaseNodeConfig) GenerateListeningPorts() {
+	if cfg.P2PPort == 0 {
+		cfg.P2PPort = NextAvailablePort()
+	}
+	if cfg.RPCPort == 0 {
+		cfg.RPCPort = NextAvailablePort()
+	}
+	if cfg.RESTPort == 0 {
+		cfg.RESTPort = NextAvailablePort()
+	}
+	if cfg.ProfilePort == 0 {
+		cfg.ProfilePort = NextAvailablePort()
+	}
+	if cfg.WalletPort == 0 {
+		cfg.WalletPort = NextAvailablePort()
+	}
+}
+
+// BaseConfig returns the base node configuration struct.
+func (cfg *BaseNodeConfig) BaseConfig() *BaseNodeConfig {
+	return cfg
+}
+
+// GenArgs generates a slice of command line arguments from the lightning node
 // config struct.
-func (cfg NodeConfig) genArgs() []string {
+func (cfg *BaseNodeConfig) GenArgs() []string {
 	var args []string
 
 	switch cfg.NetParams.Net {
@@ -288,7 +304,7 @@ func (cfg NodeConfig) genArgs() []string {
 	return args
 }
 
-func (cfg *NodeConfig) genWalletArgs() []string {
+func (cfg *BaseNodeConfig) genWalletArgs() []string {
 	var args []string
 
 	switch cfg.NetParams.Net {
@@ -336,7 +352,7 @@ type policyUpdateMap map[string]map[string][]*lnrpc.RoutingPolicy
 // harness. Each HarnessNode instance also fully embeds an RPC client in
 // order to pragmatically drive the node.
 type HarnessNode struct {
-	Cfg *NodeConfig
+	Cfg *BaseNodeConfig
 
 	// NodeID is a unique identifier for the node within a NetworkHarness.
 	NodeID int
@@ -428,7 +444,7 @@ func nextNodeID() int {
 }
 
 // newNode creates a new test lightning node instance from the passed config.
-func newNode(cfg NodeConfig) (*HarnessNode, error) {
+func newNode(cfg *BaseNodeConfig) (*HarnessNode, error) {
 	if cfg.BaseDir == "" {
 		var err error
 		cfg.BaseDir, err = ioutil.TempDir("", "lndtest-node")
@@ -448,7 +464,7 @@ func newNode(cfg NodeConfig) (*HarnessNode, error) {
 	cfg.ReadMacPath = filepath.Join(networkDir, "readonly.macaroon")
 	cfg.InvoiceMacPath = filepath.Join(networkDir, "invoice.macaroon")
 
-	generateListeningPorts(&cfg)
+	cfg.GenerateListeningPorts()
 
 	err := os.MkdirAll(cfg.DataDir, os.FileMode(0755))
 	if err != nil {
@@ -472,7 +488,7 @@ func newNode(cfg NodeConfig) (*HarnessNode, error) {
 	}
 
 	return &HarnessNode{
-		Cfg:               &cfg,
+		Cfg:               cfg,
 		NodeID:            nextNodeID(),
 		chanWatchRequests: make(chan *chanWatchRequest),
 		openChans:         make(map[wire.OutPoint]int),
@@ -625,7 +641,7 @@ func (hn *HarnessNode) InvoiceMacPath() string {
 // startLnd handles the startup of lnd, creating log files, and possibly kills
 // the process when needed.
 func (hn *HarnessNode) startLnd(lndBinary string, lndError chan<- error) error {
-	args := hn.Cfg.genArgs()
+	args := hn.Cfg.GenArgs()
 	hn.cmd = exec.Command(lndBinary, args...)
 
 	// Redirect stderr output to buffer
@@ -758,189 +774,6 @@ func (hn *HarnessNode) start(lndBinary string, lndError chan<- error,
 	}
 
 	return hn.initLightningClient()
-}
-
-func tlsCertFromFile(fname string) (*x509.CertPool, error) {
-	b, err := ioutil.ReadFile(fname)
-	if err != nil {
-		return nil, err
-	}
-	cp := x509.NewCertPool()
-	if !cp.AppendCertsFromPEM(b) {
-		return nil, fmt.Errorf("credentials: failed to append certificates")
-	}
-
-	return cp, nil
-}
-
-func (hn *HarnessNode) startRemoteWallet() error {
-	// Prepare and start the remote wallet process
-	walletArgs := hn.Cfg.genWalletArgs()
-	const dcrwalletExe = "dcrwallet-dcrlnd"
-	hn.walletCmd = exec.Command(dcrwalletExe, walletArgs...)
-
-	hn.walletCmd.Stdout = hn.logFile
-	hn.walletCmd.Stderr = hn.logFile
-
-	if err := hn.walletCmd.Start(); err != nil {
-		return fmt.Errorf("unable to start %s's wallet: %v", hn.Name(), err)
-	}
-
-	// Wait until the TLS cert file exists, so we can connect to the
-	// wallet.
-	var caCert *x509.CertPool
-	var clientCert tls.Certificate
-	err := wait.NoError(func() error {
-		var err error
-		caCert, err = tlsCertFromFile(hn.Cfg.TLSCertPath)
-		if err != nil {
-			return fmt.Errorf("unable to load wallet tls cert: %v", err)
-		}
-
-		clientCert, err = tls.LoadX509KeyPair(hn.Cfg.TLSCertPath, hn.Cfg.TLSKeyPath)
-		if err != nil {
-			return fmt.Errorf("unable to load wallet cert and key files: %v", err)
-		}
-
-		return nil
-	}, time.Second*30)
-	if err != nil {
-		return fmt.Errorf("error reading wallet TLS cert: %v", err)
-	}
-
-	// Setup the TLS config and credentials.
-	tlsCfg := &tls.Config{
-		ServerName:   "localhost",
-		RootCAs:      caCert,
-		Certificates: []tls.Certificate{clientCert},
-	}
-	creds := credentials.NewTLS(tlsCfg)
-
-	opts := []grpc.DialOption{
-		grpc.WithBlock(),
-		grpc.WithTimeout(time.Second * 40),
-		grpc.WithTransportCredentials(creds),
-		grpc.WithConnectParams(grpc.ConnectParams{
-			Backoff: backoff.Config{
-				BaseDelay:  time.Millisecond * 20,
-				Multiplier: 1,
-				Jitter:     0.2,
-				MaxDelay:   time.Millisecond * 20,
-			},
-			MinConnectTimeout: time.Millisecond * 20,
-		}),
-	}
-
-	hn.walletConn, err = grpc.Dial(
-		fmt.Sprintf("localhost:%d", hn.Cfg.WalletPort),
-		opts...,
-	)
-	if err != nil {
-		return fmt.Errorf("unable to connect to the wallet: %v", err)
-	}
-
-	password := hn.Cfg.Password
-	if len(password) == 0 {
-		password = []byte("private1")
-	}
-
-	// Open or create the wallet as necessary.
-	ctxb := context.Background()
-	loader := pb.NewWalletLoaderServiceClient(hn.walletConn)
-	respExists, err := loader.WalletExists(ctxb, &pb.WalletExistsRequest{})
-	if err != nil {
-		return err
-	}
-	if respExists.Exists {
-		_, err := loader.OpenWallet(ctxb, &pb.OpenWalletRequest{})
-		if err != nil {
-			return err
-		}
-
-		err = hn.Cfg.BackendCfg.StartWalletSync(loader, password)
-		if err != nil {
-			return err
-		}
-	} else if !hn.Cfg.HasSeed {
-		// If the test won't require or provide a seed, then initialize
-		// the wallet with a random one.
-		seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
-		if err != nil {
-			return err
-		}
-		reqCreate := &pb.CreateWalletRequest{
-			PrivatePassphrase: password,
-			Seed:              seed,
-		}
-		_, err = loader.CreateWallet(ctxb, reqCreate)
-		if err != nil {
-			return err
-		}
-
-		// Set the wallet to use per-account passphrases.
-		wallet := pb.NewWalletServiceClient(hn.walletConn)
-		reqSetAcctPwd := &pb.SetAccountPassphraseRequest{
-			AccountNumber:        0,
-			WalletPassphrase:     password,
-			NewAccountPassphrase: password,
-		}
-		_, err = wallet.SetAccountPassphrase(ctxb, reqSetAcctPwd)
-		if err != nil {
-			return err
-		}
-
-		// Wait for the wallet to be relocked. This is needed to avoid a
-		// wrongful lock event during the following syncing stage.
-		err = wait.NoError(func() error {
-			res, err := wallet.AccountUnlocked(ctxb, &pb.AccountUnlockedRequest{AccountNumber: 0})
-			if err != nil {
-				return err
-			}
-			if res.Unlocked {
-				return fmt.Errorf("wallet account still unlocked")
-			}
-			return nil
-		}, 30*time.Second)
-		if err != nil {
-			return err
-		}
-
-		err = hn.Cfg.BackendCfg.StartWalletSync(loader, password)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (hn *HarnessNode) unlockRemoteWallet() error {
-	password := hn.Cfg.Password
-	if len(password) == 0 {
-		password = []byte("private1")
-	}
-
-	// Assemble the client key+cert buffer for gRPC auth into the wallet.
-	var clientKeyCert []byte
-	cert, err := ioutil.ReadFile(hn.Cfg.TLSCertPath)
-	if err != nil {
-		return fmt.Errorf("unable to load wallet client cert file: %v", err)
-	}
-	key, err := ioutil.ReadFile(hn.Cfg.TLSKeyPath)
-	if err != nil {
-		return fmt.Errorf("unable to load wallet client key file: %v", err)
-	}
-	clientKeyCert = append(key, cert...)
-
-	unlockReq := &lnrpc.UnlockWalletRequest{
-		WalletPassword:    password,
-		DcrwClientKeyCert: clientKeyCert,
-	}
-	err = hn.Unlock(unlockReq)
-	if err != nil {
-		return fmt.Errorf("unable to unlock remote wallet: %v", err)
-	}
-	return nil
 }
 
 // WaitUntilStarted waits until the wallet state flips from "WAITING_TO_START".
