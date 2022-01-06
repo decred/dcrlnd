@@ -19,9 +19,9 @@ const (
 	// number and are determined by the results of nextAvailablePort().
 	defaultNodePort = 5555
 
-	// listenerFormat is the format string that is used to generate local
+	// ListenerFormat is the format string that is used to generate local
 	// listener addresses.
-	listenerFormat = "127.0.0.1:%d"
+	ListenerFormat = "127.0.0.1:%d"
 
 	// NeutrinoBackendName is the name of the neutrino backend.
 	NeutrinoBackendName = "neutrino"
@@ -68,7 +68,7 @@ func NextAvailablePort() int {
 		// the harness node, in practice in CI servers this seems much
 		// less likely than simply some other process already being
 		// bound at the start of the tests.
-		addr := fmt.Sprintf(listenerFormat, port)
+		addr := fmt.Sprintf(ListenerFormat, port)
 		l, err := net.Listen("tcp4", addr)
 		if err == nil {
 			err := l.Close()
