@@ -2064,6 +2064,7 @@ func (p *Brontide) pingHandler() {
 			"subscription: %v", err)
 		return
 	}
+	defer blockEpochs.Cancel()
 
 	var (
 		pingPayload [wire.MaxBlockHeaderPayload]byte
