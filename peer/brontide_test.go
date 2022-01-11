@@ -1000,6 +1000,7 @@ func TestStaticRemoteDowngrade(t *testing.T) {
 					Features:       test.features,
 					Conn:           mockConn,
 					WritePool:      writePool,
+					PongBuf:        make([]byte, lnwire.MaxPongBytes),
 				},
 			}
 
@@ -1104,6 +1105,7 @@ func TestPeerCustomMessage(t *testing.T) {
 			}
 			return nil
 		},
+		PongBuf: make([]byte, lnwire.MaxPongBytes),
 	})
 
 	// Set up the init sequence.
