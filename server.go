@@ -1026,6 +1026,21 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	// breach events from the ChannelArbitrator to the contractcourt.BreachArbiter,
 	contractBreaches := make(chan *contractcourt.ContractBreachEvent, 1)
 
+	s.breachArbiter = contractcourt.NewBreachArbiter(&contractcourt.BreachConfig{
+		CloseLink:          closeLink,
+		DB:                 s.chanStateDB,
+		Estimator:          s.cc.FeeEstimator,
+		GenSweepScript:     newSweepPkScriptGen(cc.Wallet),
+		Notifier:           cc.ChainNotifier,
+		PublishTransaction: cc.Wallet.PublishTransaction,
+		ContractBreaches:   contractBreaches,
+		Signer:             cc.Wallet.Cfg.Signer,
+		Store: contractcourt.NewRetributionStore(
+			dbs.ChanStateDB,
+		),
+		NetParams: s.cfg.ActiveNetParams.Params,
+	})
+
 	s.chainArb = contractcourt.NewChainArbitrator(contractcourt.ChainArbitratorConfig{
 		ChainHash:              s.cfg.ActiveNetParams.GenesisHash,
 		NetParams:              s.cfg.ActiveNetParams.Params,
@@ -1126,20 +1141,8 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		PaymentsExpirationGracePeriod: cfg.PaymentsExpirationGracePeriod,
 		IsForwardedHTLC:               s.htlcSwitch.IsForwardedHTLC,
 		Clock:                         clock.NewDefaultClock(),
+		SubscribeBreachComplete:       s.breachArbiter.SubscribeBreachComplete,
 	}, dbs.ChanStateDB)
-
-	s.breachArbiter = contractcourt.NewBreachArbiter(&contractcourt.BreachConfig{
-		CloseLink:          closeLink,
-		DB:                 s.chanStateDB,
-		Estimator:          s.cc.FeeEstimator,
-		GenSweepScript:     newSweepPkScriptGen(cc.Wallet),
-		Notifier:           cc.ChainNotifier,
-		PublishTransaction: cc.Wallet.PublishTransaction,
-		ContractBreaches:   contractBreaches,
-		Signer:             cc.Wallet.Cfg.Signer,
-		Store:              contractcourt.NewRetributionStore(dbs.ChanStateDB),
-		NetParams:          s.cfg.ActiveNetParams.Params,
-	})
 
 	// Select the configuration and funding parameters for Decred
 	chainCfg := cfg.Decred
