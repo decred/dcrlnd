@@ -52,6 +52,10 @@ var allTestCases = []*testCase{
 		test: testInvoiceRoutingHints,
 	},
 	{
+		name: "update channel policy fee rate accuracy",
+		test: testUpdateChannelPolicyFeeRateAccuracy,
+	},
+	{
 		name: "disconnecting target peer",
 		test: testDisconnectingTargetPeer,
 	},
