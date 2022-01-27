@@ -32,6 +32,11 @@ const (
 	// DefaultAMPInvoiceExpiry is the default invoice expiry for new AMP
 	// invoices.
 	DefaultAMPInvoiceExpiry = 30 * 24 * time.Hour
+
+	// hopHintFactor is factor by which we scale the total amount of
+	// inbound capacity we want our hop hints to represent, allowing us to
+	// have some leeway if peers go offline.
+	hopHintFactor = 2
 )
 
 // AddInvoiceConfig contains dependencies for invoice creation.
@@ -672,7 +677,6 @@ func SelectHopHints(amtMAtoms lnwire.MilliAtom, cfg *SelectHopHintsCfg,
 	// or if the sum of available bandwidth in the routing hints exceeds 2x
 	// the payment amount. We do 2x here to account for a margin of error
 	// if some of the selected channels no longer become operable.
-	hopHintFactor := lnwire.MilliAtom(2)
 	for i := 0; i < len(openChannels); i++ {
 		// If we hit either of our early termination conditions, then
 		// we'll break the loop here.
