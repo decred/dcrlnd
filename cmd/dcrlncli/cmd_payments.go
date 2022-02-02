@@ -19,6 +19,7 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lntypes"
+	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"
 	"github.com/decred/dcrlnd/routing/route"
@@ -217,8 +218,10 @@ func retrieveFeeLimit(ctx *cli.Context, amt int64) (int64, error) {
 		return feeLimitRoundedUp, nil
 	}
 
-	// If no fee limit is set, use the payment amount as a limit (100%).
-	return amt, nil
+	// If no fee limit is set, use a default value based on the amount.
+	amtMAtoms := lnwire.NewMAtomsFromAtoms(dcrutil.Amount(amt))
+	limitMsat := lnwallet.DefaultRoutingFeeLimitForAmount(amtMAtoms)
+	return int64(limitMsat.ToAtoms()), nil
 }
 
 func confirmPayReq(resp *lnrpc.PayReq, amt, feeLimit int64) error {
