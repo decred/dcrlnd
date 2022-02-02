@@ -5,7 +5,36 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
+	"github.com/decred/dcrlnd/lnwire"
 )
+
+const (
+	// RoutingFee100PercentUpTo is the cut-off amount we allow 100% fees to
+	// be charged up to.
+	RoutingFee100PercentUpTo lnwire.MilliAtom = 50_000
+
+	// DefaultRoutingFeePercentage is the default off-chain routing fee we
+	// allow to be charged for a payment over the RoutingFee100PercentUpTo
+	// size.
+	DefaultRoutingFeePercentage lnwire.MilliAtom = 5
+)
+
+// DefaultRoutingFeeLimitForAmount returns the default off-chain routing fee
+// limit lnd uses if the user does not specify a limit manually. The fee is
+// amount dependent because of the base routing fee that is set on many
+// channels. For example the default base fee is 1 satoshi. So sending a payment
+// of one satoshi will cost 1 satoshi in fees over most channels, which comes to
+// a fee of 100%. That's why for very small amounts we allow 100% fee.
+func DefaultRoutingFeeLimitForAmount(a lnwire.MilliAtom) lnwire.MilliAtom {
+	// Allow 100% fees up to a certain amount to accommodate for base fees.
+	if a <= RoutingFee100PercentUpTo {
+		return a
+	}
+
+	// Everything larger than the cut-off amount will get a default fee
+	// percentage.
+	return a * DefaultRoutingFeePercentage / 100
+}
 
 // DustLimitForSize retrieves the dust limit for a given pkscript size.  It
 // must be called with a proper size parameter or else a panic occurs.
