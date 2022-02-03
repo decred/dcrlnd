@@ -8,11 +8,13 @@ import (
 	"github.com/decred/dcrlnd/lnwire"
 )
 
-const (
+var (
 	// RoutingFee100PercentUpTo is the cut-off amount we allow 100% fees to
 	// be charged up to.
-	RoutingFee100PercentUpTo lnwire.MilliAtom = 50_000
+	RoutingFee100PercentUpTo = lnwire.NewMAtomsFromAtoms(1_000)
+)
 
+const (
 	// DefaultRoutingFeePercentage is the default off-chain routing fee we
 	// allow to be charged for a payment over the RoutingFee100PercentUpTo
 	// size.
