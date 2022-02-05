@@ -14,7 +14,6 @@ import (
 	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
 	"google.golang.org/grpc"
 
-	"decred.org/dcrwallet/v2/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
@@ -435,11 +434,11 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 // the database. A tx created with this set to true SHOULD NOT be broadcasted.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) CreateSimpleTx(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, dryRun bool) (*txauthor.AuthoredTx, error) {
+func (b *DcrWallet) EstimateTxFee(outputs []*wire.TxOut,
+	feeRate chainfee.AtomPerKByte) (fee int64, err error) {
 
 	// TODO(decred) Review semantics for btcwallet's CreateSimpleTx.
-	return nil, fmt.Errorf("CreateSimpleTx unimplemented for dcrwallet")
+	return 0, fmt.Errorf("CreateSimpleTx unimplemented for dcrwallet")
 }
 
 // LockOutpoint marks an outpoint as locked meaning it will no longer be deemed

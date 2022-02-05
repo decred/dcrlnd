@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"decred.org/dcrwallet/v2/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
@@ -208,8 +207,8 @@ type WalletController interface {
 	// SHOULD NOT be broadcasted.
 	//
 	// NOTE: This method requires the global coin selection lock to be held.
-	CreateSimpleTx(outputs []*wire.TxOut, feeRate chainfee.AtomPerKByte,
-		dryRun bool) (*txauthor.AuthoredTx, error)
+	EstimateTxFee(outputs []*wire.TxOut,
+		feeRate chainfee.AtomPerKByte) (fee int64, err error)
 
 	// ListUnspentWitness returns all unspent outputs which are version 0
 	// witness programs. The 'minconfirms' and 'maxconfirms' parameters

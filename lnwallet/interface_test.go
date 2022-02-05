@@ -21,6 +21,7 @@ import (
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 
 	_ "decred.org/dcrwallet/v2/wallet/drivers/bdb"
+	"decred.org/dcrwallet/v2/wallet/txsizes"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -2517,56 +2518,82 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 	vw *rpctest.VotingWallet,
 	w, _ *lnwallet.LightningWallet, t *testing.T) {
 
+	if _, is := w.WalletController.(*dcrwallet.DcrWallet); !is {
+		return
+	}
+
 	// Send some money from the miner to the wallet
 	err := loadTestCredits(r, w, vw.GenerateBlocks, 20, 4)
 	if err != nil {
 		t.Fatalf("unable to send money to lnwallet: %v", err)
 	}
 
+	const txOverhead int64 = 12 // version, locktime and expiry
+	changeSize := int64(txsizes.EstimateOutputSize(txsizes.P2PKHPkScriptSize))
+	inputSize := txsizes.EstimateInputSize(txsizes.RedeemP2PKHSigScriptSize)
+
+	outputSerializeSize := func(scriptLen int64) int64 {
+		return 8 + 2 + int64(wire.VarIntSerializeSize(uint64(scriptLen))) + scriptLen
+	}
+
+	const p2pkhOutputPkScriptSize = 25
+	const p2shOutputPkScriptSize = 23
+
+	calcSize := func(numInputs int) int64 {
+		return txOverhead +
+			int64(2*wire.VarIntSerializeSize(uint64(numInputs))) +
+			int64(wire.VarIntSerializeSize(uint64(2))) +
+			int64(inputSize*numInputs) +
+			outputSerializeSize(p2pkhOutputPkScriptSize) +
+			outputSerializeSize(p2shOutputPkScriptSize) +
+			changeSize
+	}
+
+	calcFee := func(feeRate chainfee.AtomPerKByte, numInputs int) int64 {
+		return int64(feeRate.FeeForSize(calcSize(numInputs)))
+	}
+
 	// The test cases we will run through for all backends.
 	testCases := []struct {
 		outVals []int64
 		feeRate chainfee.AtomPerKByte
-		valid   bool
+		expFees int64
+		invalid bool
 	}{
 		{
 			outVals: []int64{},
 			feeRate: 2500,
-			valid:   false, // No outputs.
+			invalid: true,
 		},
 
 		{
 			outVals: []int64{1e3},
 			feeRate: 2500,
-			valid:   false, // Dust output.
+			invalid: true, // Dust output.
 		},
 
 		{
 			outVals: []int64{1e8},
+			expFees: calcFee(2500, 1),
 			feeRate: 2500,
-			valid:   true,
 		},
-		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
-			feeRate: 2500,
-			valid:   true,
-		},
-		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
-			feeRate: 12500,
-			valid:   true,
-		},
-		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
-			feeRate: 50000,
-			valid:   true,
-		},
-		{
-			outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5, 1e8, 2e8,
-				1e8, 2e7, 3e5},
-			feeRate: 44250,
-			valid:   true,
-		},
+		// {
+		// 	outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+		// 	feeRate: 2500,
+		// },
+		// {
+		// 	outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+		// 	feeRate: 12500,
+		// },
+		// {
+		// 	outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5},
+		// 	feeRate: 50000,
+		// },
+		// {
+		// 	outVals: []int64{1e8, 2e8, 1e8, 2e7, 3e5, 1e8, 2e8,
+		// 		1e8, 2e7, 3e5},
+		// 	feeRate: 44250,
+		// },
 	}
 
 	for _, test := range testCases {
@@ -2576,12 +2603,9 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 		// to.
 		outputs := make([]*wire.TxOut, len(test.outVals))
 		for i, outVal := range test.outVals {
-			minerAddr, err := r.NewAddress()
-			if err != nil {
-				t.Fatalf("unable to generate address for "+
-					"miner: %v", err)
-			}
-			script, err := input.PayToAddrScript(minerAddr)
+			h := [20]byte{0x0a}
+			p2shAddr, _ := stdaddr.NewAddressScriptHashV0FromHash(h[:], r.ActiveNet)
+			script, err := input.PayToAddrScript(p2shAddr)
 			if err != nil {
 				t.Fatalf("unable to create pay to addr "+
 					"script: %v", err)
@@ -2595,99 +2619,18 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 		}
 
 		// Now try creating a tx spending to these outputs.
-		createTx, createErr := w.CreateSimpleTx(
-			outputs, feeRate, true,
-		)
-		if test.valid == (createErr != nil) {
-			fmt.Println(spew.Sdump(createTx.Tx))
-			t.Fatalf("got unexpected error when creating tx: %v",
-				createErr)
-		}
-
-		// Also send to these outputs. This should result in a tx
-		// _very_ similar to the one we just created being sent. The
-		// only difference is that the dry run tx is not signed, and
-		// that the change output position might be different.
-		tx, sendErr := w.SendOutputs(outputs, feeRate, labels.External)
-		if test.valid == (sendErr != nil) {
-			t.Fatalf("got unexpected error when sending tx: %v",
-				sendErr)
-		}
-
-		// We expected either both to not fail, or both to fail with
-		// the same error.
-		if createErr != sendErr {
-			t.Fatalf("error creating tx (%v) different "+
-				"from error sending outputs (%v)",
-				createErr, sendErr)
-		}
-
-		// If we expected the creation to fail, then this test is over.
-		if !test.valid {
-			continue
-		}
-
-		txid := tx.TxHash()
-		err = waitForMempoolTx(r, &txid)
+		fee, err := w.EstimateTxFee(outputs, feeRate)
 		if err != nil {
-			t.Fatalf("tx not relayed to miner: %v", err)
+			if test.invalid {
+				continue
+			}
+			t.Fatalf("EstimteTxFee error when none expected: %v", err)
+		} else if test.invalid {
+			t.Fatalf("No EstimteTxFee error when one was expected")
 		}
 
-		// Helper method to check that the two txs are similar.
-		assertSimilarTx := func(a, b *wire.MsgTx) error {
-			if a.Version != b.Version {
-				return fmt.Errorf("different versions: "+
-					"%v vs %v", a.Version, b.Version)
-			}
-			if a.LockTime != b.LockTime {
-				return fmt.Errorf("different locktimes: "+
-					"%v vs %v", a.LockTime, b.LockTime)
-			}
-			if len(a.TxIn) != len(b.TxIn) {
-				return fmt.Errorf("different number of "+
-					"inputs: %v vs %v", len(a.TxIn),
-					len(b.TxIn))
-			}
-			if len(a.TxOut) != len(b.TxOut) {
-				return fmt.Errorf("different number of "+
-					"outputs: %v vs %v", len(a.TxOut),
-					len(b.TxOut))
-			}
-
-			// They should be spending the same inputs.
-			for i := range a.TxIn {
-				prevA := a.TxIn[i].PreviousOutPoint
-				prevB := b.TxIn[i].PreviousOutPoint
-				if prevA != prevB {
-					return fmt.Errorf("different inputs: "+
-						"%v vs %v", spew.Sdump(prevA),
-						spew.Sdump(prevB))
-				}
-			}
-
-			// They should have the same outputs. Since the change
-			// output position gets randomized, they are not
-			// guaranteed to be in the same order.
-			for _, outA := range a.TxOut {
-				found := false
-				for _, outB := range b.TxOut {
-					if reflect.DeepEqual(outA, outB) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					return fmt.Errorf("did not find "+
-						"output %v", spew.Sdump(outA))
-				}
-			}
-			return nil
-		}
-
-		// Assert that our "template tx" was similar to the one that
-		// ended up being sent.
-		if err := assertSimilarTx(createTx.Tx, tx); err != nil {
-			t.Fatalf("transactions not similar: %v", err)
+		if test.expFees != fee {
+			t.Fatalf("wrong fees. expected %d, got %d", test.expFees, fee)
 		}
 	}
 }

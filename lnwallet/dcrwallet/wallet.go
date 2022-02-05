@@ -21,7 +21,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 
 	base "decred.org/dcrwallet/v2/wallet"
-	"decred.org/dcrwallet/v2/wallet/txauthor"
+	"decred.org/dcrwallet/v2/wallet/txsizes"
 	"decred.org/dcrwallet/v2/wallet/udb"
 	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 )
@@ -330,16 +330,50 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 // the database. A tx created with this set to true SHOULD NOT be broadcasted.
 //
 // This is a part of the WalletController interface.
-func (b *DcrWallet) CreateSimpleTx(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, dryRun bool) (*txauthor.AuthoredTx, error) {
+func (b *DcrWallet) EstimateTxFee(outputs []*wire.TxOut,
+	feeRate chainfee.AtomPerKByte) (fee int64, err error) {
 
 	// Sanity check outputs.
 	if len(outputs) < 1 {
-		return nil, lnwallet.ErrNoOutputs
+		return 0, lnwallet.ErrNoOutputs
 	}
 
-	// TODO(decred) Review semantics for btcwallet's CreateSimpleTx.
-	return nil, fmt.Errorf("CreateSimpleTx unimplemented for dcrwallet")
+	changeSource := &dryRunChangeSource{b.netParams}
+	feeAmt := dcrutil.Amount(feeRate)
+
+	// TODO:
+	tx, err := b.wallet.NewUnsignedTransaction(
+		b.ctx, outputs, feeAmt, defaultAccount, 1,
+		base.OutputSelectionAlgorithmDefault, changeSource, nil, // nil inputSource uses any available with minConf.
+	)
+	if err != nil {
+		return 0, fmt.Errorf("NewUnsignedTransaction error: %w", err)
+	}
+
+	var outputSum int64
+	for _, op := range tx.Tx.TxOut {
+		outputSum += op.Value
+	}
+
+	return int64(tx.TotalInput) - outputSum, nil
+}
+
+type dryRunChangeSource struct {
+	chainParams *chaincfg.Params
+}
+
+func (d *dryRunChangeSource) Script() (script []byte, version uint16, err error) {
+	pkHash := dcrutil.Hash160([]byte("dummy"))
+	p2pkh, err := stdaddr.NewAddressPubKeyHashEcdsaSecp256k1V0(pkHash, d.chainParams)
+	if err != nil {
+		return nil, 0, err
+	}
+	version, script = p2pkh.PaymentScript()
+	return
+}
+
+func (*dryRunChangeSource) ScriptSize() int {
+	return txsizes.P2PKHPkScriptSize
 }
 
 // LockOutpoint marks an outpoint as locked meaning it will no longer be deemed

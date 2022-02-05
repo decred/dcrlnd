@@ -12,7 +12,6 @@ import (
 	"os"
 	"time"
 
-	"decred.org/dcrwallet/v2/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
@@ -241,10 +240,10 @@ func (*mockWalletController) SendOutputs(outputs []*wire.TxOut,
 	return nil, nil
 }
 
-func (*mockWalletController) CreateSimpleTx(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, dryRun bool) (*txauthor.AuthoredTx, error) {
+func (*mockWalletController) EstimateTxFee(outputs []*wire.TxOut,
+	feeRate chainfee.AtomPerKByte) (fee int64, err error) {
 
-	return nil, nil
+	return 1, nil
 }
 
 func (*mockWalletController) ListUnspentWitness(minconfirms,
