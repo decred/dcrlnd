@@ -190,6 +190,18 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			"unknown", cfg.registeredChains.PrimaryChain())
 	}
 
+	// If this wallet is not backed by a full node, use a web-based fee
+	// estimator.
+	if cfg.Node == "dcrw" {
+		switch {
+		case cfg.TestNet3:
+			cc.feeEstimator = chainfee.NewDCRDataEstimator(true, defaultDecredStaticFeePerKB)
+		case cfg.SimNet, cfg.TestNet3, cfg.RegTest:
+		default: // mainnet
+			cc.feeEstimator = chainfee.NewDCRDataEstimator(false, defaultDecredStaticFeePerKB)
+		}
+	}
+
 	var (
 		err       error
 		rpcConfig *rpcclient.ConnConfig

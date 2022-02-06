@@ -549,3 +549,162 @@ func (w *WebAPIEstimator) feeUpdateManager() {
 // A compile-time assertion to ensure that WebAPIEstimator implements the
 // Estimator interface.
 var _ Estimator = (*WebAPIEstimator)(nil)
+
+// dcrdataFeeExpiration is how long a cached fee is good for. After this time,
+// a new HTTP request is performed on the next EstimateFeePerKB.
+const (
+	// How long before fetched fee rates expire.
+	dcrdataFeeExpiration  = time.Minute * 5
+	dcrdataRequestTimeout = time.Second * 10
+	// How long to wait after a failed request before trying again, returning
+	// the fallback rate in the interim.
+	dcrdataFailExpiration = time.Minute
+)
+
+// dcrdataFeeEstimate is the result of a fee request. dcrdataFeeEstimate will be
+// cached for up to dcrdataFeeExpiration.
+type dcrdataFeeEstimate struct {
+	feeRate AtomPerKByte
+	stamp   time.Time
+}
+
+// DCRDataFeeEstimator is a fee estimator based on the common public dcrdata
+// servers. DCRDataFeeEstimator's EstimateFeePerKB method will never return an
+// error. In the case of a network error, an error is logged and the
+// fallbackRate is returned.
+type DCRDataFeeEstimator struct {
+	urlTemplate  string
+	fallbackRate AtomPerKByte
+	fetchRate    func(context.Context, string, uint32) (AtomPerKByte, error)
+
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	cacheMtx sync.Mutex
+	cache    map[uint32]*dcrdataFeeEstimate
+	lastFail time.Time
+}
+
+// DCRDataEstimator is a constructor for a new DCRDataFeeEstimator. The
+// fallbackRate will be returned without accompanying error in the case of any
+// network errors.
+func NewDCRDataEstimator(testnet bool, fallbackRate AtomPerKByte) *DCRDataFeeEstimator {
+	url := "https://explorer.dcrdata.org/insight/api/utils/estimatefee?nbBlocks=%d"
+	if testnet {
+		url = "https://testnet.dcrdata.org/insight/api/utils/estimatefee?nbBlocks=%d"
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	return &DCRDataFeeEstimator{
+		urlTemplate:  url,
+		fallbackRate: fallbackRate,
+		fetchRate:    requestDCRDataFeeRate,
+		ctx:          ctx,
+		cancel:       cancel,
+		cache:        make(map[uint32]*dcrdataFeeEstimate, 4),
+	}
+}
+
+// EstimateFeePerKB takes in a target for the number of blocks until an initial
+// confirmation and returns the estimated fee expressed in atoms/byte.
+// IMPORTANT: Fee estimates are lazy-loaded and cached for up to
+// dcrdataFeeExpiration. A request can block for up to dcrdataRequestTimeout,
+// and requests are run under mutex lock to prevent duplicate requests from
+// running simultaneously.
+func (d *DCRDataFeeEstimator) EstimateFeePerKB(numBlocks uint32) (AtomPerKByte, error) {
+	d.cacheMtx.Lock()
+	defer d.cacheMtx.Unlock()
+
+	cachedEstimate, found := d.cache[numBlocks]
+	if found && time.Now().Before(cachedEstimate.stamp.Add(dcrdataFeeExpiration)) {
+		return cachedEstimate.feeRate, nil
+	}
+
+	if time.Since(d.lastFail) < dcrdataFailExpiration {
+		log.Debugf("DCRDataFeeEstimator returning fallback rate for cached request failure")
+		return d.fallbackRate, nil
+	}
+
+	url := fmt.Sprintf(d.urlTemplate, numBlocks)
+	feeRate, err := d.fetchRate(d.ctx, url, numBlocks)
+	if err != nil {
+		// We'll log it as an Error, but return the fallback rate without an
+		// error.
+		log.Errorf("error getting dcrdata fee rate: %v", err)
+		log.Error("using fallback rate of %d", d.fallbackRate)
+		d.lastFail = time.Now()
+		return d.fallbackRate, nil
+	}
+
+	d.cache[numBlocks] = &dcrdataFeeEstimate{
+		feeRate: feeRate,
+		stamp:   time.Now(),
+	}
+
+	return feeRate, nil
+}
+
+// Start signals the Estimator to start any processes or goroutines it needs
+// to perform its duty.
+//
+// NOTE: This method is part of the Estimator interface. This implementation
+// does nothing.
+func (d *DCRDataFeeEstimator) Start() error {
+	return nil
+}
+
+// Stop stops any spawned goroutines and cleans up the resources used by the
+// fee estimator.
+//
+// NOTE: This method is part of the Estimator interface.
+func (d *DCRDataFeeEstimator) Stop() error {
+	d.cancel()
+	return nil
+}
+
+func (d *DCRDataFeeEstimator) RelayFeePerKB() AtomPerKByte {
+	return FeePerKBFloor
+}
+
+// requestDCRDataFeeRate is the default requester for dcrdata fee rates.
+func requestDCRDataFeeRate(ctx context.Context, url string, numBlocks uint32) (AtomPerKByte, error) {
+	ctx, cancel := context.WithTimeout(ctx, dcrdataRequestTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return 0, fmt.Errorf("error constructing request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("error fetching fees: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 299 {
+		return 0, fmt.Errorf("status code %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("error reading response: %v", err)
+	}
+	var feeMap map[uint32]float64
+	if err := json.Unmarshal(body, &feeMap); err != nil {
+		return 0, fmt.Errorf("error decoding fee response: %v", err)
+	}
+
+	feeDcrPerKB, found := feeMap[numBlocks]
+	if !found {
+		return 0, fmt.Errorf("response did not include requested fee")
+	}
+
+	feeAtomsPerKB, err := dcrutil.NewAmount(feeDcrPerKB)
+	if err != nil {
+		return 0, fmt.Errorf("error converting fee rate: %v", err)
+	}
+
+	return AtomPerKByte(feeAtomsPerKB), nil
+}
+
+var _ Estimator = (*DCRDataFeeEstimator)(nil)

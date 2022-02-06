@@ -2,12 +2,15 @@ package chainfee
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 )
@@ -191,4 +194,71 @@ func TestWebAPIFeeEstimator(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDCRDataFeeEstimator(t *testing.T) {
+	const fallbackRate = 123
+	const numBlocks = 5
+
+	est := NewDCRDataEstimator(false, fallbackRate)
+
+	// Test the success path just once, since this will generate a network
+	// request. Don't fail on error.
+	_, err := est.EstimateFeePerKB(2)
+	if err != nil {
+		log.Warnf("error getting live fee rate: %v", err)
+	}
+
+	// Start with a fresh cache.
+	est = NewDCRDataEstimator(false, fallbackRate)
+
+	requested := false
+	var currentEstimate AtomPerKByte = 321
+	var currentErr error
+
+	est.fetchRate = func(_ context.Context, _ string, numBlocks uint32) (AtomPerKByte, error) {
+		requested = true
+		return currentEstimate, currentErr
+	}
+
+	checkResults := func(expRate AtomPerKByte, expRequest bool) {
+		t.Helper()
+		requested = false
+		feeRate, err := est.EstimateFeePerKB(numBlocks)
+		if err != nil {
+			t.Fatalf("EstimateFeePerKB error: %v", err)
+		}
+		if feeRate != expRate {
+			t.Fatalf("expected fee rate %d, got %d", expRate, feeRate)
+		}
+		if requested != expRequest {
+			t.Fatalf("expected request = %t, got %t", expRequest, requested)
+		}
+	}
+
+	// First query will generate a request.
+	checkResults(currentEstimate, true)
+
+	// The next request for the same one should not generate a request.
+	checkResults(currentEstimate, false)
+
+	// Now expire the cache.
+	est.cache[numBlocks].stamp = time.Now().Add(-dcrdataFeeExpiration)
+	currentEstimate++
+	checkResults(currentEstimate, true)
+
+	// Expired cache + request error is not propagated.
+	est.cache[numBlocks].stamp = time.Now().Add(-dcrdataFeeExpiration)
+	currentErr = fmt.Errorf("test error")
+	checkResults(fallbackRate, true)
+
+	// Clearing the error won't result in a request until the failure is
+	// expired.
+	currentErr = nil
+	checkResults(fallbackRate, false)
+
+	// Failures expire too.
+	est.lastFail = time.Now().Add(-dcrdataFailExpiration)
+	currentEstimate++
+	checkResults(currentEstimate, true)
 }
