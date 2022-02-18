@@ -1,6 +1,7 @@
 package sweep
 
 import (
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnwallet"
 )
@@ -32,4 +33,13 @@ type Wallet interface {
 	// ability to execute a function closure under an exclusive coin
 	// selection lock.
 	WithCoinSelectLock(f func() error) error
+
+	// RemoveDescendants removes any wallet transactions that spends
+	// outputs created by the specified transaction.
+	RemoveDescendants(*wire.MsgTx) error
+
+	// FetchTx returns the transaction that corresponds to the transaction
+	// hash passed in. If the transaction can't be found then a nil
+	// transaction pointer is returned.
+	FetchTx(chainhash.Hash) (*wire.MsgTx, error)
 }

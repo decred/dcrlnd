@@ -1034,6 +1034,34 @@ func (b *DcrWallet) GetRecoveryInfo() (bool, float64, error) {
 	return false, 0, fmt.Errorf("unimplemented")
 }
 
+// FetchTx attempts to fetch a transaction in the wallet's database
+// identified by the passed transaction hash. If the transaction can't
+// be found, then a nil pointer is returned.
+//
+// This is a part of the WalletController interface.
+func (b *DcrWallet) FetchTx(txid chainhash.Hash) (*wire.MsgTx, error) {
+	txs, _, err := b.wallet.GetTransactionsByHashes(b.ctx, []*chainhash.Hash{&txid})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(txs) < 1 {
+		return nil, fmt.Errorf("tx %s not found", txid)
+	}
+
+	return txs[0], nil
+}
+
+// RemoveDescendants attempts to remove any transaction from the
+// wallet's tx store (that may be unconfirmed) that spends outputs
+// created by the passed transaction. This remove propagates
+// recursively down the chain of descendent transactions.
+//
+// This is a part of the WalletController interface.
+func (b *DcrWallet) RemoveDescendants(*wire.MsgTx) error {
+	return fmt.Errorf("RemoveDescendants is unimplemented")
+}
+
 // ListAccount lists existing wallet accounts.
 //
 // This is a part of the WalletController interface.
