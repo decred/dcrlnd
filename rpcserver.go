@@ -3064,6 +3064,31 @@ func (r *rpcServer) WalletBalance(ctx context.Context,
 		}
 	}
 
+	// Now that we have the base balance accounted for with each account,
+	// we'll look at the set of locked UTXOs to tally that as well. If we
+	// don't display this, then anytime we attempt a funding reservation,
+	// the outputs will chose as being "gone" until they're confirmed on
+	// chain.
+	//
+	// Note(decred): this is commented out in dcrlnd because
+	// ListLeasedOutputs is not implemented in dcrwallet.
+	var lockedBalance dcrutil.Amount
+	// leases, err := r.server.cc.Wallet.ListLeasedOutputs()
+	leases, err := []*lnwallet.LockedOutput{}, error(nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, leasedOutput := range leases {
+		utxoInfo, err := r.server.cc.Wallet.FetchInputInfo(
+			&leasedOutput.Outpoint,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		lockedBalance += utxoInfo.Value
+	}
+
 	rpcsLog.Debugf("[walletbalance] Total balance=%v (confirmed=%v, "+
 		"unconfirmed=%v)", totalBalance, confirmedBalance,
 		unconfirmedBalance)
@@ -3072,6 +3097,7 @@ func (r *rpcServer) WalletBalance(ctx context.Context,
 		TotalBalance:       int64(totalBalance),
 		ConfirmedBalance:   int64(confirmedBalance),
 		UnconfirmedBalance: int64(unconfirmedBalance),
+		LockedBalance:      int64(lockedBalance),
 		AccountBalance:     rpcAccountBalances,
 	}, nil
 }
