@@ -529,7 +529,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		aliceReports[aliceAnchor.OutPoint.String()] = &lnrpc.Resolution{
 			ResolutionType: lnrpc.ResolutionType_ANCHOR,
 			Outcome:        lnrpc.ResolutionOutcome_CLAIMED,
-			SweepTxid:      aliceAnchor.SweepTx,
+			SweepTxid:      aliceAnchor.SweepTx.TxHash().String(),
 			Outpoint: &lnrpc.OutPoint{
 				TxidBytes:   aliceAnchor.OutPoint.Hash[:],
 				TxidStr:     aliceAnchor.OutPoint.Hash.String(),
@@ -639,7 +639,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		carolReports[carolAnchor.OutPoint.String()] = &lnrpc.Resolution{
 			ResolutionType: lnrpc.ResolutionType_ANCHOR,
 			Outcome:        lnrpc.ResolutionOutcome_CLAIMED,
-			SweepTxid:      carolAnchor.SweepTx,
+			SweepTxid:      carolAnchor.SweepTx.TxHash().String(),
 			AmountAtoms:    anchorSize,
 			Outpoint: &lnrpc.OutPoint{
 				TxidBytes:   carolAnchor.OutPoint.Hash[:],
@@ -777,7 +777,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 			OutputIndex: carolCommit.OutPoint.Index,
 		},
 		AmountAtoms: uint64(pushAmt),
-		SweepTxid:   carolCommit.SweepTx,
+		SweepTxid:   carolCommit.SweepTx.TxHash().String(),
 	}
 
 	// Check that we can find the commitment sweep in our set of known
@@ -1349,7 +1349,7 @@ func padCLTV(cltv uint32) uint32 {
 
 type sweptOutput struct {
 	OutPoint wire.OutPoint
-	SweepTx  string
+	SweepTx  *wire.MsgTx
 }
 
 // findCommitAndAnchor looks for a commitment sweep and anchor sweep in the
@@ -1389,13 +1389,13 @@ func findCommitAndAnchor(t *harnessTest, net *lntest.NetworkHarness,
 			if txin.ValueIn == anchorSize && txin.PreviousOutPoint.Hash.String() == closeTx {
 				anchorSweep = &sweptOutput{
 					OutPoint: txin.PreviousOutPoint,
-					SweepTx:  txHash.String(),
+					SweepTx:  tx,
 				}
 
 			} else if txin.PreviousOutPoint.Hash.String() == closeTx {
 				commitSweep = &sweptOutput{
 					OutPoint: txin.PreviousOutPoint,
-					SweepTx:  txHash.String(),
+					SweepTx:  tx,
 				}
 			}
 		}

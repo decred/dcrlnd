@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"strings"
 	"time"
 
 	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest/wait"
@@ -269,4 +271,28 @@ func (hn *HarnessNode) unlockRemoteWallet() error {
 		return fmt.Errorf("unable to unlock remote wallet: %v", err)
 	}
 	return nil
+}
+
+// GenerateAndSubmitBlock publishes the transactions and generates a new blck.
+//
+// This function's signature is similar to the one in btcd's rpctest package.
+func (h *HarnessMiner) GenerateAndSubmitBlock(txs []*dcrutil.Tx, _ int32, _ time.Time) (*dcrutil.Block, error) {
+	for _, tx := range txs {
+		_, err := h.Node.SendRawTransaction(h.runCtx, tx.MsgTx(), true)
+		if err != nil && !strings.Contains(err.Error(), "already have transaction") {
+			return nil, err
+		}
+	}
+
+	bh, err := h.votingWallet.GenerateBlocks(h.runCtx, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := h.Node.GetBlock(h.runCtx, bh[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return dcrutil.NewBlock(block), nil
 }
