@@ -7,8 +7,10 @@ import (
 	"io"
 	"time"
 
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/rpcclient/v8"
+	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/lnrpc"
@@ -20,6 +22,7 @@ import (
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // completePaymentRequests sends payments from a lightning node to complete all
@@ -473,4 +476,31 @@ func findTxAtHeight(t *harnessTest, height int64,
 	}
 
 	return nil
+}
+
+// getOutputIndex returns the output index of the given address in the given
+// transaction.
+func getOutputIndex(t *harnessTest, miner *lntest.HarnessMiner,
+	txid *chainhash.Hash, addr string) int {
+
+	t.t.Helper()
+
+	// We'll then extract the raw transaction from the mempool in order to
+	// determine the index of the p2tr output.
+	tx, err := miner.Client.GetRawTransaction(testctx.New(t), txid)
+	require.NoError(t.t, err)
+
+	p2trOutputIndex := -1
+	for i, txOut := range tx.MsgTx().TxOut {
+		_, addrs := stdscript.ExtractAddrs(
+			txOut.Version, txOut.PkScript, miner.ActiveNet,
+		)
+
+		if len(addrs) > 0 && addrs[0].String() == addr {
+			p2trOutputIndex = i
+		}
+	}
+	require.Greater(t.t, p2trOutputIndex, -1)
+
+	return p2trOutputIndex
 }
