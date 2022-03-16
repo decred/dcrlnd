@@ -16,6 +16,7 @@ import (
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/btcwalletcompat"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/internal/psbt"
 	"github.com/decred/dcrlnd/keychain"
@@ -302,4 +303,11 @@ func (b *DcrWallet) FinalizePsbt(_ *psbt.Packet) error {
 // SignPsbt does nothing.
 func (b *DcrWallet) SignPsbt(*psbt.Packet) error {
 	return fmt.Errorf("SignPsbt not supported")
+}
+
+// AddressInfo returns info about a wallet address.
+func (b *DcrWallet) AddressInfo(
+	stdaddr.Address) (btcwalletcompat.ManagedAddress, error) {
+
+	return nil, fmt.Errorf("AddressInfo not supported")
 }

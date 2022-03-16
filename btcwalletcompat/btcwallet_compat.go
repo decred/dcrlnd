@@ -17,3 +17,6 @@ const (
 
 // ManagedPubKeyAddress is a shim for btcwallet's waddrmgr.ManagedPubKeyAddress.
 type ManagedPubKeyAddress interface{}
+
+// ManagedPubKeyAddress is a shim for btcwallet's waddrmgr.ManagedAddress.
+type ManagedAddress interface{}

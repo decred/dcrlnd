@@ -92,6 +92,13 @@ func (w *WalletController) IsOurAddress(stdaddr.Address) bool {
 	return false
 }
 
+// AddressInfo currently returns a dummy value.
+func (w *WalletController) AddressInfo(
+	stdaddr.Address) (btcwalletcompat.ManagedAddress, error) {
+
+	return nil, nil
+}
+
 // ListAccounts currently returns a dummy value.
 func (w *WalletController) ListAccounts(string) (
 	[]wallet.AccountProperties, error) {
