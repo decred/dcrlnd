@@ -96,7 +96,7 @@ func TestSignatureSerializeDeserialize(t *testing.T) {
 	sig.R.Mul(secp256k1.S256().N, big.NewInt(2))
 	sig.S.Set(big.NewInt(127))
 	err = signatureSerializeDeserialize(sig)
-	if err.Error() != "R is over 32 bytes long without padding" {
+	if err.Error() != "element R is over 32 bytes long without padding" {
 		t.Fatalf("R = 2N, S = 128, R should be over 32 bytes: %s",
 			err.Error())
 	}

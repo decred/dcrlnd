@@ -21,8 +21,10 @@ var (
 	errBadLength   = errors.New("malformed signature: bad length")
 	errBadRLength  = errors.New("malformed signature: bogus R length")
 	errBadSLength  = errors.New("malformed signature: bogus S length")
-	errRTooLong    = errors.New("R is over 32 bytes long without padding")
-	errSTooLong    = errors.New("S is over 32 bytes long without padding")
+	errRTooLong    = errors.New("element R is over 32 bytes long without " +
+		"padding")
+	errSTooLong = errors.New("element S is over 32 bytes long without " +
+		"padding")
 )
 
 // NewSigFromRawSignature returns a Sig from a Bitcoin raw signature encoded in
