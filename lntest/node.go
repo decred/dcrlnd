@@ -896,7 +896,10 @@ func (hn *HarnessNode) initLightningClient(conn *grpc.ClientConn) error {
 	hn.WatchtowerClient = wtclientrpc.NewWatchtowerClientClient(conn)
 
 	// Set the harness node's pubkey to what the node claims in GetInfo.
-	err := hn.FetchNodeInfo()
+	//
+	// This is done inside a wait.NoError() call to ensure the RPC has been
+	// brought online.
+	err := wait.NoError(hn.FetchNodeInfo, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("unable to fetch %s's node info: %v", hn.Name(), err)
 	}

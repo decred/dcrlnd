@@ -7,6 +7,7 @@ package dcrlnd
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -478,10 +479,11 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	ltndLog.Infof("Waiting for chain backend to finish sync, "+
 		"start_height=%v", bestHeight)
 
-	select {
-	case <-signal.ShutdownChannel():
+	err = waitForInitialChainSync(activeChainControl, serverOpts, getListeners)
+	if errors.Is(err, errShutdownRequested) {
 		return nil
-	case <-activeChainControl.wallet.InitialSyncChannel():
+	} else if err != nil {
+		return err
 	}
 
 	_, bestHeight, err = activeChainControl.chainIO.GetBestBlock()
