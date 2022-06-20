@@ -1,0 +1,95 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "initchainsyncrpc/initchainsync.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "initialchainsyncrpcChainSyncUpdate": {
+      "type": "object",
+      "properties": {
+        "block_height": {
+          "type": "string",
+          "format": "int64"
+        },
+        "block_hash": {
+          "type": "string",
+          "format": "byte"
+        },
+        "block_timestamp": {
+          "type": "string",
+          "format": "int64"
+        },
+        "synced": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

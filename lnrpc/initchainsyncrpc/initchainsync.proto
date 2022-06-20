@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package initialchainsyncrpc;
+
+option go_package = "github.com/decred/dcrlnd/lnrpc/initchainsyncrpc";
+
+/*
+The InitialChainSync service provides rpc endpoints that can be used to query
+the current state of the initial sync progress of the chain backend during
+the app's startup.
+*/
+service InitialChainSync {
+    /*
+    SubscribeChainSync is a streaming call that registers a client to receive
+    updates about the progress of the sync procedure. If an update message is
+    received with synced = true, then this will be the last update sent and
+    the server will be shutdown.
+    */
+    rpc SubscribeChainSync (ChainSyncSubscription)
+        returns (stream ChainSyncUpdate);
+}
+
+message ChainSyncSubscription {}
+
+message ChainSyncUpdate{
+    int64 block_height = 1;
+    bytes block_hash = 2;
+    int64 block_timestamp = 3;
+    bool synced = 4;
+}
+
