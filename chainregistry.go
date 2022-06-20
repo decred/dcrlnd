@@ -343,10 +343,9 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 				activeNetParams.Params)
 		case true:
 			spvCfg := &dcrwallet.SPVSyncerConfig{
-				Peers: cfg.Dcrwallet.SPVConnect,
-				Net:   activeNetParams.Params,
-				AppDataDir: filepath.Join(cfg.DataDir,
-					activeNetParams.Params.Name),
+				Peers:      cfg.Dcrwallet.SPVConnect,
+				Net:        activeNetParams.Params,
+				AppDataDir: filepath.Join(cfg.ChainDir),
 			}
 			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
 		}
