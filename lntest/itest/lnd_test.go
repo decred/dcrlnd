@@ -12497,15 +12497,25 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("htlc mismatch: %v", predErr)
 	}
 
+	peerReq := &lnrpc.PeerEventSubscription{}
+	peerClient, err := dave.SubscribePeerEvents(ctxb, peerReq)
+	require.NoError(t.t, err)
+
 	// First, disconnect Dave and Alice so that their link is broken.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
 	if err := net.DisconnectNodes(ctxt, dave, net.Alice); err != nil {
 		t.Fatalf("unable to disconnect alice from dave: %v", err)
 	}
 
+	// Wait to receive the PEER_OFFLINE event before reconnecting them.
+	peerEvent, err := peerClient.Recv()
+	require.NoError(t.t, err)
+	require.Equal(t.t, lnrpc.PeerEvent_PEER_OFFLINE, peerEvent.GetType())
+
 	// Then, reconnect them to ensure Dave doesn't just fail back the htlc.
+	// We use EnsureConnected here in case they have already re-connected.
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	if err := net.ConnectNodes(ctxt, dave, net.Alice); err != nil {
+	if err := net.EnsureConnected(ctxt, dave, net.Alice); err != nil {
 		t.Fatalf("unable to reconnect alice to dave: %v", err)
 	}
 
@@ -12526,6 +12536,16 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	if err := net.DisconnectNodes(ctxt, dave, net.Alice); err != nil {
 		t.Fatalf("unable to disconnect alice from dave: %v", err)
 	}
+
+	// Wait to receive the PEER_ONLINE and then the PEER_OFFLINE event
+	// before advancing.
+	peerEvent2, err := peerClient.Recv()
+	require.NoError(t.t, err)
+	require.Equal(t.t, lnrpc.PeerEvent_PEER_ONLINE, peerEvent2.GetType())
+
+	peerEvent3, err := peerClient.Recv()
+	require.NoError(t.t, err)
+	require.Equal(t.t, lnrpc.PeerEvent_PEER_OFFLINE, peerEvent3.GetType())
 
 	// Now restart carol without hodl mode, to settle back the outstanding
 	// payments.
