@@ -32,8 +32,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 decred.org/cspp/v2 v2.0.0 h1:b4fZrElRufz30rYnBZ2shhC8AjNVTN4i6TMzDi+hk44=
 decred.org/cspp/v2 v2.0.0/go.mod h1:0shJWKTWY3LxZEWGxtbER1Y45+HVjC0WZtj4bctSzCI=
-decred.org/dcrwallet/v2 v2.0.7 h1:PAHZE7iK7UaYH/na9kKrOUIyJwL9OKe3iNQBSIPn27o=
-decred.org/dcrwallet/v2 v2.0.7/go.mod h1:nba2oaoo3DXAdiUNv1mdLQa2/cMFrZuJBMEVxJ5E+Pc=
+decred.org/dcrwallet/v2 v2.0.8 h1:ps0hU8SO2qnCjl4FxQxri8mO8MBWH4NRNW42hSN3E6o=
+decred.org/dcrwallet/v2 v2.0.8/go.mod h1:DEt4isEGSqMiMvo4scTX58oepPIwhTnaMCyTVPxCbzY=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -96,8 +96,9 @@ github.com/decred/dcrd/blockchain/stake/v4 v4.0.0 h1:PwoCjCTbRvDUZKKs6N2Haus8Xcb
 github.com/decred/dcrd/blockchain/stake/v4 v4.0.0/go.mod h1:bOgG7YTbTOWQgtHLL2l1Y9gBHIuM86zwVcQtsoGlZlQ=
 github.com/decred/dcrd/blockchain/standalone/v2 v2.1.0 h1:aXh7a+86p+H65MGy0QKu4Juf3/j+Y5koVSyVYFMdqP0=
 github.com/decred/dcrd/blockchain/standalone/v2 v2.1.0/go.mod h1:t2qaZ3hNnxHZ5kzVJDgW5sp47/8T5hYJt7SR+/JtRhI=
-github.com/decred/dcrd/blockchain/v4 v4.0.0 h1:fCzGqW9aKd3/4x0z2+LM+GpSksYAyftPFVvHGeEDX38=
 github.com/decred/dcrd/blockchain/v4 v4.0.0/go.mod h1:i1FeTNN0LUEWBSMoI3riAFgfVE1X/7Seoz1aJ7YQGbk=
+github.com/decred/dcrd/blockchain/v4 v4.0.2 h1:2hV4/KptuFcjpADaauVmJEmsT6kZcEoDd26Y6M3uk5I=
+github.com/decred/dcrd/blockchain/v4 v4.0.2/go.mod h1:i1FeTNN0LUEWBSMoI3riAFgfVE1X/7Seoz1aJ7YQGbk=
 github.com/decred/dcrd/certgen v1.1.1 h1:MYPG5jCysnbF4OiJ1++YumFEu2p/MsM/zxmmqC9mVFg=
 github.com/decred/dcrd/certgen v1.1.1/go.mod h1:ivkPLChfjdAgFh7ZQOtl6kJRqVkfrCq67dlq3AbZBQE=
 github.com/decred/dcrd/chaincfg v1.5.2 h1:dd6l9rqcpxg2GF5neBmE2XxRc5Lqda45fWmN4XOJRW8=

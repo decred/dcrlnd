@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.13
 
 require (
-	decred.org/dcrwallet/v2 v2.0.7
+	decred.org/dcrwallet/v2 v2.0.8
 	git.schwanenlied.me/yawning/bsaes.git v0.0.0-20180720073208-c0276d75487e // indirect
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20180408160647-ec7426b44926
@@ -14,7 +14,7 @@ require (
 	github.com/decred/dcrd/bech32 v1.1.2
 	github.com/decred/dcrd/blockchain/stake/v4 v4.0.0
 	github.com/decred/dcrd/blockchain/standalone/v2 v2.1.0
-	github.com/decred/dcrd/blockchain/v4 v4.0.0
+	github.com/decred/dcrd/blockchain/v4 v4.0.2
 	github.com/decred/dcrd/chaincfg/chainhash v1.0.3
 	github.com/decred/dcrd/chaincfg/v3 v3.1.1
 	github.com/decred/dcrd/connmgr v1.1.0
