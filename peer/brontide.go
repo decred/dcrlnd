@@ -40,6 +40,13 @@ const (
 	// idleTimeout is the duration of inactivity before we time out a peer.
 	idleTimeout = pingInterval + pingInterval/2
 
+	// sendStallTimeout is the interval such that, if we miss sending any
+	// messages before it expires, we preemptively close the connection to
+	// the remote peer. This is set to a value slightly before to
+	// idleTimeout so that we avoid sending messages just before the remote
+	// peer would disconnect from us.
+	sendStallTimeout = idleTimeout - 5*time.Second
+
 	// writeMessageTimeout is the timeout used when writing a message to the
 	// peer.
 	writeMessageTimeout = 5 * time.Second
@@ -1561,6 +1568,14 @@ func (p *Brontide) writeHandler() {
 
 	var exitErr error
 
+	// Track the time of the last sent msg using a wall time clock instead
+	// of the default monotonic clock. This is used to detect local suspend
+	// scenarios, where the remote peer already disconnected from the local
+	// peer but we missed the TCP FIN and thus any outbound messages will
+	// be discarded. See https://github.com/golang/go/issues/36141 for a
+	// discussion on how suspend affects network deadlines.
+	lastSentTimeNoMono := time.Now().Round(0)
+
 out:
 	for {
 		select {
@@ -1579,6 +1594,26 @@ out:
 			// Record the time at which we first attempt to send the
 			// message.
 			startTime := time.Now()
+
+			// If it took longer than the stall timeout time to
+			// unqueue a message to send, this means we stalled and
+			// the remote peer likely disconnected from us without
+			// us noticing. This can happen, for example, when
+			// suspending the computer, which does _not_ cause
+			// network deadlines to trigger locally but causes
+			// remote peers to disconnect.
+			nowNoMono := startTime.Round(0)
+			wallTimeInterval := nowNoMono.Sub(lastSentTimeNoMono)
+			if wallTimeInterval > sendStallTimeout {
+				peerLog.Warnf("Dequeuing from sendQueue took %s "+
+					"while max allowed is %s. Forcibly "+
+					"disconnecting from peer.", wallTimeInterval,
+					sendStallTimeout)
+				exitErr = fmt.Errorf("sendQueue receive stalled "+
+					"for %s in writeHandler", wallTimeInterval)
+				break out
+			}
+			lastSentTimeNoMono = nowNoMono
 
 		retry:
 			// Write out the message to the socket. If a timeout
