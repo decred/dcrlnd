@@ -38,7 +38,7 @@ const (
 	pingInterval = 1 * time.Minute
 
 	// idleTimeout is the duration of inactivity before we time out a peer.
-	idleTimeout = 5 * time.Minute
+	idleTimeout = pingInterval + pingInterval/2
 
 	// writeMessageTimeout is the timeout used when writing a message to the
 	// peer.
