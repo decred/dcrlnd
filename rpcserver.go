@@ -384,6 +384,10 @@ func MainRPCServerPermissions() map[string][]bakery.Op {
 			Entity: "info",
 			Action: "read",
 		}},
+		"/lnrpc.Lightning/EnforceNodePing": {{
+			Entity: "peers",
+			Action: "write",
+		}},
 		"/lnrpc.Lightning/QueryRoutes": {{
 			Entity: "info",
 			Action: "read",
@@ -5405,6 +5409,31 @@ func (r *rpcServer) GetNodeInfo(ctx context.Context,
 		NumChannels:   numChannels,
 		TotalCapacity: int64(totalCapacity),
 		Channels:      channels,
+	}, nil
+}
+
+// EnforceNodePing attempts to ping the specified peer. If it doesn't respond
+// before this function's context is canceled, then the peer is forced to
+// disconnect.
+func (r *rpcServer) EnforceNodePing(ctx context.Context,
+	in *lnrpc.EnforceNodePingRequest) (*lnrpc.EnforceNodePingResponse, error) {
+
+	pubKeyBytes, err := hex.DecodeString(in.PubKey)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode pubkey bytes: %v", err)
+	}
+	p, err := r.server.FindPeerByPubStr(string(pubKeyBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	pingTime, err := p.EnforcePing(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &lnrpc.EnforceNodePingResponse{
+		PingTimeMicro: pingTime.Microseconds(),
 	}, nil
 }
 

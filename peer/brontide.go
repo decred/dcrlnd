@@ -129,6 +129,12 @@ type Brontide struct {
 	bytesReceived uint64
 	bytesSent     uint64
 
+	// The following fields are used for handling forced ping requests done
+	// by EnforcePing().
+	enforcePingMtx   sync.Mutex
+	enforcePingChan  chan struct{}
+	enforcePongChans []chan time.Duration
+
 	// pingTime is a rough estimate of the RTT (round-trip-time) between us
 	// and the connected peer. This time is expressed in microseconds.
 	// To be used atomically.
@@ -235,6 +241,7 @@ func NewBrontide(cfg Config) *Brontide {
 		activeChannels: make(map[lnwire.ChannelID]*lnwallet.LightningChannel),
 		newChannels:    make(chan *newChannelMsg, 1),
 
+		enforcePingChan:    make(chan struct{}),
 		activeMsgStreams:   make(map[lnwire.ChannelID]*msgStream),
 		activeChanCloses:   make(map[lnwire.ChannelID]*chancloser.ChanCloser),
 		localCloseChanReqs: make(chan *htlcswitch.ChanClose),
@@ -1127,6 +1134,7 @@ out:
 			pingSendTime := atomic.LoadInt64(&p.pingLastSend)
 			delay := (time.Now().UnixNano() - pingSendTime) / 1000
 			atomic.StoreInt64(&p.pingTime, delay)
+			p.handlePong()
 
 		case *lnwire.Ping:
 			pongBytes := make([]byte, msg.NumPongBytes)
@@ -1759,6 +1767,9 @@ out:
 	for {
 		select {
 		case <-pingTicker.C:
+			p.queueMsg(lnwire.NewPing(numPingBytes), nil)
+		case <-p.enforcePingChan:
+			pingTicker.Reset(pingInterval)
 			p.queueMsg(lnwire.NewPing(numPingBytes), nil)
 		case <-p.quit:
 			break out

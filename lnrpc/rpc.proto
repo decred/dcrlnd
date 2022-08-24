@@ -364,6 +364,13 @@ service Lightning {
     */
     rpc GetNodeInfo (NodeInfoRequest) returns (NodeInfo);
 
+    /* lncli: `enforcenodeping`
+    EnforceNodePing attempts to ping the specified peer. If the request is
+    canceled before a response is received from the remote peer, then this
+    forces lnd to disconnect from the peer (and potentially attempt to reconnect).
+    */
+    rpc EnforceNodePing (EnforceNodePingRequest) returns (EnforceNodePingResponse);
+
     /* lncli: `queryroutes`
     QueryRoutes attempts to query the daemon's Channel Router for a possible
     route to a target destination capable of carrying a specific amount of
@@ -2477,6 +2484,20 @@ message RoutingPolicy {
     bool disabled = 5;
     uint64 max_htlc_m_atoms = 6;
     uint32 last_update = 7;
+}
+
+message EnforceNodePingRequest {
+    /*
+    The node pub key in hexadecimal format.
+    */
+    string pub_key = 1;
+}
+
+message EnforceNodePingResponse {
+    /*
+    Roud Trip Time (RTT) in microseconds to the peer.
+    */
+    int64 ping_time_micro = 1;
 }
 
 /*

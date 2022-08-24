@@ -3292,6 +3292,16 @@
         }
       }
     },
+    "lnrpcEnforceNodePingResponse": {
+      "type": "object",
+      "properties": {
+        "ping_time_micro": {
+          "type": "string",
+          "format": "int64",
+          "description": "Roud Trip Time (RTT) in microseconds to the peer."
+        }
+      }
+    },
     "lnrpcEstimateFeeResponse": {
       "type": "object",
       "properties": {
