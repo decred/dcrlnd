@@ -29,13 +29,12 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
+// `AddressType` has to be one of:
 //
-//`AddressType` has to be one of:
-//
-//- `p2wkh`: Pay to witness key hash (`WITNESS_PUBKEY_HASH` = 0)
-//- `np2wkh`: Pay to nested witness key hash (`NESTED_PUBKEY_HASH` = 1)
-//- `p2pkh`: Pay to pubkey hash (`PUBKEY_HASH` = 2)
-//- `p2sh`: Pay to script hash (`SCRIPT_HASH` = 3)
+// - `p2wkh`: Pay to witness key hash (`WITNESS_PUBKEY_HASH` = 0)
+// - `np2wkh`: Pay to nested witness key hash (`NESTED_PUBKEY_HASH` = 1)
+// - `p2pkh`: Pay to pubkey hash (`PUBKEY_HASH` = 2)
+// - `p2sh`: Pay to script hash (`SCRIPT_HASH` = 3)
 type AddressType int32
 
 const (
@@ -8016,12 +8015,11 @@ func (x *MPPRecord) GetTotalAmtMAtoms() int64 {
 	return 0
 }
 
-//
-//A path through the channel graph which runs over one or more channels in
-//succession. This struct carries all the information required to craft the
-//Sphinx onion packet, and send the payment along the first hop in the path. A
-//route is only selected as valid if all the channels have sufficient capacity to
-//carry the initial payment amount after fees are accounted for.
+// A path through the channel graph which runs over one or more channels in
+// succession. This struct carries all the information required to craft the
+// Sphinx onion packet, and send the payment along the first hop in the path. A
+// route is only selected as valid if all the channels have sufficient capacity to
+// carry the initial payment amount after fees are accounted for.
 type Route struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8272,11 +8270,10 @@ func (x *NodeInfo) GetChannels() []*ChannelEdge {
 	return nil
 }
 
-//
-//An individual vertex/node within the channel graph. A node is
-//connected to other nodes by one or more channel edges emanating from it. As the
-//graph is directed, a node will also have an incoming edge attached to it for
-//each outgoing edge.
+// An individual vertex/node within the channel graph. A node is
+// connected to other nodes by one or more channel edges emanating from it. As the
+// graph is directed, a node will also have an incoming edge attached to it for
+// each outgoing edge.
 type LightningNode struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -8610,12 +8607,11 @@ func (x *EnforceNodePingResponse) GetPingTimeMicro() int64 {
 	return 0
 }
 
-//
-//A fully authenticated channel along with all its unique attributes.
-//Once an authenticated channel announcement has been processed on the network,
-//then an instance of ChannelEdgeInfo encapsulating the channels attributes is
-//stored. The other portions relevant to routing policy of a channel are stored
-//within a ChannelEdgePolicy for each direction of the channel.
+// A fully authenticated channel along with all its unique attributes.
+// Once an authenticated channel announcement has been processed on the network,
+// then an instance of ChannelEdgeInfo encapsulating the channels attributes is
+// stored. The other portions relevant to routing policy of a channel are stored
+// within a ChannelEdgePolicy for each direction of the channel.
 type ChannelEdge struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

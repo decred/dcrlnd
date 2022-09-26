@@ -973,13 +973,14 @@ func createClusterChannels(aliceToBob, bobToCarol dcrutil.Amount) (
 // newThreeHopNetwork function creates the following topology and returns the
 // control object to manage this cluster:
 //
-//	alice			   bob				   carol
-//	server - <-connection-> - server - - <-connection-> - - - server
-//	 |		   	  |				   |
-//   alice htlc			bob htlc		    carol htlc
-//     switch			switch	\		    switch
-//	|			 |       \			|
-//	|			 |        \			|
+//		alice			   bob				   carol
+//		server - <-connection-> - server - - <-connection-> - - - server
+//		 |		   	  |				   |
+//	  alice htlc			bob htlc		    carol htlc
+//	    switch			switch	\		    switch
+//		|			 |       \			|
+//		|			 |        \			|
+//
 // alice                   first bob    second bob              carol
 // channel link	    	  channel link   channel link		channel link
 //
@@ -1229,16 +1230,16 @@ type twoHopNetwork struct {
 // newTwoHopNetwork function creates the following topology and returns the
 // control object to manage this cluster:
 //
-//	alice			   bob
-//	server - <-connection-> - server
-//	 |		   	    |
-//   alice htlc		  	 bob htlc
-//     switch			 switch
-//	|			    |
-//	|			    |
+//		alice			   bob
+//		server - <-connection-> - server
+//		 |		   	    |
+//	  alice htlc		  	 bob htlc
+//	    switch			 switch
+//		|			    |
+//		|			    |
+//
 // alice                           bob
 // channel link	    	       channel link
-//
 func newTwoHopNetwork(t testing.TB,
 	aliceChannel, bobChannel *lnwallet.LightningChannel,
 	startingHeight uint32) *twoHopNetwork {

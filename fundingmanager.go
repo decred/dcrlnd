@@ -100,7 +100,7 @@ var (
 // via a local signal such as RPC.
 //
 // TODO(roasbeef): actually use the context package
-//  * deadlines, etc.
+//   - deadlines, etc.
 type reservationWithCtx struct {
 	reservation *lnwallet.ChannelReservation
 	peer        lnpeer.Peer

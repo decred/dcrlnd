@@ -56,7 +56,7 @@ var (
 // The key derivation in this file follows the following hierarchy based on
 // BIP43:
 //
-//   * m/1017'/coinType'/keyFamily'/0/index
+//   - m/1017'/coinType'/keyFamily'/0/index
 type KeyFamily uint32
 
 const (
@@ -124,7 +124,7 @@ const (
 // Version 0 of our key derivation schema uses the following BIP43-like
 // derivation:
 //
-//   * m/1017'/coinType'/keyFamily'/0/index
+//   - m/1017'/coinType'/keyFamily'/0/index
 //
 // Our purpose is 1017 (chosen arbitrary for now), and the coin type will vary
 // based on which coin/chain the channels are being created on. The key family

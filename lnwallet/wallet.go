@@ -1683,8 +1683,8 @@ func (l *LightningWallet) WithCoinSelectLock(f func() error) error {
 // state hints from the root to be used for a new channel. The obfuscator is
 // generated via the following computation:
 //
-//   * sha256(initiatorKey || responderKey)[26:]
-//     * where both keys are the multi-sig keys of the respective parties
+//   - sha256(initiatorKey || responderKey)[26:]
+//   - where both keys are the multi-sig keys of the respective parties
 //
 // The first 6 bytes of the resulting hash are used as the state hint.
 func DeriveStateHintObfuscator(key1, key2 *secp256k1.PublicKey) [StateHintSize]byte {

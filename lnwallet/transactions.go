@@ -44,7 +44,7 @@ var (
 //
 // In order to spend the HTLC output, the witness for the passed transaction
 // should be:
-//   * <sender sig> <recvr sig> <preimage>
+//   - <sender sig> <recvr sig> <preimage>
 func createHtlcSuccessTx(chanType channeldb.ChannelType,
 	htlcOutput wire.OutPoint, htlcAmt dcrutil.Amount, csvDelay uint32,
 	revocationKey, delayKey *secp256k1.PublicKey) (*wire.MsgTx, error) {

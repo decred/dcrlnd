@@ -248,15 +248,15 @@ func WithEndHeight(endHeight int32) Option {
 // There are two ways to add addicional targets during the execution of the
 // foundCallback:
 //
-//   1. Via additional Find() calls of the scanner (which _are_ safe for direct
-//   calling by the foundCallback). This allows callers to start to search for
-//   additional targets on the _next_ block checked by the scanner.
+//  1. Via additional Find() calls of the scanner (which _are_ safe for direct
+//     calling by the foundCallback). This allows callers to start to search for
+//     additional targets on the _next_ block checked by the scanner.
 //
-//   2. Via the second argument to the foundCallback. That function can add
-//   targets to search for, starting at the _current_ block, transaction list
-//   and transaction index. This is useful (for example) when detecting a
-//   specific script was used in an output should trigger a search for other
-//   scripts including in the same block.
+//  2. Via the second argument to the foundCallback. That function can add
+//     targets to search for, starting at the _current_ block, transaction list
+//     and transaction index. This is useful (for example) when detecting a
+//     specific script was used in an output should trigger a search for other
+//     scripts including in the same block.
 //
 // The callback function may be called multiple times for a given target.
 func WithFoundCallback(cb FoundCallback) Option {

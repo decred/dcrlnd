@@ -192,8 +192,8 @@ func (kr *HDKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.PrivateKey
 // is our private key, and P is the public key, we perform the following
 // operation:
 //
-//  sx := k*P
-//   s := sha256(sx.SerializeCompressed())
+//	sx := k*P
+//	 s := sha256(sx.SerializeCompressed())
 //
 // NOTE: This is part of the keychain.ECDHRing interface.
 func (kr *HDKeyRing) ECDH(keyDesc KeyDescriptor,

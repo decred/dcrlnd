@@ -1179,7 +1179,7 @@ func (u *utxoNursery) closeAndRemoveIfMature(chanPoint *wire.OutPoint) error {
 // be used to spend the CSV output contained in the timeout txn.
 //
 // TODO(roasbeef): re-rename to timeout tx
-//  * create CltvCsvSpendableOutput
+//   - create CltvCsvSpendableOutput
 type babyOutput struct {
 	// expiry is the absolute block height at which the secondLevelTx
 	// should be broadcast to the network.

@@ -19,7 +19,7 @@ import (
 //
 // This test creates the following network of channels:
 //
-//   Dave -> Carol    Alice -> Bob
+//	Dave -> Carol    Alice -> Bob
 //
 // Then tries to perform a payment from Dave -> to Bob. This should fail, since
 // there is no route connecting them. Carol and Alice are then connected,

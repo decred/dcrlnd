@@ -227,35 +227,40 @@ func Ripemd160H(d []byte) []byte {
 // output payment for the sender's version of the commitment transaction. The
 // possible script paths from this output include:
 //
-//    * The sender timing out the HTLC using the second level HTLC timeout
-//      transaction.
-//    * The receiver of the HTLC claiming the output on-chain with the payment
-//      preimage.
-//    * The receiver of the HTLC sweeping all the funds in the case that a
-//      revoked commitment transaction bearing this HTLC was broadcast.
+//   - The sender timing out the HTLC using the second level HTLC timeout
+//     transaction.
+//   - The receiver of the HTLC claiming the output on-chain with the payment
+//     preimage.
+//   - The receiver of the HTLC sweeping all the funds in the case that a
+//     revoked commitment transaction bearing this HTLC was broadcast.
 //
 // If confirmedSpend=true, a 1 OP_CSV check will be added to the non-revocation
 // cases, to allow sweeping only after confirmation.
 //
 // Possible Input Scripts:
-//    SENDR: <sendr sig> <recvr sig> <0> (spend using HTLC timeout transaction)
-//    RECVR: <recvr sig> <preimage>
-//    REVOK: <revoke sig> <revoke key>
-//     * receiver revoke
+//
+//	SENDR: <sendr sig> <recvr sig> <0> (spend using HTLC timeout transaction)
+//	RECVR: <recvr sig> <preimage>
+//	REVOK: <revoke sig> <revoke key>
+//	 * receiver revoke
 //
 // OP_DUP OP_HASH160 <revocation key hash160> OP_EQUAL
 // OP_IF
-//     OP_CHECKSIG
+//
+//	OP_CHECKSIG
+//
 // OP_ELSE
-//     <recv htlc key>
-//     OP_SWAP OP_SIZE 32 OP_EQUAL
-//     OP_NOTIF
-//         OP_DROP 2 OP_SWAP <sender htlc key> 2 OP_CHECKMULTISIG
-//     OP_ELSE
-//         OP_SHA256 OP_RIPEMD160 <ripemd160(payment hash)> OP_EQUALVERIFY
-//         OP_CHECKSIG
-//     OP_ENDIF
-//     [1 OP_CHECKSEQUENCEVERIFY OP_DROP] <- if allowing confirmed spend only.
+//
+//	<recv htlc key>
+//	OP_SWAP OP_SIZE 32 OP_EQUAL
+//	OP_NOTIF
+//	    OP_DROP 2 OP_SWAP <sender htlc key> 2 OP_CHECKMULTISIG
+//	OP_ELSE
+//	    OP_SHA256 OP_RIPEMD160 <ripemd160(payment hash)> OP_EQUALVERIFY
+//	    OP_CHECKSIG
+//	OP_ENDIF
+//	[1 OP_CHECKSEQUENCEVERIFY OP_DROP] <- if allowing confirmed spend only.
+//
 // OP_ENDIF
 func SenderHTLCScript(senderHtlcKey, receiverHtlcKey,
 	revocationKey *secp256k1.PublicKey, paymentHash []byte,
@@ -462,25 +467,29 @@ func SenderHtlcSpendTimeout(receiverSig Signature,
 // cases, to allow sweeping only after confirmation.
 //
 // Possible Input Scripts:
-//    RECVR: <sender sig> <recvr sig> <preimage> (spend using HTLC success transaction)
-//    REVOK: <sig> <key>
-//    SENDR: <sig> 0
 //
+//	RECVR: <sender sig> <recvr sig> <preimage> (spend using HTLC success transaction)
+//	REVOK: <sig> <key>
+//	SENDR: <sig> 0
 //
 // OP_DUP OP_HASH160 <revocation key hash160> OP_EQUAL
 // OP_IF
-//     OP_CHECKSIG
+//
+//	OP_CHECKSIG
+//
 // OP_ELSE
-//     <sendr htlc key>
-//     OP_SWAP OP_SIZE 32 OP_EQUAL
-//     OP_IF
-//         OP_HASH160 <ripemd160(payment hash)> OP_EQUALVERIFY
-//         2 OP_SWAP <recvr htlc key> 2 OP_CHECKMULTISIG
-//     OP_ELSE
-//         OP_DROP <cltv expiry> OP_CHECKLOCKTIMEVERIFY OP_DROP
-//         OP_CHECKSIG
-//     OP_ENDIF
-//     [1 OP_CHECKSEQUENCEVERIFY OP_DROP] <- if allowing confirmed spend only.
+//
+//	<sendr htlc key>
+//	OP_SWAP OP_SIZE 32 OP_EQUAL
+//	OP_IF
+//	    OP_HASH160 <ripemd160(payment hash)> OP_EQUALVERIFY
+//	    2 OP_SWAP <recvr htlc key> 2 OP_CHECKMULTISIG
+//	OP_ELSE
+//	    OP_DROP <cltv expiry> OP_CHECKLOCKTIMEVERIFY OP_DROP
+//	    OP_CHECKSIG
+//	OP_ENDIF
+//	[1 OP_CHECKSEQUENCEVERIFY OP_DROP] <- if allowing confirmed spend only.
+//
 // OP_ENDIF
 func ReceiverHTLCScript(cltvExpiry uint32, senderHtlcKey,
 	receiverHtlcKey, revocationKey *secp256k1.PublicKey,
@@ -737,26 +746,33 @@ func ReplaceReceiverHtlcSpendRedeemPreimage(sigScript, preimage []byte) ([]byte,
 // in a particular way, and to a particular output.
 //
 // Possible Input Scripts:
-//  * To revoke an HTLC output that has been transitioned to the claim+delay
-//    state:
-//    * <revoke sig> 1
 //
-//  * To claim and HTLC output, either with a pre-image or due to a timeout:
-//    * <delay sig> 0
+//   - To revoke an HTLC output that has been transitioned to the claim+delay
+//     state:
+//
+//   - <revoke sig> 1
+//
+//   - To claim and HTLC output, either with a pre-image or due to a timeout:
+//
+//   - <delay sig> 0
 //
 // OP_IF
-//     <revoke key>
+//
+//	<revoke key>
+//
 // OP_ELSE
-//     <delay in blocks>
-//     OP_CHECKSEQUENCEVERIFY
-//     OP_DROP
-//     <delay key>
+//
+//	<delay in blocks>
+//	OP_CHECKSEQUENCEVERIFY
+//	OP_DROP
+//	<delay key>
+//
 // OP_ENDIF
 // OP_CHECKSIG
 //
 // TODO(roasbeef): possible renames for second-level
-//  * transition?
-//  * covenant output
+//   - transition?
+//   - covenant output
 func SecondLevelHtlcScript(revocationKey, delayKey *secp256k1.PublicKey,
 	csvDelay uint32) ([]byte, error) {
 
@@ -911,17 +927,19 @@ func LockTimeToSequence(isSeconds bool, locktime uint32) uint32 {
 // can claim all the settled funds in the channel, plus the unsettled funds.
 //
 // Possible Input Scripts:
-//     REVOKE:     <sig> 1
-//     SENDRSWEEP: <sig> <emptyvector>
+//
+//	REVOKE:     <sig> 1
+//	SENDRSWEEP: <sig> <emptyvector>
 //
 // Output Script:
-//     OP_IF
-//         <revokeKey>
-//     OP_ELSE
-//         <numRelativeBlocks> OP_CHECKSEQUENCEVERIFY OP_DROP
-//         <timeKey>
-//     OP_ENDIF
-//     OP_CHECKSIG
+//
+//	OP_IF
+//	    <revokeKey>
+//	OP_ELSE
+//	    <numRelativeBlocks> OP_CHECKSEQUENCEVERIFY OP_DROP
+//	    <timeKey>
+//	OP_ENDIF
+//	OP_CHECKSIG
 func CommitScriptToSelf(csvTimeout uint32, selfKey, revokeKey *secp256k1.PublicKey) ([]byte, error) {
 	// This script is spendable under two conditions: either the
 	// 'csvTimeout' has passed and we can redeem our funds, or they can
@@ -1086,9 +1104,11 @@ func CommitScriptUnencumbered(key *secp256k1.PublicKey) ([]byte, error) {
 // transaction. The money can only be spend after one confirmation.
 //
 // Possible Input Scripts:
-//     SWEEP: <sig>
+//
+//	SWEEP: <sig>
 //
 // Output Script:
+//
 //	<key> OP_CHECKSIGVERIFY
 //	1 OP_CHECKSEQUENCEVERIFY
 func CommitScriptToRemoteConfirmed(key *secp256k1.PublicKey) ([]byte, error) {
@@ -1136,10 +1156,12 @@ func CommitSpendToRemoteConfirmed(signer Signer, signDesc *SignDescriptor,
 // the given key immediately, or by anyone after 16 confirmations.
 //
 // Possible Input Scripts:
-//    By owner:				<sig>
-//    By anyone (after 16 conf):	<emptyvector>
+//
+//	By owner:				<sig>
+//	By anyone (after 16 conf):	<emptyvector>
 //
 // Output Script:
+//
 //	<funding_pubkey> OP_CHECKSIG OP_IFDUP
 //	OP_NOTIF
 //	  OP_16 OP_CSV
@@ -1206,7 +1228,7 @@ func CommitSpendAnchorAnyone(script []byte) (TxWitness, error) {
 // the pay/delay base point. The end result is that the basePoint is tweaked as
 // follows:
 //
-//   * key = basePoint + sha256(commitPoint || basePoint)*G
+//   - key = basePoint + sha256(commitPoint || basePoint)*G
 func SingleTweakBytes(commitPoint, basePoint *secp256k1.PublicKey) []byte {
 	h := sha256.New()
 	h.Write(commitPoint.SerializeCompressed())
@@ -1221,15 +1243,15 @@ func SingleTweakBytes(commitPoint, basePoint *secp256k1.PublicKey) []byte {
 // The opposite applies for when tweaking remote keys. Precisely, the following
 // operation is used to "tweak" public keys:
 //
-//   tweakPub := basePoint + sha256(commitPoint || basePoint) * G
-//            := G*k + sha256(commitPoint || basePoint)*G
-//            := G*(k + sha256(commitPoint || basePoint))
+//	tweakPub := basePoint + sha256(commitPoint || basePoint) * G
+//	         := G*k + sha256(commitPoint || basePoint)*G
+//	         := G*(k + sha256(commitPoint || basePoint))
 //
 // Therefore, if a party possess the value k, the private key of the base
 // point, then they are able to derive the proper private key for the
 // revokeKey by computing:
 //
-//   revokePriv := k + sha256(commitPoint || basePoint) mod N
+//	revokePriv := k + sha256(commitPoint || basePoint) mod N
 //
 // Where N is the order of the sub-group.
 //
@@ -1268,7 +1290,7 @@ func TweakPubKeyWithTweak(pubKey *secp256k1.PublicKey, tweakBytes []byte) *secp2
 // revoked state. Precisely, the following operation is used to derive a
 // tweaked private key:
 //
-//  * tweakPriv := basePriv + sha256(commitment || basePub) mod N
+//   - tweakPriv := basePriv + sha256(commitment || basePub) mod N
 //
 // Where N is the order of the sub-group.
 func TweakPrivKey(basePriv *secp256k1.PrivateKey, commitTweak []byte) *secp256k1.PrivateKey {
@@ -1290,24 +1312,24 @@ func TweakPrivKey(basePriv *secp256k1.PrivateKey, commitTweak []byte) *secp256k1
 // revoked commitment transaction, then if the other party knows the revocation
 // preimage, then they'll be able to derive the corresponding private key to
 // this private key by exploiting the homomorphism in the elliptic curve group:
-//    * https://en.wikipedia.org/wiki/Group_homomorphism#Homomorphisms_of_abelian_groups
+//   - https://en.wikipedia.org/wiki/Group_homomorphism#Homomorphisms_of_abelian_groups
 //
 // The derivation is performed as follows:
 //
-//   revokeKey := revokeBase * sha256(revocationBase || commitPoint) +
-//                commitPoint * sha256(commitPoint || revocationBase)
+//	revokeKey := revokeBase * sha256(revocationBase || commitPoint) +
+//	             commitPoint * sha256(commitPoint || revocationBase)
 //
-//             := G*(revokeBasePriv * sha256(revocationBase || commitPoint)) +
-//                G*(commitSecret * sha256(commitPoint || revocationBase))
+//	          := G*(revokeBasePriv * sha256(revocationBase || commitPoint)) +
+//	             G*(commitSecret * sha256(commitPoint || revocationBase))
 //
-//             := G*(revokeBasePriv * sha256(revocationBase || commitPoint) +
-//                   commitSecret * sha256(commitPoint || revocationBase))
+//	          := G*(revokeBasePriv * sha256(revocationBase || commitPoint) +
+//	                commitSecret * sha256(commitPoint || revocationBase))
 //
 // Therefore, once we divulge the revocation secret, the remote peer is able to
 // compute the proper private key for the revokeKey by computing:
 //
-//   revokePriv := (revokeBasePriv * sha256(revocationBase || commitPoint)) +
-//                 (commitSecret * sha256(commitPoint || revocationBase)) mod N
+//	revokePriv := (revokeBasePriv * sha256(revocationBase || commitPoint)) +
+//	              (commitSecret * sha256(commitPoint || revocationBase)) mod N
 //
 // Where N is the order of the sub-group.
 func DeriveRevocationPubkey(revokeBase, commitPoint *secp256k1.PublicKey) *secp256k1.PublicKey {
@@ -1341,8 +1363,9 @@ func DeriveRevocationPubkey(revokeBase, commitPoint *secp256k1.PublicKey) *secp2
 // a previously revoked commitment transaction.
 //
 // The private key is derived as follows:
-//   revokePriv := (revokeBasePriv * sha256(revocationBase || commitPoint)) +
-//                 (commitSecret * sha256(commitPoint || revocationBase)) mod N
+//
+//	revokePriv := (revokeBasePriv * sha256(revocationBase || commitPoint)) +
+//	              (commitSecret * sha256(commitPoint || revocationBase)) mod N
 //
 // Where N is the order of the sub-group.
 func DeriveRevocationPrivKey(revokeBasePriv *secp256k1.PrivateKey,

@@ -49,8 +49,9 @@ func (k BreachKey) String() string {
 
 // NewBreachHintAndKeyFromHash derives a BreachHint and BreachKey from a given
 // txid in a single pass. The hint and key are computed as:
-//    hint = chainhash(txid)
-//    key = chainhash(txid || txid)
+//
+//	hint = chainhash(txid)
+//	key = chainhash(txid || txid)
 func NewBreachHintAndKeyFromHash(hash *chainhash.Hash) (BreachHint, BreachKey) {
 	// The chainhash pkg does not currently export a New()/Sum() variant, so
 	// use the default format for calculating it.

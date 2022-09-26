@@ -117,7 +117,8 @@ type ChanStatusManager struct {
 // NewChanStatusManager initializes a new ChanStatusManager using the given
 // configuration. An error is returned if the timeouts and sample interval fail
 // to meet do not satisfy the equation:
-//   ChanEnableTimeout + ChanStatusSampleInterval > ChanDisableTimeout.
+//
+//	ChanEnableTimeout + ChanStatusSampleInterval > ChanDisableTimeout.
 func NewChanStatusManager(cfg *ChanStatusConfig) (*ChanStatusManager, error) {
 	// Assert that the config timeouts are properly formed. We require the
 	// enable_timeout + sample_interval to be less than or equal to the

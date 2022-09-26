@@ -67,9 +67,9 @@ var (
 // proceeding to send commands. Otherwise, the connection will be closed.
 //
 // TODO:
-//   * if adding support for more commands, extend this with a command queue?
-//   * place under sub-package?
-//   * support async replies from the server
+//   - if adding support for more commands, extend this with a command queue?
+//   - place under sub-package?
+//   - support async replies from the server
 type Controller struct {
 	// started is used atomically in order to prevent multiple calls to
 	// Start.
@@ -373,6 +373,7 @@ func computeHMAC256(key, message []byte) []byte {
 // supportsV3 is a helper function that parses the current version of the Tor
 // server and determines whether it supports creationg v3 onion services through
 // Tor's control port. The version string should be of the format:
+//
 //	major.minor.revision.build
 func supportsV3(version string) error {
 	// We'll split the minimum Tor version that's supported and the given

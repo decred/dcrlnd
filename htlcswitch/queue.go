@@ -98,7 +98,7 @@ func (p *packetQueue) Stop() {
 //
 // TODO(roasbeef): later will need to add back pressure handling heuristics
 // like reg congestion avoidance:
-//   * random dropping, RED, etc
+//   - random dropping, RED, etc
 func (p *packetQueue) packetCoordinator() {
 	defer atomic.StoreInt32(&p.streamShutdown, 1)
 

@@ -524,9 +524,7 @@ func copyRetInfo(retInfo *retributionInfo) *retributionInfo {
 		breachedOutputs: make([]breachedOutput, nOutputs),
 	}
 
-	for i := range retInfo.breachedOutputs {
-		ret.breachedOutputs[i] = retInfo.breachedOutputs[i]
-	}
+	copy(ret.breachedOutputs, retInfo.breachedOutputs)
 
 	return ret
 }

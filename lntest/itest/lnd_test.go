@@ -5537,7 +5537,9 @@ var singleHopSendToRouteCases = []singleHopSendToRouteCase{
 // testSingleHopSendToRoute tests that payments are properly processed through a
 // provided route with a single hop. We'll create the following network
 // topology:
-//      Carol --100k--> Dave
+//
+//	Carol --100k--> Dave
+//
 // We'll query the daemon for routes from Carol to Dave and then send payments
 // by feeding the route back into the various SendToRoute RPC methods. Here we
 // test all three SendToRoute endpoints, forcing each to perform both a regular
@@ -5940,7 +5942,9 @@ func testSingleHopSendToRouteCase(net *lntest.NetworkHarness, t *harnessTest,
 
 // testMultiHopSendToRoute tests that payments are properly processed
 // through a provided route. We'll create the following network topology:
-//      Alice --100k--> Bob --100k--> Carol
+//
+//	Alice --100k--> Bob --100k--> Carol
+//
 // We'll query the daemon for routes from Alice to Carol and then
 // send payments through the routes.
 func testMultiHopSendToRoute(net *lntest.NetworkHarness, t *harnessTest) {
@@ -11997,9 +12001,9 @@ func getSpendingTxInMempool(t *harnessTest, miner *rpcclient.Client,
 // forward a response back from the receiver once back online.
 //
 // The general flow of this test:
-//   1. Carol --> Dave --> Alice --> Bob  forward payment
-//   2.        X        X         X  Bob  restart sender and intermediaries
-//   3. Carol <-- Dave <-- Alice <-- Bob  expect settle to propagate
+//  1. Carol --> Dave --> Alice --> Bob  forward payment
+//  2. X        X         X  Bob  restart sender and intermediaries
+//  3. Carol <-- Dave <-- Alice <-- Bob  expect settle to propagate
 func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	ctxb := context.Background()
 
@@ -12312,10 +12316,10 @@ func testSwitchCircuitPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 // online.
 //
 // The general flow of this test:
-//   1. Carol --> Dave --> Alice --> Bob  forward payment
-//   2. Carol --- Dave  X  Alice --- Bob  disconnect intermediaries
-//   3. Carol --- Dave  X  Alice <-- Bob  settle last hop
-//   4. Carol <-- Dave <-- Alice --- Bob  reconnect, expect settle to propagate
+//  1. Carol --> Dave --> Alice --> Bob  forward payment
+//  2. Carol --- Dave  X  Alice --- Bob  disconnect intermediaries
+//  3. Carol --- Dave  X  Alice <-- Bob  settle last hop
+//  4. Carol <-- Dave <-- Alice --- Bob  reconnect, expect settle to propagate
 func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 	ctxb := context.Background()
 
@@ -12641,11 +12645,11 @@ func testSwitchOfflineDelivery(net *lntest.NetworkHarness, t *harnessTest) {
 // disk, and transmitted as soon as the intermediaries are reconnected.
 //
 // The general flow of this test:
-//   1. Carol --> Dave --> Alice --> Bob  forward payment
-//   2. Carol --- Dave  X  Alice --- Bob  disconnect intermediaries
-//   3. Carol --- Dave  X  Alice <-- Bob  settle last hop
-//   4. Carol --- Dave  X         X  Bob  restart Alice
-//   5. Carol <-- Dave <-- Alice --- Bob  expect settle to propagate
+//  1. Carol --> Dave --> Alice --> Bob  forward payment
+//  2. Carol --- Dave  X  Alice --- Bob  disconnect intermediaries
+//  3. Carol --- Dave  X  Alice <-- Bob  settle last hop
+//  4. Carol --- Dave  X         X  Bob  restart Alice
+//  5. Carol <-- Dave <-- Alice --- Bob  expect settle to propagate
 func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 	ctxb := context.Background()
 
@@ -12977,11 +12981,11 @@ func testSwitchOfflineDeliveryPersistence(net *lntest.NetworkHarness, t *harness
 // disk, and transmitted as soon as the intermediaries are reconnected.
 //
 // The general flow of this test:
-//   1. Carol --> Dave --> Alice --> Bob  forward payment
-//   2. Carol --- Dave  X  Alice --- Bob  disconnect intermediaries
-//   3. Carol --- Dave  X  Alice <-- Bob  settle last hop
-//   4. Carol --- Dave  X         X       shutdown Bob, restart Alice
-//   5. Carol <-- Dave <-- Alice  X       expect settle to propagate
+//  1. Carol --> Dave --> Alice --> Bob  forward payment
+//  2. Carol --- Dave  X  Alice --- Bob  disconnect intermediaries
+//  3. Carol --- Dave  X  Alice <-- Bob  settle last hop
+//  4. Carol --- Dave  X         X       shutdown Bob, restart Alice
+//  5. Carol <-- Dave <-- Alice  X       expect settle to propagate
 func testSwitchOfflineDeliveryOutgoingOffline(
 	net *lntest.NetworkHarness, t *harnessTest) {
 	ctxb := context.Background()
@@ -13257,7 +13261,9 @@ func computeFee(baseFee, feeRate, amt lnwire.MilliAtom) lnwire.MilliAtom {
 
 // testQueryRoutes checks the response of queryroutes.
 // We'll create the following network topology:
-//      Alice --> Bob --> Carol --> Dave
+//
+//	Alice --> Bob --> Carol --> Dave
+//
 // and query the daemon for routes from Alice to Dave.
 func testQueryRoutes(net *lntest.NetworkHarness, t *harnessTest) {
 	ctxb := context.Background()

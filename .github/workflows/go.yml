@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [1.16, 1.17]
+        go: [1.18, 1.19]
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Linters
-        run: "curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.44.2"
+        run: "curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.48.0"
 
       - name: Check golangci-lint version
         run: $(go env GOPATH)/bin/golangci-lint --version
@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [1.17]
+        go: [1.19]
         testsuite:
           - unit-race # unit tests
           - itest-only # embedded wallet using dcrd for sync and chain ops

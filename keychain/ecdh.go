@@ -38,8 +38,8 @@ func (p *PubKeyECDH) PubKey() *secp256k1.PublicKey {
 // k is our private key, and P is the public key, we perform the following
 // operation:
 //
-//  sx := k*P
-//  s := sha256(sx.SerializeCompressed())
+//	sx := k*P
+//	s := sha256(sx.SerializeCompressed())
 //
 // NOTE: This is part of the SingleKeyECDH interface.
 func (p *PubKeyECDH) ECDH(pubKey *secp256k1.PublicKey) ([32]byte, error) {
@@ -68,8 +68,8 @@ func (p *PrivKeyECDH) PubKey() *secp256k1.PublicKey {
 // k is our private key, and P is the public key, we perform the following
 // operation:
 //
-//  sx := k*P
-//  s := sha256(sx.SerializeCompressed())
+//	sx := k*P
+//	s := sha256(sx.SerializeCompressed())
 //
 // NOTE: This is part of the SingleKeyECDH interface.
 func (p *PrivKeyECDH) ECDH(pub *secp256k1.PublicKey) ([32]byte, error) {

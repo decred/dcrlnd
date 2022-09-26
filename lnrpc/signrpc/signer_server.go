@@ -504,7 +504,9 @@ func (s *Server) VerifyMessage(ctx context.Context,
 // derivation between the ephemeral public key in the request and the node's
 // key specified in the key_loc parameter (or the node's identity private key
 // if no key locator is specified):
-//     P_shared = privKeyNode * ephemeralPubkey
+//
+//	P_shared = privKeyNode * ephemeralPubkey
+//
 // The resulting shared public key is serialized in the compressed format and
 // hashed with sha256, resulting in the final key length of 256bit.
 func (s *Server) DeriveSharedKey(_ context.Context, in *SharedKeyRequest) (
