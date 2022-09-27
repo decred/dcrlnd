@@ -13,6 +13,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/lnwire"
+	"github.com/decred/dcrlnd/routing/route"
 )
 
 const (
@@ -119,6 +120,39 @@ func (m *mockChannelGraphTimeSeries) FetchChanUpdates(chain chainhash.Hash,
 
 var _ ChannelGraphTimeSeries = (*mockChannelGraphTimeSeries)(nil)
 
+type mockGossipState struct {
+	sync.Mutex
+	timestamps map[route.Vertex]time.Time
+}
+
+func newMockGossipState() *mockGossipState {
+	return &mockGossipState{timestamps: make(map[route.Vertex]time.Time)}
+}
+
+func (gs *mockGossipState) UpdatePeerLastGossipMsgTS(peer route.Vertex, ts time.Time) (bool, error) {
+	gs.Lock()
+	prevTS := gs.timestamps[peer]
+	var updated bool
+	if !ts.Before(prevTS) {
+		gs.timestamps[peer] = ts
+		updated = true
+	}
+	gs.Unlock()
+	return updated, nil
+}
+
+func (gs *mockGossipState) ReadPeerLastGossipMsgTS(peer route.Vertex) (time.Time, error) {
+	gs.Lock()
+	ts, ok := gs.timestamps[peer]
+	gs.Unlock()
+	if !ok {
+		return time.Time{}, fmt.Errorf("no recorded ts")
+	}
+	return ts, nil
+}
+
+var _ GossiperState = (*mockGossipState)(nil)
+
 // newTestSyncer creates a new test instance of a GossipSyncer. A buffered
 // message channel is returned for intercepting messages sent from the syncer,
 // in addition to a mock channel series which allows the test to control which
@@ -145,6 +179,7 @@ func newTestSyncer(hID lnwire.ShortChannelID,
 	msgChan := make(chan []lnwire.Message, 20)
 	cfg := gossipSyncerCfg{
 		channelSeries:  newMockChannelGraphTimeSeries(hID),
+		gossiperState:  newMockGossipState(),
 		encodingType:   encodingType,
 		chunkSize:      chunkSize,
 		batchSize:      chunkSize,

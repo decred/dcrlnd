@@ -119,6 +119,10 @@ type Config struct {
 	// graph time series queries.
 	ChanSeries ChannelGraphTimeSeries
 
+	// GossiperState is an interface that provides functions to persist
+	// data about the state of individual peer gossipers.
+	GossiperState GossiperState
+
 	// Notifier is used for receiving notifications of incoming blocks.
 	// With each new incoming block found we process previously premature
 	// announcements.
@@ -335,6 +339,7 @@ func New(cfg Config, selfKey *secp256k1.PublicKey) *AuthenticatedGossiper {
 		syncMgr: newSyncManager(&SyncManagerCfg{
 			ChainHash:               cfg.ChainHash,
 			ChanSeries:              cfg.ChanSeries,
+			GossiperState:           cfg.GossiperState,
 			RotateTicker:            cfg.RotateTicker,
 			HistoricalSyncTicker:    cfg.HistoricalSyncTicker,
 			NumActiveSyncers:        cfg.NumActiveSyncers,
@@ -1554,6 +1559,10 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 				"for %x due to being unadvertised", msg.NodeID)
 		}
 
+		if nMsg.isRemote {
+			d.updateGossiperMsgTS(nMsg.peer.PubKey(), timestamp)
+		}
+
 		nMsg.err <- nil
 		// TODO(roasbeef): get rid of the above
 		return announcements
@@ -2034,6 +2043,10 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 				source: nMsg.source,
 				msg:    msg,
 			})
+		}
+
+		if nMsg.isRemote {
+			d.updateGossiperMsgTS(nMsg.peer.PubKey(), timestamp)
 		}
 
 		nMsg.err <- nil

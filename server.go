@@ -778,6 +778,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		ChainHash:         activeNetParams.GenesisHash,
 		Broadcast:         s.BroadcastMessage,
 		ChanSeries:        chanSeries,
+		GossiperState:     discovery.NewGossiperState(s.remoteChanDB),
 		NotifyWhenOnline:  s.NotifyWhenOnline,
 		NotifyWhenOffline: s.NotifyWhenOffline,
 		SelfNodeAnnouncement: func(refresh bool) (lnwire.NodeAnnouncement, error) {

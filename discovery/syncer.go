@@ -191,6 +191,10 @@ type gossipSyncerCfg struct {
 	// our queries and respond to the queries of the remote peer.
 	channelSeries ChannelGraphTimeSeries
 
+	// gossiperState is an interface that provides functions to persist
+	// data about the state of this gossiper.
+	gossiperState GossiperState
+
 	// encodingType is the current encoding type we're aware of. Requests
 	// with different encoding types will be rejected.
 	encodingType lnwire.ShortChanIDEncoding
@@ -540,7 +544,7 @@ func (g *GossipSyncer) channelGraphSyncer() {
 			// do so now.
 			if g.localUpdateHorizon == nil && syncType == ActiveSync {
 				err := g.sendGossipTimestampRange(
-					time.Now(), math.MaxUint32,
+					g.initialGossipTimestamp(), math.MaxUint32,
 				)
 				if err != nil {
 					log.Errorf("Unable to send update "+
@@ -1367,7 +1371,7 @@ func (g *GossipSyncer) handleSyncTransition(req *syncTransitionReq) error {
 	// If an active sync has been requested, then we should resume receiving
 	// new graph updates from the remote peer.
 	case ActiveSync:
-		firstTimestamp = time.Now()
+		firstTimestamp = g.initialGossipTimestamp()
 		timestampRange = math.MaxUint32
 
 	// If a PassiveSync transition has been requested, then we should no

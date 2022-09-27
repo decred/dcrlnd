@@ -749,6 +749,7 @@ func createTestCtx(startHeight uint32) (*testCtx, func(), error) {
 		ProofMatureDelta:     proofMatureDelta,
 		WaitingProofStore:    waitingProofStore,
 		MessageStore:         newMockMessageStore(),
+		GossiperState:        newMockGossipState(),
 		RotateTicker:         ticker.NewForce(DefaultSyncerRotationInterval),
 		HistoricalSyncTicker: ticker.NewForce(DefaultHistoricalSyncInterval),
 		NumActiveSyncers:     3,

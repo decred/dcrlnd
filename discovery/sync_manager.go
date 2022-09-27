@@ -68,6 +68,10 @@ type SyncManagerCfg struct {
 	// time series queries.
 	ChanSeries ChannelGraphTimeSeries
 
+	// GossiperState is an interface that provides functions to persist
+	// data about the state of individual peer gossipers.
+	GossiperState GossiperState
+
 	// NumActiveSyncers is the number of peers for which we should have
 	// active syncers with. After reaching NumActiveSyncers, any future
 	// gossip syncers will be passive.
@@ -410,6 +414,7 @@ func (m *SyncManager) createGossipSyncer(peer lnpeer.Peer) *GossipSyncer {
 		chainHash:     m.cfg.ChainHash,
 		peerPub:       nodeID,
 		channelSeries: m.cfg.ChanSeries,
+		gossiperState: m.cfg.GossiperState,
 		encodingType:  encoding,
 		chunkSize:     encodingTypeToChunkSize[encoding],
 		batchSize:     requestBatchSize,

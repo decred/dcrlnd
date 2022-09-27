@@ -31,6 +31,7 @@ func newTestSyncManager(numActiveSyncers int) *SyncManager {
 	hID := lnwire.ShortChannelID{BlockHeight: latestKnownHeight}
 	return newSyncManager(&SyncManagerCfg{
 		ChanSeries:           newMockChannelGraphTimeSeries(hID),
+		GossiperState:        newMockGossipState(),
 		RotateTicker:         ticker.NewForce(DefaultSyncerRotationInterval),
 		HistoricalSyncTicker: ticker.NewForce(DefaultHistoricalSyncInterval),
 		NumActiveSyncers:     numActiveSyncers,
