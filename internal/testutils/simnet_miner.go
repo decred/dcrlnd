@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	chainjson "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
 	"github.com/decred/dcrd/rpcclient/v7"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lntest/wait"
@@ -91,15 +93,28 @@ func AdjustedSimnetMiner(client *rpcclient.Client, nb uint32) ([]*chainhash.Hash
 
 	hashes := make([]*chainhash.Hash, nb)
 
-	prevWork, err := client.GetWork(context.TODO())
-	if err != nil {
-		return nil, err
+	var prevWork *chainjson.GetWorkResult
+	for i := 0; ; i++ {
+		var err error
+		prevWork, err = client.GetWork(context.Background())
+		if err == nil {
+			break
+
+		}
+		if strings.Contains(err.Error(), "would result in an unrecoverable chain due to ticket exhaustion") {
+			time.Sleep(100 * time.Millisecond)
+		}
+		if err != nil && i >= 50 {
+			return nil, fmt.Errorf("unable to fetch work: %v", err)
+
+		}
+
 	}
 
 	// Force regeneration of the block template prior to generating this
 	// set of blocks so that it's current, then wait for a bit for it to be
 	// updated.
-	err = client.RegenTemplate(context.TODO())
+	err := client.RegenTemplate(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("unable to regenerate block template: %v", err)
 	}
