@@ -238,9 +238,11 @@ func (b *DcrWallet) NewAddress(t lnwallet.AddressType, change bool) (stdaddr.Add
 	var addr stdaddr.Address
 	var err error
 	if change {
-		addr, err = b.wallet.NewInternalAddress(context.TODO(), defaultAccount)
+		addr, err = b.wallet.NewInternalAddress(context.TODO(),
+			defaultAccount, base.WithGapPolicyWrap())
 	} else {
-		addr, err = b.wallet.NewExternalAddress(context.TODO(), defaultAccount)
+		addr, err = b.wallet.NewExternalAddress(context.TODO(),
+			defaultAccount, base.WithGapPolicyWrap())
 	}
 
 	if err != nil {

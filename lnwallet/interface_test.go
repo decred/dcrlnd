@@ -2510,6 +2510,20 @@ func testLastUnusedAddr(miner *rpctest.Harness,
 	}
 }
 
+// testManyNewAddresses checks that the underlying wallet driver can generate
+// many new on-chain addresses without erroring. This verifies a bug that
+// could cause the wallet to use the wrong wrapping mode for new addresses.
+func testManyNewAddresses(r *rpctest.Harness, vw *rpctest.VotingWallet,
+	w, _ *lnwallet.LightningWallet, t *testing.T) {
+	const maxAddrs = 40
+	for i := 0; i < maxAddrs; i++ {
+		_, err := w.NewAddress(lnwallet.PubKeyHash, false)
+		if err != nil {
+			t.Fatalf("unable to generate new address %d: %v", i, err)
+		}
+	}
+}
+
 // testCreateSimpleTx checks that a call to CreateSimpleTx will return a
 // transaction that is equal to the one that is being created by SendOutputs in
 // a subsequent call.
@@ -2780,6 +2794,9 @@ var walletTests = []walletTestCase{
 	{
 		name: "last unused addr",
 		test: testLastUnusedAddr,
+	}, {
+		name: "test many new addresses",
+		test: testManyNewAddresses,
 	},
 	// TODO(decred) re-enable these tests after implementing.
 	// { name: "create simple tx", test: testCreateSimpleTx, },
