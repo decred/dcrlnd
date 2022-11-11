@@ -3,7 +3,7 @@ package lnwallet
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
@@ -550,7 +550,7 @@ func (cb *CommitmentBuilder) createUnsignedCommitmentTx(ourBalance,
 
 	// Next, we'll ensure that we don't accidentally create a commitment
 	// transaction which would be invalid by consensus.
-	if err := blockchain.CheckTransactionSanity(commitTx, cb.netParams); err != nil {
+	if err := standalone.CheckTransactionSanity(commitTx, uint64(cb.netParams.MaxTxSize)); err != nil {
 		return nil, err
 	}
 

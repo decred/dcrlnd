@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"decred.org/dcrwallet/v2/wallet"
+	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	proxy "github.com/grpc-ecosystem/grpc-gateway/runtime"
 

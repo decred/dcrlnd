@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
@@ -176,7 +176,7 @@ func createSweepTx(inputs []input.Input, outputPkScript []byte,
 	// delay spending "problem" outputs, e.g. possibly batching with other
 	// classes if fees are too low.
 	btx := dcrutil.NewTx(sweepTx)
-	if err := blockchain.CheckTransactionSanity(btx.MsgTx(), netParams); err != nil {
+	if err := standalone.CheckTransactionSanity(btx.MsgTx(), uint64(netParams.MaxTxSize)); err != nil {
 		return nil, fmt.Errorf("error checking sweepTx sanity: %v", err)
 	}
 

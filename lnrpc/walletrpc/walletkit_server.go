@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"decred.org/dcrwallet/v2/wallet"
-	"github.com/decred/dcrd/blockchain/v4"
+	"decred.org/dcrwallet/v3/wallet"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -1035,7 +1035,7 @@ func (w *WalletKit) SpendUTXOs(ctx context.Context, req *SpendUTXOsRequest) (*Sp
 	}
 
 	// Double check tx is valid.
-	err := blockchain.CheckTransactionSanity(tx, w.cfg.ChainParams)
+	err := standalone.CheckTransactionSanity(tx, uint64(w.cfg.ChainParams.MaxTxSize))
 	if err != nil {
 		return nil, fmt.Errorf("signed transaction not sane: %v", err)
 	}

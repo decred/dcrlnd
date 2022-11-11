@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -948,7 +948,8 @@ func CreateCommitmentTxns(localBalance, remoteBalance dcrutil.Amount,
 		return nil, nil, err
 	}
 
-	err = blockchain.CheckTransactionSanity(ourCommitTx, chainParams)
+	maxTxSize := uint64(chainParams.MaxTxSize)
+	err = standalone.CheckTransactionSanity(ourCommitTx, maxTxSize)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -961,7 +962,7 @@ func CreateCommitmentTxns(localBalance, remoteBalance dcrutil.Amount,
 		return nil, nil, err
 	}
 
-	err = blockchain.CheckTransactionSanity(theirCommitTx, chainParams)
+	err = standalone.CheckTransactionSanity(theirCommitTx, maxTxSize)
 	if err != nil {
 		return nil, nil, err
 	}

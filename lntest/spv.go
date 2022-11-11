@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrlnd/internal/testutils"
@@ -82,7 +82,7 @@ func (b SpvBackendConfig) StartWalletSync(loader pb.WalletLoaderServiceClient, p
 
 // ConnectMiner connects the backend to the underlying miner.
 func (b SpvBackendConfig) ConnectMiner() error {
-	return rpctest.ConnectNode(b.harness, b.miner)
+	return rpctest.ConnectNode(context.Background(), b.harness, b.miner)
 }
 
 // DisconnectMiner disconnects the backend to the underlying miner.
@@ -97,7 +97,7 @@ func (b SpvBackendConfig) Name() string {
 
 func unsafeFindP2PAddr(miner, chainBackend *rpctest.Harness) (string, error) {
 	// This assumes the miner doesn't have any connections yet.
-	err := rpctest.ConnectNode(miner, chainBackend)
+	err := rpctest.ConnectNode(context.Background(), miner, chainBackend)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +151,7 @@ func NewBackend(t *testing.T, miner *rpctest.Harness) (*SpvBackendConfig, func()
 	}
 
 	// Connect this newly created node to the miner.
-	rpctest.ConnectNode(chainBackend, miner)
+	rpctest.ConnectNode(context.Background(), chainBackend, miner)
 
 	cleanUp := func() {
 		chainBackend.TearDown()

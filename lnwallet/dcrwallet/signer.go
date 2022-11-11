@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"decred.org/dcrwallet/v2/errors"
-	base "decred.org/dcrwallet/v2/wallet"
+	"decred.org/dcrwallet/v3/errors"
+	base "decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"

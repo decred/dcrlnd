@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"decred.org/dcrwallet/v2/rpc/walletrpc"
+	"decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/gcs/v3"
 	"github.com/decred/dcrd/gcs/v3/blockcf2"
+	"github.com/decred/dcrd/gcs/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainscan"
 	"google.golang.org/grpc/codes"

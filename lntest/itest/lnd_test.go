@@ -27,9 +27,8 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	dcrutilv3 "github.com/decred/dcrd/dcrutil/v4"
-	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
-	"github.com/decred/dcrd/rpcclient/v7"
+	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
+	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd"
@@ -1335,7 +1334,7 @@ func testOnchainFundRecovery(net *lntest.NetworkHarness, t *harnessTest) {
 	const minerAmt = 5 * dcrutil.AtomsPerCoin
 	const finalBalance = 6 * dcrutil.AtomsPerCoin
 	promptChangeAddr := func(node *lntest.HarnessNode) {
-		minerAddr, err := net.Miner.NewAddress()
+		minerAddr, err := net.Miner.NewAddress(ctxb)
 		if err != nil {
 			t.Fatalf("unable to create new miner address: %v", err)
 		}
@@ -2785,11 +2784,11 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// We start by connecting the new miner to our original miner, such
 	// that it will sync to our original chain.
-	if err := rpctest.ConnectNode(net.Miner, tempMiner); err != nil {
+	if err := rpctest.ConnectNode(ctxb, net.Miner, tempMiner); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice := []*rpctest.Harness{net.Miner, tempMiner}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -2909,13 +2908,13 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Connecting to the temporary miner should now cause our original
 	// chain to be re-orged out.
-	err = rpctest.ConnectNode(net.Miner, tempMiner)
+	err = rpctest.ConnectNode(ctxb, net.Miner, tempMiner)
 	if err != nil {
 		t.Fatalf("unable to remove node: %v", err)
 	}
 
 	nodes := []*rpctest.Harness{tempMiner, net.Miner}
-	if err := rpctest.JoinNodes(nodes, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodes, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -14263,7 +14262,7 @@ func testSweepAllCoins(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 
 	// Send coins to a compatible address.
-	minerAddr, err := net.Miner.NewAddress()
+	minerAddr, err := net.Miner.NewAddress(ctxb)
 	if err != nil {
 		t.Fatalf("unable to create new miner addr: %v", err)
 	}
@@ -14945,11 +14944,11 @@ func deriveFundingShim(net *lntest.NetworkHarness, t *harnessTest,
 	targetOutputs := []*wire.TxOut{fundingOutput}
 	if publish {
 		txid, err = net.Miner.SendOutputs(
-			targetOutputs, 1e4,
+			ctxb, targetOutputs, 1e4,
 		)
 		require.NoError(t.t, err)
 	} else {
-		tx, err := net.Miner.CreateTransaction(targetOutputs, 1e4)
+		tx, err := net.Miner.CreateTransaction(ctxb, targetOutputs, 1e4)
 		require.NoError(t.t, err)
 
 		txHash := tx.TxHash()
@@ -15448,7 +15447,7 @@ func TestLightningNetworkDaemon(t *testing.T) {
 		// "--connect=" + chainBackend.P2PAddr(),
 	}
 	handlers := &rpcclient.NotificationHandlers{
-		OnTxAccepted: func(hash *chainhash.Hash, amt dcrutilv3.Amount) {
+		OnTxAccepted: func(hash *chainhash.Hash, amt dcrutil.Amount) {
 			lndHarness.OnTxAccepted(hash)
 		},
 	}

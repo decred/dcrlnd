@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"decred.org/dcrwallet/v2/errors"
-	"decred.org/dcrwallet/v2/rpc/walletrpc"
+	"decred.org/dcrwallet/v3/errors"
+	"decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/wire"
 

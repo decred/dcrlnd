@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"decred.org/dcrwallet/v2/rpc/walletrpc"
+	"decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/gcs/v3"
+	"github.com/decred/dcrd/gcs/v4"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/internal/testutils"
@@ -296,6 +296,7 @@ func testChainEventsWithReorg(t *testHarness) {
 	}
 
 	// Create a second miner.
+	ctxb := context.Background()
 	netParams := chaincfg.SimNetParams()
 	tempMinerDir := ".dcrd-alt-miner"
 	tempMinerArgs := []string{"--debuglevel=debug", "--logdir=" + tempMinerDir}
@@ -303,7 +304,7 @@ func testChainEventsWithReorg(t *testHarness) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = tempMiner.SetUp(false, 0)
+	err = tempMiner.SetUp(ctxb, false, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -311,11 +312,11 @@ func testChainEventsWithReorg(t *testHarness) {
 
 	// Connect the temp miner with the orignal test miner and let them sync
 	// up.
-	if err := rpctest.ConnectNode(t.miner, tempMiner); err != nil {
+	if err := rpctest.ConnectNode(ctxb, t.miner, tempMiner); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice := []*rpctest.Harness{t.miner, tempMiner}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -323,7 +324,7 @@ func testChainEventsWithReorg(t *testHarness) {
 	assertMinerBlockHeightDelta(t, t.miner, tempMiner, 0)
 
 	// Disconnect both nodes.
-	err = rpctest.RemoveNode(context.Background(), t.miner, tempMiner)
+	err = rpctest.RemoveNode(ctxb, t.miner, tempMiner)
 	if err != nil {
 		t.Fatalf("unable to remove node: %v", err)
 	}
@@ -372,10 +373,10 @@ func testChainEventsWithReorg(t *testHarness) {
 	// Re-connect the miners. This should cause 6 news blocks to be
 	// connected (including ones for heights the we already just checked
 	// were connected).
-	if err := rpctest.ConnectNode(t.miner, tempMiner); err != nil {
+	if err := rpctest.ConnectNode(ctxb, t.miner, tempMiner); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 	assertMinerBlockHeightDelta(t, t.miner, tempMiner, 0)
@@ -428,6 +429,7 @@ func setupTestChain(t testutils.TB, testName string) (*rpctest.Harness, *rpctest
 		}
 	}()
 
+	ctxb := context.Background()
 	netParams := chaincfg.SimNetParams()
 	minerLogDir := fmt.Sprintf(".dcrd-%s", testName)
 	minerArgs := []string{"--debuglevel=debug", "--logdir=" + minerLogDir}
@@ -435,7 +437,7 @@ func setupTestChain(t testutils.TB, testName string) (*rpctest.Harness, *rpctest
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = miner.SetUp(false, 0)
+	err = miner.SetUp(ctxb, false, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -454,7 +456,8 @@ func setupTestChain(t testutils.TB, testName string) (*rpctest.Harness, *rpctest
 	}
 
 	// Setup a voting wallet for when the chain passes SVH.
-	vw, err := rpctest.NewVotingWallet(context.Background(), miner)
+	vwCtx, vwCancel := context.WithCancel(ctxb)
+	vw, err := rpctest.NewVotingWallet(vwCtx, miner)
 	if err != nil {
 		t.Fatalf("unable to create voting wallet: %v", err)
 	}
@@ -464,11 +467,11 @@ func setupTestChain(t testutils.TB, testName string) (*rpctest.Harness, *rpctest
 	vw.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
 		return testutils.AdjustedSimnetMiner(miner.Node, nb)
 	})
-	if err = vw.Start(); err != nil {
+	if err = vw.Start(vwCtx); err != nil {
 		t.Fatalf("unable to start voting wallet: %v", err)
 	}
 	tearDown = func() {
-		vw.Stop()
+		vwCancel()
 		miner.TearDown()
 	}
 

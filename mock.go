@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"decred.org/dcrwallet/v2/wallet"
-	"decred.org/dcrwallet/v2/wallet/txauthor"
+	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v3/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"

@@ -1,7 +1,7 @@
 package chainview
 
 import (
-	"decred.org/dcrwallet/v2/wallet"
+	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrlnd/chainntnfs/dcrwnotify"
 	"github.com/decred/dcrlnd/chainntnfs/remotedcrwnotify"
 	"google.golang.org/grpc"

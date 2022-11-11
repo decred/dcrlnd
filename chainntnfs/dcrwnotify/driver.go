@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"decred.org/dcrwallet/v2/wallet"
+	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/chainntnfs"
 )

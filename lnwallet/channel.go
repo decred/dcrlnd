@@ -13,7 +13,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/slog"
 
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -6250,7 +6250,7 @@ func (lc *LightningChannel) CreateCloseProposal(proposedFee dcrutil.Amount,
 	// Ensure that the transaction doesn't explicitly violate any
 	// consensus rules such as being too big, or having any value with a
 	// negative output.
-	if err := blockchain.CheckTransactionSanity(closeTx, lc.netParams); err != nil {
+	if err := standalone.CheckTransactionSanity(closeTx, uint64(lc.netParams.MaxTxSize)); err != nil {
 		return nil, nil, 0, fmt.Errorf("transaction not sane: %v", err)
 	}
 
@@ -6313,7 +6313,7 @@ func (lc *LightningChannel) CompleteCooperativeClose(
 	// Ensure that the transaction doesn't explicitly validate any
 	// consensus rules such as being too big, or having any value with a
 	// negative output.
-	if err := blockchain.CheckTransactionSanity(closeTx, lc.netParams); err != nil {
+	if err := standalone.CheckTransactionSanity(closeTx, uint64(lc.netParams.MaxTxSize)); err != nil {
 		return nil, 0, err
 	}
 

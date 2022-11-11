@@ -15,7 +15,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpcclient/v7"
+	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/rpctest"
 
 	"github.com/decred/dcrd/wire"
@@ -1097,11 +1097,11 @@ func testReorgConf(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// We start by connecting the new miner to our original miner,
 	// such that it will sync to our original chain.
-	if err := rpctest.ConnectNode(miner, miner2); err != nil {
+	if err := rpctest.ConnectNode(ctxb, miner, miner2); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice := []*rpctest.Harness{miner, miner2}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -1178,11 +1178,11 @@ func testReorgConf(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Reconnect nodes to reach consensus on the longest chain. miner2's chain
 	// should win and become active on miner1.
-	if err := rpctest.ConnectNode(miner, miner2); err != nil {
+	if err := rpctest.ConnectNode(ctxb, miner, miner2); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice = []*rpctest.Harness{miner, miner2}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -1280,11 +1280,11 @@ func testReorgSpend(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 	// We start by connecting the new miner to our original miner, in order
 	// to have a consistent view of the chain from both miners. They should
 	// be on the same block height.
-	if err := rpctest.ConnectNode(miner, miner2); err != nil {
+	if err := rpctest.ConnectNode(ctxb, miner, miner2); err != nil {
 		t.Fatalf("unable to connect miners: %v", err)
 	}
 	nodeSlice := []*rpctest.Harness{miner, miner2}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to sync miners: %v", err)
 	}
 	_, minerHeight1, err := miner.Node.GetBestBlock(ctxb)
@@ -1342,11 +1342,11 @@ func testReorgSpend(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 	if _, err := testutils.AdjustedSimnetMiner(miner2.Node, numBlocks+1); err != nil {
 		t.Fatalf("unable to generate blocks: %v", err)
 	}
-	if err := rpctest.ConnectNode(miner, miner2); err != nil {
+	if err := rpctest.ConnectNode(ctxb, miner, miner2); err != nil {
 		t.Fatalf("unable to connect miners: %v", err)
 	}
 	nodeSlice = []*rpctest.Harness{miner2, miner}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to sync miners: %v", err)
 	}
 	_, minerHeight1, err = miner.Node.GetBestBlock(ctxb)
@@ -1619,11 +1619,11 @@ func testCatchUpOnMissedBlocksWithReorg(miner1 *rpctest.Harness, vw *rpctest.Vot
 
 	// We start by connecting the new miner to our original miner,
 	// such that it will sync to our original chain.
-	if err := rpctest.ConnectNode(miner1, miner2); err != nil {
+	if err := rpctest.ConnectNode(ctxb, miner1, miner2); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice := []*rpctest.Harness{miner1, miner2}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -1664,11 +1664,11 @@ func testCatchUpOnMissedBlocksWithReorg(miner1 *rpctest.Harness, vw *rpctest.Vot
 	}
 
 	// Sync the two chains to ensure they will sync to miner2's chain.
-	if err := rpctest.ConnectNode(miner1, miner2); err != nil {
+	if err := rpctest.ConnectNode(ctxb, miner1, miner2); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice = []*rpctest.Harness{miner1, miner2}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -1943,13 +1943,14 @@ func TestInterfaces(t *testing.T) {
 			return testutils.AdjustedSimnetMiner(miner.Node, nb)
 		})
 
-		err = vw.Start()
+		vwCtx, vwCancel := context.WithCancel(ctxb)
+		err = vw.Start(vwCtx)
 		if err != nil {
 			t.Fatalf("unable to start voting wallet: %v", err)
 		}
 
 		tearDown := func() {
-			vw.Stop()
+			vwCancel()
 			tearDownMiner()
 		}
 

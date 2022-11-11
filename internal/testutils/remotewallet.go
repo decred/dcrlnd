@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
-	"github.com/decred/dcrd/rpcclient/v7"
+	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
+	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"

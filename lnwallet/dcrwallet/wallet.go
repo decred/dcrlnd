@@ -22,9 +22,9 @@ import (
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 
-	base "decred.org/dcrwallet/v2/wallet"
-	"decred.org/dcrwallet/v2/wallet/txauthor"
-	"decred.org/dcrwallet/v2/wallet/udb"
+	base "decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v3/wallet/txauthor"
+	"decred.org/dcrwallet/v3/wallet/udb"
 	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 )
 

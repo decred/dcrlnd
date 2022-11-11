@@ -9,7 +9,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/decred/dcrd/dcrutil/v4"
-	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
+	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/internal/psbt"
 	"github.com/decred/dcrlnd/lnrpc"
@@ -121,8 +121,10 @@ func testPsbtChanFunding(net *lntest.NetworkHarness, t *harnessTest) {
 	// We'll now create a fully signed transaction that sends to the outputs
 	// encoded in the PSBT. We'll let the miner do it and convert the final
 	// TX into a PSBT, that's way easier than assembling a PSBT manually.
+	ctxt, cancel = context.WithTimeout(ctxb, defaultTimeout)
+	defer cancel()
 	allOuts := append(packet.UnsignedTx.TxOut, packet2.UnsignedTx.TxOut...)
-	finalTx, err := net.Miner.CreateTransaction(allOuts, 5)
+	finalTx, err := net.Miner.CreateTransaction(ctxt, allOuts, 5)
 	if err != nil {
 		t.Fatalf("unable to create funding transaction: %v", err)
 	}

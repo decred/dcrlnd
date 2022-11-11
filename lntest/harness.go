@@ -47,7 +47,8 @@ type NetworkHarness struct {
 	// new blocks on the network.
 	Miner *rpctest.Harness
 
-	votingWallet *rpctest.VotingWallet
+	votingWallet       *rpctest.VotingWallet
+	votingWalletCancel func()
 
 	// BackendCfg houses the information necessary to use a node as LND
 	// chain backend, such as rpc configuration, P2P information etc.
@@ -232,7 +233,7 @@ func (n *NetworkHarness) SetUp(lndArgs []string) error {
 				Value:    dcrutil.AtomsPerCoin,
 			}
 
-			_, err := n.Miner.SendOutputs([]*wire.TxOut{output}, 7500)
+			_, err := n.Miner.SendOutputs(ctxb, []*wire.TxOut{output}, 7500)
 			if err != nil {
 				return err
 			}
@@ -805,7 +806,7 @@ func (n *NetworkHarness) networkWatcher() {
 		select {
 		case <-n.quit:
 			if n.votingWallet != nil {
-				n.votingWallet.Stop()
+				n.votingWalletCancel()
 			}
 			return
 
@@ -1392,7 +1393,7 @@ func (n *NetworkHarness) sendCoins(ctx context.Context, amt dcrutil.Amount,
 		PkScript: addrScript,
 		Value:    int64(amt),
 	}
-	_, err = n.Miner.SendOutputs([]*wire.TxOut{output}, 7500)
+	_, err = n.Miner.SendOutputs(ctx, []*wire.TxOut{output}, 7500)
 	if err != nil {
 		return err
 	}
@@ -1466,7 +1467,8 @@ func (n *NetworkHarness) sendCoins(ctx context.Context, amt dcrutil.Amount,
 // setupVotingWallet sets up a minimum voting wallet, so that the simnet used
 // for tests can advance past SVH.
 func (n *NetworkHarness) setupVotingWallet() error {
-	vw, err := rpctest.NewVotingWallet(context.TODO(), n.Miner)
+	vwCtx, vwCancel := context.WithCancel(context.Background())
+	vw, err := rpctest.NewVotingWallet(vwCtx, n.Miner)
 	if err != nil {
 		return err
 	}
@@ -1478,12 +1480,13 @@ func (n *NetworkHarness) setupVotingWallet() error {
 		return testutils.AdjustedSimnetMiner(n.Miner.Node, nb)
 	})
 
-	err = vw.Start()
+	err = vw.Start(vwCtx)
 	if err != nil {
 		return err
 	}
 
 	n.votingWallet = vw
+	n.votingWalletCancel = vwCancel
 	return nil
 }
 

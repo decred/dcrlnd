@@ -15,7 +15,7 @@ import (
 	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
-	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
+	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/sign"
@@ -65,7 +65,7 @@ func GetTestTxidAndScript(h *rpctest.Harness) (*chainhash.Hash, []byte, error) {
 		return nil, nil, fmt.Errorf("unable to generate pkScript: %v", err)
 	}
 	output := &wire.TxOut{Value: 2e8, PkScript: pkScript}
-	txid, err := h.SendOutputs([]*wire.TxOut{output}, testFeeRate)
+	txid, err := h.SendOutputs(context.Background(), []*wire.TxOut{output}, testFeeRate)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -130,7 +130,7 @@ func CreateSpendableOutput(t *testing.T,
 	}
 	output := &wire.TxOut{Value: 2e8, PkScript: pkScript}
 	// TODO(decred): SendOutputsWithoutChange
-	txid, err := miner.SendOutputs([]*wire.TxOut{output}, testFeeRate)
+	txid, err := miner.SendOutputs(context.Background(), []*wire.TxOut{output}, testFeeRate)
 	if err != nil {
 		t.Fatalf("unable to create tx: %v", err)
 	}

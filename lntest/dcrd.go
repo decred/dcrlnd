@@ -10,9 +10,9 @@ import (
 	"os"
 	"testing"
 
-	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/rpcclient/v7"
+	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrlnd/internal/testutils"
 )
@@ -91,7 +91,7 @@ func (b DcrdBackendConfig) StartWalletSync(loader pb.WalletLoaderServiceClient, 
 
 // ConnectMiner connects the backend to the underlying miner.
 func (b DcrdBackendConfig) ConnectMiner() error {
-	return rpctest.ConnectNode(b.harness, b.miner)
+	return rpctest.ConnectNode(context.Background(), b.harness, b.miner)
 }
 
 // DisconnectMiner disconnects the backend to the underlying miner.
@@ -130,7 +130,7 @@ func NewBackend(t *testing.T, miner *rpctest.Harness) (*DcrdBackendConfig, func(
 	}
 
 	// Connect this newly created node to the miner.
-	rpctest.ConnectNode(chainBackend, miner)
+	rpctest.ConnectNode(context.Background(), chainBackend, miner)
 
 	cleanUp := func() {
 		chainBackend.TearDown()

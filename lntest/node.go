@@ -19,7 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"

@@ -3,7 +3,7 @@ package lookout
 import (
 	"errors"
 
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
@@ -193,7 +193,7 @@ func (p *JusticeDescriptor) assembleJusticeTxn(txSize int64,
 	// Apply a BIP69 sort to the resulting transaction.
 	txsort.InPlaceSort(justiceTxn)
 
-	if err := blockchain.CheckTransactionSanity(justiceTxn, p.NetParams); err != nil {
+	if err := standalone.CheckTransactionSanity(justiceTxn, uint64(p.NetParams.MaxTxSize)); err != nil {
 		return nil, err
 	}
 

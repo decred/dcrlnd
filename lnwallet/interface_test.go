@@ -20,7 +20,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 
-	_ "decred.org/dcrwallet/v2/wallet/drivers/bdb"
+	_ "decred.org/dcrwallet/v3/wallet/drivers/bdb"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -28,7 +28,7 @@ import (
 	"github.com/decred/dcrd/dcrjson/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	dcrutilv3 "github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpcclient/v7"
+	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
@@ -280,6 +280,7 @@ func loadTestCredits(miner *rpctest.Harness, w *lnwallet.LightningWallet,
 	// but 200ms should be more than enough to prevent triggering this bug
 	// on most dev machines.
 	time.Sleep(time.Millisecond * 200)
+	ctxb := context.Background()
 
 	for _, walletAddr := range addrs {
 		script, err := input.PayToAddrScript(walletAddr)
@@ -292,7 +293,7 @@ func loadTestCredits(miner *rpctest.Harness, w *lnwallet.LightningWallet,
 			PkScript: script,
 			Version:  scriptVersion,
 		}
-		if _, err := miner.SendOutputs([]*wire.TxOut{output}, 1e5); err != nil {
+		if _, err := miner.SendOutputs(ctxb, []*wire.TxOut{output}, 1e5); err != nil {
 			return err
 		}
 	}
@@ -1175,6 +1176,7 @@ func testListTransactionDetails(miner *rpctest.Harness,
 
 	// Let the wallet close the address manager (see issue dcrwallet#1372).
 	time.Sleep(time.Millisecond * 50)
+	ctxb := context.Background()
 
 	txids := make(map[chainhash.Hash]struct{})
 	for i := 0; i < numTxns; i++ {
@@ -1187,7 +1189,7 @@ func testListTransactionDetails(miner *rpctest.Harness,
 			Value:    outputAmt,
 			PkScript: script,
 		}
-		txid, err := miner.SendOutputs([]*wire.TxOut{output},
+		txid, err := miner.SendOutputs(ctxb, []*wire.TxOut{output},
 			dcrutil.Amount(defaultFeeRate))
 		if err != nil {
 			t.Fatalf("unable to send coinbase: %v", err)
@@ -1512,6 +1514,7 @@ func testTransactionSubscriptions(miner *rpctest.Harness,
 	// Sleep to allow the wallet's address manager to close (see issue
 	// dcrwallet#1372).
 	time.Sleep(time.Millisecond * 50)
+	ctxb := context.Background()
 
 	for i := 0; i < numTxns; i++ {
 		script, err := input.PayToAddrScript(addrs[i])
@@ -1523,7 +1526,7 @@ func testTransactionSubscriptions(miner *rpctest.Harness,
 			Value:    outputAmt,
 			PkScript: script,
 		}
-		txid, err := miner.SendOutputs([]*wire.TxOut{output},
+		txid, err := miner.SendOutputs(ctxb, []*wire.TxOut{output},
 			dcrutil.Amount(defaultFeeRate))
 		if err != nil {
 			t.Fatalf("unable to send coinbase: %v", err)
@@ -2184,6 +2187,8 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 	w *lnwallet.LightningWallet, _ *lnwallet.LightningWallet,
 	t *testing.T) {
 
+	ctxb := context.Background()
+
 	// Currently disabled due to
 	// https://github.com/decred/dcrwallet/issues/1710. Re-assess after
 	// that is fixed.
@@ -2196,7 +2201,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 	// reorganization that doesn't invalidate any existing transactions or
 	// create any new non-coinbase transactions. We'll then check if it's
 	// the same after the empty reorg.
-	_, err := vw.GenerateBlocks(context.TODO(), 5)
+	_, err := vw.GenerateBlocks(ctxb, 5)
 	if err != nil {
 		t.Fatalf("unable to generate blocks on passed node: %v", err)
 	}
@@ -2215,7 +2220,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Send some money from the wallet back to the miner.
 	// Grab a fresh address from the miner to house this output.
-	minerAddr, err := r.NewAddress()
+	minerAddr, err := r.NewAddress(ctxb)
 	if err != nil {
 		t.Fatalf("unable to generate address for miner: %v", err)
 	}
@@ -2238,7 +2243,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 	if err != nil {
 		t.Fatalf("tx not relayed to miner: %v", err)
 	}
-	_, err = vw.GenerateBlocks(context.TODO(), 3)
+	_, err = vw.GenerateBlocks(ctxb, 3)
 	if err != nil {
 		t.Fatalf("unable to generate blocks on passed node: %v", err)
 	}
@@ -2273,17 +2278,17 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Step 2: connect the miner to the passed miner and wait for
 	// synchronization.
-	err = rpctest.ConnectNode(r2, r)
+	err = rpctest.ConnectNode(ctxb, r2, r)
 	if err != nil {
 		t.Fatalf("unable to connect mining nodes together: %v", err)
 	}
-	err = rpctest.JoinNodes([]*rpctest.Harness{r2, r}, rpctest.Blocks)
+	err = rpctest.JoinNodes(ctxb, []*rpctest.Harness{r2, r}, rpctest.Blocks)
 	if err != nil {
 		t.Fatalf("unable to synchronize mining nodes: %v", err)
 	}
 
 	mineFirst := func(nb uint32) ([]*chainhash.Hash, error) {
-		return vw.GenerateBlocks(context.TODO(), nb)
+		return vw.GenerateBlocks(ctxb, nb)
 	}
 	mineSecond := func(nb uint32) ([]*chainhash.Hash, error) {
 		return testutils.AdjustedSimnetMiner(r2.Node, nb)
@@ -2304,12 +2309,12 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 				t.Fatalf("timeout waiting for miner disconnect")
 			default:
 			}
-			err = rpctest.RemoveNode(context.TODO(), r2, r)
+			err = rpctest.RemoveNode(ctxb, r2, r)
 			if err != nil {
 				t.Fatalf("unable to disconnect mining nodes: %v",
 					err)
 			}
-			stillConnected, err = rpctest.NodesConnected(context.TODO(), r2, r, true)
+			stillConnected, err = rpctest.NodesConnected(ctxb, r2, r, true)
 			if err != nil {
 				t.Fatalf("error checking node connectivity: %v",
 					err)
@@ -2333,7 +2338,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 		}
 
 		// Step 5: Reconnect the miners and wait for them to synchronize.
-		err = rpctest.ConnectNode(r2, r)
+		err = rpctest.ConnectNode(ctxb, r2, r)
 		if err != nil {
 			switch err := err.(type) {
 			case *dcrjson.RPCError:
@@ -2346,7 +2351,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 					"together: %v", err)
 			}
 		}
-		err = rpctest.JoinNodes([]*rpctest.Harness{r2, r},
+		err = rpctest.JoinNodes(ctxb, []*rpctest.Harness{r2, r},
 			rpctest.Blocks)
 		if err != nil {
 			t.Fatalf("unable to synchronize mining nodes: %v", err)
@@ -2599,6 +2604,7 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 		},
 	}
 
+	ctxb := context.Background()
 	for _, test := range testCases {
 		feeRate := test.feeRate
 
@@ -2606,7 +2612,7 @@ func testCreateSimpleTx(r *rpctest.Harness, // nolint: unused
 		// to.
 		outputs := make([]*wire.TxOut, len(test.outVals))
 		for i, outVal := range test.outVals {
-			minerAddr, err := r.NewAddress()
+			minerAddr, err := r.NewAddress(ctxb)
 			if err != nil {
 				t.Fatalf("unable to generate address for "+
 					"miner: %v", err)
@@ -3095,7 +3101,9 @@ func TestLightningWallet(t *testing.T) {
 			}
 
 			// Setup a voting wallet for when the chain passes SVH.
-			votingWallet, err := rpctest.NewVotingWallet(context.TODO(), miningNode)
+			vwCtx, vwCancel := context.WithCancel(context.Background())
+			defer vwCancel()
+			votingWallet, err := rpctest.NewVotingWallet(vwCtx, miningNode)
 			if err != nil {
 				t.Fatalf("unable to create voting wallet: %v", err)
 			}
@@ -3105,10 +3113,9 @@ func TestLightningWallet(t *testing.T) {
 			votingWallet.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
 				return testutils.AdjustedSimnetMiner(miningNode.Node, nb)
 			})
-			if err = votingWallet.Start(); err != nil {
+			if err = votingWallet.Start(vwCtx); err != nil {
 				t.Fatalf("unable to start voting wallet: %v", err)
 			}
-			defer votingWallet.Stop()
 
 			rpcConfig := miningNode.RPCConfig()
 

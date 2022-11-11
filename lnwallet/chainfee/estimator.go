@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrutil/v4"
-	dcrjson "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
-	"github.com/decred/dcrd/rpcclient/v7"
+	dcrjson "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
+	"github.com/decred/dcrd/rpcclient/v8"
 )
 
 const (

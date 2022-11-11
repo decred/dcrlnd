@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
@@ -1138,7 +1138,7 @@ func (b *breachArbiter) sweepSpendableOutputsTxn(txSize int64,
 
 	// Before signing the transaction, check to ensure that it meets some
 	// basic validity requirements.
-	if err := blockchain.CheckTransactionSanity(txn, b.cfg.NetParams); err != nil {
+	if err := standalone.CheckTransactionSanity(txn, uint64(b.cfg.NetParams.MaxTxSize)); err != nil {
 		brarLog.Debugf("Sweep tx does not pass sanity check: %v. "+
 			"Tx=%s", logClosure(func() string {
 			return spew.Sdump(txn)

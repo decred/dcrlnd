@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
-	"decred.org/dcrwallet/v2/chain"
-	wallet "decred.org/dcrwallet/v2/wallet"
+	"decred.org/dcrwallet/v3/chain"
+	wallet "decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/rpcclient/v7"
+	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrlnd/build"
 	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 )

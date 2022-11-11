@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/decred/dcrd/blockchain/stake/v4"
-	"github.com/decred/dcrd/blockchain/v4"
+	"github.com/decred/dcrd/blockchain/stake/v5"
+	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -1057,7 +1057,7 @@ func createTestChannelsForVectors(tc *testContext, chanType channeldb.ChannelTyp
 // commitment, etc) is reasonably sane according to consensus and standardness
 // checks that don't require a full backing blockchain to verify.
 func checkLnTransactionSanity(tx *wire.MsgTx, utxos map[wire.OutPoint]*wire.TxOut, netParams *chaincfg.Params) error {
-	err := blockchain.CheckTransactionSanity(tx, netParams)
+	err := standalone.CheckTransactionSanity(tx, uint64(netParams.MaxTxSize))
 	if err != nil {
 		return fmt.Errorf("error checking tx sanity: %v", err)
 	}
@@ -1065,7 +1065,7 @@ func checkLnTransactionSanity(tx *wire.MsgTx, utxos map[wire.OutPoint]*wire.TxOu
 	var inputSum int64
 	var outputSum int64
 
-	txType := stake.DetermineTxType(tx, true, false)
+	txType := stake.DetermineTxType(tx)
 	if txType != stake.TxTypeRegular {
 		return fmt.Errorf("transaction is not of the regular type")
 	}

@@ -14,8 +14,8 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrjson/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpcclient/v7"
-	rpcclient3 "github.com/decred/dcrd/rpcclient/v7"
+	"github.com/decred/dcrd/rpcclient/v8"
+	rpcclient3 "github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/sign"
@@ -90,7 +90,7 @@ func getTestTXID(miner *rpctest.Harness) (*chainhash.Hash, error) {
 			PkScript: script,
 		},
 	}
-	return miner.SendOutputs(outputs, 2500)
+	return miner.SendOutputs(context.Background(), outputs, 2500)
 }
 
 func locateOutput(tx *wire.MsgTx, script []byte) (*wire.OutPoint, *wire.TxOut, error) {
@@ -542,6 +542,8 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	chainView FilteredChainView, chainViewInit chainViewInitFunc,
 	t *testing.T) {
 
+	ctxb := context.Background()
+
 	// Create a node that has a shorter chain than the main chain, so we
 	// can trigger a reorg.
 	reorgNode, err := testutils.NewSetupRPCTest(
@@ -579,11 +581,11 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	// Now connect the node with the short chain to the main node, and wait
 	// for their chains to synchronize. The short chain will be reorged all
 	// the way back to genesis.
-	if err := rpctest.ConnectNode(reorgNode, node); err != nil {
+	if err := rpctest.ConnectNode(ctxb, reorgNode, node); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
 	nodeSlice := []*rpctest.Harness{node, reorgNode}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
@@ -687,10 +689,10 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	}
 
 	// Now connect the two nodes, and wait for their chains to sync up.
-	if err := rpctest.ConnectNode(reorgNode, node); err != nil {
+	if err := rpctest.ConnectNode(ctxb, reorgNode, node); err != nil {
 		t.Fatalf("unable to connect harnesses: %v", err)
 	}
-	if err := rpctest.JoinNodes(nodeSlice, rpctest.Blocks); err != nil {
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
 		t.Fatalf("unable to join node on blocks: %v", err)
 	}
 
