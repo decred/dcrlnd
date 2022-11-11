@@ -33,7 +33,7 @@ COPY "start-dcrd.sh" .
 # Generate an certificate for both dcrd and dcrwallet.
 RUN mkdir "/config" \
     &&  chmod +x start-dcrd.sh \
-    && "/bin/gencerts" --host="dcrd" --host="dcrwallet" -f -d="/config"
+    && "/bin/gencerts" -H="dcrd" -H="dcrwallet" -f -L /config/rpc.cert /config/rpc.key
 
 # Create a volume to house pregenerated RPC credentials. This will be
 # shared with any containers so they can securely query dcrd's RPC server.

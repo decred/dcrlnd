@@ -57,4 +57,5 @@ exec dcrwallet \
     --ticketbuyer.limit=5 \
     --appdata="/data" \
     "--pass=$WALLET_PASS" \
+    "--clientcafile=/rpc/rpc.cert" \
     "$@"

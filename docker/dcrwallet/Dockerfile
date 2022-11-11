@@ -24,6 +24,7 @@ RUN dcrwallet \
     --appdata=/data \
     --rpccert=/rpc/rpc.cert \
     --rpckey=/rpc/rpc.key \
+    --clientcafile=/rpc/rpc.cert \
     --simnet \
     & sleep 5 \
     && cd /init \
@@ -47,7 +48,7 @@ COPY --from=builder /data/simnet /data/simnet
 COPY --from=builder /data/dcrd.conf /data/dcrd.conf
 
 COPY "start-dcrwallet.sh" .
-RUN chmod +x start-dcrwallet.sh 
+RUN chmod +x start-dcrwallet.sh
 
 VOLUME ["/data"]
 
