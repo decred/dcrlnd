@@ -18,13 +18,12 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 
 	"github.com/decred/dcrlnd"
 	"github.com/decred/dcrlnd/input"
-	"github.com/decred/dcrlnd/internal/testutils"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest/wait"
 	"github.com/decred/dcrlnd/lnwire"
@@ -149,7 +148,7 @@ func (n *NetworkHarness) SetUp(lndArgs []string) error {
 
 	// Generate enough blocks so that the network harness can have funds to
 	// send to the voting wallet, Alice and Bob.
-	_, err = testutils.AdjustedSimnetMiner(n.Miner.Node, 64)
+	_, err = rpctest.AdjustedSimnetMiner(context.Background(), n.Miner.Node, 64)
 	if err != nil {
 		return fmt.Errorf("unable to init chain: %v", err)
 	}
@@ -1477,7 +1476,7 @@ func (n *NetworkHarness) setupVotingWallet() error {
 	// are generated as fast as possible without triggering PoW difficulty
 	// increases.
 	vw.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
-		return testutils.AdjustedSimnetMiner(n.Miner.Node, nb)
+		return rpctest.AdjustedSimnetMiner(ctx, n.Miner.Node, nb)
 	})
 
 	err = vw.Start(vwCtx)

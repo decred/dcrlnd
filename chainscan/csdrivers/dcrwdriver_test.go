@@ -12,10 +12,10 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/gcs/v4"
-	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/internal/testutils"
 	"github.com/decred/dcrlnd/lntest/wait"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
 var (
@@ -336,7 +336,7 @@ func testChainEventsWithReorg(t *testHarness) {
 
 	// Mine 3 blocks in the original miner and 6 in the temp miner.
 	t.generate(3)
-	_, err = testutils.AdjustedSimnetMiner(tempMiner.Node, 6)
+	_, err = rpctest.AdjustedSimnetMiner(context.Background(), tempMiner.Node, 6)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -450,7 +450,7 @@ func setupTestChain(t testutils.TB, testName string) (*rpctest.Harness, *rpctest
 		t.Fatal(err)
 	}
 
-	_, err = testutils.AdjustedSimnetMiner(miner.Node, 64)
+	_, err = rpctest.AdjustedSimnetMiner(context.Background(), miner.Node, 64)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,7 +465,7 @@ func setupTestChain(t testutils.TB, testName string) (*rpctest.Harness, *rpctest
 		t.Logf("Voting wallet error: %v", err)
 	})
 	vw.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
-		return testutils.AdjustedSimnetMiner(miner.Node, nb)
+		return rpctest.AdjustedSimnetMiner(ctx, miner.Node, nb)
 	})
 	if err = vw.Start(vwCtx); err != nil {
 		t.Fatalf("unable to start voting wallet: %v", err)

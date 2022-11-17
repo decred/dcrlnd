@@ -8,7 +8,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/rpcclient/v8"
-	"github.com/decred/dcrd/rpctest"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
 // NewSetupRPCTest attempts up to maxTries to setup an rpctest harness or

@@ -15,8 +15,6 @@ import (
 	"github.com/decred/dcrd/dcrjson/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/rpcclient/v8"
-	rpcclient3 "github.com/decred/dcrd/rpcclient/v8"
-	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/sign"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
@@ -24,6 +22,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/internal/testutils"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
 var (
@@ -184,7 +183,7 @@ func testFilterBlockNotifications(node *rpctest.Harness,
 	blockChan := chainView.FilteredBlocks()
 
 	// Next we'll mine a block confirming the output generated above.
-	newBlockHashes, err := testutils.AdjustedSimnetMiner(node.Node, 1)
+	newBlockHashes, err := rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -268,7 +267,7 @@ func testFilterBlockNotifications(node *rpctest.Harness,
 	if err != nil {
 		t.Fatalf("unable to get spending txid in mempool: %v", err)
 	}
-	newBlockHashes, err = testutils.AdjustedSimnetMiner(node.Node, 1)
+	newBlockHashes, err = rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -294,7 +293,7 @@ func testFilterBlockNotifications(node *rpctest.Harness,
 	if err != nil {
 		t.Fatalf("unable to get spending txid in mempool: %v", err)
 	}
-	newBlockHashes, err = testutils.AdjustedSimnetMiner(node.Node, 1)
+	newBlockHashes, err = rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -324,7 +323,7 @@ func testUpdateFilterBackTrack(node *rpctest.Harness,
 	}
 
 	// Next we'll mine a block confirming the output generated above.
-	initBlockHashes, err := testutils.AdjustedSimnetMiner(node.Node, 1)
+	initBlockHashes, err := rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -368,7 +367,7 @@ func testUpdateFilterBackTrack(node *rpctest.Harness,
 	if err != nil {
 		t.Fatalf("unable to get spending txid in mempool: %v", err)
 	}
-	newBlockHashes, err := testutils.AdjustedSimnetMiner(node.Node, 1)
+	newBlockHashes, err := rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -431,7 +430,7 @@ func testFilterSingleBlock(node *rpctest.Harness, chainView FilteredChainView,
 	blockChan := chainView.FilteredBlocks()
 
 	// Next we'll mine a block confirming the output generated above.
-	newBlockHashes, err := testutils.AdjustedSimnetMiner(node.Node, 1)
+	newBlockHashes, err := rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -486,7 +485,7 @@ func testFilterSingleBlock(node *rpctest.Harness, chainView FilteredChainView,
 	if err != nil {
 		t.Fatalf("unable to send spending tx2: %v", err)
 	}
-	blockHashes, err := testutils.AdjustedSimnetMiner(node.Node, 1)
+	blockHashes, err := rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -643,7 +642,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	if numPeers < 1 {
 		t.Fatalf("no connected peer")
 	}
-	err = reorgNode.Node.AddNode(context.TODO(), peers[0].Addr, rpcclient3.ANRemove)
+	err = reorgNode.Node.AddNode(context.TODO(), peers[0].Addr, rpcclient.ANRemove)
 	if err != nil {
 		t.Fatalf("unable to disconnect mining nodes: %v", err)
 	}
@@ -662,8 +661,12 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 
 	// Mine 10 blocks on the main chain, 5 on the chain that will be
 	// reorged out,
-	testutils.AdjustedSimnetMiner(node.Node, 10)
-	testutils.AdjustedSimnetMiner(reorgNode.Node, 5)
+	if _, err := rpctest.AdjustedSimnetMiner(context.Background(), node.Node, 10); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rpctest.AdjustedSimnetMiner(context.Background(), reorgNode.Node, 5); err != nil {
+		t.Fatal(err)
+	}
 
 	// 5 new blocks should get notified.
 	for i := int64(0); i < 5; i++ {

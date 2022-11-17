@@ -8,7 +8,6 @@ require (
 	github.com/Yawning/aez v0.0.0-20180408160647-ec7426b44926
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/decred/dcrd v1.2.1-0.20221022042516-01b05fde6079
 	github.com/decred/dcrd/addrmgr/v2 v2.0.1
 	github.com/decred/dcrd/bech32 v1.1.2
 	github.com/decred/dcrd/blockchain/stake/v5 v5.0.0
@@ -19,7 +18,7 @@ require (
 	github.com/decred/dcrd/connmgr v1.1.0
 	github.com/decred/dcrd/dcrec v1.0.0
 	github.com/decred/dcrd/dcrec/secp256k1/v2 v2.0.0
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
 	github.com/decred/dcrd/dcrjson/v4 v4.0.0
 	github.com/decred/dcrd/dcrutil/v4 v4.0.0
 	github.com/decred/dcrd/gcs/v3 v3.0.0
@@ -29,6 +28,7 @@ require (
 	github.com/decred/dcrd/rpcclient/v8 v8.0.0
 	github.com/decred/dcrd/txscript/v4 v4.0.0
 	github.com/decred/dcrd/wire v1.5.0
+	github.com/decred/dcrtest/dcrdtest v0.0.0-20221124143755-5c2e83fd64c9
 	github.com/decred/lightning-onion/v4 v4.0.0
 	github.com/decred/slog v1.2.0
 	github.com/go-errors/errors v1.0.1
@@ -85,15 +85,20 @@ require (
 	github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea // indirect
 	github.com/dchest/siphash v1.2.2 // indirect
 	github.com/decred/base58 v1.0.4 // indirect
+	github.com/decred/dcrd v1.2.1-0.20221123192607-fc017ce3bb3b // indirect
 	github.com/decred/dcrd/blockchain/stake/v4 v4.0.0 // indirect
 	github.com/decred/dcrd/certgen v1.1.1 // indirect
 	github.com/decred/dcrd/chaincfg v1.5.2 // indirect
 	github.com/decred/dcrd/connmgr/v3 v3.1.0 // indirect
+	github.com/decred/dcrd/container/apbf v1.0.0 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/crypto/ripemd160 v1.0.1 // indirect
 	github.com/decred/dcrd/database/v3 v3.0.0 // indirect
 	github.com/decred/dcrd/dcrec/edwards/v2 v2.0.2 // indirect
 	github.com/decred/dcrd/lru v1.1.1 // indirect
+	github.com/decred/dcrd/math/uint256 v1.0.0 // indirect
+	github.com/decred/dcrd/peer/v3 v3.0.0 // indirect
+	github.com/decred/dcrd/rpc/jsonrpc/types/v3 v3.0.0 // indirect
 	github.com/decred/go-socks v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect

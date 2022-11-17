@@ -16,7 +16,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/rpcclient/v8"
-	"github.com/decred/dcrd/rpctest"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -1174,7 +1174,9 @@ func testReorgConf(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Reorganize transaction out of the chain by generating a longer fork
 	// from the other miner. The transaction is not included in this fork.
-	testutils.AdjustedSimnetMiner(miner2.Node, 2)
+	if _, err := rpctest.AdjustedSimnetMiner(ctxb, miner2.Node, 2); err != nil {
+		t.Fatalf("unable to generate longer fork: %v", err)
+	}
 
 	// Reconnect nodes to reach consensus on the longest chain. miner2's chain
 	// should win and become active on miner1.
@@ -1339,7 +1341,7 @@ func testReorgSpend(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 
 	// Now, with the other miner, we'll generate one more block than the
 	// other miner and connect them to cause a reorg.
-	if _, err := testutils.AdjustedSimnetMiner(miner2.Node, numBlocks+1); err != nil {
+	if _, err := rpctest.AdjustedSimnetMiner(ctxb, miner2.Node, numBlocks+1); err != nil {
 		t.Fatalf("unable to generate blocks: %v", err)
 	}
 	if err := rpctest.ConnectNode(ctxb, miner, miner2); err != nil {
@@ -1658,7 +1660,7 @@ func testCatchUpOnMissedBlocksWithReorg(miner1 *rpctest.Harness, vw *rpctest.Vot
 
 	// We generate an extra block on miner 2's chain to ensure it is the
 	// longer chain.
-	_, err = testutils.AdjustedSimnetMiner(miner2.Node, numBlocks+1)
+	_, err = rpctest.AdjustedSimnetMiner(ctxb, miner2.Node, numBlocks+1)
 	if err != nil {
 		t.Fatalf("unable to generate single block: %v", err)
 	}
@@ -1731,7 +1733,7 @@ func testCatchUpOnMissedBlocksWithReorg(miner1 *rpctest.Harness, vw *rpctest.Vot
 
 	// Generate a single block, which should trigger the notifier to rewind
 	// to the common ancestor and dispatch notifications from there.
-	_, err = testutils.AdjustedSimnetMiner(miner2.Node, 1)
+	_, err = rpctest.AdjustedSimnetMiner(ctxb, miner2.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate single block: %v", err)
 	}
@@ -1926,7 +1928,7 @@ func TestInterfaces(t *testing.T) {
 
 		// Generate enough blocks so that the network harness can have
 		// funds to send to the voting wallet, Alice and Bob.
-		_, err = testutils.AdjustedSimnetMiner(miner.Node, 64)
+		_, err = rpctest.AdjustedSimnetMiner(ctxb, miner.Node, 64)
 		if err != nil {
 			t.Fatalf("unable to init chain: %v", err)
 		}
@@ -1940,7 +1942,7 @@ func TestInterfaces(t *testing.T) {
 		// are generated as fast as possible without triggering PoW difficulty
 		// increases.
 		vw.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
-			return testutils.AdjustedSimnetMiner(miner.Node, nb)
+			return rpctest.AdjustedSimnetMiner(ctxb, miner.Node, nb)
 		})
 
 		vwCtx, vwCancel := context.WithCancel(ctxb)

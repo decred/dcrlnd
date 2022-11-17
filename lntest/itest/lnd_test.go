@@ -29,7 +29,6 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	jsonrpctypes "github.com/decred/dcrd/rpc/jsonrpc/types/v4"
 	"github.com/decred/dcrd/rpcclient/v8"
-	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd"
 	"github.com/decred/dcrlnd/channeldb"
@@ -50,6 +49,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -2837,7 +2837,9 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 	// open.
 	block := mineBlocks(t, net, 10, 1)[0]
 	assertTxInBlock(t, block, fundingTxID)
-	testutils.AdjustedSimnetMiner(tempMiner.Node, 15)
+	if _, err := rpctest.AdjustedSimnetMiner(ctxb, tempMiner.Node, 15); err != nil {
+		t.Fatalf("unable to generate blocks in temp miner: %v", err)
+	}
 
 	// Ensure the chain lengths are what we expect, with the temp miner
 	// being 5 blocks ahead.

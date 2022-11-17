@@ -27,13 +27,12 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrjson/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
-	dcrutilv3 "github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/rpcclient/v8"
-	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 	"github.com/stretchr/testify/require"
 
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -2291,7 +2290,7 @@ func testReorgWalletBalance(r *rpctest.Harness, vw *rpctest.VotingWallet,
 		return vw.GenerateBlocks(ctxb, nb)
 	}
 	mineSecond := func(nb uint32) ([]*chainhash.Hash, error) {
-		return testutils.AdjustedSimnetMiner(r2.Node, nb)
+		return rpctest.AdjustedSimnetMiner(context.Background(), r2.Node, nb)
 	}
 
 	// Step 3: Do a set of reorgs by disconnecting the two miners, mining
@@ -2838,7 +2837,7 @@ func clearWalletStates(a, b *lnwallet.LightningWallet) error {
 
 func waitForMempoolTx(r *rpctest.Harness, txid *chainhash.Hash) error {
 	var found bool
-	var tx *dcrutilv3.Tx
+	var tx *dcrutil.Tx
 	var err error
 	timeout := time.After(30 * time.Second)
 	for !found {
@@ -3095,7 +3094,7 @@ func TestLightningWallet(t *testing.T) {
 			// Generate enough blocks for the initial load of test and voting
 			// wallet but not so many that it would trigger a reorg after SVH
 			// during the testReorgWalletBalance test.
-			_, err = testutils.AdjustedSimnetMiner(miningNode.Node, 40)
+			_, err = rpctest.AdjustedSimnetMiner(context.Background(), miningNode.Node, 40)
 			if err != nil {
 				t.Fatalf("unable to generate initial blocks: %v", err)
 			}
@@ -3111,7 +3110,7 @@ func TestLightningWallet(t *testing.T) {
 				t.Logf("Voting wallet error: %v", err)
 			})
 			votingWallet.SetMiner(func(ctx context.Context, nb uint32) ([]*chainhash.Hash, error) {
-				return testutils.AdjustedSimnetMiner(miningNode.Node, nb)
+				return rpctest.AdjustedSimnetMiner(ctx, miningNode.Node, nb)
 			})
 			if err = votingWallet.Start(vwCtx); err != nil {
 				t.Fatalf("unable to start voting wallet: %v", err)

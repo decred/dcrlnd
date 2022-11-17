@@ -10,14 +10,13 @@ import (
 	"testing"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/rpctest"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/internal/testutils"
+	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
 var (
@@ -139,7 +138,7 @@ func TestHistoricalConfDetailsTxIndex(t *testing.T) {
 
 	// We'll now confirm this transaction and re-attempt to retrieve its
 	// confirmation details.
-	if _, err := testutils.AdjustedSimnetMiner(harness.Node, 1); err != nil {
+	if _, err := rpctest.AdjustedSimnetMiner(context.Background(), harness.Node, 1); err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
 
@@ -284,7 +283,7 @@ func TestInneficientRescan(t *testing.T) {
 
 	// We'll now confirm this transaction and attempt to retrieve its
 	// confirmation details.
-	bhs, err := testutils.AdjustedSimnetMiner(harness.Node, 1)
+	bhs, err := rpctest.AdjustedSimnetMiner(context.Background(), harness.Node, 1)
 	if err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
@@ -307,7 +306,7 @@ func TestInneficientRescan(t *testing.T) {
 	prevOutputHeight := minedHeight - 1
 
 	// Generate a few blocks after mining to test some conditions.
-	if _, err := testutils.AdjustedSimnetMiner(harness.Node, 20); err != nil {
+	if _, err := rpctest.AdjustedSimnetMiner(context.Background(), harness.Node, 20); err != nil {
 		t.Fatalf("unable to generate block: %v", err)
 	}
 
