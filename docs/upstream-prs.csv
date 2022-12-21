@@ -952,3 +952,6 @@ $20b42ce26			cli improv
 4620			bugfix chainntfs
 4421			improv tls
 4601		v0.11.1-beta	improv psbt
+4915			fix reconnect transmission order; brought earlier
+5231			fix force close on reconnect; brought earlier
+6655			fix disconnect procedure; brought earlier
