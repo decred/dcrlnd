@@ -11,6 +11,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
+	"github.com/stretchr/testify/require"
 )
 
 // testAddInvoiceMaxInboundAmt tests whether trying to add an invoice fails
@@ -118,12 +119,22 @@ func testAddInvoiceMaxInboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 	}
 
+	peerReq := &lnrpc.PeerEventSubscription{}
+	carolPeerClient, err := carol.SubscribePeerEvents(ctxb, peerReq)
+	require.NoError(t.t, err)
+
 	// Disconnect the nodes from one another. While their channel remains open,
 	// carol cannot receive payments (since bob is offline from her POV).
 	err = net.DisconnectNodes(ctxb, carol, net.Bob)
 	if err != nil {
 		t.Fatalf("unable to disconnect carol and bob: %v", err)
 	}
+
+	// Wait to receive the PEER_OFFLINE event before trying to create the
+	// invoice.
+	peerEvent, err := carolPeerClient.Recv()
+	require.NoError(t.t, err)
+	require.Equal(t.t, lnrpc.PeerEvent_PEER_OFFLINE, peerEvent.GetType())
 
 	// Now trying to add an invoice with an offline peer should fail.
 	err = addInvoice(0, false)
@@ -350,6 +361,10 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 		}
 	}
 
+	peerReq := &lnrpc.PeerEventSubscription{}
+	carolPeerClient, err := carol.SubscribePeerEvents(ctxb, peerReq)
+	require.NoError(t.t, err)
+
 	// Disconnect the nodes from one another. While their channel remains
 	// open, carol cannot send payments (since bob is offline from her
 	// POV).
@@ -357,6 +372,12 @@ func testSendPaymentMaxOutboundAmt(net *lntest.NetworkHarness, t *harnessTest) {
 	if err != nil {
 		t.Fatalf("unable to disconnect carol and bob: %v", err)
 	}
+
+	// Wait to receive the PEER_OFFLINE event before trying to create the
+	// invoice.
+	peerEvent, err := carolPeerClient.Recv()
+	require.NoError(t.t, err)
+	require.Equal(t.t, lnrpc.PeerEvent_PEER_OFFLINE, peerEvent.GetType())
 
 	// Now trying to send a payment with an offline peer should fail.
 	err = sendPayment(1)
