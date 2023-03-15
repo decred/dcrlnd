@@ -2163,6 +2163,15 @@ func TestGossipSyncerSyncTransitions(t *testing.T) {
 			assert: func(t *testing.T, msgChan chan []lnwire.Message,
 				g *GossipSyncer) {
 
+				// The processing loop of the syncer sends an
+				// initial message to start receiving updates.
+				// Consume it.
+				firstTimestamp := uint32(time.Now().Unix())
+				assertMsgSent(t, msgChan, &lnwire.GossipTimestampRange{
+					FirstTimestamp: firstTimestamp,
+					TimestampRange: math.MaxUint32,
+				})
+
 				// When transitioning from active to passive, we
 				// should expect to see a new local update
 				// horizon sent to the remote peer indicating
@@ -2208,6 +2217,7 @@ func TestGossipSyncerSyncTransitions(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

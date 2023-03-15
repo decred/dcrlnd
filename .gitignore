@@ -52,6 +52,9 @@ routing/chainview/*.log
 dcrlnd.log
 
 cmd/cmd
+cmd/dcrlnd/dcrlnd
+cmd/dcrlncli/dcrlncli
+
 *.key
 *.hex
 

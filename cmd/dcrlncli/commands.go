@@ -1455,7 +1455,7 @@ func capturePassword(instruction string, optional bool,
 	validate func([]byte) error) ([]byte, error) {
 
 	for {
-		fmt.Printf(instruction)
+		fmt.Printf("%s", instruction)
 		password, err := readPassword()
 		if err != nil {
 			return nil, err
