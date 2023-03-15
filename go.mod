@@ -3,13 +3,13 @@ module github.com/decred/dcrlnd
 go 1.18
 
 require (
-	decred.org/dcrwallet/v2 v2.0.8
+	decred.org/dcrwallet/v2 v2.0.11
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20180408160647-ec7426b44926
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd v1.2.1-0.20220120180802-74a67dce2480
-	github.com/decred/dcrd/addrmgr/v2 v2.0.0
+	github.com/decred/dcrd/addrmgr/v2 v2.0.1
 	github.com/decred/dcrd/bech32 v1.1.2
 	github.com/decred/dcrd/blockchain/stake/v4 v4.0.0
 	github.com/decred/dcrd/blockchain/standalone/v2 v2.1.0
@@ -32,7 +32,7 @@ require (
 	github.com/decred/slog v1.2.0
 	github.com/go-errors/errors v1.0.1
 	github.com/golang/protobuf v1.4.3
-	github.com/gorilla/websocket v1.4.2
+	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.3
@@ -53,6 +53,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.32.0
@@ -130,7 +131,6 @@ require (
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/genproto v0.0.0-20200924141100-a14c0a98937d // indirect
 	gopkg.in/errgo.v1 v1.0.0 // indirect
