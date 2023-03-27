@@ -90,6 +90,7 @@ cat > "${NODES_ROOT}/dcrlnd0.conf" <<EOF
 [Application Options]
 
 datadir = ${NODES_ROOT}/dcrlnd0
+logdir = ${NODES_ROOT}/dcrlnd0/logs
 tlscertpath = ${NODES_ROOT}/dcrlnd0/tls.cert
 tlskeypath = ${NODES_ROOT}/dcrlnd0/tls.key
 rpclisten = 127.0.0.1:20000
@@ -111,6 +112,7 @@ cat > "${NODES_ROOT}/dcrlnd1.conf" <<EOF
 [Application Options]
 
 datadir = ${NODES_ROOT}/dcrlnd1
+logdir = ${NODES_ROOT}/dcrlnd1/logs
 tlscertpath = ${NODES_ROOT}/dcrlnd1/tls.cert
 tlskeypath = ${NODES_ROOT}/dcrlnd1/tls.key
 rpclisten = 127.0.0.1:20100
@@ -132,6 +134,7 @@ cat > "${NODES_ROOT}/dcrlnd2.conf" <<EOF
 [Application Options]
 
 datadir = ${NODES_ROOT}/dcrlnd2
+logdir = ${NODES_ROOT}/dcrlnd2/logs
 tlscertpath = ${NODES_ROOT}/dcrlnd2/tls.cert
 tlskeypath = ${NODES_ROOT}/dcrlnd2/tls.key
 rpclisten = 127.0.0.1:20200
