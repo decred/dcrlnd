@@ -15402,6 +15402,10 @@ var testsCases = []*testCase{
 		test: testWumboChannels,
 	},
 	{
+		name: "extra accounts features",
+		test: testExtraAccountsFeatures,
+	},
+	{
 		name: "maximum channel size",
 		test: testMaxChannelSize,
 	},

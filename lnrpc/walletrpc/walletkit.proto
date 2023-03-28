@@ -147,6 +147,26 @@ service WalletKit {
     rpc ListSweeps (ListSweepsRequest) returns (ListSweepsResponse);
 
     /*
+    DeriveNextAccount generates the next account of the wallet.
+    */
+    rpc DeriveNextAccount(DeriveNextAccountRequest) returns (DeriveNextAccountResponse);
+
+    /*
+    ExportPrivateKey exports a private key that is derived from a wallet address.
+    */
+    rpc ExportPrivateKey(ExportPrivateKeyRequest) returns (ExportPrivateKeyResponse);
+
+    /*
+    RescanWallet performs an on-chain rescan for wallet transactions.
+    */
+    rpc RescanWallet (RescanWalletRequest) returns (stream RescanWalletResponse);
+
+    /*
+    SpendUTXOs performs a custom on-chain spend of UTXOs.
+    */
+    rpc SpendUTXOs(SpendUTXOsRequest) returns (SpendUTXOsResponse);
+
+    /*
     LabelTransaction adds a label to a transaction. If the transaction already
     has a label the call will fail unless the overwrite bool is set. This will
     overwrite the exiting transaction label. Labels must not be empty, and
@@ -585,6 +605,69 @@ message ListSweepsResponse {
         lnrpc.TransactionDetails transaction_details = 1;
         TransactionIDs transaction_ids = 2;
     }
+}
+
+message DeriveNextAccountRequest {
+    // The name for the new account.
+    string name = 1;
+}
+
+message DeriveNextAccountResponse {}
+
+
+message ExportPrivateKeyRequest {
+  // The public address for which to export the private key.
+  string address = 1;
+}
+
+message ExportPrivateKeyResponse {
+  // The private key in WIF format.
+  string wif = 1;
+}
+
+message RescanWalletRequest {
+    // The height where to begin the rescan process;
+    int32 begin_height = 1;
+}
+
+message RescanWalletResponse {
+    // The height up to which the wallet was rescanned through.
+    int32 scanned_through_height = 1;
+}
+
+message SpendUTXOsRequest {
+    message UTXOAndKey {
+        // The transaction has of the UTXO outpoint.
+        bytes txid = 1;
+        // The transaction index.
+        uint32 index = 2;
+        // The transaction tree.
+        uint32 tree = 3;
+        // The private key that corresponds to the address in the utxo.
+        string private_key_wif = 4;
+        // The height hint of where to look for the UTXO on the utxo set.
+        uint32 height_hint = 5;
+        // The address in the UTXO.
+        string address = 6;
+    }
+    message Output {
+        // The address to send to.
+        string address = 1;
+        // The amount to send.
+        int64 amount = 2;
+    }
+
+    // The inputs/utxos to spend.
+    repeated UTXOAndKey utxos = 1;
+
+    // The output to send to. If there's any non-dust change left unsent, then
+    // that change is sent back to the wallet.
+    repeated Output outputs = 2;
+}
+
+message SpendUTXOsResponse {
+    bytes txid = 1;
+    bytes raw_tx = 2;
 }
 
 message LabelTransactionRequest {
