@@ -550,6 +550,53 @@
         }
       }
     },
+    "SpendUTXOsRequestOutput": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "The address to send to."
+        },
+        "amount": {
+          "type": "string",
+          "format": "int64",
+          "description": "The amount to send."
+        }
+      }
+    },
+    "SpendUTXOsRequestUTXOAndKey": {
+      "type": "object",
+      "properties": {
+        "txid": {
+          "type": "string",
+          "format": "byte",
+          "description": "The transaction has of the UTXO outpoint."
+        },
+        "index": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The transaction index."
+        },
+        "tree": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The transaction tree."
+        },
+        "private_key_wif": {
+          "type": "string",
+          "description": "The private key that corresponds to the address in the utxo."
+        },
+        "height_hint": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The height hint of where to look for the UTXO on the utxo set."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address in the UTXO."
+        }
+      }
+    },
     "lnrpcAddressType": {
       "type": "string",
       "enum": [
@@ -711,6 +758,31 @@
         }
       }
     },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
     "signrpcKeyDescriptor": {
       "type": "object",
       "properties": {
@@ -851,6 +923,9 @@
     "walletrpcBumpFeeResponse": {
       "type": "object"
     },
+    "walletrpcDeriveNextAccountResponse": {
+      "type": "object"
+    },
     "walletrpcEstimateFeeResponse": {
       "type": "object",
       "properties": {
@@ -858,6 +933,15 @@
           "type": "string",
           "format": "int64",
           "description": "The amount of atoms per kilobyte that should be used in order to reach the\nconfirmation target in the request."
+        }
+      }
+    },
+    "walletrpcExportPrivateKeyResponse": {
+      "type": "object",
+      "properties": {
+        "wif": {
+          "type": "string",
+          "description": "The private key in WIF format."
         }
       }
     },
@@ -1084,6 +1168,16 @@
     "walletrpcReleaseOutputResponse": {
       "type": "object"
     },
+    "walletrpcRescanWalletResponse": {
+      "type": "object",
+      "properties": {
+        "scanned_through_height": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The height up to which the wallet was rescanned through."
+        }
+      }
+    },
     "walletrpcSendOutputsRequest": {
       "type": "object",
       "properties": {
@@ -1112,6 +1206,19 @@
           "type": "string",
           "format": "byte",
           "description": "The serialized transaction sent out on the network."
+        }
+      }
+    },
+    "walletrpcSpendUTXOsResponse": {
+      "type": "object",
+      "properties": {
+        "txid": {
+          "type": "string",
+          "format": "byte"
+        },
+        "raw_tx": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },

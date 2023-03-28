@@ -14,10 +14,15 @@ import (
 	"time"
 
 	"decred.org/dcrwallet/v2/wallet"
+	"github.com/decred/dcrd/blockchain/v4"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrd/txscript/v4"
+	"github.com/decred/dcrd/txscript/v4/sign"
+	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
@@ -104,6 +109,22 @@ var (
 		"/walletrpc.WalletKit/ListSweeps": {{
 			Entity: "onchain",
 			Action: "read",
+		}},
+		"/walletrpc.WalletKit/DeriveNextAccount": {{
+			Entity: "onchain",
+			Action: "write",
+		}},
+		"/walletrpc.WalletKit/ExportPrivateKey": {{
+			Entity: "onchain",
+			Action: "write",
+		}},
+		"/walletrpc.WalletKit/RescanWallet": {{
+			Entity: "onchain",
+			Action: "read",
+		}},
+		"/walletrpc.WalletKit/SpendUTXOs": {{
+			Entity: "onchain",
+			Action: "write",
 		}},
 		"/walletrpc.WalletKit/LabelTransaction": {{
 			Entity: "onchain",
@@ -827,6 +848,219 @@ func (w *WalletKit) ListSweeps(ctx context.Context,
 			TransactionDetails: lnrpc.RPCTransactionDetails(transactions),
 		},
 	}, nil
+}
+
+func (w *WalletKit) extendedWallet() (lnwallet.ExtendedWalletController, error) {
+	if ewc, ok := w.cfg.Wallet.(lnwallet.ExtendedWalletController); ok {
+		return ewc, nil
+	}
+
+	if lnw, ok := w.cfg.Wallet.(*lnwallet.LightningWallet); ok {
+		if ewc, ok := lnw.WalletController.(lnwallet.ExtendedWalletController); ok {
+			return ewc, nil
+		}
+	}
+
+	return nil, fmt.Errorf("underlying WalletController %T not an ExtendedWalletController",
+		w.cfg.Wallet)
+}
+
+// DeriveNextAccount generates the next account of the wallet.
+func (w *WalletKit) DeriveNextAccount(_ context.Context, req *DeriveNextAccountRequest) (*DeriveNextAccountResponse, error) {
+	ewc, err := w.extendedWallet()
+	if err != nil {
+		return nil, err
+	}
+	return &DeriveNextAccountResponse{}, ewc.DeriveNextAccount(req.Name)
+}
+
+// ExportPrivateKey exports a private key that is derived from a wallet address.
+func (w *WalletKit) ExportPrivateKey(_ context.Context, req *ExportPrivateKeyRequest) (*ExportPrivateKeyResponse, error) {
+	ewc, err := w.extendedWallet()
+	if err != nil {
+		return nil, err
+	}
+	addr, err := stdaddr.DecodeAddress(req.Address, w.cfg.ChainParams)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := ewc.ExportPrivKey(addr)
+	if err != nil {
+		return nil, err
+	}
+	wif, err := dcrutil.NewWIF(pk.Serialize(), w.cfg.ChainParams.PrivateKeyID,
+		dcrec.STEcdsaSecp256k1)
+	res := &ExportPrivateKeyResponse{
+		Wif: wif.String(),
+	}
+	return res, nil
+}
+
+func (w *WalletKit) RescanWallet(req *RescanWalletRequest,
+	server WalletKit_RescanWalletServer) error {
+
+	progressFunc := func(scannedThrough int32) error {
+		return server.Send(&RescanWalletResponse{ScannedThroughHeight: scannedThrough})
+	}
+	ewc, err := w.extendedWallet()
+	if err != nil {
+		return err
+	}
+	return ewc.RescanWallet(req.BeginHeight, progressFunc)
+}
+
+// SpendUTXOs performs a custom on-chain spend of UTXOs.
+func (w *WalletKit) SpendUTXOs(ctx context.Context, req *SpendUTXOsRequest) (*SpendUTXOsResponse, error) {
+
+	// An empty sigScript, to help in sizing the tx for fee determination.
+	pseudoSigScript := make([]byte, input.P2PKHSigScriptSize)
+
+	type sigPK struct {
+		Version  uint16
+		PKScript []byte
+		PrivKey  []byte
+	}
+	sigPKs := make([]sigPK, 0, len(req.Utxos))
+
+	// Build the tx.
+	var totalIn, totalOut int64
+	tx := wire.NewMsgTx()
+	for _, utxo := range req.Utxos {
+		wif, err := dcrutil.DecodeWIF(utxo.PrivateKeyWif, w.cfg.ChainParams.PrivateKeyID)
+		if err != nil {
+			return nil, fmt.Errorf("%s is not a valid wif: %s",
+				utxo.PrivateKeyWif, err)
+		}
+
+		txid, err := chainhash.NewHash(utxo.Txid)
+		if err != nil {
+			return nil, fmt.Errorf("%x is not a chainhash.Hash: %v",
+				utxo.Txid, err)
+		}
+		outp := &wire.OutPoint{Hash: *txid, Index: utxo.Index, Tree: int8(utxo.Tree)}
+
+		addr, err := stdaddr.DecodeAddress(utxo.Address, w.cfg.ChainParams)
+		if err != nil {
+			return nil, fmt.Errorf("utxo address %s is not a stdaddr: %v",
+				utxo.Address, err)
+		}
+
+		_, script := addr.PaymentScript()
+
+		txout, err := w.cfg.Chain.GetUtxo(outp, script, utxo.HeightHint, ctx.Done())
+		if err != nil {
+			return nil, fmt.Errorf("unable to query for utxo %s: %v",
+				outp, err)
+		}
+
+		totalIn += txout.Value
+		txin := wire.NewTxIn(outp, txout.Value, pseudoSigScript)
+		tx.AddTxIn(txin)
+
+		pk := sigPK{PKScript: script, PrivKey: wif.PrivKey(), Version: txout.Version}
+		sigPKs = append(sigPKs, pk)
+	}
+
+	for _, out := range req.Outputs {
+		addr, err := stdaddr.DecodeAddress(out.Address, w.cfg.ChainParams)
+		if err != nil {
+			return nil, fmt.Errorf("output address %s is not a stdaddr: %v", out.Address, err)
+		}
+
+		version, script := addr.PaymentScript()
+
+		txout := wire.NewTxOut(out.Amount, script)
+		txout.Version = version
+		tx.AddTxOut(txout)
+		totalOut += out.Amount
+	}
+
+	sizeNoChange := int64(tx.SerializeSize())
+	feeRate := w.cfg.FeeEstimator.RelayFeePerKB()
+	feeNoChange := int64(feeRate.FeeForSize(sizeNoChange))
+	dustLimit := int64(lnwallet.DustThresholdForRelayFee(feeRate))
+
+	if totalIn-totalOut < feeNoChange {
+		return nil, fmt.Errorf("total input amount %d cannot be spent to "+
+			"to total output %d and fee %d", totalIn, totalOut, feeNoChange)
+	}
+
+	// If the change (after fees) is > than the dustLimit, create a change
+	// output.
+	if totalIn-totalOut-feeNoChange > dustLimit {
+		// Send change to a wallet address.
+		addr, err := w.cfg.Wallet.NewAddress(lnwallet.PubKeyHash, true, lnwallet.DefaultAccountName)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate change address: %v", err)
+		}
+		version, script := addr.PaymentScript()
+
+		// Create the txOut with zero amount to recalculate the fee
+		// below.
+		txout := wire.NewTxOut(0, script)
+		txout.Version = version
+		tx.AddTxOut(txout)
+
+		// Recalculate fee.
+		size := int64(tx.SerializeSize())
+		fee := int64(feeRate.FeeForSize(size))
+		changeAmt := totalIn - totalOut - fee
+		if changeAmt < dustLimit {
+			// Adding the change output made change < dust, so
+			// remove the change output and proceed with higher fee.
+			tx.TxOut = tx.TxOut[:len(tx.TxOut)-1]
+		} else {
+			txout.Value = changeAmt
+		}
+	}
+
+	// Sign it.
+	for i := range req.Utxos {
+		sigScript, err := sign.SignatureScript(tx, i, sigPKs[i].PKScript,
+			txscript.SigHashAll, sigPKs[i].PrivKey, dcrec.STEcdsaSecp256k1,
+			true)
+		if err != nil {
+			return nil, fmt.Errorf("unable to sign input %d: %v",
+				i, err)
+		}
+		tx.TxIn[i].SignatureScript = sigScript
+	}
+
+	// Double check tx is valid.
+	err := blockchain.CheckTransactionSanity(tx, w.cfg.ChainParams)
+	if err != nil {
+		return nil, fmt.Errorf("signed transaction not sane: %v", err)
+	}
+	for i := range tx.TxIn {
+		vm, err := txscript.NewEngine(
+			sigPKs[i].PKScript, tx, i,
+			input.ScriptVerifyFlags, sigPKs[i].Version, nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create VM to check input %d: %v",
+				i, err)
+		}
+		if err = vm.Execute(); err != nil {
+			return nil, fmt.Errorf("tx input %d failed script execution: %v",
+				i, err)
+		}
+	}
+
+	// Broadcast it
+	err = w.cfg.Wallet.PublishTransaction(tx, "")
+	if err != nil {
+		return nil, fmt.Errorf("unable to publish tx: %v", err)
+	}
+	rawTx, err := tx.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	txId := tx.TxHash()
+	res := &SpendUTXOsResponse{
+		Txid:  txId[:],
+		RawTx: rawTx,
+	}
+	return res, nil
 }
 
 // LabelTransaction adds a label to a transaction.
