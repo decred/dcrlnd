@@ -51,22 +51,6 @@ func walletCommands() []cli.Command {
 	}
 }
 
-func parseAddrType(addrTypeStr string) (walletrpc.AddressType, error) {
-	switch addrTypeStr {
-	case "":
-		return walletrpc.AddressType_UNKNOWN, nil
-	case "p2wkh":
-		return walletrpc.AddressType_WITNESS_PUBKEY_HASH, nil
-	case "np2wkh":
-		return walletrpc.AddressType_NESTED_WITNESS_PUBKEY_HASH, nil
-	case "np2wkh-p2wkh":
-		return walletrpc.AddressType_HYBRID_NESTED_WITNESS_PUBKEY_HASH, nil
-	default:
-		return 0, errors.New("invalid address type, supported address " +
-			"types are: p2wkh, np2wkh, and np2wkh-p2wkh")
-	}
-}
-
 func getWalletClient(ctx *cli.Context) (walletrpc.WalletKitClient, func()) {
 	conn := getClientConn(ctx, false)
 	cleanUp := func() {

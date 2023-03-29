@@ -890,6 +890,9 @@ func (w *WalletKit) ExportPrivateKey(_ context.Context, req *ExportPrivateKeyReq
 	}
 	wif, err := dcrutil.NewWIF(pk.Serialize(), w.cfg.ChainParams.PrivateKeyID,
 		dcrec.STEcdsaSecp256k1)
+	if err != nil {
+		return nil, err
+	}
 	res := &ExportPrivateKeyResponse{
 		Wif: wif.String(),
 	}
