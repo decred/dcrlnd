@@ -393,6 +393,10 @@ message SendOutputsRequest {
 
     // An optional label for the transaction, limited to 500 characters.
     string label = 3;
+
+    // The account from which to send funds. If empty, funds are sent from the
+    // default account.
+    string account = 100;
 }
 message SendOutputsResponse {
     /*

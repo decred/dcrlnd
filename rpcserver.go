@@ -1068,14 +1068,14 @@ func allowCORS(handler http.Handler, origins []string) http.Handler {
 // more addresses specified in the passed payment map. The payment map maps an
 // address to a specified output value to be sent to that address.
 func (r *rpcServer) sendCoinsOnChain(paymentMap map[string]int64,
-	feeRate chainfee.AtomPerKByte, label string) (*chainhash.Hash, error) {
+	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*chainhash.Hash, error) {
 
 	outputs, err := addrPairsToOutputs(paymentMap, activeNetParams.Params)
 	if err != nil {
 		return nil, err
 	}
 
-	tx, err := r.server.cc.wallet.SendOutputs(outputs, feeRate, label)
+	tx, err := r.server.cc.wallet.SendOutputs(outputs, feeRate, label, fromAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -1291,7 +1291,7 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 		paymentMap := map[string]int64{targetAddr.String(): in.Amount}
 		err := wallet.WithCoinSelectLock(func() error {
 			newTXID, err := r.sendCoinsOnChain(
-				paymentMap, feePerKB, label,
+				paymentMap, feePerKB, label, in.Account,
 			)
 			if err != nil {
 				return err
@@ -1346,7 +1346,7 @@ func (r *rpcServer) SendMany(ctx context.Context,
 	err = wallet.WithCoinSelectLock(func() error {
 
 		sendManyTXID, err := r.sendCoinsOnChain(
-			in.AddrToAmount, feePerKB, label,
+			in.AddrToAmount, feePerKB, label, in.Account,
 		)
 		if err != nil {
 			return err

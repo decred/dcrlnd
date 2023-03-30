@@ -311,11 +311,20 @@ func (b *DcrWallet) IsOurAddress(a stdaddr.Address) bool {
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, label string) (*wire.MsgTx, error) {
+	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*wire.MsgTx, error) {
 
 	// Sanity check outputs.
 	if len(outputs) < 1 {
 		return nil, lnwallet.ErrNoOutputs
+	}
+
+	acctNb := defaultAccount
+	if fromAccount != "" && fromAccount != lnwallet.DefaultAccountName {
+		var err error
+		acctNb, err = b.wallet.AccountNumber(context.TODO(), fromAccount)
+		if err != nil {
+			return nil, fmt.Errorf("unknown account named %s: %v", fromAccount, err)
+		}
 	}
 
 	// Ensure we haven't changed the default relay fee.
@@ -327,7 +336,7 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 	defer b.wallet.SetRelayFee(oldRelayFee)
 
 	txHash, err := b.wallet.SendOutputs(context.TODO(), outputs,
-		defaultAccount, defaultAccount, 1)
+		acctNb, acctNb, 1)
 	if err != nil {
 		return nil, err
 	}

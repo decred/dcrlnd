@@ -885,6 +885,10 @@ message SendManyRequest {
 
     // An optional label for the transaction, limited to 500 characters.
     string label = 6;
+
+    // The account from which to send funds. If empty, funds are sent from the
+    // default account.
+    string account = 100;
 }
 message SendManyResponse {
     // The id of the transaction
@@ -915,6 +919,10 @@ message SendCoinsRequest {
 
     // An optional label for the transaction, limited to 500 characters.
     string label = 7;
+
+    // The account from which to send funds. If empty, funds are sent from the
+    // default account.
+    string account = 100;
 }
 message SendCoinsResponse {
     // The transaction ID of the transaction
