@@ -239,7 +239,7 @@ func (*mockWalletController) IsOurAddress(a stdaddr.Address) bool {
 }
 
 func (*mockWalletController) SendOutputs(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, label string) (*wire.MsgTx, error) {
+	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*wire.MsgTx, error) {
 
 	return nil, nil
 }

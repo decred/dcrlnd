@@ -326,9 +326,18 @@ func (b *DcrWallet) IsOurAddress(a stdaddr.Address) bool {
 //
 // This is a part of the WalletController interface.
 func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
-	feeRate chainfee.AtomPerKByte, label string) (*wire.MsgTx, error) {
+	feeRate chainfee.AtomPerKByte, label, fromAccount string) (*wire.MsgTx, error) {
 
 	ctxb := context.Background()
+
+	var acctNb = b.account
+	if fromAccount != "" && fromAccount != lnwallet.DefaultAccountName {
+		res, err := b.wallet.AccountNumber(context.Background(), &pb.AccountNumberRequest{AccountName: fromAccount})
+		if err != nil {
+			return nil, fmt.Errorf("unknown account named %s: %v", fromAccount, err)
+		}
+		acctNb = res.AccountNumber
+	}
 
 	reqOutputs := make([]*pb.ConstructTransactionRequest_Output, len(outputs))
 	for i, out := range outputs {
@@ -342,7 +351,7 @@ func (b *DcrWallet) SendOutputs(outputs []*wire.TxOut,
 		}
 	}
 	req := &pb.ConstructTransactionRequest{
-		SourceAccount:    b.account,
+		SourceAccount:    acctNb,
 		FeePerKb:         int32(feeRate),
 		NonChangeOutputs: reqOutputs,
 	}

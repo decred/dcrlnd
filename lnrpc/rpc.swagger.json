@@ -5257,6 +5257,10 @@
         "label": {
           "type": "string",
           "description": "An optional label for the transaction, limited to 500 characters."
+        },
+        "account": {
+          "type": "string",
+          "description": "The account from which to send funds. If empty, funds are sent from the\ndefault account."
         }
       }
     },
@@ -5293,6 +5297,10 @@
         "label": {
           "type": "string",
           "description": "An optional label for the transaction, limited to 500 characters."
+        },
+        "account": {
+          "type": "string",
+          "description": "The account from which to send funds. If empty, funds are sent from the\ndefault account."
         }
       }
     },
