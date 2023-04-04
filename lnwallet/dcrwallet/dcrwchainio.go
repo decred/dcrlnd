@@ -76,13 +76,16 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 		confirmOut = e.Tx.TxOut[e.Index]
 		dcrwLog.Debugf("Found confirmation of %s on block %d (%s) for GetUtxo",
 			op, e.BlockHeight, e.BlockHash)
-		findExtra(
+		err := findExtra(
 			chainscan.SpentOutPoint(*op, scriptVersion, pkScript),
-			chainscan.WithStartHeight(e.BlockHeight),
+			chainscan.WithStartHeight(e.BlockHeight+1),
 			chainscan.WithFoundCallback(foundSpend),
 			chainscan.WithCancelChan(cancel),
 			chainscan.WithCompleteChan(spendCompleted),
 		)
+		if err != nil {
+			dcrwLog.Warnf("Unable to chainscan for spend of UTXO: %v", err)
+		}
 	}
 
 	// First search for the confirmation of the given script, then for its
