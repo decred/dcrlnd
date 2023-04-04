@@ -619,6 +619,7 @@ func TestHistoricalAddNewTargetDuringFcb(t *testing.T) {
 		foundCb := func(e Event, addNew FindFunc) {
 			assertNoError(t, addNew(
 				c.target(b),
+				WithStartHeight(e.BlockHeight+1),
 				WithFoundChan(foundChan),
 			))
 		}
@@ -976,6 +977,63 @@ func TestHistoricalAfterTip(t *testing.T) {
 
 	assertCompleted(t, completeChan)
 	assertFoundChanRcvHeight(t, foundChan, int32(b.block.Header.Height))
+}
+
+// TestHistoricalFindSpendAfterConfirm asserts that attempting to find a spent
+// UTXO works when the spend happens on a later block and the spent is added
+// during the search for confirmation.
+func TestHistoricalFindSpendAfterConfirm(t *testing.T) {
+	tc := newHistTestCtx(t)
+	defer tc.cleanup()
+
+	// The generated test chain is:
+	// - 5 blocks that miss the cfilter match
+	// - 5 blocks with a cfilter match
+	// - block with confirmed output
+	// - 5 blocks with a cfilter match
+	// - 5 blocks that miss the cfilter match
+	// - block which spends the previous output
+	tc.genBlocks(5, false)
+	tc.genBlocks(5, true)
+	bConfirm := tc.chain.newFromTip(
+		confirmScript(testPkScript),
+		cfilterData(testPkScript),
+	)
+	outp := wire.OutPoint{
+		Hash:  bConfirm.block.Transactions[0].TxHash(),
+		Index: 1,
+	}
+	tc.chain.extend(bConfirm)
+	tc.genBlocks(5, true)
+	tc.genBlocks(5, false)
+	bSpend := tc.chain.newFromTip(
+		spendOutPoint(outp),
+		cfilterData(testPkScript),
+	)
+	tc.chain.extend(bSpend)
+
+	// Setup the callback that is called when the output is confirmed and
+	// which will trigger the search for the spent outpoint.
+	foundSpentChan := make(chan Event)
+	completeChan := make(chan struct{})
+	foundCb := func(e Event, addNew FindFunc) {
+		assertNoError(t, addNew(
+			SpentOutPoint(outp, 0, testPkScript),
+			WithStartHeight(e.BlockHeight+1),
+			WithFoundChan(foundSpentChan),
+			WithCompleteChan(completeChan),
+		))
+	}
+
+	// Start the search.
+	tc.hist.Find(
+		ConfirmedScript(0, testPkScript),
+		WithFoundCallback(foundCb),
+	)
+
+	// Search should've been completed and the spending tx found.
+	assertCompleted(t, completeChan)
+	assertFoundChanRcvHeight(t, foundSpentChan, int32(bSpend.block.Header.Height))
 }
 
 // BenchHistoricalCfilterMisses benchmarks the behavior of historical searches

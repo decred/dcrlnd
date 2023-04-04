@@ -250,13 +250,18 @@ func WithEndHeight(endHeight int32) Option {
 //
 //  1. Via additional Find() calls of the scanner (which _are_ safe for direct
 //     calling by the foundCallback). This allows callers to start to search for
-//     additional targets on the _next_ block checked by the scanner.
+//     additional targets on any block (either further along the chain or in the
+//     past).
 //
 //  2. Via the second argument to the foundCallback. That function can add
 //     targets to search for, starting at the _current_ block, transaction list
 //     and transaction index. This is useful (for example) when detecting a
 //     specific script was used in an output should trigger a search for other
-//     scripts including in the same block.
+//     scripts including in the same block. Note that when adding new targets
+//     using this method, they MUST include a
+//     WithStartingHeight(event.BlockHeight+1) option (even though the search
+//     will also be carried in later transactions of the current block being
+//     scanned).
 //
 // The callback function may be called multiple times for a given target.
 func WithFoundCallback(cb FoundCallback) Option {
@@ -427,6 +432,10 @@ type targetList struct {
 	// allocation during the critical code path when matches occur in a
 	// block.
 	ff FindFunc
+
+	// addedDuringScan tracks new targets added by the ff/addDuringFoundCb
+	// during a single scan() call.
+	addedDuringScan []*target
 }
 
 func newTargetList(initial []*target) *targetList {
@@ -594,12 +603,14 @@ func (tl *targetList) addDuringFoundCb(tgt Target, opts ...Option) error {
 			"endHeight lower than the current blockHeight")
 	}
 
-	if t.startHeight != 0 && t.startHeight != tl.blockHeight {
+	if t.startHeight != tl.blockHeight+1 {
 		return errors.New("cannot add targets during foundCb with " +
-			"startHeight different than the current blockHeight")
+			"startHeight different than the current blockHeight + 1")
 	}
 
+	log.Tracef("Adding new target %s inside addDuringFoundCb", t)
 	tl.add(t)
+	tl.addedDuringScan = append(tl.addedDuringScan, t)
 	return nil
 }
 
@@ -811,6 +822,7 @@ func (bcf blockCFilter) matches(entries [][]byte) bool {
 // therefore callers should check whether the target list is dirty and rebuild
 // cfilter entries as appropriate.
 func scan(ctx context.Context, blockcf *blockCFilter, targets *targetList, getBlock func(context.Context, *chainhash.Hash) (*wire.MsgBlock, error)) error {
+	targets.addedDuringScan = nil
 	if !blockcf.matches(targets.cfEntries) {
 		return nil
 	}

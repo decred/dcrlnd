@@ -74,6 +74,8 @@ func targetsForNextBatch(height int32, newTargets []*target) ([]*target, []*targ
 			nextBatch = append(nextBatch, nt)
 
 		default:
+			log.Tracef("New target Added to this batch due to %d > %d",
+				nt.startHeight, height)
 			thisBatch = append(thisBatch, nt)
 		}
 	}
@@ -179,7 +181,7 @@ func (h *Historical) rescanRun(targets *targetList, batch *targetHeap, startHeig
 		// Fetch and split new targets between those that can be
 		// processed in this batch and those that will need to wait for
 		// the next batch.
-		newTargets, err := h.drainNewTargets(nil)
+		newTargets, err := h.drainNewTargets(targets.addedDuringScan)
 		if err != nil {
 			return err
 		}
@@ -192,7 +194,6 @@ func (h *Historical) rescanRun(targets *targetList, batch *targetHeap, startHeig
 			targets.add(batch.pop())
 			log.Tracef("Added target to run at height %d: %s",
 				bcf.height, t)
-
 		}
 
 		// Remove canceled and targets which reached their endHeight

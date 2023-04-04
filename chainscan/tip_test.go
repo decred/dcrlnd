@@ -603,6 +603,7 @@ func TestTipWatcherAddNewTargetDuringFcb(t *testing.T) {
 		foundCb := func(e Event, addNew FindFunc) {
 			assertNoError(t, addNew(
 				c.target(b),
+				WithStartHeight(e.BlockHeight+1),
 				WithFoundChan(foundChan),
 			))
 		}
