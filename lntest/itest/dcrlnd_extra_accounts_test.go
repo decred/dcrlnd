@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/input"
@@ -115,9 +116,26 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 		}},
 	}
 	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
-	_, err = dave.WalletKitClient.SpendUTXOs(ctxt, spendReq)
+	spendRes, err := dave.WalletKitClient.SpendUTXOs(ctxt, spendReq)
 	require.NoError(t.t, err)
-	mineBlocks(t, net, 1, 1)
+
+	// Check that Dave sees the tx.
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	getWtxReq := &walletrpc.GetWalletTxRequest{Txid: spendRes.Txid}
+	unminedTx, err := dave.WalletKitClient.GetWalletTx(ctxt, getWtxReq)
+	require.NoError(t.t, err)
+	require.Equal(t.t, int32(0), unminedTx.Confirmations)
+
+	// Mine the tx.
+	minedBlock := mineBlocks(t, net, 1, 1)[0]
+	minedBh := minedBlock.BlockHash()
+
+	// Dave now sees the mined tx.
+	time.Sleep(100 * time.Millisecond)
+	minedTx, err := dave.WalletKitClient.GetWalletTx(ctxt, getWtxReq)
+	require.NoError(t.t, err)
+	require.Equal(t.t, int32(1), minedTx.Confirmations)
+	require.Equal(t.t, minedBh[:], minedTx.BlockHash)
 
 	// Carol has no more balance and Dave has the balance minus tx fee.
 	txSize := (&input.TxSizeEstimator{}).AddP2PKHInput().AddP2PKHOutput().Size()

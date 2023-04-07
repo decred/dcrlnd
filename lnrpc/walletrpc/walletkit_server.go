@@ -126,6 +126,10 @@ var (
 			Entity: "onchain",
 			Action: "write",
 		}},
+		"/walletrpc.WalletKit/GetWalletTx": {{
+			Entity: "onchain",
+			Action: "read",
+		}},
 		"/walletrpc.WalletKit/LabelTransaction": {{
 			Entity: "onchain",
 			Action: "write",
@@ -1063,6 +1067,32 @@ func (w *WalletKit) SpendUTXOs(ctx context.Context, req *SpendUTXOsRequest) (*Sp
 	res := &SpendUTXOsResponse{
 		Txid:  txId[:],
 		RawTx: rawTx,
+	}
+	return res, nil
+}
+
+func (w *WalletKit) GetWalletTx(ctx context.Context, req *GetWalletTxRequest) (
+	*GetWalletTxResponse, error) {
+	ewc, err := w.extendedWallet()
+	if err != nil {
+		return nil, err
+	}
+
+	txh, err := chainhash.NewHash(req.Txid)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := ewc.GetWalletTransaction(*txh)
+	if err != nil {
+		return nil, err
+	}
+	res := &GetWalletTxResponse{
+		RawTx:         tx.RawTx,
+		Confirmations: tx.Confirmations,
+	}
+	if tx.BlockHash != nil {
+		res.BlockHash = tx.BlockHash[:]
 	}
 	return res, nil
 }

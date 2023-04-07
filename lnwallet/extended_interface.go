@@ -1,9 +1,20 @@
 package lnwallet
 
 import (
+	"errors"
+
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 )
+
+type WalletTransaction struct {
+	RawTx         []byte
+	Confirmations int32
+	BlockHash     *chainhash.Hash
+}
+
+var ErrWalletTxNotExist = errors.New("tx does not exist in wallet")
 
 // ExtendedWalletController offers extended actions for the wallet (ones defined
 // only in dcrlnd).
@@ -18,4 +29,9 @@ type ExtendedWalletController interface {
 
 	// RescanWallet performs a wallet rescan for transactions.
 	RescanWallet(startHeight int32, progress func(height int32) error) error
+
+	// GetWalletTransaction returns information about a transaction that
+	// belongs to the wallet. If the transaction does not exist in the
+	// wallet, then ErrWalletTxNotExist should be returned.
+	GetWalletTransaction(tx chainhash.Hash) (*WalletTransaction, error)
 }

@@ -3,7 +3,10 @@ package dcrwallet
 import (
 	"context"
 
+	"decred.org/dcrwallet/v2/errors"
+	walleterr "decred.org/dcrwallet/v2/errors"
 	base "decred.org/dcrwallet/v2/wallet"
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
@@ -66,4 +69,21 @@ func (b *DcrWallet) RescanWallet(startHeight int32, progress func(height int32) 
 			return nil
 		}
 	}
+}
+
+func (b *DcrWallet) GetWalletTransaction(txh chainhash.Hash) (*lnwallet.WalletTransaction, error) {
+	txs, confs, bh, err := b.wallet.TransactionSummary(context.Background(), &txh)
+	if errors.Is(err, walleterr.NotExist) {
+		return nil, lnwallet.ErrWalletTxNotExist
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	res := &lnwallet.WalletTransaction{
+		RawTx:         txs.Transaction,
+		Confirmations: confs,
+		BlockHash:     bh,
+	}
+	return res, nil
 }

@@ -5,9 +5,12 @@ import (
 	"io"
 
 	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrlnd/lnwallet"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ lnwallet.ExtendedWalletController = (*DcrWallet)(nil)
@@ -42,4 +45,29 @@ func (b *DcrWallet) RescanWallet(startHeight int32, progress func(height int32) 
 			}
 		}
 	}
+}
+
+func (b *DcrWallet) GetWalletTransaction(txh chainhash.Hash) (*lnwallet.WalletTransaction, error) {
+	req := &pb.GetTransactionRequest{
+		TransactionHash: txh[:],
+	}
+	res, err := b.wallet.GetTransaction(b.ctx, req)
+	if status.Code(err) == codes.NotFound {
+		return nil, lnwallet.ErrWalletTxNotExist
+	}
+	if err != nil {
+		return nil, err
+	}
+	var bh *chainhash.Hash
+	if res.BlockHash != nil {
+		bh, err = chainhash.NewHash(res.BlockHash)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &lnwallet.WalletTransaction{
+		RawTx:         res.Transaction.Transaction,
+		Confirmations: res.Confirmations,
+		BlockHash:     bh,
+	}, nil
 }
