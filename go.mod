@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.18
 
 require (
-	decred.org/dcrwallet/v2 v2.0.11
+	decred.org/dcrwallet/v2 v2.1.1
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20180408160647-ec7426b44926
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
@@ -50,7 +50,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/tv42/zbase32 v0.0.0-20160707012821-501572607d02
 	github.com/urfave/cli v1.20.0
-	golang.org/x/crypto v0.1.0
+	golang.org/x/crypto v0.6.0
 	golang.org/x/net v0.7.0
 	golang.org/x/sys v0.6.0
 	golang.org/x/term v0.5.0
@@ -130,7 +130,7 @@ require (
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20200924141100-a14c0a98937d // indirect
 	gopkg.in/errgo.v1 v1.0.0 // indirect
