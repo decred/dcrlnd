@@ -3438,20 +3438,20 @@ func runTests(t *testing.T, walletDriver *lnwallet.WalletDriver,
 		}
 	}
 
-	// Load our test wallets with 20 outputs each holding 4DCR.
-	if err := loadTestCredits(miningNode, alice, votingWallet.GenerateBlocks, 20, 4); err != nil {
-		t.Logf("unable to send initial funds to alice: %v", err)
+	// Load our test wallets with 20 outputs each holding 1DCR.
+	if err := loadTestCredits(miningNode, alice, votingWallet.GenerateBlocks, 20, 1); err != nil {
+		t.Fatalf("unable to send initial funds to alice: %v", err)
 	}
-	if err := loadTestCredits(miningNode, bob, votingWallet.GenerateBlocks, 20, 4); err != nil {
-		t.Logf("unable to send initial funds to bob: %v", err)
+	if err := loadTestCredits(miningNode, bob, votingWallet.GenerateBlocks, 20, 1); err != nil {
+		t.Fatalf("unable to send initial funds to bob: %v", err)
 	}
 
 	t.Logf("Loaded test credits")
 
-	// Both wallets should now have 80DCR available for
+	// Both wallets should now have 20DCR available for
 	// spending.
-	assertProperBalance(t, alice, 1, 80)
-	assertProperBalance(t, bob, 1, 80)
+	assertProperBalance(t, alice, 1, 20)
+	assertProperBalance(t, bob, 1, 20)
 
 	// Execute every test, clearing possibly mutated
 	// wallet state after each step.
