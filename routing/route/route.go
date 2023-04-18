@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -479,8 +478,8 @@ func (r *Route) String() string {
 		if i > 0 {
 			b.WriteString(" -> ")
 		}
-		b.WriteString(fmt.Sprintf("%v (%v)",
-			strconv.FormatUint(hop.ChannelID, 10),
+		b.WriteString(fmt.Sprintf("%s (%v)",
+			lnwire.NewShortChanIDFromInt(hop.ChannelID),
 			amt,
 		))
 		amt = hop.AmtToForward
