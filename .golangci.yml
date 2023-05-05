@@ -14,3 +14,29 @@ issues:
                 - path: _test\.go
                   linters:
                     - gosec
+
+run:
+  deadline: 10m
+
+linters:
+  skip-files: "mobile\\/.*generated\\.go"
+
+  disable-all: true
+  enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - errchkjson
+    - exportloopref
+    - gofmt
+    - gosimple
+    - govet
+    - grouper
+    - ineffassign
+    - nosprintfhostport
+    - reassign
+    - rowserrcheck
+    - typecheck
+    - unconvert
+    - unused
+    - vetshadow
