@@ -346,6 +346,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 				Peers:      cfg.Dcrwallet.SPVConnect,
 				Net:        activeNetParams.Params,
 				AppDataDir: filepath.Join(cfg.ChainDir),
+				DialFunc:   cfg.Dcrwallet.DialFunc,
 			}
 			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
 		}

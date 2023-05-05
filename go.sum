@@ -32,8 +32,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 decred.org/cspp/v2 v2.0.0 h1:b4fZrElRufz30rYnBZ2shhC8AjNVTN4i6TMzDi+hk44=
 decred.org/cspp/v2 v2.0.0/go.mod h1:0shJWKTWY3LxZEWGxtbER1Y45+HVjC0WZtj4bctSzCI=
-decred.org/dcrwallet/v2 v2.1.1 h1:QZdm51WbNAq2CruOjdA5HZp0cFtUatu79BHeyaRLG/U=
-decred.org/dcrwallet/v2 v2.1.1/go.mod h1:dpE2wTMZiNoyjt9f5rZGytrz+HbZep91lHFFneVIOJI=
+decred.org/dcrwallet/v2 v2.2.0 h1:/fdUDdNUFP46WCeTX5wfBC2SOujrqMrhTp4rT6TUguc=
+decred.org/dcrwallet/v2 v2.2.0/go.mod h1:dpE2wTMZiNoyjt9f5rZGytrz+HbZep91lHFFneVIOJI=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.schwanenlied.me/yawning/bsaes.git v0.0.0-20180720073208-c0276d75487e h1:F2x1bq7RaNCIuqYpswggh1+c1JmwdnkHNC9wy1KDip0=
 git.schwanenlied.me/yawning/bsaes.git v0.0.0-20180720073208-c0276d75487e/go.mod h1:BWqTsj8PgcPriQJGl7el20J/7TuT1d/hSyFDXMEpoEo=
