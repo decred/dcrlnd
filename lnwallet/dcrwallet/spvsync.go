@@ -18,6 +18,7 @@ type SPVSyncerConfig struct {
 	Peers      []string
 	Net        *chaincfg.Params
 	AppDataDir string
+	DialFunc   p2p.DialFunc
 }
 
 // SPVSyncer implements the required methods for synchronizing a DcrWallet
@@ -55,6 +56,10 @@ func (s *SPVSyncer) start(w *DcrWallet) error {
 	amgrDir := filepath.Join(s.cfg.AppDataDir, s.cfg.Net.Name)
 	amgr := addrmgr.New(amgrDir, lookup)
 	lp := p2p.NewLocalPeer(s.cfg.Net, addr, amgr)
+	if s.cfg.DialFunc != nil {
+		lp.SetDialFunc(s.cfg.DialFunc)
+	}
+
 	syncer := spv.NewSyncer(w.wallet, lp)
 	if len(s.cfg.Peers) > 0 {
 		syncer.SetPersistentPeers(s.cfg.Peers)

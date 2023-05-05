@@ -107,7 +107,7 @@ func testExtraAccountsFeatures(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Dave will spend the utxo from Carol's account into its own wallet.
 	spendReq := &walletrpc.SpendUTXOsRequest{
-		Utxos: []*walletrpc.SpendUTXOsRequest_UTXOAndKey{&walletrpc.SpendUTXOsRequest_UTXOAndKey{
+		Utxos: []*walletrpc.SpendUTXOsRequest_UTXOAndKey{{
 			Txid:          utxo.Outpoint.TxidBytes,
 			Index:         utxo.Outpoint.OutputIndex,
 			PrivateKeyWif: key.Wif,
