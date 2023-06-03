@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	pb "decred.org/dcrwallet/v2/rpc/walletrpc"
@@ -13,13 +12,14 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var (
+const (
+	dcrdConfigFile  = "/data/dcrd.conf"
 	certificateFile = "/rpc/rpc.cert"
 	keyFile         = "/rpc/rpc.key"
 )
 
 func tlsCertFromFile(fname string) (*x509.CertPool, error) {
-	b, err := ioutil.ReadFile(fname)
+	b, err := os.ReadFile(fname)
 	if err != nil {
 		return nil, err
 
@@ -64,6 +64,7 @@ func main() {
 
 	// Init the loader service client used for
 	// create a new wallet
+	ctx := context.Background()
 	lc := pb.NewWalletLoaderServiceClient(conn)
 
 	createWalletRequest := &pb.CreateWalletRequest{
@@ -72,7 +73,7 @@ func main() {
 	}
 
 	// Create/import a wallet
-	_, err = lc.CreateWallet(context.Background(), createWalletRequest)
+	_, err = lc.CreateWallet(ctx, createWalletRequest)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -89,7 +90,7 @@ func main() {
 		Kind:    pb.NextAddressRequest_BIP0044_EXTERNAL,
 	}
 
-	nextAddressResponse, err := c.NextAddress(context.Background(), nextAddressRequest)
+	nextAddressResponse, err := c.NextAddress(ctx, nextAddressRequest)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -100,7 +101,7 @@ func main() {
 
 	// Create the dcrd config file with new mining address
 	data := []byte(fmt.Sprintf("miningaddr=%v", miningAddress))
-	err = ioutil.WriteFile("/data/dcrd.conf", data, 0644)
+	err = os.WriteFile(dcrdConfigFile, data, 0644)
 	if err != nil {
 		fmt.Println(err)
 		return
