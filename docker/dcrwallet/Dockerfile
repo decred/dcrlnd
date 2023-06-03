@@ -1,7 +1,7 @@
-FROM golang:1.15-alpine as builder
+FROM golang:1.20-alpine as builder
 
 # Passing env to the builder image
-ARG DCRWALLET_VERSION=v1.5.1
+ARG DCRWALLET_VERSION=release-v1.7.7
 ARG WALLET_SEED
 ARG WALLET_PASS
 ENV WALLET_SEED=$WALLET_SEED WALLET_PASS=$WALLET_PASS
