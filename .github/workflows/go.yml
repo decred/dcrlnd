@@ -17,10 +17,10 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Check out source
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c #v3.3.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab #v3.5.2
 
       - name: Install Linters
-        run: "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2"
+        run: "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.53.1"
 
       - name: Check golangci-lint version
         run: golangci-lint --version
@@ -30,7 +30,7 @@ jobs:
 
       - name: Lint
         run: |
-          golangci-lint run
+          golangci-lint run --out-format=github-actions
 
       - name: Package test binaries
         run: |
@@ -65,7 +65,7 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Check out source
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c #v3.3.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab #v3.5.2
 
       - name: Download the test binaries
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a #v3.0.2
