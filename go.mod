@@ -27,7 +27,7 @@ require (
 	github.com/decred/dcrd/rpcclient/v8 v8.0.0
 	github.com/decred/dcrd/txscript/v4 v4.1.0
 	github.com/decred/dcrd/wire v1.6.0
-	github.com/decred/dcrtest/dcrdtest v0.0.0-20230608204327-d0a3c1865f71
+	github.com/decred/dcrtest/dcrdtest v1.0.0
 	github.com/decred/lightning-onion/v4 v4.0.0
 	github.com/decred/slog v1.2.0
 	github.com/go-errors/errors v1.4.2
@@ -75,7 +75,7 @@ require (
 	github.com/coreos/pkg v0.0.0-20230327231512-ba87abf18a23 // indirect
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/decred/base58 v1.0.5 // indirect
-	github.com/decred/dcrd v1.2.1-0.20230608200243-645f649907cd // indirect
+	github.com/decred/dcrd v1.8.0 // indirect
 	github.com/decred/dcrd/blockchain/stake/v4 v4.0.0 // indirect
 	github.com/decred/dcrd/certgen v1.1.2 // indirect
 	github.com/decred/dcrd/chaincfg v1.5.2 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/decred/dcrd/dcrec/edwards/v2 v2.0.3 // indirect
 	github.com/decred/dcrd/lru v1.1.2 // indirect
 	github.com/decred/dcrd/math/uint256 v1.0.1 // indirect
-	github.com/decred/dcrd/peer/v3 v3.0.1 // indirect
+	github.com/decred/dcrd/peer/v3 v3.0.2 // indirect
 	github.com/decred/go-socks v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
