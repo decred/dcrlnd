@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	macaroon "gopkg.in/macaroon.v2"
@@ -217,9 +218,19 @@ func extractPathArgs(ctx *cli.Context) (string, string, error) {
 }
 
 func main() {
+	// Use the standart decred -V (capital V) flag for version.
+	cli.VersionFlag = cli.BoolFlag{
+		Name:  "version, V",
+		Usage: "print the version",
+	}
+
+	// Build the standard version string.
+	versionStr := fmt.Sprintf("%s (Go version %s %s/%s)\n",
+		build.Version(), runtime.Version(), runtime.GOOS, runtime.GOARCH)
+
 	app := cli.NewApp()
 	app.Name = "dcrlncli"
-	app.Version = build.Version()
+	app.Version = versionStr
 	app.Usage = "control plane for your Decred Lightning Network Daemon (dcrlnd)"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
