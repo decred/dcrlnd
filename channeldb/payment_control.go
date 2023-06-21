@@ -199,6 +199,12 @@ func (p *PaymentControl) InitPayment(paymentHash lntypes.Hash,
 			return err
 		}
 
+		// Mark payment as inflight in the inflight payments index.
+		err = createPaymentInflightIndexEntry(tx, sequenceNum)
+		if err != nil {
+			return err
+		}
+
 		// Also delete any lingering failure info now that we are
 		// re-attempting.
 		return bucket.Delete(paymentFailInfoKey)
@@ -369,6 +375,11 @@ func (p *PaymentControl) RegisterAttempt(paymentHash lntypes.Hash,
 
 		// Retrieve attempt info for the notification.
 		payment, err = fetchPayment(bucket)
+		if err != nil {
+			return err
+		}
+
+		err = updatePaymentInflightIndexEntry(tx, payment)
 		return err
 	})
 	if err != nil {
@@ -466,6 +477,11 @@ func (p *PaymentControl) updateHtlcKey(paymentHash lntypes.Hash,
 
 		// Retrieve attempt info for the notification.
 		payment, err = fetchPayment(bucket)
+		if err != nil {
+			return err
+		}
+
+		err = updatePaymentInflightIndexEntry(tx, payment)
 		return err
 	})
 	if err != nil {
@@ -527,7 +543,8 @@ func (p *PaymentControl) Fail(paymentHash lntypes.Hash,
 			return err
 		}
 
-		return nil
+		err = updatePaymentInflightIndexEntry(tx, payment)
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -680,6 +697,18 @@ func (p *PaymentControl) FetchInFlightPayments() ([]*MPPayment, error) {
 		payments := tx.ReadBucket(paymentsRootBucket)
 		if payments == nil {
 			return nil
+		}
+
+		// Try to load the list of inflight payments by index. If the
+		// index does not exist (which is signalled by a specific error),
+		// continue attempting to list inflight payments
+		var err error
+		inFlights, err = fetchInflightPaymentsByIndex(tx)
+		if err == nil {
+			return nil
+		}
+		if err != nil && !errors.Is(err, errPaymentsInflightIndexNotExists) {
+			return err
 		}
 
 		return payments.ForEach(func(k, _ []byte) error {

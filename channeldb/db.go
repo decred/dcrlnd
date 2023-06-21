@@ -236,6 +236,12 @@ func CreateWithBackend(backend kvdb.Backend, modifiers ...OptionModifier) (*DB, 
 		return nil, err
 	}
 
+	// Run dcrlnd-specific init code (that hasn't been ported to lnd).
+	if err := chanDB.initDcrlndFeatures(); err != nil {
+		backend.Close()
+		return nil, err
+	}
+
 	return chanDB, nil
 }
 

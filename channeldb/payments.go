@@ -744,6 +744,15 @@ func (db *DB) DeletePayments() error {
 			}
 		}
 
+		inflightBucket := tx.ReadWriteBucket(paymentsInflightIndexBucket)
+		if inflightBucket != nil {
+			for _, k := range deleteIndexes {
+				if err := indexBucket.Delete(k); err != nil {
+					return err
+				}
+			}
+		}
+
 		return nil
 	})
 }
