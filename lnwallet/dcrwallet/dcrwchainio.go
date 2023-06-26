@@ -42,25 +42,16 @@ func runAndLogOnError(ctx context.Context, f func(context.Context) error, name s
 	}()
 }
 
-// GetUtxo returns the original output referenced by the passed outpoint that
-// created the target pkScript.
-//
-// This method is a part of the lnwallet.BlockChainIO interface.
-func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
-	heightHint uint32, cancel <-chan struct{}) (*wire.TxOut, error) {
-	src := csdrivers.NewDcrwalletCSDriver(b.wallet)
-	ctx, cancelCtx := context.WithCancel(b.ctx)
-	defer cancelCtx()
-
-	historical := chainscan.NewHistorical(src)
+// GetUtxoWithHistorical returns the original output referenced by the passed
+// outpoint that created the target pkScript, searched for using the passed
+// historical chain scanner.
+func GetUtxoWithHistorical(ctx context.Context, historical *chainscan.Historical, op *wire.OutPoint,
+	pkScript []byte, heightHint uint32) (*wire.TxOut, error) {
 	scriptVersion := uint16(0)
 	confirmCompleted := make(chan struct{})
 	spendCompleted := make(chan struct{})
 	var confirmOut *wire.TxOut
 	var spent *chainscan.Event
-
-	runAndLogOnError(ctx, src.Run, "GetUtxo.DcrwalletCSDriver")
-	runAndLogOnError(ctx, historical.Run, "GetUtxo.Historical")
 
 	dcrwLog.Debugf("GetUtxo looking for %s start at %d", op, heightHint)
 
@@ -80,7 +71,7 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 			chainscan.SpentOutPoint(*op, scriptVersion, pkScript),
 			chainscan.WithStartHeight(e.BlockHeight+1),
 			chainscan.WithFoundCallback(foundSpend),
-			chainscan.WithCancelChan(cancel),
+			chainscan.WithCancelChan(ctx.Done()),
 			chainscan.WithCompleteChan(spendCompleted),
 		)
 		if err != nil {
@@ -93,17 +84,15 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 	historical.Find(
 		chainscan.ConfirmedOutPoint(*op, scriptVersion, pkScript),
 		chainscan.WithStartHeight(int32(heightHint)),
-		chainscan.WithCancelChan(cancel),
+		chainscan.WithCancelChan(ctx.Done()),
 		chainscan.WithFoundCallback(foundConfirm),
 		chainscan.WithCompleteChan(confirmCompleted),
 	)
 
 	for confirmCompleted != nil && spendCompleted != nil {
 		select {
-		case <-cancel:
-			return nil, errors.New("GetUtxo cancelled by caller")
 		case <-ctx.Done():
-			return nil, errors.New("wallet shutting down")
+			return nil, errors.New("context is done")
 		case <-confirmCompleted:
 			confirmCompleted = nil
 		case <-spendCompleted:
@@ -120,6 +109,34 @@ func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 	default:
 		return nil, errors.Errorf("output %s not found during chain scan", op)
 	}
+
+}
+
+// GetUtxo returns the original output referenced by the passed outpoint that
+// created the target pkScript.
+//
+// This method is a part of the lnwallet.BlockChainIO interface.
+func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
+	heightHint uint32, cancel <-chan struct{}) (*wire.TxOut, error) {
+
+	// Setup a context that is canceled when either the wallet or the passed
+	// cancelChan are canceled.
+	ctx, cancelCtx := context.WithCancel(b.ctx)
+	defer cancelCtx()
+	go func() {
+		select {
+		case <-cancel:
+			cancelCtx()
+		case <-ctx.Done():
+		}
+	}()
+
+	src := csdrivers.NewDcrwalletCSDriver(b.wallet)
+	historical := chainscan.NewHistorical(src)
+	runAndLogOnError(ctx, src.Run, "GetUtxo.DcrwalletCSDriver")
+	runAndLogOnError(ctx, historical.Run, "GetUtxo.Historical")
+
+	return GetUtxoWithHistorical(ctx, historical, op, pkScript, heightHint)
 }
 
 // GetBlock returns a raw block from the server given its hash.

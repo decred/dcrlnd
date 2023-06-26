@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"decred.org/dcrwallet/v3/errors"
 	"decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/wire"
@@ -12,6 +11,7 @@ import (
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/chainscan/csdrivers"
 	"github.com/decred/dcrlnd/lnwallet"
+	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -57,79 +57,25 @@ func (b *DcrWallet) GetBestBlock() (*chainhash.Hash, int32, error) {
 // This method is a part of the lnwallet.BlockChainIO interface.
 func (b *DcrWallet) GetUtxo(op *wire.OutPoint, pkScript []byte,
 	heightHint uint32, cancel <-chan struct{}) (*wire.TxOut, error) {
-	// FIXME: unify with the dcrwallet driver.
-	src := csdrivers.NewRemoteWalletCSDriver(b.wallet, b.network)
+
+	// Setup a context that is canceled when either the wallet or the passed
+	// cancelChan are canceled.
 	ctx, cancelCtx := context.WithCancel(b.ctx)
 	defer cancelCtx()
+	go func() {
+		select {
+		case <-cancel:
+			cancelCtx()
+		case <-ctx.Done():
+		}
+	}()
 
+	src := csdrivers.NewRemoteWalletCSDriver(b.wallet, b.network)
 	historical := chainscan.NewHistorical(src)
-	scriptVersion := uint16(0)
-	confirmCompleted := make(chan struct{})
-	spendCompleted := make(chan struct{})
-	var confirmOut *wire.TxOut
-	var spent *chainscan.Event
-
 	runAndLogOnError(ctx, src.Run, "GetUtxo.RemoteWalletCSDriver")
 	runAndLogOnError(ctx, historical.Run, "GetUtxo.Historical")
 
-	dcrwLog.Debugf("GetUtxo looking for %s start at %d", op, heightHint)
-
-	foundSpend := func(e chainscan.Event, _ chainscan.FindFunc) {
-		dcrwLog.Debugf("Found spend of %s on block %d (%s) for GetUtxo",
-			op, e.BlockHeight, e.BlockHash)
-		spent = &e
-	}
-
-	foundConfirm := func(e chainscan.Event, findExtra chainscan.FindFunc) {
-		// Found confirmation of the outpoint. Try to find someone
-		// spending it.
-		confirmOut = e.Tx.TxOut[e.Index]
-		dcrwLog.Debugf("Found confirmation of %s on block %d (%s) for GetUtxo",
-			op, e.BlockHeight, e.BlockHash)
-		err := findExtra(
-			chainscan.SpentOutPoint(*op, scriptVersion, pkScript),
-			chainscan.WithStartHeight(e.BlockHeight+1),
-			chainscan.WithFoundCallback(foundSpend),
-			chainscan.WithCancelChan(cancel),
-			chainscan.WithCompleteChan(spendCompleted),
-		)
-		if err != nil {
-			dcrwLog.Warnf("Unable to chainscan for spend of UTXO: %v:", err)
-		}
-	}
-
-	// First search for the confirmation of the given script, then for its
-	// spending.
-	historical.Find(
-		chainscan.ConfirmedOutPoint(*op, scriptVersion, pkScript),
-		chainscan.WithStartHeight(int32(heightHint)),
-		chainscan.WithCancelChan(cancel),
-		chainscan.WithFoundCallback(foundConfirm),
-		chainscan.WithCompleteChan(confirmCompleted),
-	)
-
-	for confirmCompleted != nil && spendCompleted != nil {
-		select {
-		case <-cancel:
-			return nil, errors.New("GetUtxo cancelled by caller")
-		case <-ctx.Done():
-			return nil, errors.New("wallet shutting down")
-		case <-confirmCompleted:
-			confirmCompleted = nil
-		case <-spendCompleted:
-			spendCompleted = nil
-		}
-	}
-
-	switch {
-	case spent != nil:
-		return nil, errors.Errorf("output %s spent by %s:%d", op,
-			spent.Tx.CachedTxHash(), spent.Index)
-	case confirmOut != nil:
-		return confirmOut, nil
-	default:
-		return nil, errors.Errorf("output %s not found during chain scan", op)
-	}
+	return dcrwallet.GetUtxoWithHistorical(ctx, historical, op, pkScript, heightHint)
 }
 
 // GetBlock returns a raw block from the server given its hash.
