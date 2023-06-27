@@ -53,12 +53,18 @@ func GetUtxoWithHistorical(ctx context.Context, historical *chainscan.Historical
 	var confirmOut *wire.TxOut
 	var spent *chainscan.Event
 
+	// Use a context to stop the search once both a spend and confirm have
+	// been found.
+	searchCtx, searchCancel := context.WithCancel(ctx)
+	defer searchCancel()
+
 	dcrwLog.Debugf("GetUtxo looking for %s start at %d", op, heightHint)
 
 	foundSpend := func(e chainscan.Event, _ chainscan.FindFunc) {
 		dcrwLog.Debugf("Found spend of %s on block %d (%s) for GetUtxo",
 			op, e.BlockHeight, e.BlockHash)
 		spent = &e
+		searchCancel() // Found the spend, stop searching.
 	}
 
 	foundConfirm := func(e chainscan.Event, findExtra chainscan.FindFunc) {
@@ -71,7 +77,7 @@ func GetUtxoWithHistorical(ctx context.Context, historical *chainscan.Historical
 			chainscan.SpentOutPoint(*op, scriptVersion, pkScript),
 			chainscan.WithStartHeight(e.BlockHeight+1),
 			chainscan.WithFoundCallback(foundSpend),
-			chainscan.WithCancelChan(ctx.Done()),
+			chainscan.WithCancelChan(searchCtx.Done()),
 			chainscan.WithCompleteChan(spendCompleted),
 		)
 		if err != nil {
@@ -84,7 +90,7 @@ func GetUtxoWithHistorical(ctx context.Context, historical *chainscan.Historical
 	historical.Find(
 		chainscan.ConfirmedOutPoint(*op, scriptVersion, pkScript),
 		chainscan.WithStartHeight(int32(heightHint)),
-		chainscan.WithCancelChan(ctx.Done()),
+		chainscan.WithCancelChan(searchCtx.Done()),
 		chainscan.WithFoundCallback(foundConfirm),
 		chainscan.WithCompleteChan(confirmCompleted),
 	)
@@ -92,9 +98,19 @@ func GetUtxoWithHistorical(ctx context.Context, historical *chainscan.Historical
 	for confirmCompleted != nil && spendCompleted != nil {
 		select {
 		case <-ctx.Done():
-			return nil, errors.New("context is done")
+			return nil, ctx.Err()
+
+		case <-searchCtx.Done():
+			// Spend found.
+			confirmCompleted = nil
+			spendCompleted = nil
+
 		case <-confirmCompleted:
 			confirmCompleted = nil
+			if confirmOut == nil {
+				spendCompleted = nil
+			}
+
 		case <-spendCompleted:
 			spendCompleted = nil
 		}
@@ -102,8 +118,17 @@ func GetUtxoWithHistorical(ctx context.Context, historical *chainscan.Historical
 
 	switch {
 	case spent != nil:
-		return nil, errors.Errorf("output %s spent by %s:%d", op,
-			spent.Tx.CachedTxHash(), spent.Index)
+		return nil, lnwallet.ErrUtxoAlreadySpent{
+			PrevOutPoint: *op,
+			BlockHash:    spent.BlockHash,
+			BlockHeight:  spent.BlockHeight,
+			TxIndex:      spent.TxIndex,
+			SpendingOutPoint: wire.OutPoint{
+				Hash:  *spent.Tx.CachedTxHash(),
+				Index: uint32(spent.Index),
+				Tree:  spent.Tree,
+			},
+		}
 	case confirmOut != nil:
 		return confirmOut, nil
 	default:

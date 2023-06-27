@@ -6,6 +6,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnwire"
 )
 
@@ -196,4 +197,26 @@ type ErrUnknownHtlcIndex struct {
 func (e ErrUnknownHtlcIndex) Error() string {
 	return fmt.Sprintf("No HTLC with ID %d in channel %v",
 		e.index, e.chanID)
+}
+
+// ErrUtxoAlreadySpent may be returned by BlockChainIO implementations when a
+// GetUtxo call fails due to the output having been spent.
+type ErrUtxoAlreadySpent struct {
+	PrevOutPoint     wire.OutPoint
+	BlockHeight      int32
+	BlockHash        chainhash.Hash
+	TxIndex          int32
+	SpendingOutPoint wire.OutPoint
+}
+
+// Error returns an error string.
+func (err ErrUtxoAlreadySpent) Error() string {
+	return fmt.Sprintf("UTXO %s already spent by tx %s",
+		err.PrevOutPoint, err.SpendingOutPoint)
+}
+
+// Is is part of the error unwrapping contract.
+func (err ErrUtxoAlreadySpent) Is(target error) bool {
+	var e ErrUtxoAlreadySpent
+	return errors.As(target, &e)
 }
