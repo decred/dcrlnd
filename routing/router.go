@@ -1244,6 +1244,14 @@ func (r *ChannelRouter) processUpdate(msg interface{}) error {
 			return newErrf(ErrIgnored, "ignoring msg for known "+
 				"chan_id=%v", msg.ChannelID)
 		}
+		knownSpent, err := r.cfg.Graph.IsKnownSpent(msg.ChannelID)
+		if err != nil {
+			return errors.Errorf("unable to check if edge known spent: %v", err)
+		}
+		if knownSpent {
+			return errors.Errorf("ignoring msg for known spent "+
+				"chan_id=%v", msg.ChannelID)
+		}
 
 		// If AssumeChannelValid is present, then we are unable to
 		// perform any of the expensive checks below, so we'll
@@ -1313,6 +1321,19 @@ func (r *ChannelRouter) processUpdate(msg interface{}) error {
 			r.quit,
 		)
 		if err != nil {
+			if errors.Is(err, lnwallet.ErrUtxoAlreadySpent{}) {
+				// Received a channel announcement for a
+				// known-spent channel. Mark it as known spent
+				// in the DB to speed up the lookup if we
+				// receive other announcements.
+				if err := r.cfg.Graph.MarkKnownSpent(msg.ChannelID); err != nil {
+					log.Warnf("Unable to mark channel edge %s spent: %v",
+						channelID, err)
+				} else {
+					log.Infof("Marked channel edge %s spent",
+						channelID)
+				}
+			}
 			return fmt.Errorf("unable to fetch utxo "+
 				"for chan_id=%v, chan_point=%v: %v",
 				msg.ChannelID, fundingPoint, err)
