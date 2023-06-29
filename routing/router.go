@@ -2300,11 +2300,27 @@ func (r *ChannelRouter) ForEachNode(cb func(*channeldb.LightningNode) error) err
 func (r *ChannelRouter) ForAllOutgoingChannels(cb func(*channeldb.ChannelEdgeInfo,
 	*channeldb.ChannelEdgePolicy) error) error {
 
+	openChans, err := r.cfg.Graph.LocalOpenChanIDs()
+	if err != nil {
+		return fmt.Errorf("unable to query local open chan IDs: %v", err)
+	}
+
 	return r.selfNode.ForEachChannel(nil, func(_ kvdb.RTx, c *channeldb.ChannelEdgeInfo,
 		e, _ *channeldb.ChannelEdgePolicy) error {
 
 		if e == nil {
 			return fmt.Errorf("channel from self node has no policy")
+		}
+
+		// If the channel is not actually open in the DB, skip it. Some
+		// unindentified bug causes a node to have old, already closed
+		// channels in the graph but not the DB, so this check prevents
+		// re-generating announcements for those channels.
+		if _, ok := openChans[c.ChannelID]; !ok {
+			log.Warnf("Seeing local channel %s (%s) in graph when channel "+
+				"is not open in the DB", lnwire.NewShortChanIDFromInt(c.ChannelID),
+				c.ChannelPoint)
+			return nil
 		}
 
 		return cb(c, e)
