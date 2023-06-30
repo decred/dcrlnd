@@ -2387,6 +2387,12 @@ func (r *ChannelRouter) IsKnownEdge(chanID lnwire.ShortChannelID) bool {
 func (r *ChannelRouter) IsStaleEdgePolicy(chanID lnwire.ShortChannelID,
 	timestamp time.Time, flags lnwire.ChanUpdateChanFlags) bool {
 
+	// If the channel is known to be spent, this can't possibly be a useful
+	// ChannelUpdate.
+	if isSpent, _ := r.cfg.Graph.IsKnownSpent(chanID.ToUint64()); isSpent {
+		return false
+	}
+
 	edge1Timestamp, edge2Timestamp, exists, isZombie, err :=
 		r.cfg.Graph.HasChannelEdge(chanID.ToUint64())
 	if err != nil {
