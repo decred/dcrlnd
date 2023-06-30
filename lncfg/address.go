@@ -54,10 +54,10 @@ func NormalizeAddresses(addrs []string, defaultPort string,
 // interface.
 func EnforceSafeAuthentication(addrs []net.Addr, macaroonsActive bool) error {
 	// We'll now examine all addresses that this RPC server is listening
-	// on. If it's a localhost address or a private address, we'll skip it,
-	// otherwise, we'll return an error if macaroons are inactive.
+	// on. If it's a localhost address we'll skip it, otherwise, we'll
+	// return an error if macaroons are inactive.
 	for _, addr := range addrs {
-		if IsLoopback(addr.String()) || IsUnix(addr) || IsPrivate(addr) {
+		if IsLoopback(addr.String()) || IsUnix(addr) {
 			continue
 		}
 
@@ -118,10 +118,11 @@ func IsUnix(addr net.Addr) bool {
 }
 
 // IsPrivate returns true if the address is private. The definitions are,
-//   https://en.wikipedia.org/wiki/Link-local_address
-//   https://en.wikipedia.org/wiki/Multicast_address
-//   Local IPv4 addresses, https://tools.ietf.org/html/rfc1918
-//   Local IPv6 addresses, https://tools.ietf.org/html/rfc4193
+//
+//	https://en.wikipedia.org/wiki/Link-local_address
+//	https://en.wikipedia.org/wiki/Multicast_address
+//	Local IPv4 addresses, https://tools.ietf.org/html/rfc1918
+//	Local IPv6 addresses, https://tools.ietf.org/html/rfc4193
 func IsPrivate(addr net.Addr) bool {
 	switch addr := addr.(type) {
 	case *net.TCPAddr:
