@@ -28,8 +28,7 @@
           "format": "int64"
         },
         "synced": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         }
       }
     },

@@ -14,7 +14,7 @@
     "/v1/balance/blockchain": {
       "get": {
         "summary": "lncli: `walletbalance`\nWalletBalance returns total unspent outputs(confirmed and unconfirmed), all\nconfirmed unspent outputs and all unconfirmed unspent outputs under control\nof the wallet.",
-        "operationId": "WalletBalance",
+        "operationId": "Lightning_WalletBalance",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -23,7 +23,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -37,7 +37,7 @@
     "/v1/balance/channels": {
       "get": {
         "summary": "lncli: `channelbalance`\nChannelBalance returns the total funds available across all open channels\nin atoms.",
-        "operationId": "ChannelBalance",
+        "operationId": "Lightning_ChannelBalance",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -46,7 +46,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -60,7 +60,7 @@
     "/v1/channels": {
       "get": {
         "summary": "lncli: `listchannels`\nListChannels returns a description of all the open channels that this node\nis a participant in.",
-        "operationId": "ListChannels",
+        "operationId": "Lightning_ListChannels",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -69,7 +69,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -80,29 +80,25 @@
             "name": "active_only",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "inactive_only",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "public_only",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "private_only",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "peer",
@@ -119,7 +115,7 @@
       },
       "post": {
         "summary": "OpenChannelSync is a synchronous version of the OpenChannel RPC call. This\ncall is meant to be consumed by clients to the REST proxy. As with all\nother sync calls, all byte slices are intended to be populated as hex\nencoded strings.",
-        "operationId": "OpenChannelSync",
+        "operationId": "Lightning_OpenChannelSync",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -128,7 +124,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -152,7 +148,7 @@
     "/v1/channels/abandon/{channel_point.funding_txid_str}/{channel_point.output_index}": {
       "delete": {
         "summary": "lncli: `abandonchannel`\nAbandonChannel removes all channel state from the database except for a\nclose summary. This method can be used to get rid of permanently unusable\nchannels due to bugs fixed in newer versions of lnd. This method can also be\nused to remove externally funded channels where the funding transaction was\nnever broadcast. Only available for non-externally funded channels in dev\nbuild.",
-        "operationId": "AbandonChannel",
+        "operationId": "Lightning_AbandonChannel",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -161,7 +157,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -195,8 +191,7 @@
             "name": "pending_funding_shim_only",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -207,7 +202,7 @@
     "/v1/channels/backup": {
       "get": {
         "summary": "ExportAllChannelBackups returns static channel backups for all existing\nchannels known to lnd. A set of regular singular static channel backups for\neach channel are returned. Additionally, a multi-channel backup is returned\nas well, which contains a single encrypted blob containing the backups of\neach channel.",
-        "operationId": "ExportAllChannelBackups",
+        "operationId": "Lightning_ExportAllChannelBackups",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -216,7 +211,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -230,7 +225,7 @@
     "/v1/channels/backup/restore": {
       "post": {
         "summary": "lncli: `restorechanbackup`\nRestoreChannelBackups accepts a set of singular channel backups, or a\nsingle encrypted multi-chan backup and attempts to recover any funds\nremaining within the channel. If we are able to unpack the backup, then the\nnew channel will be shown under listchannels, as well as pending channels.",
-        "operationId": "RestoreChannelBackups",
+        "operationId": "Lightning_RestoreChannelBackups",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -239,7 +234,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -263,7 +258,7 @@
     "/v1/channels/backup/subscribe": {
       "get": {
         "summary": "SubscribeChannelBackups allows a client to sub-subscribe to the most up to\ndate information concerning the state of all channel backups. Each time a\nnew channel is added, we return the new set of channels, along with a\nmulti-chan backup containing the backup info for all channels. Each time a\nchannel is closed, we send a new update, which contains new new chan back\nups, but the updated set of encrypted multi-chan backups with the closed\nchannel(s) removed.",
-        "operationId": "SubscribeChannelBackups",
+        "operationId": "Lightning_SubscribeChannelBackups",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -281,7 +276,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -295,7 +290,7 @@
     "/v1/channels/backup/verify": {
       "post": {
         "summary": "VerifyChanBackup allows a caller to verify the integrity of a channel backup\nsnapshot. This method will accept either a packed Single or a packed Multi.\nSpecifying both will result in an error.",
-        "operationId": "VerifyChanBackup",
+        "operationId": "Lightning_VerifyChanBackup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -304,7 +299,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -328,7 +323,7 @@
     "/v1/channels/backup/{chan_point.funding_txid_str}/{chan_point.output_index}": {
       "get": {
         "summary": "lncli: `exportchanbackup`\nExportChannelBackup attempts to return an encrypted static channel backup\nfor the target channel identified by it channel point. The backup is\nencrypted with a key generated from the aezeed seed of the user. The\nreturned backup can either be restored using the RestoreChannelBackup\nmethod once lnd is running, or via the InitWallet and UnlockWallet methods\nfrom the WalletUnlocker service.",
-        "operationId": "ExportChannelBackup",
+        "operationId": "Lightning_ExportChannelBackup",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -337,7 +332,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -376,7 +371,7 @@
     "/v1/channels/closed": {
       "get": {
         "summary": "lncli: `closedchannels`\nClosedChannels returns a description of all the closed channels that\nthis node was a participant in.",
-        "operationId": "ClosedChannels",
+        "operationId": "Lightning_ClosedChannels",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -385,7 +380,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -396,43 +391,37 @@
             "name": "cooperative",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "local_force",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "remote_force",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "breach",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "funding_canceled",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "abandoned",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -443,7 +432,7 @@
     "/v1/channels/pending": {
       "get": {
         "summary": "lncli: `pendingchannels`\nPendingChannels returns a list of all the channels that are currently\nconsidered \"pending\". A channel is pending if it has finished the funding\nworkflow and is waiting for confirmations for the funding txn, or is in the\nprocess of closure, either initiated cooperatively or non-cooperatively.",
-        "operationId": "PendingChannels",
+        "operationId": "Lightning_PendingChannels",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -452,7 +441,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -466,7 +455,7 @@
     "/v1/channels/stream": {
       "post": {
         "summary": "lncli: `openchannel`\nOpenChannel attempts to open a singly funded channel specified in the\nrequest to a remote peer. Users are able to specify a target number of\nblocks that the funding transaction should be confirmed in, or a manual fee\nrate to us for the funding transaction. If neither are specified, then a\nlax block confirmation target is used. Each OpenStatusUpdate will return\nthe pending channel ID of the in-progress channel. Depending on the\narguments specified in the OpenChannelRequest, this pending channel ID can\nthen be used to manually progress the channel funding flow.",
-        "operationId": "OpenChannel",
+        "operationId": "Lightning_OpenChannel",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -484,7 +473,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -508,7 +497,7 @@
     "/v1/channels/subscribe": {
       "get": {
         "summary": "SubscribeChannelEvents creates a uni-directional stream from the server to\nthe client in which any updates relevant to the state of the channels are\nsent over. Events include new active channels, inactive channels, and closed\nchannels.",
-        "operationId": "SubscribeChannelEvents",
+        "operationId": "Lightning_SubscribeChannelEvents",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -526,7 +515,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -540,7 +529,7 @@
     "/v1/channels/transactions": {
       "post": {
         "summary": "SendPaymentSync is the synchronous non-streaming version of SendPayment.\nThis RPC is intended to be consumed by clients of the REST proxy.\nAdditionally, this RPC expects the destination's public key and the payment\nhash (if any) to be encoded as hex strings.",
-        "operationId": "SendPaymentSync",
+        "operationId": "Lightning_SendPaymentSync",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -549,7 +538,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -573,7 +562,7 @@
     "/v1/channels/transactions/route": {
       "post": {
         "summary": "SendToRouteSync is a synchronous version of SendToRoute. It Will block\nuntil the payment either fails or succeeds.",
-        "operationId": "SendToRouteSync",
+        "operationId": "Lightning_SendToRouteSync",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -582,7 +571,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -606,7 +595,7 @@
     "/v1/channels/{channel_point.funding_txid_str}/{channel_point.output_index}": {
       "delete": {
         "summary": "lncli: `closechannel`\nCloseChannel attempts to close an active channel identified by its channel\noutpoint (ChannelPoint). The actions of this method can additionally be\naugmented to attempt a force close after a timeout period in the case of an\ninactive peer. If a non-force close (cooperative closure) is requested,\nthen the user can specify either a target number of blocks until the\nclosure transaction is confirmed, or a manual fee rate. If neither are\nspecified, then a default lax, block confirmation target is used.",
-        "operationId": "CloseChannel",
+        "operationId": "Lightning_CloseChannel",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -624,7 +613,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -659,8 +648,7 @@
             "description": "If true, then the channel will be closed forcibly. This means the\ncurrent commitment transaction will be signed and broadcast.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "target_conf",
@@ -694,7 +682,7 @@
     "/v1/chanpolicy": {
       "post": {
         "summary": "lncli: `updatechanpolicy`\nUpdateChannelPolicy allows the caller to update the fee schedule and\nchannel policies for all channels globally, or a particular channel.",
-        "operationId": "UpdateChannelPolicy",
+        "operationId": "Lightning_UpdateChannelPolicy",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -703,7 +691,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -727,7 +715,7 @@
     "/v1/debuglevel": {
       "post": {
         "summary": "lncli: `debuglevel`\nDebugLevel allows a caller to programmatically set the logging verbosity of\nlnd. The logging can be targeted according to a coarse daemon-wide logging\nlevel, or in a granular fashion to specify the logging for a target\nsub-system.",
-        "operationId": "DebugLevel",
+        "operationId": "Lightning_DebugLevel",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -736,7 +724,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -760,7 +748,7 @@
     "/v1/fees": {
       "get": {
         "summary": "lncli: `feereport`\nFeeReport allows the caller to obtain a report detailing the current fee\nschedule enforced by the node globally for each channel.",
-        "operationId": "FeeReport",
+        "operationId": "Lightning_FeeReport",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -769,7 +757,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -783,7 +771,7 @@
     "/v1/funding/step": {
       "post": {
         "summary": "FundingStateStep is an advanced funding related call that allows the caller\nto either execute some preparatory steps for a funding workflow, or\nmanually progress a funding workflow. The primary way a funding flow is\nidentified is via its pending channel ID. As an example, this method can be\nused to specify that we're expecting a funding flow for a particular\npending channel ID, for which we need to use specific parameters.\nAlternatively, this can be used to interactively drive PSBT signing for\nfunding for partially complete funding transactions.",
-        "operationId": "FundingStateStep",
+        "operationId": "Lightning_FundingStateStep",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -792,7 +780,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -816,7 +804,7 @@
     "/v1/getinfo": {
       "get": {
         "summary": "lncli: `getinfo`\nGetInfo returns general information concerning the lightning node including\nit's identity pubkey, alias, the chains it is connected to, and information\nconcerning the number of open+pending channels.",
-        "operationId": "GetInfo",
+        "operationId": "Lightning_GetInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -825,7 +813,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -839,7 +827,7 @@
     "/v1/getrecoveryinfo": {
       "get": {
         "summary": "* lncli: `getrecoveryinfo`\nGetRecoveryInfo returns information concerning the recovery mode including\nwhether it's in a recovery mode, whether the recovery is finished, and the\nprogress made so far.",
-        "operationId": "GetRecoveryInfo",
+        "operationId": "Lightning_GetRecoveryInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -848,7 +836,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -862,7 +850,7 @@
     "/v1/graph": {
       "get": {
         "summary": "lncli: `describegraph`\nDescribeGraph returns a description of the latest graph state from the\npoint of view of the node. The graph information is partitioned into two\ncomponents: all the nodes/vertexes, and all the edges that connect the\nvertexes themselves. As this is a directed graph, the edges also contain\nthe node directional specific routing policy which includes: the time lock\ndelta, fee information, etc.",
-        "operationId": "DescribeGraph",
+        "operationId": "Lightning_DescribeGraph",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -871,7 +859,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -883,8 +871,7 @@
             "description": "Whether unannounced channels are included in the response or not. If set,\nunannounced channels are included. Unannounced channels are both private\nchannels, and public channels that are not yet announced to the network.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -895,7 +882,7 @@
     "/v1/graph/edge/{chan_id}": {
       "get": {
         "summary": "lncli: `getchaninfo`\nGetChanInfo returns the latest authenticated network announcement for the\ngiven channel identified by its channel ID: an 8-byte integer which\nuniquely identifies the location of transaction's funding output within the\nblockchain.",
-        "operationId": "GetChanInfo",
+        "operationId": "Lightning_GetChanInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -904,7 +891,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -928,7 +915,7 @@
     "/v1/graph/info": {
       "get": {
         "summary": "lncli: `getnetworkinfo`\nGetNetworkInfo returns some basic stats about the known channel graph from\nthe point of view of the node.",
-        "operationId": "GetNetworkInfo",
+        "operationId": "Lightning_GetNetworkInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -937,7 +924,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -951,7 +938,7 @@
     "/v1/graph/node/{pub_key}": {
       "get": {
         "summary": "lncli: `getnodeinfo`\nGetNodeInfo returns the latest advertised, aggregated, and authenticated\nchannel information for the specified node identified by its public key.",
-        "operationId": "GetNodeInfo",
+        "operationId": "Lightning_GetNodeInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -960,7 +947,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -979,8 +966,7 @@
             "description": "If true, will include all known channels associated with the node.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -991,7 +977,7 @@
     "/v1/graph/nodemetrics": {
       "get": {
         "summary": "lncli: `getnodemetrics`\nGetNodeMetrics returns node metrics calculated from the graph. Currently\nthe only supported metric is betweenness centrality of individual nodes.",
-        "operationId": "GetNodeMetrics",
+        "operationId": "Lightning_GetNodeMetrics",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1000,7 +986,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1032,7 +1018,7 @@
       "get": {
         "summary": "lncli: `queryroutes`\nQueryRoutes attempts to query the daemon's Channel Router for a possible\nroute to a target destination capable of carrying a specific amount of\natoms. The retuned route contains the full details required to craft and\nsend an HTLC, also including the necessary information that should be\npresent within the Sphinx packet encapsulated within the HTLC.",
         "description": "When using REST, the `dest_custom_records` map type can be set by appending\n`\u0026dest_custom_records[\u003crecord_number\u003e]=\u003crecord_data_base64_url_encoded\u003e`\nto the URL. Unfortunately this map type doesn't appear in the REST API\ndocumentation because of a bug in the grpc-gateway library.",
-        "operationId": "QueryRoutes",
+        "operationId": "Lightning_QueryRoutes",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1041,7 +1027,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1127,8 +1113,7 @@
             "description": "If set to true, edge probabilities from mission control will be used to get\nthe optimal route.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "cltv_limit",
@@ -1193,7 +1178,7 @@
     "/v1/graph/subscribe": {
       "get": {
         "summary": "SubscribeChannelGraph launches a streaming RPC that allows the caller to\nreceive notifications upon any changes to the channel graph topology from\nthe point of view of the responding node. Events notified include: new\nnodes coming online, nodes updating their authenticated attributes, new\nchannels being advertised, updates in the routing policy for a directional\nchannel edge, and when channels are closed on-chain.",
-        "operationId": "SubscribeChannelGraph",
+        "operationId": "Lightning_SubscribeChannelGraph",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -1211,7 +1196,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1225,7 +1210,7 @@
     "/v1/invoice/{r_hash_str}": {
       "get": {
         "summary": "lncli: `lookupinvoice`\nLookupInvoice attempts to look up an invoice according to its payment hash.\nThe passed payment hash *must* be exactly 32 bytes, if not, an error is\nreturned.",
-        "operationId": "LookupInvoice",
+        "operationId": "Lightning_LookupInvoice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1234,7 +1219,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1265,7 +1250,7 @@
     "/v1/invoices": {
       "get": {
         "summary": "lncli: `listinvoices`\nListInvoices returns a list of all the invoices currently stored within the\ndatabase. Any active debug invoices are ignored. It has full support for\npaginated responses, allowing users to query for specific invoices through\ntheir add_index. This can be done by using either the first_index_offset or\nlast_index_offset fields included in the response as the index_offset of the\nnext request. By default, the first 100 invoices created will be returned.\nBackwards pagination is also supported through the Reversed flag.",
-        "operationId": "ListInvoices",
+        "operationId": "Lightning_ListInvoices",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1274,7 +1259,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1286,8 +1271,7 @@
             "description": "If set, only invoices that are not settled and not canceled will be returned\nin the response.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "index_offset",
@@ -1310,8 +1294,7 @@
             "description": "If set, the invoices returned will result from seeking backwards from the\nspecified index offset. This can be used to paginate backwards.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1320,7 +1303,7 @@
       },
       "post": {
         "summary": "lncli: `addinvoice`\nAddInvoice attempts to add a new invoice to the invoice database. Any\nduplicated invoices are rejected, therefore all invoices *must* have a\nunique payment preimage.",
-        "operationId": "AddInvoice",
+        "operationId": "Lightning_AddInvoice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1329,7 +1312,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1353,7 +1336,7 @@
     "/v1/invoices/subscribe": {
       "get": {
         "summary": "SubscribeInvoices returns a uni-directional stream (server -\u003e client) for\nnotifying the client of newly added/settled invoices. The caller can\noptionally specify the add_index and/or the settle_index. If the add_index\nis specified, then we'll first start by sending add invoice events for all\ninvoices with an add_index greater than the specified value. If the\nsettle_index is specified, the next, we'll send out all settle events for\ninvoices with a settle_index greater than the specified value. One or both\nof these fields can be set. If no fields are set, then we'll only send out\nthe latest add/settle events.",
-        "operationId": "SubscribeInvoices",
+        "operationId": "Lightning_SubscribeInvoices",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -1371,7 +1354,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1403,7 +1386,7 @@
     "/v1/macaroon": {
       "post": {
         "summary": "lncli: `bakemacaroon`\nBakeMacaroon allows the creation of a new macaroon with custom read and\nwrite permissions. No first-party caveats are added since this can be done\noffline.",
-        "operationId": "BakeMacaroon",
+        "operationId": "Lightning_BakeMacaroon",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1412,7 +1395,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1436,7 +1419,7 @@
     "/v1/macaroon/ids": {
       "get": {
         "summary": "lncli: `listmacaroonids`\nListMacaroonIDs returns all root key IDs that are in use.",
-        "operationId": "ListMacaroonIDs",
+        "operationId": "Lightning_ListMacaroonIDs",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1445,7 +1428,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1459,7 +1442,7 @@
     "/v1/macaroon/permissions": {
       "get": {
         "summary": "lncli: `listpermissions`\nListPermissions lists all RPC method URIs and their required macaroon\npermissions to access them.",
-        "operationId": "ListPermissions",
+        "operationId": "Lightning_ListPermissions",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1468,7 +1451,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1482,7 +1465,7 @@
     "/v1/macaroon/{root_key_id}": {
       "delete": {
         "summary": "lncli: `deletemacaroonid`\nDeleteMacaroonID deletes the specified macaroon ID and invalidates all\nmacaroons derived from that ID.",
-        "operationId": "DeleteMacaroonID",
+        "operationId": "Lightning_DeleteMacaroonID",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1491,7 +1474,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1515,7 +1498,7 @@
     "/v1/newaddress": {
       "get": {
         "summary": "lncli: `newaddress`\nNewAddress creates a new address under control of the local wallet.",
-        "operationId": "NewAddress",
+        "operationId": "Lightning_NewAddress",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1524,7 +1507,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1562,7 +1545,7 @@
     "/v1/payments": {
       "get": {
         "summary": "lncli: `listpayments`\nListPayments returns a list of all outgoing payments.",
-        "operationId": "ListPayments",
+        "operationId": "Lightning_ListPayments",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1571,7 +1554,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1583,8 +1566,7 @@
             "description": "If true, then return payments that have not yet fully completed. This means\nthat pending payments, as well as failed payments will show up if this\nfield is set to true. This flag doesn't change the meaning of the indices,\nwhich are tied to individual payments.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           },
           {
             "name": "index_offset",
@@ -1607,8 +1589,7 @@
             "description": "If set, the payments returned will result from seeking backwards from the\nspecified index offset. This can be used to paginate backwards. The order\nof the returned payments is always oldest first (ascending index order).",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1617,7 +1598,7 @@
       },
       "delete": {
         "summary": "DeleteAllPayments deletes all outgoing payments from DB.",
-        "operationId": "DeleteAllPayments",
+        "operationId": "Lightning_DeleteAllPayments",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1626,7 +1607,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1640,7 +1621,7 @@
     "/v1/payreq/{pay_req}": {
       "get": {
         "summary": "lncli: `decodepayreq`\nDecodePayReq takes an encoded payment request string and attempts to decode\nit, returning a full description of the conditions encoded within the\npayment request.",
-        "operationId": "DecodePayReq",
+        "operationId": "Lightning_DecodePayReq",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1649,7 +1630,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1672,7 +1653,7 @@
     "/v1/peers": {
       "get": {
         "summary": "lncli: `listpeers`\nListPeers returns a verbose listing of all currently active peers.",
-        "operationId": "ListPeers",
+        "operationId": "Lightning_ListPeers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1681,7 +1662,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1693,8 +1674,7 @@
             "description": "If true, only the last error that our peer sent us will be returned with\nthe peer's information, rather than the full set of historic errors we have\nstored.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1703,7 +1683,7 @@
       },
       "post": {
         "summary": "lncli: `connect`\nConnectPeer attempts to establish a connection to a remote peer. This is at\nthe networking level, and is used for communication between nodes. This is\ndistinct from establishing a channel with a peer.",
-        "operationId": "ConnectPeer",
+        "operationId": "Lightning_ConnectPeer",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1712,7 +1692,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1736,7 +1716,7 @@
     "/v1/peers/subscribe": {
       "get": {
         "summary": "SubscribePeerEvents creates a uni-directional stream from the server to\nthe client in which any events relevant to the state of peers are sent\nover. Events include peers going online and offline.",
-        "operationId": "SubscribePeerEvents",
+        "operationId": "Lightning_SubscribePeerEvents",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -1754,7 +1734,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1768,7 +1748,7 @@
     "/v1/peers/{pub_key}": {
       "delete": {
         "summary": "lncli: `disconnect`\nDisconnectPeer attempts to disconnect one peer from another identified by a\ngiven pubKey. In the case that we currently have a pending or active channel\nwith the target peer, then this action will be not be allowed.",
-        "operationId": "DisconnectPeer",
+        "operationId": "Lightning_DisconnectPeer",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1777,7 +1757,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1800,7 +1780,7 @@
     "/v1/signmessage": {
       "post": {
         "summary": "lncli: `signmessage`\nSignMessage signs a message with this node's private key. The returned\nsignature string is `zbase32` encoded and pubkey recoverable, meaning that\nonly the message digest and signature are needed for verification.",
-        "operationId": "SignMessage",
+        "operationId": "Lightning_SignMessage",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1809,7 +1789,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1833,7 +1813,7 @@
     "/v1/stop": {
       "post": {
         "summary": "lncli: `stop`\nStopDaemon will send a shutdown request to the interrupt handler, triggering\na graceful shutdown of the daemon.",
-        "operationId": "StopDaemon",
+        "operationId": "Lightning_StopDaemon",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1842,7 +1822,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1867,7 +1847,7 @@
       "post": {
         "summary": "lncli: `fwdinghistory`\nForwardingHistory allows the caller to query the htlcswitch for a record of\nall HTLCs forwarded within the target time range, and integer offset\nwithin that time range. If no time-range is specified, then the first chunk\nof the past 24 hrs of forwarding history are returned.",
         "description": "A list of forwarding events are returned. The size of each forwarding event\nis 40 bytes, and the max message size able to be returned in gRPC is 4 MiB.\nAs a result each message can only contain 50k entries. Each response has\nthe index offset of the last entry. The index offset can be provided to the\nrequest to allow the caller to skip a series of records.",
-        "operationId": "ForwardingHistory",
+        "operationId": "Lightning_ForwardingHistory",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1876,7 +1856,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1900,7 +1880,7 @@
     "/v1/transactions": {
       "get": {
         "summary": "lncli: `listchaintxns`\nGetTransactions returns a list describing all the known transactions\nrelevant to the wallet.",
-        "operationId": "GetTransactions",
+        "operationId": "Lightning_GetTransactions",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1909,7 +1889,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1946,7 +1926,7 @@
       },
       "post": {
         "summary": "lncli: `sendcoins`\nSendCoins executes a request to send coins to a particular address. Unlike\nSendMany, this RPC call only allows creating a single output at a time. If\nneither target_conf, or atoms_per_byte are set, then the internal wallet\nwill consult its fee model to determine a fee for the default confirmation\ntarget.",
-        "operationId": "SendCoins",
+        "operationId": "Lightning_SendCoins",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1955,7 +1935,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -1980,7 +1960,7 @@
       "get": {
         "summary": "lncli: `estimatefee`\nEstimateFee asks the chain backend to estimate the fee rate and total fees\nfor a transaction that pays to multiple specified outputs.",
         "description": "When using REST, the `AddrToAmount` map type can be set by appending\n`\u0026AddrToAmount[\u003caddress\u003e]=\u003camount_to_send\u003e` to the URL. Unfortunately this\nmap type doesn't appear in the REST API documentation because of a bug in\nthe grpc-gateway library.",
-        "operationId": "EstimateFee",
+        "operationId": "Lightning_EstimateFee",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1989,7 +1969,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -2013,7 +1993,7 @@
     "/v1/transactions/many": {
       "post": {
         "summary": "lncli: `sendmany`\nSendMany handles a request for a transaction that creates multiple specified\noutputs in parallel. If neither target_conf, or atoms_per_byte are set, then\nthe internal wallet will consult its fee model to determine a fee for the\ndefault confirmation target.",
-        "operationId": "SendMany",
+        "operationId": "Lightning_SendMany",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2022,7 +2002,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -2046,7 +2026,7 @@
     "/v1/transactions/subscribe": {
       "get": {
         "summary": "SubscribeTransactions creates a uni-directional stream from the server to\nthe client in which any newly discovered transactions relevant to the\nwallet are sent over.",
-        "operationId": "SubscribeTransactions",
+        "operationId": "Lightning_SubscribeTransactions",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -2064,7 +2044,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -2104,7 +2084,7 @@
       "get": {
         "summary": "lncli: `listunspent`\nDeprecated, use walletrpc.ListUnspent instead.",
         "description": "ListUnspent returns a list of all utxos spendable by the wallet with a\nnumber of confirmations between the specified minimum and maximum.",
-        "operationId": "ListUnspent",
+        "operationId": "Lightning_ListUnspent",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2113,7 +2093,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -2152,7 +2132,7 @@
     "/v1/verifymessage": {
       "post": {
         "summary": "lncli: `verifymessage`\nVerifyMessage verifies a signature over a msg. The signature must be\nzbase32 encoded and signed by an active node in the resident node's\nchannel database. In addition to returning the validity of the signature,\nVerifyMessage also returns the recovered pubkey from the signature.",
-        "operationId": "VerifyMessage",
+        "operationId": "Lightning_VerifyMessage",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2161,7 +2141,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -2596,7 +2576,6 @@
       "properties": {
         "active": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether this channel is active or not"
         },
         "remote_pubkey": {
@@ -2676,12 +2655,10 @@
         },
         "private": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether this channel is advertised to the network or not."
         },
         "initiator": {
           "type": "boolean",
-          "format": "boolean",
           "description": "True if we were the ones that created the channel."
         },
         "chan_status_flags": {
@@ -2700,7 +2677,6 @@
         },
         "static_remote_key": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Deprecated. Use commitment_type."
         },
         "commitment_type": {
@@ -2934,8 +2910,7 @@
           "format": "byte"
         },
         "success": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         }
       }
     },
@@ -3261,7 +3236,6 @@
         },
         "perm": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set, the daemon will attempt to persistently connect to the target\npeer. Otherwise, the call will be synchronous."
         }
       }
@@ -3273,8 +3247,7 @@
       "type": "object",
       "properties": {
         "show": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         },
         "level_spec": {
           "type": "string"
@@ -3297,7 +3270,6 @@
       "properties": {
         "deleted": {
           "type": "boolean",
-          "format": "boolean",
           "description": "A boolean indicates that the deletion is successful."
         }
       }
@@ -3315,7 +3287,6 @@
         },
         "direction_reverse": {
           "type": "boolean",
-          "format": "boolean",
           "description": "The direction of this edge. If direction_reverse is false, the direction\nof this edge is from the channel endpoint with the lexicographically smaller\npub key to the endpoint with the larger pub key. If direction_reverse is\nis true, the edge goes the other way."
         }
       }
@@ -3395,12 +3366,10 @@
           "type": "string"
         },
         "is_required": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         },
         "is_known": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         }
       }
     },
@@ -3722,17 +3691,14 @@
         },
         "synced_to_chain": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether the wallet's view is synced to the main chain"
         },
         "synced_to_graph": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether we consider ourselves synced with the public channel graph."
         },
         "testnet": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether the current node is connected to testnet. This field is\ndeprecated and the network field should be used instead"
         },
         "chains": {
@@ -3758,7 +3724,6 @@
         },
         "server_active": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether all server sub-processes have started and the node is ready to be\nused."
         },
         "router_prune_target": {
@@ -3778,12 +3743,10 @@
       "properties": {
         "recovery_mode": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether the wallet is in recovery mode"
         },
         "recovery_finished": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether the wallet recovery progress is finished"
         },
         "progress": {
@@ -3820,8 +3783,7 @@
       "type": "object",
       "properties": {
         "incoming": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         },
         "amount": {
           "type": "string",
@@ -3907,7 +3869,6 @@
         },
         "tlv_payload": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set to true, then this hop will be encoded using the new variable length\nTLV format. Note that if any custom tlv_records below are specified, then\nthis field MUST be set to true for them to be encoded properly."
         },
         "mpp_record": {
@@ -3992,7 +3953,6 @@
         },
         "settled": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether this invoice has been fulfilled"
         },
         "creation_date": {
@@ -4037,7 +3997,6 @@
         },
         "private": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether this invoice should include routing hints for private channels."
         },
         "add_index": {
@@ -4078,7 +4037,6 @@
         },
         "ignore_max_inbound_amt": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether to forgo checking for the current max inbound amount before\ncreating the invoice. This is only applicable during invoice creation.\n\nWhen creating an invoice, the node will check if there is enough inbound\nbandwidth in at least one of its directly connected channels (after\naccounting for the required reserves) before allowing the invoice to be\ncreated. Specifying this parameter as true will make the node ignore those\nchecks and create the invoice even if it could not possibly have it settled."
         },
         "features": {
@@ -4090,7 +4048,6 @@
         },
         "is_keysend": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Indicates if this invoice was a spontaneous payment that arrived via keysend\n[EXPERIMENTAL]."
         }
       }
@@ -4586,7 +4543,6 @@
         },
         "private": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether this channel should be private, not announced to the greater\nnetwork."
         },
         "min_htlc_m_atoms": {
@@ -4606,7 +4562,6 @@
         },
         "spend_unconfirmed": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether unconfirmed outputs should be used as inputs for the funding\ntransaction."
         },
         "close_address": {
@@ -4848,7 +4803,6 @@
         },
         "inbound": {
           "type": "boolean",
-          "format": "boolean",
           "title": "A channel is inbound if the counterparty initiated the channel"
         },
         "ping_time": {
@@ -4931,7 +4885,6 @@
       "properties": {
         "incoming": {
           "type": "boolean",
-          "format": "boolean",
           "title": "The direction within the channel that the htlc was sent"
         },
         "amount": {
@@ -4978,7 +4931,6 @@
       "properties": {
         "global": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set, then this update applies to all currently active channels."
         },
         "chan_point": {
@@ -5012,7 +4964,6 @@
         },
         "min_htlc_m_atoms_specified": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If true, min_htlc_m_atoms is applied."
         }
       }
@@ -5035,7 +4986,6 @@
         },
         "no_publish": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If a channel should be part of a batch (multiple channel openings in one\ntransaction), it can be dangerous if the whole batch transaction is\npublished too early before all channel opening negotiations are completed.\nThis flag prevents this particular channel from broadcasting the transaction\nafter the negotiation with the remote peer. In a batch of channel openings\nthis flag should be set to true for every channel but the very last."
         }
       }
@@ -5214,8 +5164,7 @@
           "format": "int64"
         },
         "disabled": {
-          "type": "boolean",
-          "format": "boolean"
+          "type": "boolean"
         },
         "max_htlc_m_atoms": {
           "type": "string",
@@ -5251,7 +5200,6 @@
         },
         "send_all": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set, then the amount field will be ignored, and lnd will attempt to\nsend all the coins under control of the internal wallet to the specified\naddress."
         },
         "label": {
@@ -5364,7 +5312,6 @@
         },
         "ignore_max_outbound_amt": {
           "type": "boolean",
-          "format": "boolean",
           "description": "Whether to forgo checking for the maximum outbound amount before attempting\nto send the payment.\n\nWhen sending a payment, the node will check if there is enough outbound\nbandwidth in at least one of its directly connected channels (after\naccounting for the required reserves) before attempting to determine a\nroute for it. Specifying this parameter will disable these checks and allow\nthe node to attempt the payment even if there are no outbound channels with\nenough capacity to send it."
         },
         "last_hop_pubkey": {
@@ -5387,7 +5334,6 @@
         },
         "allow_self_payment": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set, circular payments to self are permitted."
         },
         "dest_features": {
@@ -5593,7 +5539,6 @@
       "properties": {
         "valid": {
           "type": "boolean",
-          "format": "boolean",
           "title": "Whether the signature was valid over the given message"
         },
         "pubkey": {

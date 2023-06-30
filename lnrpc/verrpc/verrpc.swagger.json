@@ -14,7 +14,7 @@
     "/v2/versioner/version": {
       "get": {
         "summary": "lncli: `version`\nGetVersion returns the current version and build information of the running\ndaemon.",
-        "operationId": "GetVersion",
+        "operationId": "Versioner_GetVersion",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -23,7 +23,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }

@@ -14,7 +14,7 @@
     "/v2/router/htlcevents": {
       "get": {
         "summary": "SubscribeHtlcEvents creates a uni-directional stream from the server to\nthe client which delivers a stream of htlc events.",
-        "operationId": "SubscribeHtlcEvents",
+        "operationId": "Router_SubscribeHtlcEvents",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -32,7 +32,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -46,7 +46,7 @@
     "/v2/router/mc": {
       "get": {
         "summary": "QueryMissionControl exposes the internal mission control state to callers.\nIt is a development feature.",
-        "operationId": "QueryMissionControl",
+        "operationId": "Router_QueryMissionControl",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -55,7 +55,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -69,7 +69,7 @@
     "/v2/router/mc/probability/{from_node}/{to_node}/{amt_m_atoms}": {
       "get": {
         "summary": "QueryProbability returns the current success probability estimate for a\ngiven node pair and amount.",
-        "operationId": "QueryProbability",
+        "operationId": "Router_QueryProbability",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -78,7 +78,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -118,7 +118,7 @@
     "/v2/router/mc/reset": {
       "post": {
         "summary": "ResetMissionControl clears all mission control state and starts with a clean\nslate.",
-        "operationId": "ResetMissionControl",
+        "operationId": "Router_ResetMissionControl",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -127,7 +127,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -151,7 +151,7 @@
     "/v2/router/route": {
       "post": {
         "summary": "BuildRoute builds a fully specified route based on a list of hop public\nkeys. It retrieves the relevant channel policies from the graph in order to\ncalculate the correct fees and time locks.",
-        "operationId": "BuildRoute",
+        "operationId": "Router_BuildRoute",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -160,7 +160,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -184,7 +184,7 @@
     "/v2/router/route/estimatefee": {
       "post": {
         "summary": "EstimateRouteFee allows callers to obtain a lower bound w.r.t how much it\nmay cost to send an HTLC to the target end destination.",
-        "operationId": "EstimateRouteFee",
+        "operationId": "Router_EstimateRouteFee",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -193,7 +193,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -217,7 +217,7 @@
     "/v2/router/route/send": {
       "post": {
         "summary": "SendToRouteV2 attempts to make a payment via the specified route. This\nmethod differs from SendPayment in that it allows users to specify a full\nroute manually. This can be used for things like rebalancing, and atomic\nswaps.",
-        "operationId": "SendToRouteV2",
+        "operationId": "Router_SendToRouteV2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -226,7 +226,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -250,7 +250,7 @@
     "/v2/router/send": {
       "post": {
         "summary": "SendPaymentV2 attempts to route a payment described by the passed\nPaymentRequest to the final destination. The call returns a stream of\npayment updates.",
-        "operationId": "SendPaymentV2",
+        "operationId": "Router_SendPaymentV2",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -268,7 +268,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -292,7 +292,7 @@
     "/v2/router/track/{payment_hash}": {
       "get": {
         "summary": "TrackPaymentV2 returns an update stream for the payment identified by the\npayment hash.",
-        "operationId": "TrackPaymentV2",
+        "operationId": "Router_TrackPaymentV2",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -310,7 +310,7 @@
             }
           },
           "default": {
-            "description": "An unexpected error response",
+            "description": "An unexpected error response.",
             "schema": {
               "$ref": "#/definitions/runtimeError"
             }
@@ -330,8 +330,7 @@
             "description": "If set, only the final payment update is streamed back. Intermediate updates\nthat show which htlcs are still in flight are suppressed.",
             "in": "query",
             "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -585,7 +584,6 @@
         },
         "tlv_payload": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set to true, then this hop will be encoded using the new variable length\nTLV format. Note that if any custom tlv_records below are specified, then\nthis field MUST be set to true for them to be encoded properly."
         },
         "mpp_record": {
@@ -1298,7 +1296,6 @@
         },
         "allow_self_payment": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set, circular payments to self are permitted."
         },
         "dest_features": {
@@ -1315,7 +1312,6 @@
         },
         "no_inflight_updates": {
           "type": "boolean",
-          "format": "boolean",
           "description": "If set, only the final payment update is streamed back. Intermediate updates\nthat show which htlcs are still in flight are suppressed."
         }
       }
