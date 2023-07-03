@@ -143,7 +143,7 @@ func TestChangeDuringUpdate(t *testing.T) {
 
 		count++
 		return nil
-	})
+	}, func() {})
 
 	require.Nil(t, err)
 	require.Equal(t, count, 2)

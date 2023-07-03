@@ -25,7 +25,7 @@ func TestReadCursorEmptyInterval(t *testing.T) {
 		require.NotNil(t, b)
 
 		return nil
-	})
+	}, func() {})
 	require.NoError(t, err)
 
 	err = db.View(func(tx walletdb.ReadTx) error {
@@ -50,7 +50,7 @@ func TestReadCursorEmptyInterval(t *testing.T) {
 		require.Nil(t, v)
 
 		return nil
-	})
+	}, func() {})
 	require.NoError(t, err)
 }
 
@@ -79,7 +79,7 @@ func TestReadCursorNonEmptyInterval(t *testing.T) {
 			require.NoError(t, b.Put([]byte(kv.key), []byte(kv.val)))
 		}
 		return nil
-	})
+	}, func() {})
 
 	require.NoError(t, err)
 
@@ -126,7 +126,7 @@ func TestReadCursorNonEmptyInterval(t *testing.T) {
 		require.Nil(t, v)
 
 		return nil
-	})
+	}, func() {})
 
 	require.NoError(t, err)
 }
@@ -163,7 +163,7 @@ func TestReadWriteCursor(t *testing.T) {
 			require.NoError(t, err)
 		}
 		return nil
-	}))
+	}, func() {}))
 
 	err = db.Update(func(tx walletdb.ReadWriteTx) error {
 		b := tx.ReadWriteBucket([]byte("apple"))
@@ -277,7 +277,7 @@ func TestReadWriteCursor(t *testing.T) {
 		require.Equal(t, reverseKVs(expected), kvs)
 
 		return nil
-	})
+	}, func() {})
 
 	require.NoError(t, err)
 
@@ -321,7 +321,7 @@ func TestReadWriteCursorWithBucketAndValue(t *testing.T) {
 		require.NotNil(t, b2)
 
 		return nil
-	}))
+	}, func() {}))
 
 	err = db.View(func(tx walletdb.ReadTx) error {
 		b := tx.ReadBucket([]byte("apple"))
@@ -355,7 +355,7 @@ func TestReadWriteCursorWithBucketAndValue(t *testing.T) {
 		require.Equal(t, []byte("val"), v)
 
 		return nil
-	})
+	}, func() {})
 
 	require.NoError(t, err)
 

@@ -42,7 +42,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jrick/logrotate v1.0.0
 	github.com/kkdai/bstream v1.0.0
-	github.com/matheusd/etcd v0.5.0-alpha.5.0.20230215150709-cb359727eca4
+	github.com/matheusd/etcd v0.5.0-alpha.5.0.20230703143131-79b93c0cee87
 	github.com/matheusd/google-protobuf-protos v0.0.0-20200707194502-ef6ec5c2266f
 	github.com/matheusd/protobuf-hex-display v1.3.3-0.20201012153224-75fb8d4840f1
 	github.com/miekg/dns v1.1.53
