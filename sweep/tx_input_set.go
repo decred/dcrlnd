@@ -94,7 +94,7 @@ func newTxInputSet(wallet Wallet, feePerKB,
 	dustLimit := lnwallet.DustThresholdForRelayFee(relayFee)
 
 	state := txInputSetState{
-		weightEstimate: newWeightEstimator(),
+		sizeEstimate: newSizeEstimator(),
 	}
 
 	b := txInputSet{
@@ -106,7 +106,7 @@ func newTxInputSet(wallet Wallet, feePerKB,
 	}
 
 	// Add the sweep tx output to the size estimate.
-	b.sizeEstimate.AddP2PKHOutput()
+	b.sizeEstimate.addP2PKHOutput()
 
 	return &b
 }
@@ -144,7 +144,7 @@ func (t *txInputSet) addToState(inp input.Input, constraints addConstraints) *tx
 	s.inputTotal += value
 
 	// Recalculate the tx fee.
-	newSize := s.sizeEstimate.Size()
+	newSize := s.sizeEstimate.size()
 	fee := t.feePerKB.FeeForSize(int64(newSize))
 
 	// Calculate the new output value.

@@ -117,10 +117,10 @@ func generateInputPartitionings(sweepableInputs []txInput,
 		}
 
 		log.Infof("Candidate sweep set of size=%v (+%v wallet inputs), "+
-			"has yield=%v, weight=%v",
+			"has yield=%v, size=%v",
 			inputCount, len(txInputs.inputs)-inputCount,
 			txInputs.outputValue-txInputs.walletInputTotal,
-			txInputs.sizeEstimate.Size())
+			txInputs.sizeEstimate.size())
 
 		sets = append(sets, txInputs.inputs)
 		sweepableInputs = sweepableInputs[inputCount:]
@@ -227,7 +227,7 @@ func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
 
 	// Our sweep transaction will pay to a single p2pkh address,
 	// ensure it contributes to our size estimate.
-	sizeEstimate.AddP2PKHOutput()
+	sizeEstimate.addP2PKHOutput()
 
 	// For each output, use its witness type to determine the estimate
 	// size of its witness, and add it to the proper set of spendable
@@ -248,7 +248,7 @@ func getSizeEstimate(inputs []input.Input) ([]input.Input, int64) {
 		sweepInputs = append(sweepInputs, inp)
 	}
 
-	return sweepInputs, int64(sizeEstimate.Size())
+	return sweepInputs, int64(sizeEstimate.size())
 }
 
 // inputSummary returns a string containing a human readable summary about the
