@@ -3,7 +3,6 @@ package channeldb
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -101,8 +100,12 @@ func (d *DB) ReadFlapCount(pubkey route.Vertex) (*FlapCount, error) {
 
 		flapBytes := peerBucket.Get(flapCountKey)
 		if flapBytes == nil {
-			return fmt.Errorf("flap count not recorded for: %v",
-				pubkey)
+			// Note(decred): in lnd this returns an opaque error,
+			// but we may have entries in the peersBucket that
+			// may not have a set flapCountKey, so return the same
+			// error that flags that the info does not exist for
+			// this peer.
+			return ErrNoPeerBucket
 		}
 
 		var (
