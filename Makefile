@@ -1,9 +1,4 @@
-# This is currently changed to use the local dir (.) as package instead of
-# github.com/decred/dcrlnd so that makefile actions (such as running integration
-# tests) are executed against the local dir (possibly with local changes)
-# instead of trying to execute them against the official repo module's.
-#PKG := github.com/decred/dcrlnd
-PKG := .
+PKG := github.com/decred/dcrlnd
 FULLPKG := github.com/decred/dcrlnd
 ESCPKG := github.com\/decred\/dcrlnd
 
