@@ -14,7 +14,7 @@ build_protoc_gen_go() {
 
 generate() {
 
-    GGWVERSION=$(go list -m all | grep "github.com/grpc-ecosystem/grpc-gateway" | sed 's/ /@/' -)
+    GGWVERSION=$(go list -m all | grep "github.com/grpc-ecosystem/grpc-gateway " | sed 's/ /@/' -)
     PROTOSVERSION=$(go list -m all | grep "github.com/matheusd/google-protobuf-protos" | sed 's/ /@/' -)
     GOOGAPIS="$GOPATH/pkg/mod/$GGWVERSION/third_party/googleapis"
     PROTOBUFAPIS="$GOPATH/pkg/mod/$PROTOSVERSION"
