@@ -346,7 +346,6 @@ func DefaultConfig() Config {
 		TimeLockDelta:     DefaultDecredTimeLockDelta,
 		Node:              "dcrd",
 		DcrdMode: &lncfg.DcrdConfig{
-			Dir:     defaultDcrdDir,
 			RPCHost: defaultRPCHost,
 			RPCCert: defaultDcrdRPCCertFile,
 		},
@@ -571,7 +570,6 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	cfg.ReadMacPath = CleanAndExpandPath(cfg.ReadMacPath)
 	cfg.InvoiceMacPath = CleanAndExpandPath(cfg.InvoiceMacPath)
 	cfg.LogDir = CleanAndExpandPath(cfg.LogDir)
-	cfg.DcrdMode.Dir = CleanAndExpandPath(cfg.DcrdMode.Dir)
 	cfg.Tor.PrivateKeyPath = CleanAndExpandPath(cfg.Tor.PrivateKeyPath)
 	cfg.Tor.WatchtowerKeyPath = CleanAndExpandPath(cfg.Tor.WatchtowerKeyPath)
 	cfg.Watchtower.TowerDir = CleanAndExpandPath(cfg.Watchtower.TowerDir)
@@ -1209,7 +1207,6 @@ func parseRPCParams(nodeConfig interface{}, net chainCode,
 		switch net {
 		case decredChain:
 			daemonName = "dcrd"
-			confDir = conf.Dir
 			confFile = "dcrd"
 		}
 
