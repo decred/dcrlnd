@@ -1,5 +1,5 @@
-//go:build dcrd
-// +build dcrd
+//go:build !spv
+// +build !spv
 
 package lntest
 
