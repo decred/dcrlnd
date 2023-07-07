@@ -456,7 +456,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// When we create the chain control, we need storage for the height
 	// hints and also the wallet itself, for these two we want them to be
 	// replicated, so we'll pass in the remote channel DB instance.
-	chainControlConfig := &chainreg.Config{
+	ChainControlConfig := &chainreg.Config{
 		Decred:                      cfg.Decred,
 		PrimaryChain:                cfg.registeredChains.PrimaryChain,
 		HeightHintCacheQueryDisable: cfg.HeightHintCacheQueryDisable,
@@ -475,7 +475,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		ActiveNetParams:             cfg.ActiveNetParams,
 		FeeURL:                      cfg.FeeURL,
 	}
-	activeChainControl, err := newChainControl(chainControlConfig)
+	activeChainControl, err := NewChainControl(ChainControlConfig)
 	if err != nil {
 		err := fmt.Errorf("unable to create chain control: %v", err)
 		ltndLog.Error(err)
@@ -490,7 +490,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// startup (mainly, slip0044 upgrade, account and address discovery) which
 	// may deadlock if we try to start using it to (e.g.) derive the node's id
 	// private key before the wallet is fully synced for the first time.
-	_, bestHeight, err := activeChainControl.chainIO.GetBestBlock()
+	_, bestHeight, err := activeChainControl.ChainIO.GetBestBlock()
 	if err != nil {
 		return err
 	}
@@ -505,7 +505,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		return err
 	}
 
-	_, bestHeight, err = activeChainControl.chainIO.GetBestBlock()
+	_, bestHeight, err = activeChainControl.ChainIO.GetBestBlock()
 	if err != nil {
 		return err
 	}
@@ -520,7 +520,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	cfg.registeredChains.RegisterChain(primaryChain, activeChainControl)
 
 	// TODO(roasbeef): add rotation
-	idKeyDesc, err := activeChainControl.keyRing.DeriveKey(
+	idKeyDesc, err := activeChainControl.KeyRing.DeriveKey(
 		keychain.KeyLocator{
 			Family: keychain.KeyFamilyNodeKey,
 			Index:  0,
@@ -593,7 +593,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		}
 		defer towerDB.Close()
 
-		towerKeyDesc, err := activeChainControl.keyRing.DeriveKey(
+		towerKeyDesc, err := activeChainControl.KeyRing.DeriveKey(
 			keychain.KeyLocator{
 				Family: keychain.KeyFamilyTowerID,
 				Index:  0,
@@ -607,20 +607,20 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 
 		wtCfg := &watchtower.Config{
 			NetParams:      cfg.ActiveNetParams.Params,
-			BlockFetcher:   activeChainControl.chainIO,
+			BlockFetcher:   activeChainControl.ChainIO,
 			DB:             towerDB,
-			EpochRegistrar: activeChainControl.chainNotifier,
+			EpochRegistrar: activeChainControl.ChainNotifier,
 			Net:            cfg.net,
 			NewAddress: func() (stdaddr.Address, error) {
-				return activeChainControl.wallet.NewAddress(
+				return activeChainControl.Wallet.NewAddress(
 					lnwallet.WitnessPubKey, false,
 					lnwallet.DefaultAccountName,
 				)
 			},
 			NodeKeyECDH: keychain.NewPubKeyECDH(
-				towerKeyDesc, activeChainControl.keyRing,
+				towerKeyDesc, activeChainControl.KeyRing,
 			),
-			PublishTx: activeChainControl.wallet.PublishTransaction,
+			PublishTx: activeChainControl.Wallet.PublishTransaction,
 			ChainHash: cfg.ActiveNetParams.GenesisHash,
 		}
 

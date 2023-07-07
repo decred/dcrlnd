@@ -89,7 +89,7 @@ func (c *chanController) OpenChannel(target *secp256k1.PublicKey,
 
 	// With the connection established, we'll now establish our connection
 	// to the target peer, waiting for the first update before we exit.
-	feePerKB, err := c.server.cc.feeEstimator.EstimateFeePerKB(
+	feePerKB, err := c.server.cc.FeeEstimator.EstimateFeePerKB(
 		c.confTarget,
 	)
 	if err != nil {
@@ -180,7 +180,7 @@ func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
 			netParams:     netParams,
 		},
 		WalletBalance: func() (dcrutil.Amount, error) {
-			return svr.cc.wallet.ConfirmedBalance(
+			return svr.cc.Wallet.ConfirmedBalance(
 				cfg.MinConfs, lnwallet.DefaultAccountName,
 			)
 		},
@@ -293,7 +293,7 @@ func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
 				Node:    autopilot.NewNodeID(channel.IdentityPub),
 			}, nil
 		},
-		SubscribeTransactions: svr.cc.wallet.SubscribeTransactions,
+		SubscribeTransactions: svr.cc.Wallet.SubscribeTransactions,
 		SubscribeTopology:     svr.chanRouter.SubscribeTopology,
 	}, nil
 }

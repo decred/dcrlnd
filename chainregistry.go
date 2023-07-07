@@ -107,54 +107,67 @@ func checkDcrdNode(wantNet wire.CurrencyNet, rpcConfig rpcclient.ConnConfig) err
 	return nil
 }
 
-// chainControl couples the three primary interfaces lnd utilizes for a
-// particular chain together. A single chainControl instance will exist for all
+// ChainControl couples the three primary interfaces lnd utilizes for a
+// particular chain together. A single ChainControl instance will exist for all
 // the chains lnd is currently active on.
-type chainControl struct {
-	chainIO lnwallet.BlockChainIO
+type ChainControl struct {
+	// ChainIO represents an abstraction over a source that can query the blockchain.
+	ChainIO lnwallet.BlockChainIO
 
-	feeEstimator chainfee.Estimator
+	// FeeEstimator is used to estimate an optimal fee for transactions important to us.
+	FeeEstimator chainfee.Estimator
 
-	signer input.Signer
+	// Signer is used to provide signatures over things like transactions.
+	Signer input.Signer
 
-	keyRing keychain.SecretKeyRing
+	// KeyRing represents a set of keys that we have the private keys to.
+	KeyRing keychain.SecretKeyRing
 
-	wc lnwallet.WalletController
+	// Wc is an abstraction over some basic wallet commands. This base set of commands
+	// will be provided to the Wallet *LightningWallet raw pointer below.
+	Wc lnwallet.WalletController
 
-	msgSigner lnwallet.MessageSigner
+	// MsgSigner is used to sign arbitrary messages.
+	MsgSigner lnwallet.MessageSigner
 
-	chainNotifier chainntnfs.ChainNotifier
+	// ChainNotifier is used to receive blockchain events that we are interested in.
+	ChainNotifier chainntnfs.ChainNotifier
 
-	chainView chainview.FilteredChainView
+	// ChainView is used in the router for maintaining an up-to-date graph.
+	ChainView chainview.FilteredChainView
 
-	wallet *lnwallet.LightningWallet
+	// Wallet is our LightningWallet that also contains the abstract Wc above. This wallet
+	// handles all of the lightning operations.
+	Wallet *lnwallet.LightningWallet
 
-	routingPolicy htlcswitch.ForwardingPolicy
+	// RoutingPolicy is the routing policy we have decided to use.
+	RoutingPolicy htlcswitch.ForwardingPolicy
 
-	minHtlcIn lnwire.MilliAtom
+	// MinHtlcIn is the minimum HTLC we will accept.
+	MinHtlcIn lnwire.MilliAtom
 }
 
-// newChainControl attempts to create a chainControl instance according to the
+// NewChainControl attempts to create a ChainControl instance according to the
 // parameters in the passed configuration.
-func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
+func NewChainControl(cfg *chainreg.Config) (*ChainControl, error) {
 
 	// Set the RPC config from the "home" chain. Multi-chain isn't yet
 	// active, so we'll restrict usage to a particular chain for now.
 	ltndLog.Infof("Primary chain is set to: %v",
 		cfg.PrimaryChain())
 
-	cc := &chainControl{}
+	cc := &ChainControl{}
 
 	switch cfg.PrimaryChain() {
 	case chainreg.DecredChain:
-		cc.routingPolicy = htlcswitch.ForwardingPolicy{
+		cc.RoutingPolicy = htlcswitch.ForwardingPolicy{
 			MinHTLCOut:    cfg.Decred.MinHTLCOut,
 			BaseFee:       cfg.Decred.BaseFee,
 			FeeRate:       cfg.Decred.FeeRate,
 			TimeLockDelta: cfg.Decred.TimeLockDelta,
 		}
-		cc.minHtlcIn = cfg.Decred.MinHTLCIn
-		cc.feeEstimator = chainfee.NewStaticEstimator(
+		cc.MinHtlcIn = cfg.Decred.MinHTLCIn
+		cc.FeeEstimator = chainfee.NewStaticEstimator(
 			DefaultDecredStaticFeePerKB,
 			DefaultDecredStaticMinRelayFeeRate,
 		)
@@ -278,7 +291,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 			DB:            cfg.RemoteChanDB,
 			Conn:          cfg.WalletConn,
 			AccountNumber: cfg.WalletAccountNb,
-			ChainIO:       cc.chainIO,
+			ChainIO:       cc.ChainIO,
 		}
 
 		wc, err := remotedcrwallet.New(*dcrwConfig)
@@ -289,25 +302,25 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 
 		// Remote wallet mode currently always use the wallet for chain
 		// notifications and chain IO.
-		cc.chainNotifier, err = remotedcrwnotify.New(
+		cc.ChainNotifier, err = remotedcrwnotify.New(
 			cfg.WalletConn, cfg.ActiveNetParams.Params, hintCache, hintCache,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		cc.chainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn)
+		cc.ChainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn)
 		if err != nil {
 			srvrLog.Errorf("unable to create chain view: %v", err)
 			return nil, err
 		}
 
 		secretKeyRing = wc
-		cc.msgSigner = wc
-		cc.signer = wc
-		cc.wc = wc
-		cc.keyRing = wc
-		cc.chainIO = wc
+		cc.MsgSigner = wc
+		cc.Signer = wc
+		cc.Wc = wc
+		cc.KeyRing = wc
+		cc.ChainIO = wc
 
 	default:
 		// Initialize the appropriate syncer.
@@ -332,7 +345,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 
 		dcrwConfig := &dcrwallet.Config{
 			Syncer:         syncer,
-			ChainIO:        cc.chainIO,
+			ChainIO:        cc.ChainIO,
 			PrivatePass:    cfg.PrivateWalletPw,
 			PublicPass:     cfg.PublicWalletPw,
 			Birthday:       cfg.Birthday,
@@ -357,26 +370,26 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 			// Use the wallet itself for chain IO.
 			srvrLog.Info("Using the wallet for chain operations")
 
-			cc.chainNotifier, err = dcrwnotify.New(
+			cc.ChainNotifier, err = dcrwnotify.New(
 				wc.InternalWallet(), cfg.ActiveNetParams.Params, hintCache, hintCache,
 			)
 			if err != nil {
 				return nil, err
 			}
 
-			cc.chainView, err = chainview.NewDcrwalletFilteredChainView(wc.InternalWallet())
+			cc.ChainView, err = chainview.NewDcrwalletFilteredChainView(wc.InternalWallet())
 			if err != nil {
 				srvrLog.Errorf("unable to create chain view: %v", err)
 				return nil, err
 			}
 
-			cc.chainIO = wc
+			cc.ChainIO = wc
 
 		case "dcrd":
 			// Use the dcrd node for chain IO.
 			srvrLog.Info("Using dcrd for chain operations")
 
-			cc.chainNotifier, err = dcrdnotify.New(
+			cc.ChainNotifier, err = dcrdnotify.New(
 				rpcConfig, cfg.ActiveNetParams.Params, hintCache, hintCache,
 			)
 			if err != nil {
@@ -385,13 +398,13 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 
 			// Finally, we'll create an instance of the default
 			// chain view to be used within the routing layer.
-			cc.chainView, err = chainview.NewDcrdFilteredChainView(*rpcConfig)
+			cc.ChainView, err = chainview.NewDcrdFilteredChainView(*rpcConfig)
 			if err != nil {
 				srvrLog.Errorf("unable to create chain view: %v", err)
 				return nil, err
 			}
 
-			cc.chainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig, cfg.ActiveNetParams.Params)
+			cc.ChainIO, err = dcrwallet.NewRPCChainIO(*rpcConfig, cfg.ActiveNetParams.Params)
 			if err != nil {
 				return nil, err
 			}
@@ -409,7 +422,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 				// TODO(decred) Review if fallbackFeeRate should be higher than
 				// the default relay fee.
 				fallBackFeeRate := chainfee.AtomPerKByte(1e4)
-				cc.feeEstimator, err = chainfee.NewDcrdEstimator(
+				cc.FeeEstimator, err = chainfee.NewDcrdEstimator(
 					*rpcConfig, fallBackFeeRate,
 				)
 				if err != nil {
@@ -419,10 +432,10 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		}
 
 		secretKeyRing = wc
-		cc.msgSigner = wc
-		cc.signer = wc
-		cc.wc = wc
-		cc.keyRing = wc
+		cc.MsgSigner = wc
+		cc.Signer = wc
+		cc.Wc = wc
+		cc.KeyRing = wc
 	}
 
 	// Override default fee estimator if an external service is specified.
@@ -434,7 +447,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		ltndLog.Infof("Using external fee estimator %v: cached=%v",
 			cfg.FeeURL, cacheFees)
 
-		cc.feeEstimator = chainfee.NewWebAPIEstimator(
+		cc.FeeEstimator = chainfee.NewWebAPIEstimator(
 			chainfee.SparseConfFeeSource{
 				URL: cfg.FeeURL,
 			},
@@ -443,7 +456,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 	}
 
 	// Start the fee estimator.
-	if err := cc.feeEstimator.Start(); err != nil {
+	if err := cc.FeeEstimator.Start(); err != nil {
 		return nil, err
 	}
 
@@ -454,12 +467,12 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 	// channel logic, and exposes control via proxy state machines.
 	walletCfg := lnwallet.Config{
 		Database:           cfg.RemoteChanDB,
-		Notifier:           cc.chainNotifier,
-		WalletController:   cc.wc,
-		Signer:             cc.signer,
-		FeeEstimator:       cc.feeEstimator,
+		Notifier:           cc.ChainNotifier,
+		WalletController:   cc.Wc,
+		Signer:             cc.Signer,
+		FeeEstimator:       cc.FeeEstimator,
 		SecretKeyRing:      secretKeyRing,
-		ChainIO:            cc.chainIO,
+		ChainIO:            cc.ChainIO,
 		DefaultConstraints: channelConstraints,
 		NetParams:          *cfg.ActiveNetParams.Params,
 	}
@@ -475,7 +488,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 
 	ltndLog.Info("LightningWallet opened")
 
-	cc.wallet = lnWallet
+	cc.Wallet = lnWallet
 
 	return cc, nil
 }
@@ -526,44 +539,44 @@ var (
 	}
 )
 
-// chainRegistry keeps track of the current chains
-type chainRegistry struct {
+// ChainRegistry keeps track of the current chains
+type ChainRegistry struct {
 	sync.RWMutex
 
-	activeChains map[chainreg.ChainCode]*chainControl
+	activeChains map[chainreg.ChainCode]*ChainControl
 	netParams    map[chainreg.ChainCode]*chainreg.DecredNetParams
 
 	primaryChain chainreg.ChainCode
 }
 
-// newChainRegistry creates a new chainRegistry.
-func newChainRegistry() *chainRegistry {
-	return &chainRegistry{
-		activeChains: make(map[chainreg.ChainCode]*chainControl),
+// newChainRegistry creates a new ChainRegistry.
+func newChainRegistry() *ChainRegistry {
+	return &ChainRegistry{
+		activeChains: make(map[chainreg.ChainCode]*ChainControl),
 		netParams:    make(map[chainreg.ChainCode]*chainreg.DecredNetParams),
 	}
 }
 
-// RegisterChain assigns an active chainControl instance to a target chain
+// RegisterChain assigns an active ChainControl instance to a target chain
 // identified by its chainreg.ChainCode.
-func (c *chainRegistry) RegisterChain(newChain chainreg.ChainCode, cc *chainControl) {
+func (c *ChainRegistry) RegisterChain(newChain chainreg.ChainCode, cc *ChainControl) {
 	c.Lock()
 	c.activeChains[newChain] = cc
 	c.Unlock()
 }
 
-// LookupChain attempts to lookup an active chainControl instance for the
+// LookupChain attempts to lookup an active ChainControl instance for the
 // target chain.
-func (c *chainRegistry) LookupChain(targetChain chainreg.ChainCode) (*chainControl, bool) {
+func (c *ChainRegistry) LookupChain(targetChain chainreg.ChainCode) (*ChainControl, bool) {
 	c.RLock()
 	cc, ok := c.activeChains[targetChain]
 	c.RUnlock()
 	return cc, ok
 }
 
-// LookupChainByHash attempts to look up an active chainControl which
+// LookupChainByHash attempts to look up an active ChainControl which
 // corresponds to the passed genesis hash.
-func (c *chainRegistry) LookupChainByHash(chainHash chainhash.Hash) (*chainControl, bool) {
+func (c *ChainRegistry) LookupChainByHash(chainHash chainhash.Hash) (*ChainControl, bool) {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -577,7 +590,7 @@ func (c *chainRegistry) LookupChainByHash(chainHash chainhash.Hash) (*chainContr
 }
 
 // RegisterPrimaryChain sets a target chain as the "home chain" for lnd.
-func (c *chainRegistry) RegisterPrimaryChain(cc chainreg.ChainCode) {
+func (c *ChainRegistry) RegisterPrimaryChain(cc chainreg.ChainCode) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -587,7 +600,7 @@ func (c *chainRegistry) RegisterPrimaryChain(cc chainreg.ChainCode) {
 // PrimaryChain returns the primary chain for this running lnd instance. The
 // primary chain is considered the "home base" while the other registered
 // chains are treated as secondary chains.
-func (c *chainRegistry) PrimaryChain() chainreg.ChainCode {
+func (c *ChainRegistry) PrimaryChain() chainreg.ChainCode {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -595,7 +608,7 @@ func (c *chainRegistry) PrimaryChain() chainreg.ChainCode {
 }
 
 // ActiveChains returns a slice containing the active chains.
-func (c *chainRegistry) ActiveChains() []chainreg.ChainCode {
+func (c *ChainRegistry) ActiveChains() []chainreg.ChainCode {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -608,7 +621,7 @@ func (c *chainRegistry) ActiveChains() []chainreg.ChainCode {
 }
 
 // NumActiveChains returns the total number of active chains.
-func (c *chainRegistry) NumActiveChains() uint32 {
+func (c *ChainRegistry) NumActiveChains() uint32 {
 	c.RLock()
 	defer c.RUnlock()
 

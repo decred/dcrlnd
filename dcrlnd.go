@@ -15,7 +15,7 @@ var errShutdownRequested = errors.New("shutdown requested")
 // waitForInitialChainSync waits until the initial chain sync is completed
 // before returning. It creates a gRPC service to listen to requests to provide
 // the sync progress.
-func waitForInitialChainSync(activeChainControl *chainControl,
+func waitForInitialChainSync(activeChainControl *ChainControl,
 	serverOpts []grpc.ServerOption, getListeners rpcListeners) error {
 
 	// Start a gRPC server listening for HTTP/2 connections, solely used
@@ -43,7 +43,7 @@ func waitForInitialChainSync(activeChainControl *chainControl,
 		grpcServer.GracefulStop()
 	}()
 
-	svc := initchainsyncrpc.New(activeChainControl.wallet)
+	svc := initchainsyncrpc.New(activeChainControl.Wallet)
 	initchainsyncrpc.RegisterInitialChainSyncServer(grpcServer, svc)
 
 	// wg marks when all listeners have started.
@@ -69,7 +69,7 @@ func waitForInitialChainSync(activeChainControl *chainControl,
 	select {
 	case <-signal.ShutdownChannel():
 		return errShutdownRequested
-	case <-activeChainControl.wallet.InitialSyncChannel():
+	case <-activeChainControl.Wallet.InitialSyncChannel():
 	}
 
 	return nil
