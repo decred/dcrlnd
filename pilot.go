@@ -9,6 +9,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/autopilot"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -77,7 +78,7 @@ type chanController struct {
 	minConfs      int32
 	confTarget    uint32
 	chanMinHtlcIn lnwire.MilliAtom
-	netParams     decredNetParams
+	netParams     chainreg.DecredNetParams
 }
 
 // OpenChannel opens a channel to a target peer, with a capacity of the
@@ -135,7 +136,7 @@ var _ autopilot.ChannelController = (*chanController)(nil)
 // interfaces needed to drive it won't be launched before the Manager's
 // StartAgent method is called.
 func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
-	c *Config, netParams decredNetParams) (*autopilot.ManagerCfg,
+	c *Config, netParams chainreg.DecredNetParams) (*autopilot.ManagerCfg,
 	error) {
 
 	atplLog.Infof("Instantiating autopilot with active=%v, "+

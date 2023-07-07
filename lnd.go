@@ -32,6 +32,7 @@ import (
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/cert"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/keychain"
@@ -455,12 +456,26 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// When we create the chain control, we need storage for the height
 	// hints and also the wallet itself, for these two we want them to be
 	// replicated, so we'll pass in the remote channel DB instance.
-	activeChainControl, err := newChainControlFromConfig(
-		cfg, localChanDB, remoteChanDB, privateWalletPw, publicWalletPw,
-		walletInitParams.Birthday, walletInitParams.RecoveryWindow,
-		walletInitParams.Wallet, walletInitParams.Loader,
-		walletInitParams.Conn, cfg.Dcrwallet.AccountNumber,
-	)
+	chainControlConfig := &chainreg.Config{
+		Decred:                      cfg.Decred,
+		PrimaryChain:                cfg.registeredChains.PrimaryChain,
+		HeightHintCacheQueryDisable: cfg.HeightHintCacheQueryDisable,
+		DcrdMode:                    cfg.DcrdMode,
+		DcrwMode:                    cfg.Dcrwallet,
+		LocalChanDB:                 localChanDB,
+		RemoteChanDB:                remoteChanDB,
+		PrivateWalletPw:             privateWalletPw,
+		PublicWalletPw:              publicWalletPw,
+		Birthday:                    walletInitParams.Birthday,
+		RecoveryWindow:              walletInitParams.RecoveryWindow,
+		WalletLoader:                walletInitParams.Loader,
+		Wallet:                      walletInitParams.Wallet,
+		WalletConn:                  walletInitParams.Conn,
+		WalletAccountNb:             cfg.Dcrwallet.AccountNumber,
+		ActiveNetParams:             cfg.ActiveNetParams,
+		FeeURL:                      cfg.FeeURL,
+	}
+	activeChainControl, err := newChainControl(chainControlConfig)
 	if err != nil {
 		err := fmt.Errorf("unable to create chain control: %v", err)
 		ltndLog.Error(err)

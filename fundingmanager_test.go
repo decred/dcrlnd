@@ -26,6 +26,7 @@ import (
 	"github.com/decred/dcrd/wire"
 
 	"github.com/decred/dcrlnd/chainntnfs"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chainscan"
 	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/channeldb"
@@ -106,7 +107,7 @@ var (
 		modNScalar(sBytes),
 	)
 
-	fundingNetParams = decredTestNetParams
+	fundingNetParams = chainreg.DecredTestNetParams
 )
 
 type mockNotifier struct {

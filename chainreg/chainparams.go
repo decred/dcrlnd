@@ -10,42 +10,42 @@ import (
 // corresponding RPC port of a daemon running on the particular network.
 type DecredNetParams struct {
 	*chaincfg.Params
-	rpcPort  string
+	RPCPort  string
 	CoinType uint32
-	dcrwPort string
+	DcrwPort string
 }
 
 // decredTestNetParams contains parameters specific to the 3rd version of the
 // test network.
 var DecredTestNetParams = DecredNetParams{
 	Params:   chaincfg.TestNet3Params(),
-	rpcPort:  "19109",
+	RPCPort:  "19109",
 	CoinType: keychain.CoinTypeTestnet,
-	dcrwPort: "19111",
+	DcrwPort: "19111",
 }
 
 // DecredMainNetParams contains parameters specific to the current Decred
 // mainnet.
 var DecredMainNetParams = DecredNetParams{
 	Params:   chaincfg.MainNetParams(),
-	rpcPort:  "9109",
+	RPCPort:  "9109",
 	CoinType: keychain.CoinTypeDecred,
-	dcrwPort: "9111",
+	DcrwPort: "9111",
 }
 
 // decredSimNetParams contains parameters specific to the simulation test
 // network.
 var DecredSimNetParams = DecredNetParams{
 	Params:   chaincfg.SimNetParams(),
-	rpcPort:  "19556",
+	RPCPort:  "19556",
 	CoinType: keychain.CoinTypeTestnet,
-	dcrwPort: "19558",
+	DcrwPort: "19558",
 }
 
 // regTestNetParams contains parameters specific to a local regtest network.
 var RegTestNetParams = DecredNetParams{
 	Params:   chaincfg.RegNetParams(),
-	rpcPort:  "19334",
+	RPCPort:  "19334",
 	CoinType: keychain.CoinTypeTestnet,
 }
 

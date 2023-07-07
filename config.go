@@ -310,7 +310,7 @@ type Config struct {
 	networkDir string
 
 	// ActiveNetParams contains parameters of the target chain.
-	ActiveNetParams decredNetParams
+	ActiveNetParams chainreg.DecredNetParams
 }
 
 // DefaultConfig returns all default values for the Config struct.
@@ -416,7 +416,7 @@ func DefaultConfig() Config {
 		LogWriter:               build.NewRotatingLogWriter(),
 		DB:                      lncfg.DefaultDB(),
 		registeredChains:        newChainRegistry(),
-		ActiveNetParams:         decredTestNetParams,
+		ActiveNetParams:         chainreg.DecredTestNetParams,
 	}
 }
 
@@ -780,15 +780,15 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	numNets := 0
 	if cfg.Decred.TestNet3 {
 		numNets++
-		cfg.ActiveNetParams = decredTestNetParams
+		cfg.ActiveNetParams = chainreg.DecredTestNetParams
 	}
 	if cfg.Decred.RegTest {
 		numNets++
-		cfg.ActiveNetParams = regTestNetParams
+		cfg.ActiveNetParams = chainreg.RegTestNetParams
 	}
 	if cfg.Decred.SimNet {
 		numNets++
-		cfg.ActiveNetParams = decredSimNetParams
+		cfg.ActiveNetParams = chainreg.DecredSimNetParams
 	}
 	if numNets > 1 {
 		str := "%s: The testnet, regtest, and simnet params" +
@@ -799,7 +799,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 
 	// We default to mainnet if none are specified.
 	if numNets == 0 {
-		cfg.ActiveNetParams = decredMainNetParams
+		cfg.ActiveNetParams = chainreg.DecredMainNetParams
 	}
 
 	if cfg.Decred.TimeLockDelta < minTimeLockDelta {
@@ -839,7 +839,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		if err != nil {
 			cfg.Dcrwallet.GRPCHost = net.JoinHostPort(
 				cfg.Dcrwallet.GRPCHost,
-				cfg.ActiveNetParams.dcrwPort,
+				cfg.ActiveNetParams.DcrwPort,
 			)
 		}
 

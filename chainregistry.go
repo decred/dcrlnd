@@ -13,6 +13,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/rpcclient/v8"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 	"github.com/decred/dcrlnd/chainntnfs/dcrwnotify"
@@ -78,7 +79,7 @@ var defaultDcrChannelConstraints = channeldb.ChannelConstraints{
 // checkDcrdNode checks whether the dcrd node reachable using the provided
 // config is usable as source of chain information, given the requirements of a
 // dcrlnd node.
-func checkDcrdNode(cfg *Config, rpcConfig rpcclient.ConnConfig) error {
+func checkDcrdNode(wantNet wire.CurrencyNet, rpcConfig rpcclient.ConnConfig) error {
 	connectTimeout := 30 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
 	defer cancel()
@@ -101,7 +102,7 @@ func checkDcrdNode(cfg *Config, rpcConfig rpcclient.ConnConfig) error {
 	if err != nil {
 		return err
 	}
-	if net != cfg.ActiveNetParams.Params.Net {
+	if net != wantNet {
 		return fmt.Errorf("dcrd node network mismatch")
 	}
 
@@ -161,7 +162,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		)
 	default:
 		return nil, fmt.Errorf("default routing policy for chain %v is "+
-			"unknown", cfg.registeredChains.PrimaryChain())
+			"unknown", cfg.PrimaryChain())
 	}
 
 	var (
@@ -177,7 +178,9 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 	}
 
 	// Initialize the height hint cache within the chain directory.
-	hintCache, err := chainntnfs.NewHeightHintCache(heightHintCacheConfig, localDB)
+	hintCache, err := chainntnfs.NewHeightHintCache(
+		heightHintCacheConfig, cfg.LocalChanDB,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize height hint "+
 			"cache: %v", err)
@@ -185,21 +188,21 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 
 	// When running in remote wallet mode, we only support running in dcrw
 	// mode (using the wallet for chain operations).
-	if conn != nil && cfg.Decred.Node != "dcrw" {
+	if cfg.WalletConn != nil && cfg.Decred.Node != "dcrw" {
 		return nil, fmt.Errorf("remote wallet mode only supports " +
 			"'node=dcrw' config")
 	}
 
 	// When running in embedded wallet mode with spv on, we only support
 	// running in dcrw mode.
-	if conn == nil && cfg.Dcrwallet.SPV && cfg.Decred.Node != "dcrw" {
+	if cfg.WalletConn == nil && cfg.DcrwMode.SPV && cfg.Decred.Node != "dcrw" {
 		return nil, fmt.Errorf("embedded wallet in SPV mode only " +
 			"supports 'node=dcrw' config")
 	}
 
 	// We only require a dcrd connection when running in embedded mode and
 	// not in SPV mode.
-	needsDcrd := conn == nil && !cfg.Dcrwallet.SPV
+	needsDcrd := cfg.WalletConn == nil && !cfg.DcrwMode.SPV
 	if needsDcrd {
 		// Load dcrd's TLS cert for the RPC connection.  If a raw cert
 		// was specified in the config, then we'll set that directly.
@@ -235,7 +238,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 			dcrdHost = dcrdMode.RPCHost
 		} else {
 			dcrdHost = fmt.Sprintf("%v:%v", dcrdMode.RPCHost,
-				cfg.ActiveNetParams.rpcPort)
+				cfg.ActiveNetParams.RPCPort)
 		}
 
 		dcrdUser := dcrdMode.RPCUser
@@ -254,7 +257,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		// Verify that the provided dcrd instance exists, is reachable,
 		// it's on the correct network and has the features required
 		// for dcrlnd to perform its work.
-		if err = checkDcrdNode(cfg, *rpcConfig); err != nil {
+		if err = checkDcrdNode(cfg.ActiveNetParams.Net, *rpcConfig); err != nil {
 			srvrLog.Errorf("unable to use specified dcrd node: %v",
 				err)
 			return nil, err
@@ -266,17 +269,17 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 	// Initialize the appopriate wallet controller (either the embedded
 	// dcrwallet or a remote one).
 	switch {
-	case conn != nil:
+	case cfg.WalletConn != nil:
 		srvrLog.Info("Using the remote wallet for chain operations")
 
 		// Initialize an RPC syncer for this wallet and use it as
 		// blockchain IO source.
 		dcrwConfig := &remotedcrwallet.Config{
-			PrivatePass:   privateWalletPw,
+			PrivatePass:   cfg.PrivateWalletPw,
 			NetParams:     cfg.ActiveNetParams.Params,
-			DB:            remoteDB,
-			Conn:          conn,
-			AccountNumber: accountNumber,
+			DB:            cfg.RemoteChanDB,
+			Conn:          cfg.WalletConn,
+			AccountNumber: cfg.WalletAccountNb,
 			ChainIO:       cc.chainIO,
 		}
 
@@ -289,13 +292,13 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		// Remote wallet mode currently always use the wallet for chain
 		// notifications and chain IO.
 		cc.chainNotifier, err = remotedcrwnotify.New(
-			conn, cfg.ActiveNetParams.Params, hintCache, hintCache,
+			cfg.WalletConn, cfg.ActiveNetParams.Params, hintCache, hintCache,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		cc.chainView, err = chainview.NewRemoteWalletFilteredChainView(conn)
+		cc.chainView, err = chainview.NewRemoteWalletFilteredChainView(cfg.WalletConn)
 		if err != nil {
 			srvrLog.Errorf("unable to create chain view: %v", err)
 			return nil, err
@@ -311,16 +314,16 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 	default:
 		// Initialize the appropriate syncer.
 		var syncer dcrwallet.WalletSyncer
-		switch cfg.Dcrwallet.SPV {
+		switch cfg.DcrwMode.SPV {
 		case false:
 			syncer, err = dcrwallet.NewRPCSyncer(*rpcConfig,
 				cfg.ActiveNetParams.Params)
 		case true:
 			spvCfg := &dcrwallet.SPVSyncerConfig{
-				Peers:      cfg.Dcrwallet.SPVConnect,
+				Peers:      cfg.DcrwMode.SPVConnect,
 				Net:        cfg.ActiveNetParams.Params,
 				AppDataDir: filepath.Join(cfg.Decred.ChainDir),
-				DialFunc:   cfg.Dcrwallet.DialFunc,
+				DialFunc:   cfg.DcrwMode.DialFunc,
 			}
 			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
 		}
@@ -332,15 +335,15 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		dcrwConfig := &dcrwallet.Config{
 			Syncer:         syncer,
 			ChainIO:        cc.chainIO,
-			PrivatePass:    privateWalletPw,
-			PublicPass:     publicWalletPw,
-			Birthday:       birthday,
-			RecoveryWindow: recoveryWindow,
+			PrivatePass:    cfg.PrivateWalletPw,
+			PublicPass:     cfg.PublicWalletPw,
+			Birthday:       cfg.Birthday,
+			RecoveryWindow: cfg.RecoveryWindow,
 			DataDir:        cfg.Decred.ChainDir,
 			NetParams:      cfg.ActiveNetParams.Params,
-			Wallet:         wallet,
-			Loader:         loader,
-			DB:             remoteDB,
+			Wallet:         cfg.Wallet,
+			Loader:         cfg.WalletLoader,
+			DB:             cfg.RemoteChanDB,
 		}
 
 		wc, err := dcrwallet.New(*dcrwConfig)
@@ -452,7 +455,7 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 	// Create, and start the lnwallet, which handles the core payment
 	// channel logic, and exposes control via proxy state machines.
 	walletCfg := lnwallet.Config{
-		Database:           remoteDB,
+		Database:           cfg.RemoteChanDB,
 		Notifier:           cc.chainNotifier,
 		WalletController:   cc.wc,
 		Signer:             cc.signer,
@@ -530,7 +533,7 @@ type chainRegistry struct {
 	sync.RWMutex
 
 	activeChains map[chainreg.ChainCode]*chainControl
-	netParams    map[chainreg.ChainCode]*decredNetParams
+	netParams    map[chainreg.ChainCode]*chainreg.DecredNetParams
 
 	primaryChain chainreg.ChainCode
 }
@@ -539,7 +542,7 @@ type chainRegistry struct {
 func newChainRegistry() *chainRegistry {
 	return &chainRegistry{
 		activeChains: make(map[chainreg.ChainCode]*chainControl),
-		netParams:    make(map[chainreg.ChainCode]*decredNetParams),
+		netParams:    make(map[chainreg.ChainCode]*chainreg.DecredNetParams),
 	}
 }
 
