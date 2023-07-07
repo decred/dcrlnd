@@ -35,6 +35,7 @@ ITEST_LDFLAGS := -ldflags "-X $(PKG)/build.Commit=$(COMMIT)"
 # and omit the DWARF symbol table (-w). Also we clear the build ID.
 RELEASE_LDFLAGS := $(call make_ldflags, $(RELEASE_TAGS), -s -w -buildid=)
 
+DCRD_REPO := github.com/decred/dcrd
 DCRD_COMMIT := v1.8.0
 DCRD_META := "$(DCRD_COMMIT).from-dcrlnd"
 DCRD_LDFLAGS := "-X github.com/decred/dcrd/internal/version.BuildMetadata=$(DCRD_META)"
@@ -110,7 +111,7 @@ $(GOACC_BIN):
 
 dcrd:
 	@$(call print, "Installing dcrd $(DCRD_COMMIT).")
-	git clone https://github.com/decred/dcrd $(DCRD_TMPDIR)
+	git clone https://$(DCRD_REPO) $(DCRD_TMPDIR)
 	cd $(DCRD_TMPDIR) && \
 		git checkout $(DCRD_COMMIT) && \
 		GO111MODULE=on go build -o "$$GOPATH/bin/dcrd-dcrlnd" -ldflags $(DCRD_LDFLAGS) .
