@@ -210,7 +210,7 @@ func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainControl
 			subCfgValue.FieldByName("NodeSigner").Set(
 				reflect.ValueOf(nodeSigner),
 			)
-			defaultDelta := cfg.TimeLockDelta
+			defaultDelta := cfg.Decred.TimeLockDelta
 			subCfgValue.FieldByName("DefaultCLTVExpiry").Set(
 				reflect.ValueOf(defaultDelta),
 			)

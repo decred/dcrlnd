@@ -175,7 +175,7 @@ func initAutoPilot(svr *server, cfg *lncfg.AutoPilot,
 			private:       cfg.Private,
 			minConfs:      cfg.MinConfs,
 			confTarget:    cfg.ConfTarget,
-			chanMinHtlcIn: c.MinHTLCIn,
+			chanMinHtlcIn: c.Decred.MinHTLCIn,
 			netParams:     netParams,
 		},
 		WalletBalance: func() (dcrutil.Amount, error) {

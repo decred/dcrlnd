@@ -157,12 +157,12 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 	switch cfg.registeredChains.PrimaryChain() {
 	case chainreg.DecredChain:
 		cc.routingPolicy = htlcswitch.ForwardingPolicy{
-			MinHTLCOut:    cfg.MinHTLCOut,
-			BaseFee:       cfg.BaseFee,
-			FeeRate:       cfg.FeeRate,
-			TimeLockDelta: cfg.TimeLockDelta,
+			MinHTLCOut:    cfg.Decred.MinHTLCOut,
+			BaseFee:       cfg.Decred.BaseFee,
+			FeeRate:       cfg.Decred.FeeRate,
+			TimeLockDelta: cfg.Decred.TimeLockDelta,
 		}
-		cc.minHtlcIn = cfg.MinHTLCIn
+		cc.minHtlcIn = cfg.Decred.MinHTLCIn
 		cc.feeEstimator = chainfee.NewStaticEstimator(
 			defaultDecredStaticFeePerKB,
 			defaultDecredStaticMinRelayFeeRate,
@@ -193,14 +193,14 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 
 	// When running in remote wallet mode, we only support running in dcrw
 	// mode (using the wallet for chain operations).
-	if conn != nil && cfg.Node != "dcrw" {
+	if conn != nil && cfg.Decred.Node != "dcrw" {
 		return nil, fmt.Errorf("remote wallet mode only supports " +
 			"'node=dcrw' config")
 	}
 
 	// When running in embedded wallet mode with spv on, we only support
 	// running in dcrw mode.
-	if conn == nil && cfg.Dcrwallet.SPV && cfg.Node != "dcrw" {
+	if conn == nil && cfg.Dcrwallet.SPV && cfg.Decred.Node != "dcrw" {
 		return nil, fmt.Errorf("embedded wallet in SPV mode only " +
 			"supports 'node=dcrw' config")
 	}
@@ -327,7 +327,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			spvCfg := &dcrwallet.SPVSyncerConfig{
 				Peers:      cfg.Dcrwallet.SPVConnect,
 				Net:        cfg.ActiveNetParams.Params,
-				AppDataDir: filepath.Join(cfg.ChainDir),
+				AppDataDir: filepath.Join(cfg.Decred.ChainDir),
 				DialFunc:   cfg.Dcrwallet.DialFunc,
 			}
 			syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
@@ -344,7 +344,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 			PublicPass:     publicWalletPw,
 			Birthday:       birthday,
 			RecoveryWindow: recoveryWindow,
-			DataDir:        cfg.ChainDir,
+			DataDir:        cfg.Decred.ChainDir,
 			NetParams:      cfg.ActiveNetParams.Params,
 			Wallet:         wallet,
 			Loader:         loader,
@@ -359,7 +359,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 
 		// When running with an embedded wallet we can run in either
 		// dcrw or dcrd node modes.
-		switch cfg.Node {
+		switch cfg.Decred.Node {
 		case "dcrw":
 			// Use the wallet itself for chain IO.
 			srvrLog.Info("Using the wallet for chain operations")
@@ -405,7 +405,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 
 			// If we're not in simnet or regtest mode, then we'll
 			// attempt to use a proper fee estimator.
-			if !cfg.SimNet && !cfg.RegTest {
+			if !cfg.Decred.SimNet && !cfg.Decred.RegTest {
 				ltndLog.Infof("Initializing dcrd backed fee estimator")
 
 				// Finally, we'll re-initialize the fee estimator, as
@@ -436,7 +436,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 	if cfg.FeeURL != "" {
 		// Do not cache fees on regtest and simnet to make it easier to
 		// execute manual or automated test cases.
-		cacheFees := !cfg.RegTest && !cfg.SimNet
+		cacheFees := !cfg.Decred.RegTest && !cfg.Decred.SimNet
 
 		ltndLog.Infof("Using external fee estimator %v: cached=%v",
 			cfg.FeeURL, cacheFees)

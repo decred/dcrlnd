@@ -611,7 +611,7 @@ func newRPCServer(cfg *Config, s *server, macService *macaroons.Service,
 		ActiveNetParams:        cfg.ActiveNetParams.Params,
 		Tower:                  s.controlTower,
 		MaxTotalTimelock:       cfg.MaxOutgoingCltvExpiry,
-		DefaultFinalCltvDelta:  uint16(cfg.TimeLockDelta),
+		DefaultFinalCltvDelta:  uint16(cfg.Decred.TimeLockDelta),
 		SubscribeHtlcEvents:    s.htlcNotifier.SubscribeHtlcEvents,
 		InterceptableForwarder: s.interceptableSwitch,
 	}
@@ -4405,7 +4405,7 @@ func (r *rpcServer) extractPaymentIntent(rpcPayReq *rpcPaymentRequest) (rpcPayme
 		// use when creating an invoice. We do not assume the default of
 		// 9 blocks that is defined in BOLT-11, because this is never
 		// enough for other lnd nodes.
-		payIntent.cltvDelta = uint16(r.cfg.TimeLockDelta)
+		payIntent.cltvDelta = uint16(r.cfg.Decred.TimeLockDelta)
 	}
 
 	// If the user is manually specifying payment details, then the payment
@@ -5008,7 +5008,7 @@ func (r *rpcServer) AddInvoice(ctx context.Context,
 		return nil, err
 	}
 
-	defaultDelta := r.cfg.TimeLockDelta
+	defaultDelta := r.cfg.Decred.TimeLockDelta
 
 	addInvoiceCfg := &invoicesrpc.AddInvoiceConfig{
 		AddInvoice:        r.server.invoices.AddInvoice,

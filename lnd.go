@@ -219,13 +219,13 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	// We default to mainnet if none are specified.
 	network := "mainnet"
 	switch {
-	case cfg.TestNet3:
+	case cfg.Decred.TestNet3:
 		network = "testnet"
 
-	case cfg.SimNet:
+	case cfg.Decred.SimNet:
 		network = "simnet"
 
-	case cfg.RegTest:
+	case cfg.Decred.RegTest:
 		network = "regtest"
 	}
 
@@ -1056,7 +1056,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		cfg.AdminMacPath, cfg.ReadMacPath, cfg.InvoiceMacPath,
 	}
 	pwService := walletunlocker.New(
-		cfg.ChainDir, cfg.ActiveNetParams.Params, !cfg.SyncFreelist,
+		cfg.Decred.ChainDir, cfg.ActiveNetParams.Params, !cfg.SyncFreelist,
 		macaroonFiles, chanDB, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
 		cfg.Dcrwallet.ClientKeyPath, cfg.Dcrwallet.ClientCertPath,
 		cfg.Dcrwallet.AccountNumber,
@@ -1153,7 +1153,7 @@ func waitForWalletPassword(cfg *Config, restEndpoints []net.Addr,
 		}
 
 		netDir := dcrwallet.NetworkDir(
-			cfg.ChainDir, cfg.ActiveNetParams.Params,
+			cfg.Decred.ChainDir, cfg.ActiveNetParams.Params,
 		)
 		loader := walletloader.NewLoader(cfg.ActiveNetParams.Params, netDir,
 			wallet.DefaultGapLimit)

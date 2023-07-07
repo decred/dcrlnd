@@ -31,7 +31,6 @@ import (
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lnrpc/signrpc"
-	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing"
 	"github.com/decred/dcrlnd/tor"
 	flags "github.com/jessevdk/go-flags"
@@ -215,18 +214,7 @@ type Config struct {
 	MaxPendingChannels int    `long:"maxpendingchannels" description:"The maximum number of incoming pending channels permitted per peer."`
 	BackupFilePath     string `long:"backupfilepath" description:"The target location of the channel backup file"`
 
-	ChainDir            string           `long:"chaindir" description:"The directory to store the chain's data within."`
-	Node                string           `long:"node" description:"The blockchain interface to use." choice:"dcrd" choice:"dcrw"`
-	TestNet3            bool             `long:"testnet" description:"Use the test network"`
-	SimNet              bool             `long:"simnet" description:"Use the simulation test network"`
-	RegTest             bool             `long:"regtest" description:"Use the regression test network"`
-	DefaultNumChanConfs int              `long:"defaultchanconfs" description:"The default number of confirmations a channel must have before it's considered open. If this is not set, we will scale the value according to the channel size."`
-	DefaultRemoteDelay  int              `long:"defaultremotedelay" description:"The default number of blocks we will require our channel counterparty to wait before accessing its funds in case of unilateral close. If this is not set, we will scale the value according to the channel size."`
-	MinHTLCIn           lnwire.MilliAtom `long:"minhtlc" description:"The smallest HTLC we are willing to accept on our channels, in MilliAtoms"`
-	MinHTLCOut          lnwire.MilliAtom `long:"minhtlcout" description:"The smallest HTLC we are willing to send out on our channels, in MilliAtoms"`
-	BaseFee             lnwire.MilliAtom `long:"basefee" description:"The base fee in MilliAtom we will charge for forwarding payments on our channels"`
-	FeeRate             lnwire.MilliAtom `long:"feerate" description:"The fee rate used when forwarding payments on our channels. The total fee charged is basefee + (amount * feerate / 1000000), where amount is the forwarded amount."`
-	TimeLockDelta       uint32           `long:"timelockdelta" description:"The CLTV delta we will subtract from a forwarded HTLC's timelock value"`
+	Decred *lncfg.Chain
 
 	FeeURL string `long:"feeurl" description:"Optional URL for external fee estimation. If no URL is specified, the method for fee estimation will depend on the chosen backend and network."`
 
@@ -340,12 +328,14 @@ func DefaultConfig() Config {
 		MaxLogFiles:       defaultMaxLogFiles,
 		MaxLogFileSize:    defaultMaxLogFileSize,
 		AcceptorTimeout:   defaultAcceptorTimeout,
-		MinHTLCIn:         defaultDecredMinHTLCInMAtoms,
-		MinHTLCOut:        defaultDecredMinHTLCOutMAtoms,
-		BaseFee:           DefaultDecredBaseFeeMAtoms,
-		FeeRate:           DefaultDecredFeeRate,
-		TimeLockDelta:     DefaultDecredTimeLockDelta,
-		Node:              "dcrd",
+		Decred: &lncfg.Chain{
+			MinHTLCIn:     defaultDecredMinHTLCInMAtoms,
+			MinHTLCOut:    defaultDecredMinHTLCOutMAtoms,
+			BaseFee:       DefaultDecredBaseFeeMAtoms,
+			FeeRate:       DefaultDecredFeeRate,
+			TimeLockDelta: DefaultDecredTimeLockDelta,
+			Node:          "dcrd",
+		},
 		DcrdMode: &lncfg.DcrdConfig{
 			RPCHost: defaultRPCHost,
 			RPCCert: defaultDcrdRPCCertFile,
@@ -788,15 +778,15 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	// network flags passed; assign active network params while we're at
 	// it.
 	numNets := 0
-	if cfg.TestNet3 {
+	if cfg.Decred.TestNet3 {
 		numNets++
 		cfg.ActiveNetParams = decredTestNetParams
 	}
-	if cfg.RegTest {
+	if cfg.Decred.RegTest {
 		numNets++
 		cfg.ActiveNetParams = regTestNetParams
 	}
-	if cfg.SimNet {
+	if cfg.Decred.SimNet {
 		numNets++
 		cfg.ActiveNetParams = decredSimNetParams
 	}
@@ -812,16 +802,16 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		cfg.ActiveNetParams = decredMainNetParams
 	}
 
-	if cfg.TimeLockDelta < minTimeLockDelta {
+	if cfg.Decred.TimeLockDelta < minTimeLockDelta {
 		return nil, fmt.Errorf("timelockdelta must be at least %v",
 			minTimeLockDelta)
 	}
 
-	switch cfg.Node {
+	switch cfg.Decred.Node {
 	case "dcrd":
 		err := parseRPCParams(
-			cfg.DcrdMode, chainreg.DecredChain, cfg.SimNet,
-			cfg.Node, funcName,
+			cfg.DcrdMode, chainreg.DecredChain, cfg.Decred.SimNet,
+			cfg.Decred.Node, funcName,
 		)
 		if err != nil {
 			err := fmt.Errorf("unable to load RPC "+
@@ -837,7 +827,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		return nil, fmt.Errorf(str, funcName)
 	}
 
-	cfg.ChainDir = filepath.Join(cfg.DataDir,
+	cfg.Decred.ChainDir = filepath.Join(cfg.DataDir,
 		defaultChainSubDirname,
 		chainreg.DecredChain.String())
 
