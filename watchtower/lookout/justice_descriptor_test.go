@@ -254,7 +254,7 @@ func testJusticeDescriptor(t *testing.T, blobType blob.Type) {
 	}
 
 	outputs, err := policy.ComputeJusticeTxOuts(
-		totalAmount, int64(txSize), justiceKit.SweepAddress,
+		totalAmount, txSize, justiceKit.SweepAddress,
 		sessionInfo.RewardAddress,
 	)
 	require.Nil(t, err)

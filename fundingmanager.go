@@ -1237,7 +1237,7 @@ func (f *fundingManager) handleFundingOpen(peer lnpeer.Peer,
 	if amt < f.cfg.MinChanSize {
 		f.failFundingFlow(
 			peer, msg.PendingChannelID,
-			lnwallet.ErrChanTooSmall(amt, dcrutil.Amount(f.cfg.MinChanSize)),
+			lnwallet.ErrChanTooSmall(amt, f.cfg.MinChanSize),
 		)
 		return
 	}

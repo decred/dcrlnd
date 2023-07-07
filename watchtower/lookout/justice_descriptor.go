@@ -139,6 +139,9 @@ func (p *JusticeDescriptor) commitToRemoteInput() (*breachedInput, error) {
 		toRemotePkScript, err = input.CommitScriptUnencumbered(
 			toRemotePubKey,
 		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Locate the to-remote output on the breaching commitment transaction.

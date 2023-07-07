@@ -899,6 +899,9 @@ func importPubKey(ctx *cli.Context) error {
 		PublicKey: pubKeyBytes,
 	}
 	resp, err := walletClient.ImportPublicKey(ctxb, req)
+	if err != nil {
+		return err
+	}
 
 	printRespJSON(resp)
 

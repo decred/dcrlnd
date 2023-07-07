@@ -100,7 +100,7 @@ func (w *sizeEstimator) size() int {
 // into account unconfirmed parent transactions (cpfp).
 func (w *sizeEstimator) fee() dcrutil.Amount {
 	// Calculate fee and size for just this tx.
-	childSize := int64(w.estimator.Size())
+	childSize := w.estimator.Size()
 
 	// Add combined weight of unconfirmed parent txes.
 	totalSize := childSize + w.parentsSize

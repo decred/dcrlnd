@@ -11,6 +11,9 @@ import (
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
+// newBackend initializes a new dcrd rpctest backend.
+//
+//nolint:unused
 func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.Harness, func() error, error) {
 	args := []string{
 		"--rejectnonstd",
