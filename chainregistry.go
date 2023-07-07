@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/rpcclient/v8"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -26,11 +25,9 @@ import (
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"
 	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
-	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 	"github.com/decred/dcrlnd/lnwallet/remotedcrwallet"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing/chainview"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -138,23 +135,18 @@ type chainControl struct {
 	minHtlcIn lnwire.MilliAtom
 }
 
-// newChainControlFromConfig attempts to create a chainControl instance
-// according to the parameters in the passed lnd configuration. Currently only
-// one chainControl instance exists: one backed by a running dcrd full-node.
-func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
-	privateWalletPw, publicWalletPw []byte, birthday time.Time,
-	recoveryWindow uint32, wallet *wallet.Wallet,
-	loader *walletloader.Loader,
-	conn *grpc.ClientConn, accountNumber int32) (*chainControl, error) {
+// newChainControl attempts to create a chainControl instance according to the
+// parameters in the passed configuration.
+func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 
 	// Set the RPC config from the "home" chain. Multi-chain isn't yet
 	// active, so we'll restrict usage to a particular chain for now.
 	ltndLog.Infof("Primary chain is set to: %v",
-		cfg.registeredChains.PrimaryChain())
+		cfg.PrimaryChain())
 
 	cc := &chainControl{}
 
-	switch cfg.registeredChains.PrimaryChain() {
+	switch cfg.PrimaryChain() {
 	case chainreg.DecredChain:
 		cc.routingPolicy = htlcswitch.ForwardingPolicy{
 			MinHTLCOut:    cfg.Decred.MinHTLCOut,

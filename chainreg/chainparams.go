@@ -1,4 +1,4 @@
-package dcrlnd
+package chainreg
 
 import (
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -6,9 +6,9 @@ import (
 	"github.com/decred/dcrlnd/keychain"
 )
 
-// decredNetParams couples the p2p parameters of a network with the
+// DecredNetParams couples the p2p parameters of a network with the
 // corresponding RPC port of a daemon running on the particular network.
-type decredNetParams struct {
+type DecredNetParams struct {
 	*chaincfg.Params
 	rpcPort  string
 	CoinType uint32
@@ -17,16 +17,16 @@ type decredNetParams struct {
 
 // decredTestNetParams contains parameters specific to the 3rd version of the
 // test network.
-var decredTestNetParams = decredNetParams{
+var DecredTestNetParams = DecredNetParams{
 	Params:   chaincfg.TestNet3Params(),
 	rpcPort:  "19109",
 	CoinType: keychain.CoinTypeTestnet,
 	dcrwPort: "19111",
 }
 
-// decredMainNetParams contains parameters specific to the current Decred
+// DecredMainNetParams contains parameters specific to the current Decred
 // mainnet.
-var decredMainNetParams = decredNetParams{
+var DecredMainNetParams = DecredNetParams{
 	Params:   chaincfg.MainNetParams(),
 	rpcPort:  "9109",
 	CoinType: keychain.CoinTypeDecred,
@@ -35,7 +35,7 @@ var decredMainNetParams = decredNetParams{
 
 // decredSimNetParams contains parameters specific to the simulation test
 // network.
-var decredSimNetParams = decredNetParams{
+var DecredSimNetParams = DecredNetParams{
 	Params:   chaincfg.SimNetParams(),
 	rpcPort:  "19556",
 	CoinType: keychain.CoinTypeTestnet,
@@ -43,15 +43,15 @@ var decredSimNetParams = decredNetParams{
 }
 
 // regTestNetParams contains parameters specific to a local regtest network.
-var regTestNetParams = decredNetParams{
+var RegTestNetParams = DecredNetParams{
 	Params:   chaincfg.RegNetParams(),
 	rpcPort:  "19334",
 	CoinType: keychain.CoinTypeTestnet,
 }
 
-// isTestnet tests if the given params correspond to a testnet
+// IsTestnet tests if the given params correspond to a testnet
 // parameter configuration.
-func isTestnet(params *decredNetParams) bool {
+func IsTestnet(params *DecredNetParams) bool {
 	switch params.Params.Net {
 	case wire.TestNet3:
 		return true
