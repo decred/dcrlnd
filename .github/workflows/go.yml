@@ -53,11 +53,11 @@ jobs:
         go: ['1.20']
         testsuite:
           - unit-race # unit tests
-          - itest-only # embedded wallet using dcrd for sync and chain ops
-          - itest-only walletimpl=embeddedwallet_dcrw # embedded wallet, dcrd sync but dcrw chain ops
-          - itest-only walletimpl=embeddedwallet_dcrw backend=spv # embedded wallet, spv sync and dcrw chain ops
-          - itest-only walletimpl=remotewallet # remote wallet dcrd sync
-          - itest-only walletimpl=remotewallet backend=spv # remote wallet spv sync
+          - itest-parallel-run # embedded wallet using dcrd for sync and chain ops
+          - itest-parallel-run walletimpl=embeddedwallet_dcrw # embedded wallet, dcrd sync but dcrw chain ops
+          - itest-parallel-run walletimpl=embeddedwallet_dcrw backend=spv # embedded wallet, spv sync and dcrw chain ops
+          - itest-parallel-run walletimpl=remotewallet # remote wallet dcrd sync
+          - itest-parallel-run walletimpl=remotewallet backend=spv # remote wallet spv sync
     steps:
       - name: Set up Go
         uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 #v3.5.0

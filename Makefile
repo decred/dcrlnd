@@ -1,5 +1,4 @@
 PKG := github.com/decred/dcrlnd
-FULLPKG := github.com/decred/dcrlnd
 ESCPKG := github.com\/decred\/dcrlnd
 
 DCRD_PKG := github.com/decred/dcrd
@@ -29,7 +28,8 @@ ANDROID_BUILD := $(ANDROID_BUILD_DIR)/Lndmobile.aar
 
 WTDIRTY := $(shell git diff-index --quiet HEAD -- || echo "-dirty" || echo "")
 COMMIT := $(shell git log -1 --format="%H$(WTDIRTY)")
-LDFLAGS := -ldflags "-X $(FULLPKG)/build.Commit=$(COMMIT)"
+LDFLAGS := -ldflags "-X $(PKG)/build.Commit=$(COMMIT)"
+ITEST_LDFLAGS := -ldflags "-X $(PKG)/build.Commit=$(COMMIT)"
 
 # For the release, we want to remove the symbol table and debug information (-s)
 # and omit the DWARF symbol table (-w). Also we clear the build ID.
@@ -52,8 +52,8 @@ FALAFEL_COMMIT := v0.7.1
 GOFUZZ_COMMIT := 21309f307f61
 
 DEPGET := cd /tmp && GO111MODULE=on go get -v
-GOBUILD := GO111MODULE=on go build -v
-GOINSTALL := GO111MODULE=on go install -v
+GOBUILD := CGO_ENABLED=0 GO111MODULE=on go build -v
+GOINSTALL := CGO_ENABLED=0 GO111MODULE=on go install -v
 GOTEST := GO111MODULE=on go test -v
 
 GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
@@ -113,7 +113,7 @@ dcrd:
 	git clone https://github.com/decred/dcrd $(DCRD_TMPDIR)
 	cd $(DCRD_TMPDIR) && \
 		git checkout $(DCRD_COMMIT) && \
-		GO111MODULE=on go build -o "$$GOPATH/bin/dcrd-dcrlnd" -ldflags $(DCRD_LDFLAGS) . 
+		GO111MODULE=on go build -o "$$GOPATH/bin/dcrd-dcrlnd" -ldflags $(DCRD_LDFLAGS) .
 	rm -rf $(DCRD_TMPDIR)
 
 dcrwallet:
@@ -151,8 +151,8 @@ build:
 
 build-itest:
 	@$(call print, "Building itest dcrlnd and dcrlncli.")
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest $(LDFLAGS) $(PKG)/cmd/dcrlnd
-	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest $(LDFLAGS) $(PKG)/cmd/dcrlncli
+	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlnd-itest $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
+	$(GOBUILD) -tags="$(ITEST_TAGS)" -o dcrlncli-itest $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlncli
 
 build-all:
 	@$(call print, "Building debug dcrlnd and dcrlncli with all submodules.")
@@ -191,10 +191,7 @@ itest-only:
 
 itest: dcrd dcrwallet build-itest itest-only
 
-itest-parallel: dcrd dcrwallet
-	@$(call print, "Building dcrlnd binary")
-	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o lntest/itest/dcrlnd-itest $(ITEST_LDFLAGS) $(PKG)/cmd/dcrlnd
-
+itest-parallel-run:
 	@$(call print, "Building itest binary for $(backend) backend")
 	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -c -o lntest/itest/itest.test
 
@@ -202,17 +199,18 @@ itest-parallel: dcrd dcrwallet
 	rm -rf lntest/itest/*.log lntest/itest/.logs-*
 	echo -n "$$(seq 0 $$(expr $(NUM_ITEST_TRANCHES) - 1))" | xargs -P $(NUM_ITEST_TRANCHES) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
 
-itest-parallel-windows: dcrd dcrwallet
-	@$(call print, "Building dcrlnd binary")
-	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o lntest/itest/dcrlnd-itest.exe $(ITEST_LDFLAGS) $(PKG)/cmd/lnd
+itest-parallel: dcrd dcrwallet build-itest itest-parallel-run
 
+itest-windows: dcrd dcrwallet build-itest-windows itest-only
+
+itest-parallel-windows-run:
 	@$(call print, "Building itest binary for $(backend) backend")
 	CGO_ENABLED=0 $(GOTEST) -v ./lntest/itest -tags="$(DEV_TAGS) $(RPC_TAGS) rpctest $(backend)" -logoutput -goroutinedump -c -o lntest/itest/itest.test.exe
 
 	@$(call print, "Running tests")
 	EXEC_SUFFIX=".exe" echo -n "$$(seq 0 $$(expr $(NUM_ITEST_TRANCHES) - 1))" | xargs -P $(NUM_ITEST_TRANCHES) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS)
 
-itest-windows: dcrd dcrwallet build-itest-windows itest-only
+itest-parallel-windows: dcrd dcrwallet build-itest-windows itest-parallel-windows-run
 
 unit-only:
 	@$(call print, "Running unit tests.")

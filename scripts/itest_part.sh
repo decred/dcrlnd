@@ -14,7 +14,7 @@ shift
 # Windows insists on having the .exe suffix for an executable, we need to add
 # that here if necessary.
 EXEC="$WORKDIR"/itest.test"$EXEC_SUFFIX"
-LND_EXEC="$WORKDIR"/dcrlnd-itest"$EXEC_SUFFIX"
+LND_EXEC="$(pwd)"/dcrlnd-itest"$EXEC_SUFFIX"
 echo $EXEC -test.v "$@" -logoutput -goroutinedump -logdir=.logs-tranche$TRANCHE -lndexec=$LND_EXEC -splittranches=$NUM_TRANCHES -runtranche=$TRANCHE
 
 # Exit code 255 causes the parallel jobs to abort, so if one part fails the
