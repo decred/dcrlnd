@@ -18,6 +18,7 @@ import (
 	"github.com/decred/dcrlnd/chainntnfs/dcrdnotify"
 	"github.com/decred/dcrlnd/chainntnfs/dcrwnotify"
 	"github.com/decred/dcrlnd/chainntnfs/remotedcrwnotify"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
@@ -75,25 +76,6 @@ const (
 var defaultDcrChannelConstraints = channeldb.ChannelConstraints{
 	DustLimit:        lnwallet.DefaultDustLimit(),
 	MaxAcceptedHtlcs: input.MaxHTLCNumber / 2,
-}
-
-// chainCode is an enum-like structure for keeping track of the chains
-// currently supported within lnd.
-type chainCode uint32
-
-const (
-	// decredChain is Decred's testnet chain.
-	decredChain chainCode = iota
-)
-
-// String returns a string representation of the target chainCode.
-func (c chainCode) String() string {
-	switch c {
-	case decredChain:
-		return "decred"
-	default:
-		return "kekcoin"
-	}
 }
 
 // checkDcrdNode checks whether the dcrd node reachable using the provided
@@ -173,7 +155,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 	cc := &chainControl{}
 
 	switch cfg.registeredChains.PrimaryChain() {
-	case decredChain:
+	case chainreg.DecredChain:
 		cc.routingPolicy = htlcswitch.ForwardingPolicy{
 			MinHTLCOut:    cfg.MinHTLCOut,
 			BaseFee:       cfg.BaseFee,
@@ -524,11 +506,11 @@ var (
 	})
 
 	// chainMap is a simple index that maps a chain's genesis hash to the
-	// chainCode enum for that chain.
-	chainMap = map[chainhash.Hash]chainCode{
-		decredTestnet3Genesis: decredChain,
+	// chainreg.ChainCode enum for that chain.
+	chainMap = map[chainhash.Hash]chainreg.ChainCode{
+		decredTestnet3Genesis: chainreg.DecredChain,
 
-		decredMainnetGenesis: decredChain,
+		decredMainnetGenesis: chainreg.DecredChain,
 	}
 
 	// chainDNSSeeds is a map of a chain's hash to the set of DNS seeds
@@ -555,23 +537,23 @@ var (
 type chainRegistry struct {
 	sync.RWMutex
 
-	activeChains map[chainCode]*chainControl
-	netParams    map[chainCode]*decredNetParams
+	activeChains map[chainreg.ChainCode]*chainControl
+	netParams    map[chainreg.ChainCode]*decredNetParams
 
-	primaryChain chainCode
+	primaryChain chainreg.ChainCode
 }
 
 // newChainRegistry creates a new chainRegistry.
 func newChainRegistry() *chainRegistry {
 	return &chainRegistry{
-		activeChains: make(map[chainCode]*chainControl),
-		netParams:    make(map[chainCode]*decredNetParams),
+		activeChains: make(map[chainreg.ChainCode]*chainControl),
+		netParams:    make(map[chainreg.ChainCode]*decredNetParams),
 	}
 }
 
 // RegisterChain assigns an active chainControl instance to a target chain
-// identified by its chainCode.
-func (c *chainRegistry) RegisterChain(newChain chainCode, cc *chainControl) {
+// identified by its chainreg.ChainCode.
+func (c *chainRegistry) RegisterChain(newChain chainreg.ChainCode, cc *chainControl) {
 	c.Lock()
 	c.activeChains[newChain] = cc
 	c.Unlock()
@@ -579,7 +561,7 @@ func (c *chainRegistry) RegisterChain(newChain chainCode, cc *chainControl) {
 
 // LookupChain attempts to lookup an active chainControl instance for the
 // target chain.
-func (c *chainRegistry) LookupChain(targetChain chainCode) (*chainControl, bool) {
+func (c *chainRegistry) LookupChain(targetChain chainreg.ChainCode) (*chainControl, bool) {
 	c.RLock()
 	cc, ok := c.activeChains[targetChain]
 	c.RUnlock()
@@ -602,7 +584,7 @@ func (c *chainRegistry) LookupChainByHash(chainHash chainhash.Hash) (*chainContr
 }
 
 // RegisterPrimaryChain sets a target chain as the "home chain" for lnd.
-func (c *chainRegistry) RegisterPrimaryChain(cc chainCode) {
+func (c *chainRegistry) RegisterPrimaryChain(cc chainreg.ChainCode) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -612,7 +594,7 @@ func (c *chainRegistry) RegisterPrimaryChain(cc chainCode) {
 // PrimaryChain returns the primary chain for this running lnd instance. The
 // primary chain is considered the "home base" while the other registered
 // chains are treated as secondary chains.
-func (c *chainRegistry) PrimaryChain() chainCode {
+func (c *chainRegistry) PrimaryChain() chainreg.ChainCode {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -620,11 +602,11 @@ func (c *chainRegistry) PrimaryChain() chainCode {
 }
 
 // ActiveChains returns a slice containing the active chains.
-func (c *chainRegistry) ActiveChains() []chainCode {
+func (c *chainRegistry) ActiveChains() []chainreg.ChainCode {
 	c.RLock()
 	defer c.RUnlock()
 
-	chains := make([]chainCode, 0, len(c.activeChains))
+	chains := make([]chainreg.ChainCode, 0, len(c.activeChains))
 	for activeChain := range c.activeChains {
 		chains = append(chains, activeChain)
 	}

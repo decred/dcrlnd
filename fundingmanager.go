@@ -14,6 +14,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
@@ -3054,7 +3055,7 @@ func (f *fundingManager) handleInitFundingMsg(msg *initFundingMsg) {
 	// We'll determine our dust limit depending on which chain is active.
 	var ourDustLimit dcrutil.Amount
 	switch f.cfg.RegisteredChains.PrimaryChain() {
-	case decredChain:
+	case chainreg.DecredChain:
 		ourDustLimit = lnwallet.DefaultDustLimit()
 	}
 

@@ -21,6 +21,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chanbackup"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/discovery"
@@ -819,7 +820,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	switch cfg.Node {
 	case "dcrd":
 		err := parseRPCParams(
-			cfg.DcrdMode, decredChain, cfg.SimNet,
+			cfg.DcrdMode, chainreg.DecredChain, cfg.SimNet,
 			cfg.Node, funcName,
 		)
 		if err != nil {
@@ -838,7 +839,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 
 	cfg.ChainDir = filepath.Join(cfg.DataDir,
 		defaultChainSubDirname,
-		decredChain.String())
+		chainreg.DecredChain.String())
 
 	// Ensure sane config when using a remote wallet.
 	if cfg.Dcrwallet.GRPCHost != "" {
@@ -869,7 +870,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 
 	// Finally we'll register the decred chain as our current
 	// primary chain.
-	cfg.registeredChains.RegisterPrimaryChain(decredChain)
+	cfg.registeredChains.RegisterPrimaryChain(chainreg.DecredChain)
 
 	// Ensure that the user didn't attempt to specify negative values for
 	// any of the autopilot params.
@@ -1188,7 +1189,7 @@ func CleanAndExpandPath(path string) string {
 	return filepath.Clean(os.ExpandEnv(path))
 }
 
-func parseRPCParams(nodeConfig interface{}, net chainCode,
+func parseRPCParams(nodeConfig interface{}, net chainreg.ChainCode,
 	simnet bool, flagNode string, funcName string) error {
 
 	// First, we'll check our node config to make sure the RPC parameters
@@ -1205,7 +1206,7 @@ func parseRPCParams(nodeConfig interface{}, net chainCode,
 
 		// Get the daemon name for displaying proper errors.
 		switch net {
-		case decredChain:
+		case chainreg.DecredChain:
 			daemonName = "dcrd"
 			confFile = "dcrd"
 		}
