@@ -329,8 +329,8 @@ func DefaultConfig() Config {
 		MaxLogFileSize:    defaultMaxLogFileSize,
 		AcceptorTimeout:   defaultAcceptorTimeout,
 		Decred: &lncfg.Chain{
-			MinHTLCIn:     defaultDecredMinHTLCInMAtoms,
-			MinHTLCOut:    defaultDecredMinHTLCOutMAtoms,
+			MinHTLCIn:     DefaultDecredMinHTLCInMAtoms,
+			MinHTLCOut:    DefaultDecredMinHTLCOutMAtoms,
 			BaseFee:       DefaultDecredBaseFeeMAtoms,
 			FeeRate:       DefaultDecredFeeRate,
 			TimeLockDelta: DefaultDecredTimeLockDelta,

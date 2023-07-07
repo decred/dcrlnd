@@ -32,22 +32,20 @@ import (
 )
 
 const (
-	// TODO(decred) verify these amounts
-
-	// defaultDecredMinHTLCInMAtoms is the default smallest value htlc this
+	// DefaultDecredMinHTLCInMAtoms is the default smallest value htlc this
 	// node will accept. This value is proposed in the channel open
 	// sequence and cannot be changed during the life of the channel.
 	//
 	// All forwarded payments are subjected to the min htlc constraint of
 	// the routing policy of the outgoing channel. This implicitly controls
 	// the minimum htlc value on the incoming channel too.
-	defaultDecredMinHTLCInMAtoms = lnwire.MilliAtom(1000)
+	DefaultDecredMinHTLCInMAtoms = lnwire.MilliAtom(1000)
 
-	// defaultDecredMinHTLCOutMAtoms is the default minimum htlc value that
+	// DefaultDecredMinHTLCOutMAtoms is the default minimum htlc value that
 	// we require for sending out htlcs. Our channel peer may have a lower
 	// min htlc channel parameter, but we - by default - don't forward
 	// anything under the value defined here.
-	defaultDecredMinHTLCOutMAtoms = lnwire.MilliAtom(1000)
+	DefaultDecredMinHTLCOutMAtoms = lnwire.MilliAtom(1000)
 
 	// DefaultDecredBaseFeeMAtoms is the default forwarding base fee.
 	DefaultDecredBaseFeeMAtoms = lnwire.MilliAtom(1000)
@@ -59,12 +57,12 @@ const (
 	// delta.
 	DefaultDecredTimeLockDelta = 80
 
-	// defaultDecredStaticFeePerKB is the fee rate of 10000 atom/kB
-	defaultDecredStaticFeePerKB = chainfee.AtomPerKByte(1e4)
+	// DefaultDecredStaticFeePerKB is the fee rate of 10000 atom/kB
+	DefaultDecredStaticFeePerKB = chainfee.AtomPerKByte(1e4)
 
-	// defaultDecredStaticMinRelayFeeRate is the min relay fee used for
+	// DefaultDecredStaticMinRelayFeeRate is the min relay fee used for
 	// static estimators.
-	defaultDecredStaticMinRelayFeeRate = chainfee.FeePerKBFloor
+	DefaultDecredStaticMinRelayFeeRate = chainfee.FeePerKBFloor
 )
 
 // defaultDcrChannelConstraints is the default set of channel constraints that are
@@ -157,8 +155,8 @@ func newChainControl(cfg *chainreg.Config) (*chainControl, error) {
 		}
 		cc.minHtlcIn = cfg.Decred.MinHTLCIn
 		cc.feeEstimator = chainfee.NewStaticEstimator(
-			defaultDecredStaticFeePerKB,
-			defaultDecredStaticMinRelayFeeRate,
+			DefaultDecredStaticFeePerKB,
+			DefaultDecredStaticMinRelayFeeRate,
 		)
 	default:
 		return nil, fmt.Errorf("default routing policy for chain %v is "+
