@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
 	"github.com/decred/dcrlnd/signal"
 	"google.golang.org/grpc"
@@ -15,7 +16,7 @@ var errShutdownRequested = errors.New("shutdown requested")
 // waitForInitialChainSync waits until the initial chain sync is completed
 // before returning. It creates a gRPC service to listen to requests to provide
 // the sync progress.
-func waitForInitialChainSync(activeChainControl *ChainControl,
+func waitForInitialChainSync(activeChainControl *chainreg.ChainControl,
 	serverOpts []grpc.ServerOption, getListeners rpcListeners) error {
 
 	// Start a gRPC server listening for HTTP/2 connections, solely used

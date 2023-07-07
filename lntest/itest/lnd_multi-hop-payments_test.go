@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lntest"
@@ -177,7 +178,7 @@ func testMultiHopPayments(net *lntest.NetworkHarness, t *harnessTest) {
 	const aliceFeeRatePPM = 100000
 	updateChannelPolicy(
 		t, net.Alice, chanPointAlice, aliceBaseFeeAtoms*1000,
-		aliceFeeRatePPM, dcrlnd.DefaultDecredTimeLockDelta, maxHtlc,
+		aliceFeeRatePPM, chainreg.DefaultDecredTimeLockDelta, maxHtlc,
 		carol,
 	)
 
@@ -185,7 +186,7 @@ func testMultiHopPayments(net *lntest.NetworkHarness, t *harnessTest) {
 	const daveFeeRatePPM = 150000
 	updateChannelPolicy(
 		t, dave, chanPointDave, daveBaseFeeAtoms*1000, daveFeeRatePPM,
-		dcrlnd.DefaultDecredTimeLockDelta, maxHtlc, carol,
+		chainreg.DefaultDecredTimeLockDelta, maxHtlc, carol,
 	)
 
 	// Before we start sending payments, subscribe to htlc events for each

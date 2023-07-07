@@ -6,6 +6,7 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/autopilot"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/invoices"
@@ -81,7 +82,7 @@ type subRPCServerConfigs struct {
 //
 // NOTE: This MUST be called before any callers are permitted to execute the
 // FetchConfig method.
-func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *ChainControl,
+func (s *subRPCServerConfigs) PopulateDependencies(cfg *Config, cc *chainreg.ChainControl,
 	networkDir string, macService *macaroons.Service,
 	atpl *autopilot.Manager,
 	invoiceRegistry *invoices.InvoiceRegistry,

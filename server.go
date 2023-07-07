@@ -24,6 +24,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/brontide"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/chanacceptor"
 	"github.com/decred/dcrlnd/chanbackup"
 	"github.com/decred/dcrlnd/chanfitness"
@@ -202,7 +203,7 @@ type server struct {
 	// intended to replace it.
 	scheduledPeerConnection map[string]func()
 
-	cc *ChainControl
+	cc *chainreg.ChainControl
 
 	fundingMgr *fundingManager
 
@@ -337,7 +338,7 @@ func noiseDial(idKey keychain.SingleKeyECDH,
 // passed listener address.
 func newServer(cfg *Config, listenAddrs []net.Addr,
 	localChanDB, remoteChanDB *channeldb.DB,
-	towerClientDB *wtdb.ClientDB, cc *ChainControl,
+	towerClientDB *wtdb.ClientDB, cc *chainreg.ChainControl,
 	nodeKeyDesc *keychain.KeyDescriptor,
 	chansToRestore walletunlocker.ChannelsToRecover,
 	chanPredicate chanacceptor.ChannelAcceptor,
@@ -1843,7 +1844,7 @@ func initNetworkBootstrappers(s *server) ([]discovery.NetworkPeerBootstrapper, e
 	// If this isn't simnet mode, then one of our additional bootstrapping
 	// sources will be the set of running DNS seeds.
 	if !s.cfg.Decred.SimNet {
-		dnsSeeds, ok := chainDNSSeeds[s.cfg.ActiveNetParams.GenesisHash]
+		dnsSeeds, ok := chainreg.ChainDNSSeeds[s.cfg.ActiveNetParams.GenesisHash]
 
 		// If we have a set of DNS seeds for this chain, then we'll add
 		// it as an additional bootstrapping source.

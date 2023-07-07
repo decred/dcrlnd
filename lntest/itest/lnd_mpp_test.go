@@ -12,6 +12,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lntest"
@@ -94,7 +95,7 @@ func testSendToRouteMultiPath(net *lntest.NetworkHarness, t *harnessTest) {
 
 		req := &routerrpc.BuildRouteRequest{
 			AmtMAtoms:      int64(amt * 1000),
-			FinalCltvDelta: dcrlnd.DefaultDecredTimeLockDelta,
+			FinalCltvDelta: chainreg.DefaultDecredTimeLockDelta,
 			HopPubkeys:     rpcHops,
 		}
 

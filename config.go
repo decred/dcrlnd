@@ -302,7 +302,7 @@ type Config struct {
 
 	// registeredChains keeps track of all chains that have been registered
 	// with the daemon.
-	registeredChains *ChainRegistry
+	registeredChains *chainreg.ChainRegistry
 
 	// networkDir is the path to the directory of the currently active
 	// network. This path will hold the files related to each different
@@ -329,11 +329,11 @@ func DefaultConfig() Config {
 		MaxLogFileSize:    defaultMaxLogFileSize,
 		AcceptorTimeout:   defaultAcceptorTimeout,
 		Decred: &lncfg.Chain{
-			MinHTLCIn:     DefaultDecredMinHTLCInMAtoms,
-			MinHTLCOut:    DefaultDecredMinHTLCOutMAtoms,
-			BaseFee:       DefaultDecredBaseFeeMAtoms,
-			FeeRate:       DefaultDecredFeeRate,
-			TimeLockDelta: DefaultDecredTimeLockDelta,
+			MinHTLCIn:     chainreg.DefaultDecredMinHTLCInMAtoms,
+			MinHTLCOut:    chainreg.DefaultDecredMinHTLCOutMAtoms,
+			BaseFee:       chainreg.DefaultDecredBaseFeeMAtoms,
+			FeeRate:       chainreg.DefaultDecredFeeRate,
+			TimeLockDelta: chainreg.DefaultDecredTimeLockDelta,
 			Node:          "dcrd",
 		},
 		DcrdMode: &lncfg.DcrdConfig{
@@ -415,7 +415,7 @@ func DefaultConfig() Config {
 		MaxChannelFeeAllocation: htlcswitch.DefaultMaxLinkFeeAllocation,
 		LogWriter:               build.NewRotatingLogWriter(),
 		DB:                      lncfg.DefaultDB(),
-		registeredChains:        newChainRegistry(),
+		registeredChains:        chainreg.NewChainRegistry(),
 		ActiveNetParams:         chainreg.DecredTestNetParams,
 	}
 }

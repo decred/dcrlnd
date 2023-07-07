@@ -13,6 +13,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lntest"
@@ -405,7 +406,7 @@ func (c *interceptorTestContext) buildRoute(ctx context.Context, amtMAtoms int64
 
 	req := &routerrpc.BuildRouteRequest{
 		AmtMAtoms:      amtMAtoms,
-		FinalCltvDelta: dcrlnd.DefaultDecredTimeLockDelta,
+		FinalCltvDelta: chainreg.DefaultDecredTimeLockDelta,
 		HopPubkeys:     rpcHops,
 	}
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/decred/dcrlnd"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/routing/route"
 	"github.com/urfave/cli"
@@ -27,7 +27,7 @@ var buildRouteCommand = cli.Command{
 			Name: "final_cltv_delta",
 			Usage: "number of blocks the last hop has to reveal " +
 				"the preimage",
-			Value: dcrlnd.DefaultDecredTimeLockDelta,
+			Value: chainreg.DefaultDecredTimeLockDelta,
 		},
 		cli.StringFlag{
 			Name:  "hops",

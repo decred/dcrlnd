@@ -1,6 +1,3 @@
-//go:build !rpctest
-// +build !rpctest
-
 package dcrlnd
 
 import (
@@ -8,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/decred/dcrd/wire"
+	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/channeldb"
 )
 
@@ -55,7 +53,7 @@ func TestNurseryStoreInit(t *testing.T) {
 	}
 	defer cleanUp()
 
-	ns, err := newNurseryStore(&decredTestnet3Genesis, cdb)
+	ns, err := newNurseryStore(&chainreg.DecredTestNetParams.GenesisHash, cdb)
 	if err != nil {
 		t.Fatalf("unable to open nursery store: %v", err)
 	}
@@ -75,7 +73,7 @@ func TestNurseryStoreIncubate(t *testing.T) {
 	}
 	defer cleanUp()
 
-	ns, err := newNurseryStore(&decredTestnet3Genesis, cdb)
+	ns, err := newNurseryStore(&chainreg.DecredTestNetParams.GenesisHash, cdb)
 	if err != nil {
 		t.Fatalf("unable to open nursery store: %v", err)
 	}
@@ -316,7 +314,7 @@ func TestNurseryStoreGraduate(t *testing.T) {
 	}
 	defer cleanUp()
 
-	ns, err := newNurseryStore(&decredTestnet3Genesis, cdb)
+	ns, err := newNurseryStore(&chainreg.DecredTestNetParams.GenesisHash, cdb)
 	if err != nil {
 		t.Fatalf("unable to open nursery store: %v", err)
 	}
