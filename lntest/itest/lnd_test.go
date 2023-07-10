@@ -15212,15 +15212,11 @@ func TestLightningNetworkDaemon(t *testing.T) {
 	// case should naturally as a result and we log the server error here to
 	// help debug.
 	go func() {
-		for {
-			select {
-			case err, more := <-lndHarness.ProcessErrors():
-				if !more {
-					return
-				}
-				ht.Logf("lnd finished with error (stderr):\n%v",
-					err)
-			}
+		errChan := lndHarness.ProcessErrors()
+		for err := range errChan {
+			ht.Logf("lnd finished with error (stderr):\n%v",
+				err)
+
 		}
 	}()
 
