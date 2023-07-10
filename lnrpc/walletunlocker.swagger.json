@@ -354,7 +354,14 @@
       }
     },
     "lnrpcUnlockWalletResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "admin_macaroon": {
+          "type": "string",
+          "format": "byte",
+          "description": "The binary serialized admin macaroon that can be used to access the daemon\nafter rotating the macaroon root key. If both the stateless_init and\nnew_macaroon_root_key parameter were set to true, this is the ONLY copy of\nthe macaroon that was created from the new root key and MUST be stored\nsafely by the caller. Otherwise a copy of this macaroon is also persisted on\ndisk by the daemon, together with other macaroon files."
+        }
+      }
     },
     "protobufAny": {
       "type": "object",

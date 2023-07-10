@@ -513,9 +513,10 @@ func (u *UnlockerService) unlockRemoteWallet(ctx context.Context,
 	// We successfully opened the wallet and pass the instance back to
 	// avoid it needing to be unlocked again.
 	walletUnlockMsg := &WalletUnlockMsg{
-		Passphrase:   in.WalletPassword,
-		Conn:         conn,
-		UnloadWallet: func() error { return nil },
+		Passphrase:    in.WalletPassword,
+		Conn:          conn,
+		UnloadWallet:  func() error { return nil },
+		StatelessInit: in.StatelessInit,
 	}
 
 	// Before we return the unlock payload, we'll check if we can extract
@@ -528,9 +529,24 @@ func (u *UnlockerService) unlockRemoteWallet(ctx context.Context,
 	// At this point we were able to open the existing wallet with the
 	// provided password. We send the password over the UnlockMsgs channel,
 	// such that it can be used by lnd to open the wallet.
-	u.UnlockMsgs <- walletUnlockMsg
+	select {
+	case u.UnlockMsgs <- walletUnlockMsg:
+		// We need to read from the channel to let the daemon continue
+		// its work. But we don't need the returned macaroon for this
+		// operation, so we read it but then discard it.
+		select {
+		case adminMac := <-u.MacResponseChan:
+			return &lnrpc.UnlockWalletResponse{
+				AdminMacaroon: adminMac,
+			}, nil
 
-	return &lnrpc.UnlockWalletResponse{}, nil
+		case <-ctx.Done():
+			return nil, ErrUnlockTimeout
+		}
+
+	case <-ctx.Done():
+		return nil, ErrUnlockTimeout
+	}
 }
 
 // UnlockWallet sends the password provided by the incoming UnlockWalletRequest

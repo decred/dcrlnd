@@ -201,6 +201,15 @@ message UnlockWalletRequest {
     bool stateless_init = 4;
 }
 message UnlockWalletResponse {
+    /*
+    The binary serialized admin macaroon that can be used to access the daemon
+    after rotating the macaroon root key. If both the stateless_init and
+    new_macaroon_root_key parameter were set to true, this is the ONLY copy of
+    the macaroon that was created from the new root key and MUST be stored
+    safely by the caller. Otherwise a copy of this macaroon is also persisted on
+    disk by the daemon, together with other macaroon files.
+    */
+    bytes admin_macaroon = 901;
 }
 
 message ChangePasswordRequest {
