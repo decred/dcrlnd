@@ -539,6 +539,12 @@ func testStatelessInit(net *lntest.NetworkHarness, t *harnessTest) {
 		t.Fatalf("returned address was not a regtest address")
 	}
 
+	if carol.Cfg.RemoteWallet {
+		t.Log("Skipping rest of test because RemoteWallet does not support " +
+			"changing password")
+		return
+	}
+
 	// As a second part, shut down the node and then try to change the
 	// password when we start it up again.
 	if err := net.RestartNodeNoUnlock(carol, nil); err != nil {
