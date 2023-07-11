@@ -132,16 +132,9 @@ func (f *fakeLogger) Print(args ...interface{})                 {}
 func (f *fakeLogger) Printf(format string, args ...interface{}) {}
 func (f *fakeLogger) Println(args ...interface{})               {}
 
-// SetUp starts the initial seeder nodes within the test harness. The initial
-// node's wallets will be funded wallets with ten 1 DCR outputs each. Finally
-// rpc clients capable of communicating with the initial seeder nodes are
-// created. Nodes are initialized with the given extra command line flags, which
-// should be formatted properly - "--arg=value".
-func (n *NetworkHarness) SetUp(lndArgs []string) error {
-	// Swap out grpc's default logger with out fake logger which drops the
-	// statements on the floor.
-	grpclog.SetLogger(&fakeLogger{})
-
+// SetUpChain performs the initial chain setup for integration tests. This
+// should be done only once.
+func (n *NetworkHarness) SetUpChain() error {
 	// Generate the premine block the usual way.
 	_, err := n.Miner.Node.Generate(context.TODO(), 1)
 	if err != nil {
@@ -161,6 +154,19 @@ func (n *NetworkHarness) SetUp(lndArgs []string) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// SetUp starts the initial seeder nodes within the test harness. The initial
+// node's wallets will be funded wallets with ten 1 DCR outputs each. Finally
+// rpc clients capable of communicating with the initial seeder nodes are
+// created. Nodes are initialized with the given extra command line flags, which
+// should be formatted properly - "--arg=value".
+func (n *NetworkHarness) SetUp(lndArgs []string) error {
+	// Swap out grpc's default logger with out fake logger which drops the
+	// statements on the floor.
+	grpclog.SetLogger(&fakeLogger{})
 
 	// Start the initial seeder nodes within the test network, then connect
 	// their respective RPC clients.

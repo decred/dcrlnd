@@ -15233,6 +15233,10 @@ func TestLightningNetworkDaemon(t *testing.T) {
 		}
 	}()
 
+	// Setup the initial chain.
+	err = lndHarness.SetUpChain()
+	require.NoError(t, err)
+
 	// With the dcrd harness created, we can now complete the
 	// initialization of the network. args - list of lnd arguments,
 	// example: "--debuglevel=debug"
