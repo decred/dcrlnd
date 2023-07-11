@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/chainreg"
@@ -1123,6 +1124,12 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 		return nil, fmt.Errorf("default-remote-max-htlcs (%v) must be "+
 			"less than %v", cfg.DefaultRemoteMaxHtlcs,
 			maxRemoteHtlcs)
+	}
+
+	// Enforce only bbolt is being used in mainnet for now.
+	if cfg.ActiveNetParams.Net == wire.MainNet && cfg.DB.Backend != lncfg.BoltBackend {
+		return nil, fmt.Errorf("Cannot use DB backend %q in mainnet",
+			cfg.DB.Backend)
 	}
 
 	// Validate the subconfigs for workers, caches, and the tower client.
