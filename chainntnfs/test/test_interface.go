@@ -1909,8 +1909,12 @@ var blockCatchupTests = []blockCatchupTestCase{
 // import should trigger an init() method within the package which registers
 // the interface. Second, an additional case in the switch within the main loop
 // below needs to be added which properly initializes the interface.
-func TestInterfaces(t *testing.T, targetBackEnd string) {
+func TestInterfaces(t *testing.T, notifierType string) {
 	t.Parallel()
+
+	if chainntnfs.NotifierByName(notifierType) == nil {
+		t.Fatalf("Notifier %s does not exist", notifierType)
+	}
 
 	// newMiner initializes a new rpctest harness for testing and returns
 	// that.
@@ -2043,74 +2047,59 @@ func TestInterfaces(t *testing.T, targetBackEnd string) {
 
 	log.Printf("Running %v ChainNotifier interface tests", len(txNtfnTests))
 
-	for _, notifierDriver := range chainntnfs.RegisteredNotifiers() {
+	miner, vw, tearDownMiner := newMiner(t, notifierType)
+	defer tearDownMiner()
 
-		notifierType := notifierDriver.NotifierType
-		if notifierType != targetBackEnd {
-			continue
+	notifier, tearDownNotifier := newNotifier(
+		t, notifierType, true, miner.RPCConfig(),
+	)
+	defer tearDownNotifier()
+
+	for _, txNtfnTest := range txNtfnTests {
+		for _, scriptDispatch := range []bool{false, true} {
+			testName := txNtfnTest.name
+			if scriptDispatch {
+				testName += " with script dispatch"
+			}
+			success := t.Run(testName, func(t *testing.T) {
+				txNtfnTest.test(
+					miner, vw, notifier,
+					scriptDispatch, t,
+				)
+			})
+			if !success {
+				return
+			}
 		}
+	}
 
-		success := t.Run(notifierType, func(t *testing.T) {
-			miner, vw, tearDownMiner := newMiner(t, notifierType)
-			defer tearDownMiner()
+	for _, blockNtfnTest := range blockNtfnTests {
+		testName := blockNtfnTest.name
+		success := t.Run(testName, func(t *testing.T) {
+			blockNtfnTest.test(miner, vw, notifier, t)
+		})
+		if !success {
+			return
+		}
+	}
 
+	// The first test for the next set of tests causes a
+	// reorg, so recreate a new miner.
+	miner, vw, tearDownMiner = newMiner(t, notifierType)
+	defer tearDownMiner()
+
+	// Run catchup tests separately since they require restarting
+	// the notifier every time.
+	for _, blockCatchupTest := range blockCatchupTests {
+		testName := blockCatchupTest.name
+
+		success := t.Run(testName, func(t *testing.T) {
 			notifier, tearDownNotifier := newNotifier(
-				t, notifierType, true, miner.RPCConfig(),
+				t, notifierType, false, miner.RPCConfig(),
 			)
 			defer tearDownNotifier()
-
-			for _, txNtfnTest := range txNtfnTests {
-				for _, scriptDispatch := range []bool{false, true} {
-					testName := txNtfnTest.name
-					if scriptDispatch {
-						testName += " with script dispatch"
-					}
-					success := t.Run(testName, func(t *testing.T) {
-						txNtfnTest.test(
-							miner, vw, notifier,
-							scriptDispatch, t,
-						)
-					})
-					if !success {
-						return
-					}
-				}
-			}
-
-			for _, blockNtfnTest := range blockNtfnTests {
-				testName := blockNtfnTest.name
-				success := t.Run(testName, func(t *testing.T) {
-					blockNtfnTest.test(miner, vw, notifier, t)
-				})
-				if !success {
-					return
-				}
-			}
-
-			// The first test for the next set of tests causes a
-			// reorg, so recreate a new miner.
-			miner, vw, tearDownMiner = newMiner(t, notifierType)
-			defer tearDownMiner()
-
-			// Run catchup tests separately since they require restarting
-			// the notifier every time.
-			for _, blockCatchupTest := range blockCatchupTests {
-				testName := blockCatchupTest.name
-
-				success := t.Run(testName, func(t *testing.T) {
-					notifier, tearDownNotifier := newNotifier(
-						t, notifierType, false, miner.RPCConfig(),
-					)
-					defer tearDownNotifier()
-					blockCatchupTest.test(miner, vw, notifier, t)
-				})
-				if !success {
-					return
-				}
-			}
-
+			blockCatchupTest.test(miner, vw, notifier, t)
 		})
-
 		if !success {
 			return
 		}

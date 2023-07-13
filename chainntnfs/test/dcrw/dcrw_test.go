@@ -9,8 +9,8 @@ import (
 	chainntnfstest "github.com/decred/dcrlnd/chainntnfs/test"
 )
 
-// TestInterfaces executes the generic notifier test suite against a dcrw
+// TestDcrwChainNtfns executes the generic notifier test suite against a dcrw
 // powered chain notifier.
-func TestInterfaces(t *testing.T) {
+func TestDcrwChainNtfns(t *testing.T) {
 	chainntnfstest.TestInterfaces(t, "dcrw")
 }
