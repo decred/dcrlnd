@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
@@ -22,6 +23,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/internal/testutils"
+	"github.com/decred/dcrlnd/lntest/wait"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 
@@ -554,7 +556,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	defer reorgNode.TearDown()
 
 	// Init a chain view that has this node as its block source.
-	cleanUpFunc, reorgView, err := chainViewInit(t, reorgNode.RPCConfig())
+	cleanUpFunc, reorgView, err := chainViewInit(t, reorgNode)
 	if err != nil {
 		t.Fatalf("unable to create chain view: %v", err)
 	}
@@ -742,7 +744,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	time.Sleep(time.Millisecond * 500)
 }
 
-type chainViewInitFunc func(t testutils.TB, rpcInfo rpcclient.ConnConfig) (func(), FilteredChainView, error)
+type chainViewInitFunc func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error)
 
 type testCase struct {
 	name string
@@ -775,8 +777,8 @@ var interfaceImpls = []struct {
 }{
 	{
 		name: "dcrd_websockets",
-		chainViewInit: func(t testutils.TB, config rpcclient.ConnConfig) (func(), FilteredChainView, error) {
-			chainView, err := NewDcrdFilteredChainView(config)
+		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
+			chainView, err := NewDcrdFilteredChainView(miner.RPCConfig())
 			if err != nil {
 				return nil, nil, err
 			}
@@ -785,8 +787,9 @@ var interfaceImpls = []struct {
 		},
 	},
 	{
-		name: "dcrw_embedded",
-		chainViewInit: func(t testutils.TB, config rpcclient.ConnConfig) (func(), FilteredChainView, error) {
+		name: "dcrw_embedded_dcrd",
+		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
+			config := miner.RPCConfig()
 			w, teardown := testutils.NewRPCSyncingTestWallet(t, &config)
 			chainView, err := NewDcrwalletFilteredChainView(w)
 			if err != nil {
@@ -797,8 +800,34 @@ var interfaceImpls = []struct {
 		},
 	},
 	{
-		name: "dcrw_remote",
-		chainViewInit: func(t testutils.TB, config rpcclient.ConnConfig) (func(), FilteredChainView, error) {
+		name: "dcrw_embedded_spv",
+		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
+			w, teardown := testutils.NewSPVSyncingTestWallet(t, miner.P2PAddress())
+			chainView, err := NewDcrwalletFilteredChainView(w)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// Wait until the wallet has fully synced.
+			_, bestHeight, err := miner.Node.GetBestBlock(context.Background())
+			if err != nil {
+				return nil, nil, err
+			}
+			err = wait.NoError(func() error {
+				_, height := w.MainChainTip(context.Background())
+				if int64(height) != bestHeight {
+					return fmt.Errorf("wallet height %d not miner height %d", height, bestHeight)
+				}
+				return nil
+			}, 30*time.Second)
+
+			return teardown, chainView, err
+		},
+	},
+	{
+		name: "dcrw_remote_dcrd",
+		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
+			config := miner.RPCConfig()
 			conn, teardown := testutils.NewRPCSyncingTestRemoteDcrwallet(t, &config)
 			chainView, err := NewRemoteWalletFilteredChainView(conn)
 			if err != nil {
@@ -808,52 +837,79 @@ var interfaceImpls = []struct {
 			return teardown, chainView, err
 		},
 	},
+	{
+		name: "dcrw_remote_spv",
+		chainViewInit: func(t testutils.TB, miner *rpctest.Harness) (func(), FilteredChainView, error) {
+			conn, teardown := testutils.NewSPVSyncingTestRemoteDcrwallet(t, miner.P2PAddress())
+			chainView, err := NewRemoteWalletFilteredChainView(conn)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// Wait until the wallet has fully synced.
+			_, bestHeight, err := miner.Node.GetBestBlock(context.Background())
+			if err != nil {
+				return nil, nil, err
+			}
+			wallet := pb.NewWalletServiceClient(conn)
+			err = wait.NoError(func() error {
+				res, err := wallet.BestBlock(context.Background(), &pb.BestBlockRequest{})
+				if err != nil {
+					return err
+				}
+				if int64(res.Height) != bestHeight {
+					return fmt.Errorf("wallet height %d not miner height %d", res.Height, bestHeight)
+				}
+				return nil
+			}, 30*time.Second)
+
+			return teardown, chainView, err
+		},
+	},
 }
 
 func TestFilteredChainView(t *testing.T) {
-	// Initialize the harness around a dcrd node which will serve as our
-	// dedicated miner to generate blocks, cause re-orgs, etc. We'll set up
-	// this node with a chain length of 125, so we have plenty of DCR to
-	// play around with.
-	miner, err := testutils.NewSetupRPCTest(
-		t, 5, netParams, nil, []string{"--txindex"}, true, 25,
-	)
-	if err != nil {
-		t.Fatalf("unable to create mining node: %v", err)
-	}
-	defer miner.TearDown()
-
 	for _, chainViewImpl := range interfaceImpls {
-		t.Logf("Testing '%v' implementation of FilteredChainView",
-			chainViewImpl.name)
-
-		cleanUpFunc, chainView, err := chainViewImpl.chainViewInit(t, miner.RPCConfig())
-		if err != nil {
-			t.Fatalf("unable to make chain view: %v", err)
-		}
-
-		if err := chainView.Start(); err != nil {
-			t.Fatalf("unable to start chain view: %v", err)
-		}
-		for _, chainViewTest := range chainViewTests {
-			testName := fmt.Sprintf("%v %v", chainViewImpl.name,
-				chainViewTest.name)
-			success := t.Run(testName, func(t *testing.T) {
-				chainViewTest.test(miner, chainView,
-					chainViewImpl.chainViewInit, t)
-			})
-
-			if !success {
-				break
+		t.Run(chainViewImpl.name, func(t *testing.T) {
+			// Initialize the harness around a dcrd node which will serve as our
+			// dedicated miner to generate blocks, cause re-orgs, etc. We'll set up
+			// this node with a chain length of 25, so we have plenty of DCR to
+			// play around with.
+			miner, err := testutils.NewSetupRPCTest(
+				t, 5, netParams, nil, []string{"--txindex"}, true, 25,
+			)
+			if err != nil {
+				t.Fatalf("unable to create mining node: %v", err)
 			}
-		}
+			defer miner.TearDown()
 
-		if err := chainView.Stop(); err != nil {
-			t.Fatalf("unable to stop chain view: %v", err)
-		}
+			cleanUpFunc, chainView, err := chainViewImpl.chainViewInit(t, miner)
+			if err != nil {
+				t.Fatalf("unable to make chain view: %v", err)
+			}
 
-		if cleanUpFunc != nil {
-			cleanUpFunc()
-		}
+			if err := chainView.Start(); err != nil {
+				t.Fatalf("unable to start chain view: %v", err)
+			}
+			for _, chainViewTest := range chainViewTests {
+				testName := fmt.Sprintf("%v", chainViewTest.name)
+				success := t.Run(testName, func(t *testing.T) {
+					chainViewTest.test(miner, chainView,
+						chainViewImpl.chainViewInit, t)
+				})
+
+				if !success {
+					break
+				}
+			}
+
+			if err := chainView.Stop(); err != nil {
+				t.Fatalf("unable to stop chain view: %v", err)
+			}
+
+			if cleanUpFunc != nil {
+				cleanUpFunc()
+			}
+		})
 	}
 }
