@@ -333,7 +333,7 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 // This function returns the grpc conn and a cleanup function to close the
 // wallet.
 func NewRPCSyncingTestRemoteDcrwallet(t TB, dcrd *rpcclient.ConnConfig) (*grpc.ClientConn, func()) {
-	tempDir, err := ioutil.TempDir("", "test-dcrw")
+	tempDir, err := ioutil.TempDir("", "test-dcrw-rpc")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -341,6 +341,32 @@ func NewRPCSyncingTestRemoteDcrwallet(t TB, dcrd *rpcclient.ConnConfig) (*grpc.C
 	var seed [32]byte
 	c, tearDownWallet := NewCustomTestRemoteDcrwallet(t, "remotedcrw", tempDir,
 		seed[:], []byte("pass"), dcrd, nil)
+	tearDown := func() {
+		tearDownWallet()
+
+		if !t.Failed() {
+			os.RemoveAll(tempDir)
+		}
+	}
+
+	return c, tearDown
+}
+
+// NewRPCSyncingTestRemoteDcrwallet creates a new dcrwallet process that can be
+// used by a remotedcrwallet instance to perform the interface tests. This
+// remote wallet syncs to the passed dcrd node using SPV mode sycing.
+//
+// This function returns the grpc conn and a cleanup function to close the
+// wallet.
+func NewSPVSyncingTestRemoteDcrwallet(t TB, p2pAddr string) (*grpc.ClientConn, func()) {
+	tempDir, err := ioutil.TempDir("", "test-dcrw-spv")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var seed [32]byte
+	c, tearDownWallet := NewCustomTestRemoteDcrwallet(t, "remotedcrw", tempDir,
+		seed[:], []byte("pass"), nil, &SPVConfig{Address: p2pAddr})
 	tearDown := func() {
 		tearDownWallet()
 

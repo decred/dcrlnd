@@ -12,5 +12,5 @@ import (
 // TestDcrdChainNtfns executes the generic notifier test suite against a dcrd
 // powered chain notifier.
 func TestDcrdChainNtfns(t *testing.T) {
-	chainntnfstest.TestInterfaces(t, "dcrd")
+	chainntnfstest.TestInterfaces(t, "dcrd", "dcrd")
 }

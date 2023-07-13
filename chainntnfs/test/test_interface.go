@@ -13,11 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/rpcclient/v8"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
+	"google.golang.org/grpc"
 
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -1909,7 +1910,11 @@ var blockCatchupTests = []blockCatchupTestCase{
 // import should trigger an init() method within the package which registers
 // the interface. Second, an additional case in the switch within the main loop
 // below needs to be added which properly initializes the interface.
-func TestInterfaces(t *testing.T, notifierType string) {
+//
+// syncerType may be "dcrd" or "spv", depending on what the backing wallet
+// should be syncing to. This is only applicable to the dcrw and remotedcrw
+// notifier types.
+func TestInterfaces(t *testing.T, notifierType, syncerType string) {
 	t.Parallel()
 
 	if chainntnfs.NotifierByName(notifierType) == nil {
@@ -1923,7 +1928,7 @@ func TestInterfaces(t *testing.T, notifierType string) {
 		// dedicated miner to generate blocks, cause re-orgs, etc. We'll set up
 		// this node with a chain length of 125, so we have plenty of DCR to
 		// play around with.
-		minerLogDir := fmt.Sprintf(".miner-logs-%s", notifierType)
+		minerLogDir := fmt.Sprintf(".miner-logs-%s-%s", notifierType, syncerType)
 		minerArgs := []string{"--debuglevel=debug", "--logdir=" + minerLogDir}
 
 		miner, err := testutils.NewSetupRPCTest(
@@ -1972,7 +1977,7 @@ func TestInterfaces(t *testing.T, notifierType string) {
 		return miner, vw, tearDown
 	}
 
-	newNotifier := func(t *testing.T, notifierType string, startNotifier bool, backend rpcclient.ConnConfig) (chainntnfs.TestChainNotifier, func()) {
+	newNotifier := func(t *testing.T, notifierType string, startNotifier bool, miner *rpctest.Harness) (chainntnfs.TestChainNotifier, func()) {
 		// Initialize a height hint cache for each notifier.
 		tempDir, err := ioutil.TempDir("", "channeldb")
 		if err != nil {
@@ -1994,6 +1999,7 @@ func TestInterfaces(t *testing.T, notifierType string) {
 		var tearDownNotifier func()
 		switch notifierType {
 		case "dcrd":
+			backend := miner.RPCConfig()
 			notifier, err = dcrdnotify.New(
 				&backend, netParams, hintCache,
 				hintCache,
@@ -2003,7 +2009,18 @@ func TestInterfaces(t *testing.T, notifierType string) {
 			}
 
 		case "dcrw":
-			w, teardown := testutils.NewRPCSyncingTestWallet(t, &backend)
+			var w *wallet.Wallet
+			var teardown func()
+			switch syncerType {
+			case "dcrd":
+				backend := miner.RPCConfig()
+				w, teardown = testutils.NewRPCSyncingTestWallet(t, &backend)
+			case "spv":
+				w, teardown = testutils.NewSPVSyncingTestWallet(t, miner.P2PAddress())
+			default:
+				t.Fatalf("unknown syncer type %s", syncerType)
+			}
+
 			notifier, err = dcrwnotify.New(
 				w, netParams, hintCache, hintCache,
 			)
@@ -2013,7 +2030,17 @@ func TestInterfaces(t *testing.T, notifierType string) {
 			tearDownNotifier = teardown
 
 		case "remotedcrw":
-			c, teardown := testutils.NewRPCSyncingTestRemoteDcrwallet(t, &backend)
+			var c *grpc.ClientConn
+			var teardown func()
+			switch syncerType {
+			case "dcrd":
+				backend := miner.RPCConfig()
+				c, teardown = testutils.NewRPCSyncingTestRemoteDcrwallet(t, &backend)
+			case "spv":
+				c, teardown = testutils.NewSPVSyncingTestRemoteDcrwallet(t, miner.P2PAddress())
+			default:
+				t.Fatalf("unknown syncer type %s", syncerType)
+			}
 			notifier, err = remotedcrwnotify.New(
 				c, netParams, hintCache, hintCache,
 			)
@@ -2051,7 +2078,7 @@ func TestInterfaces(t *testing.T, notifierType string) {
 	defer tearDownMiner()
 
 	notifier, tearDownNotifier := newNotifier(
-		t, notifierType, true, miner.RPCConfig(),
+		t, notifierType, true, miner,
 	)
 	defer tearDownNotifier()
 
@@ -2095,7 +2122,7 @@ func TestInterfaces(t *testing.T, notifierType string) {
 
 		success := t.Run(testName, func(t *testing.T) {
 			notifier, tearDownNotifier := newNotifier(
-				t, notifierType, false, miner.RPCConfig(),
+				t, notifierType, false, miner,
 			)
 			defer tearDownNotifier()
 			blockCatchupTest.test(miner, vw, notifier, t)

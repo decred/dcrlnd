@@ -2,12 +2,17 @@ package testutils
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
+	"net"
 	"os"
 	"time"
 
 	"decred.org/dcrwallet/v3/chain"
+	"decred.org/dcrwallet/v3/p2p"
+	"decred.org/dcrwallet/v3/spv"
 	wallet "decred.org/dcrwallet/v3/wallet"
+	"github.com/decred/dcrd/addrmgr/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/rpcclient/v8"
@@ -26,6 +31,8 @@ var (
 
 func init() {
 	wallet.UseLogger(build.NewSubLogger("DCRW", nil))
+	p2p.UseLogger(build.NewSubLogger("DCRW", nil))
+	spv.UseLogger(build.NewSubLogger("DCRW", nil))
 }
 
 // NewRPCSyncingTestWallet creates a test wallet that syncs itself using the
@@ -33,7 +40,7 @@ func init() {
 func NewRPCSyncingTestWallet(t TB, rpcConfig *rpcclient.ConnConfig) (*wallet.Wallet, func()) {
 	t.Helper()
 
-	tempDir, err := ioutil.TempDir("", "test-dcrw")
+	tempDir, err := ioutil.TempDir("", "test-dcrw-rpc")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,6 +89,70 @@ func NewRPCSyncingTestWallet(t TB, rpcConfig *rpcclient.ConnConfig) (*wallet.Wal
 
 	cleanUp := func() {
 		cancel()
+		w.Lock()
+		if !t.Failed() {
+			os.RemoveAll(tempDir)
+		} else {
+			t.Logf("Wallet data at %s", tempDir)
+		}
+	}
+
+	return w, cleanUp
+}
+
+// NewSPVSyncingTestWallet creates a test wallet that syncs itself using the
+// SPV connection mode.
+func NewSPVSyncingTestWallet(t TB, p2pAddr string) (*wallet.Wallet, func()) {
+	t.Helper()
+
+	tempDir, err := ioutil.TempDir("", "test-dcrw-spv")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		if t.Failed() {
+			t.Logf("Wallet data at %s", tempDir)
+		}
+	}()
+
+	loader := walletloader.NewLoader(chaincfg.SimNetParams(), tempDir,
+		wallet.DefaultGapLimit)
+
+	pass := []byte("test")
+
+	w, err := loader.CreateNewWallet(
+		context.Background(), pass, pass, testHDSeed[:],
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := w.Unlock(context.Background(), pass, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 0}
+	amgrDir := tempDir
+	amgr := addrmgr.New(amgrDir, net.LookupIP)
+	lp := p2p.NewLocalPeer(w.ChainParams(), addr, amgr)
+	syncer := spv.NewSyncer(w, lp)
+	syncer.SetPersistentPeers([]string{p2pAddr})
+	w.SetNetworkBackend(syncer)
+	ctx, cancel := context.WithCancel(context.Background())
+	syncerChan := make(chan error, 1)
+	go func() { syncerChan <- syncer.Run(ctx) }()
+
+	cleanUp := func() {
+		cancel()
+		select {
+		case err := <-syncerChan:
+			if err != nil && !errors.Is(err, context.Canceled) {
+				t.Logf("SPV syncer errored: %v", err)
+			}
+		case <-time.After(30 * time.Second):
+			t.Logf("Timeout waiting for SPV syncer to finish")
+		}
 		w.Lock()
 		if !t.Failed() {
 			os.RemoveAll(tempDir)
