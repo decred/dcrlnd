@@ -389,6 +389,15 @@ const (
 	AcceptedHtlcSuccessSigScriptSize int64 = 1 + 73 + 1 + 73 + 1 + 32 +
 		1 + 1 + acceptedHtlcRedeemScriptSize
 
+	// AcceptedHtlcSuccessSigScriptSizeConfirmed is the size of a sigScript
+	// used when redeeming an acceptedHtlcScript using the "success" code
+	// path when the redeem script includes the additional OP_CSV check.
+	//
+	// Note: the original acceptedHtlcRedeemScriptSize constant already
+	// included the size of the additional OP_CSV check, therefore this is
+	// the same as the original sig script size.
+	AcceptedHtlcSuccessSigScriptSizeConfirmed = AcceptedHtlcSuccessSigScriptSize
+
 	// AcceptedHtlcPenaltySigScriptSize is the size of a sigScript used
 	// when redeeming an acceptedHtlcScript using the "penalty" code path.
 	//
@@ -419,6 +428,15 @@ const (
 	// Total: 288 bytes
 	OfferedHtlcTimeoutSigScriptSize int64 = 1 + 73 + 1 + 73 + 1 + 1 +
 		1 + offeredHtlcRedeemScriptSize
+
+	// OfferedHtlcTimeoutSigScriptSizeConfirmed is the size of a sigScript used
+	// when redeeming an offeredHtlcScript using the "timeout" code path,
+	// when the script includes the additional OP_CSV check.
+	//
+	// Note: the original offeredHtlcRedeemScriptSize already includes the
+	// additional bytes of the check, therefore this is the same as the
+	// original path.
+	OfferedHtlcTimeoutSigScriptSizeConfirmed = OfferedHtlcTimeoutSigScriptSize
 
 	// OfferedHtlcSuccessSigScriptSize is the size of a sigScript used
 	// when redeeming an offeredHtlcScript using the "success" code path.
