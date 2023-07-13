@@ -28,7 +28,9 @@ func init() {
 	wallet.UseLogger(build.NewSubLogger("DCRW", nil))
 }
 
-func NewSyncingTestWallet(t TB, rpcConfig *rpcclient.ConnConfig) (*wallet.Wallet, func()) {
+// NewRPCSyncingTestWallet creates a test wallet that syncs itself using the
+// RPC connection mode.
+func NewRPCSyncingTestWallet(t TB, rpcConfig *rpcclient.ConnConfig) (*wallet.Wallet, func()) {
 	t.Helper()
 
 	tempDir, err := ioutil.TempDir("", "test-dcrw")

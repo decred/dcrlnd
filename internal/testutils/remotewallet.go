@@ -326,13 +326,13 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 	return conn, cleanup
 }
 
-// NewTestRemoteDcrwallet creates a new dcrwallet process that can be used by a
-// remotedcrwallet instance to perform the interface tests. This currently only
-// supports running the wallet in rpc sync mode.
+// NewRPCSyncingTestRemoteDcrwallet creates a new dcrwallet process that can be
+// used by a remotedcrwallet instance to perform the interface tests. This
+// remote wallet syncs to the passed dcrd node using RPC mode sycing.
 //
 // This function returns the grpc conn and a cleanup function to close the
 // wallet.
-func NewTestRemoteDcrwallet(t TB, dcrd *rpcclient.ConnConfig) (*grpc.ClientConn, func()) {
+func NewRPCSyncingTestRemoteDcrwallet(t TB, dcrd *rpcclient.ConnConfig) (*grpc.ClientConn, func()) {
 	tempDir, err := ioutil.TempDir("", "test-dcrw")
 	if err != nil {
 		t.Fatal(err)
@@ -355,7 +355,7 @@ func NewTestRemoteDcrwallet(t TB, dcrd *rpcclient.ConnConfig) (*grpc.ClientConn,
 // SetPerAccountPassphrase calls the SetAccountPassphrase rpc endpoint on the
 // wallet at the given conn, setting it to the specified passphrse.
 //
-// This function expects a conn returned by NewTestRemoteDcrwallet.
+// This function expects a conn returned by NewCustomTestRemoteDcrwallet.
 func SetPerAccountPassphrase(conn *grpc.ClientConn, passphrase []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()

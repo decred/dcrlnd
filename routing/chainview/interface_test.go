@@ -787,7 +787,7 @@ var interfaceImpls = []struct {
 	{
 		name: "dcrw_embedded",
 		chainViewInit: func(t testutils.TB, config rpcclient.ConnConfig) (func(), FilteredChainView, error) {
-			w, teardown := testutils.NewSyncingTestWallet(t, &config)
+			w, teardown := testutils.NewRPCSyncingTestWallet(t, &config)
 			chainView, err := NewDcrwalletFilteredChainView(w)
 			if err != nil {
 				return nil, nil, err
@@ -799,7 +799,7 @@ var interfaceImpls = []struct {
 	{
 		name: "dcrw_remote",
 		chainViewInit: func(t testutils.TB, config rpcclient.ConnConfig) (func(), FilteredChainView, error) {
-			conn, teardown := testutils.NewTestRemoteDcrwallet(t, &config)
+			conn, teardown := testutils.NewRPCSyncingTestRemoteDcrwallet(t, &config)
 			chainView, err := NewRemoteWalletFilteredChainView(conn)
 			if err != nil {
 				return nil, nil, err

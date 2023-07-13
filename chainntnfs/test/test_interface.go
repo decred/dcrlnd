@@ -1999,7 +1999,7 @@ func TestInterfaces(t *testing.T, targetBackEnd string) {
 			}
 
 		case "dcrw":
-			w, teardown := testutils.NewSyncingTestWallet(t, &backend)
+			w, teardown := testutils.NewRPCSyncingTestWallet(t, &backend)
 			notifier, err = dcrwnotify.New(
 				w, netParams, hintCache, hintCache,
 			)
@@ -2009,7 +2009,7 @@ func TestInterfaces(t *testing.T, targetBackEnd string) {
 			tearDownNotifier = teardown
 
 		case "remotedcrw":
-			c, teardown := testutils.NewTestRemoteDcrwallet(t, &backend)
+			c, teardown := testutils.NewRPCSyncingTestRemoteDcrwallet(t, &backend)
 			notifier, err = remotedcrwnotify.New(
 				c, netParams, hintCache, hintCache,
 			)

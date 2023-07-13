@@ -513,7 +513,7 @@ func TestDcrwalletCSDriver(t *testing.T) {
 	defer tearDownMiner()
 
 	rpcConfig := miner.RPCConfig()
-	w, tearDownWallet := testutils.NewSyncingTestWallet(t, &rpcConfig)
+	w, tearDownWallet := testutils.NewRPCSyncingTestWallet(t, &rpcConfig)
 	defer tearDownWallet()
 
 	for _, tc := range testCases {
@@ -544,7 +544,7 @@ func TestRemoteDcrwalletCSDriver(t *testing.T) {
 	defer tearDownMiner()
 
 	rpcConfig := miner.RPCConfig()
-	conn, tearDownWallet := testutils.NewTestRemoteDcrwallet(t, &rpcConfig)
+	conn, tearDownWallet := testutils.NewRPCSyncingTestRemoteDcrwallet(t, &rpcConfig)
 	wsvc := walletrpc.NewWalletServiceClient(conn)
 	nsvc := walletrpc.NewNetworkServiceClient(conn)
 	defer tearDownWallet()
@@ -582,7 +582,7 @@ func BenchmarkDcrwalletCSDriver(b *testing.B) {
 	defer tearDownMiner()
 
 	rpcConfig := miner.RPCConfig()
-	w, tearDownWallet := testutils.NewSyncingTestWallet(b, &rpcConfig)
+	w, tearDownWallet := testutils.NewRPCSyncingTestWallet(b, &rpcConfig)
 	defer tearDownWallet()
 
 	d := NewDcrwalletCSDriver(w)
