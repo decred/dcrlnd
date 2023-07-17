@@ -3767,6 +3767,11 @@ func testChannelForceClosure(net *lntest.NetworkHarness, t *harnessTest) {
 func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 	alice, carol *lntest.HarnessNode, channelType commitType) {
 
+	// See the comment on testMultiHopHtlcAggregation.
+	if channelType == commitTypeAnchors {
+		t.Skipf("HTLC aggregation cannot happen in dcrlnd")
+	}
+
 	ctxb := context.Background()
 
 	const (

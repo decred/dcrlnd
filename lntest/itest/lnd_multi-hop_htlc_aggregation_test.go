@@ -27,6 +27,29 @@ import (
 func testMultiHopHtlcAggregation(net *lntest.NetworkHarness, t *harnessTest,
 	alice, bob *lntest.HarnessNode, c commitType) {
 
+	// HTLC aggregation for anchor outputs in BTC's LN relies on the fact
+	// that SIGHASH_SINGLE|SIGHASH_ANYONECANPAY for segwit outputs only use
+	// a single output in its hashing calculation (i.e. the output at the
+	// corresponding input index being verified), and then "transporting"
+	// this signature to be used in a different transaction (the sweep
+	// transaction that aggregates multiple htlc success transactions).
+	//
+	// Unfortunately, Decred's SIGHASH_SINGLE|SIGHASH_ANYONECANPAY hashing
+	// mode follows the original (as opposed to the segwit) BTC hashing
+	// mode, which sets output amounts to -1 and nils the PkScripts of
+	// every output with an index lower than the input being verified.
+	//
+	// This effectively means the trick for aggregating outputs into a
+	// single tx does not work in Decred as opposed to segwit BTC.
+	//
+	// Thus we disable the itest that asserts the correct behavior re:
+	// aggregation and disable anchor outputs in mainnet dcrlnd (where they
+	// are less useful than in BTC, because the current fee market is much
+	// more stable and fees are actually lower).
+	if c == commitTypeAnchors {
+		t.Skipf("HTLC aggregation cannot happen in dcrlnd")
+	}
+
 	const finalCltvDelta = 40
 	ctxb := context.Background()
 

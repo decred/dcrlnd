@@ -1147,6 +1147,11 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 			cfg.DB.Backend)
 	}
 
+	// Enforce anchors are not used in mainnet.
+	if cfg.ActiveNetParams.Net == wire.MainNet && cfg.ProtocolOptions.AnchorCommitments() {
+		return nil, fmt.Errorf("cannot use anchor commitments on mainnet")
+	}
+
 	// Validate the subconfigs for workers, caches, and the tower client.
 	err = lncfg.Validate(
 		cfg.Workers,
