@@ -1,7 +1,7 @@
 //go:build !rpctest
 // +build !rpctest
 
-package dcrlnd
+package funding
 
 import (
 	"bytes"
@@ -33,7 +33,6 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channelnotifier"
 	"github.com/decred/dcrlnd/discovery"
-	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
 	"github.com/decred/dcrlnd/keychain"
@@ -65,6 +64,10 @@ const (
 
 	// A dummy value to use for the funding broadcast height.
 	fundingBroadcastHeight = 123
+
+	// defaultMaxLocalCSVDelay is the maximum delay we accept on our
+	// commitment output.
+	defaultMaxLocalCSVDelay = 10000
 )
 
 var (
@@ -384,7 +387,7 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 
 	chainedAcceptor := chanacceptor.NewChainedAcceptor()
 
-	fundingCfg := fundingConfig{
+	fundingCfg := Config{
 		IDKey:        privKey.PubKey(),
 		Wallet:       lnw,
 		Notifier:     chainNotifier,
@@ -471,7 +474,7 @@ func createTestFundingManager(t *testing.T, privKey *secp256k1.PrivateKey,
 		},
 		ZombieSweeperInterval:         1 * time.Hour,
 		ReservationTimeout:            1 * time.Nanosecond,
-		MaxChanSize:                   funding.MaxFundingAmount,
+		MaxChanSize:                   MaxFundingAmount,
 		MaxLocalCSVDelay:              defaultMaxLocalCSVDelay,
 		MaxPendingChannels:            lncfg.DefaultMaxPendingChannels,
 		NotifyOpenChannelEvent:        evt.NotifyOpenChannelEvent,
@@ -529,7 +532,7 @@ func recreateAliceFundingManager(t *testing.T, alice *testNode) {
 
 	chainedAcceptor := chanacceptor.NewChainedAcceptor()
 
-	f, err := NewFundingManager(fundingConfig{
+	f, err := NewFundingManager(Config{
 		IDKey:        oldCfg.IDKey,
 		Wallet:       oldCfg.Wallet,
 		Notifier:     oldCfg.Notifier,
@@ -594,7 +597,7 @@ func recreateAliceFundingManager(t *testing.T, alice *testNode) {
 	}
 }
 
-type cfgOption func(*fundingConfig)
+type cfgOption func(*Config)
 
 func setupFundingManagers(t *testing.T,
 	options ...cfgOption) (*testNode, *testNode) {
@@ -2901,7 +2904,7 @@ func TestFundingManagerMaxPendingChannels(t *testing.T) {
 	t.Parallel()
 
 	alice, bob := setupFundingManagers(
-		t, func(cfg *fundingConfig) {
+		t, func(cfg *Config) {
 			cfg.MaxPendingChannels = maxPending
 		},
 	)
@@ -3074,7 +3077,7 @@ func TestFundingManagerRejectPush(t *testing.T) {
 
 	// Enable 'rejectpush' option and initialize funding managers.
 	alice, bob := setupFundingManagers(
-		t, func(cfg *fundingConfig) {
+		t, func(cfg *Config) {
 			cfg.RejectPush = true
 		},
 	)
@@ -3416,10 +3419,10 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 	// Create a set of funding managers that will reject wumbo
 	// channels but set --maxchansize explicitly lower than soft-limit.
 	// Verify that wumbo rejecting funding managers will respect
-	// --maxchansize below 1073741823 atoms (funding.MaxFundingAmount) limit.
-	alice, bob := setupFundingManagers(t, func(cfg *fundingConfig) {
+	// --maxchansize below 1073741823 atoms (MaxFundingAmount) limit.
+	alice, bob := setupFundingManagers(t, func(cfg *Config) {
 		cfg.NoWumboChans = true
-		cfg.MaxChanSize = funding.MaxFundingAmount - 1
+		cfg.MaxChanSize = MaxFundingAmount - 1
 	})
 
 	// Attempt to create a channel above the limit
@@ -3430,7 +3433,7 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 		Peer:            bob,
 		TargetPubkey:    bob.privKey.PubKey(),
 		ChainHash:       fundingNetParams.GenesisHash,
-		LocalFundingAmt: funding.MaxDecredFundingAmount,
+		LocalFundingAmt: MaxDecredFundingAmount,
 		PushAmt:         lnwire.NewMAtomsFromAtoms(0),
 		Private:         false,
 		Updates:         updateChan,
@@ -3448,9 +3451,9 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 	// channels but set --maxchansize explicitly higher than soft-limit
 	// A --maxchansize greater than this limit should have no effect.
 	tearDownFundingManagers(t, alice, bob)
-	alice, bob = setupFundingManagers(t, func(cfg *fundingConfig) {
+	alice, bob = setupFundingManagers(t, func(cfg *Config) {
 		cfg.NoWumboChans = true
-		cfg.MaxChanSize = funding.MaxFundingAmount + 1
+		cfg.MaxChanSize = MaxFundingAmount + 1
 	})
 
 	// Reset the Peer to the newly created one.
@@ -3466,7 +3469,7 @@ func TestMaxChannelSizeConfig(t *testing.T) {
 	// Create the funding managers, this time allowing
 	// wumbo channels but setting --maxchansize explicitly.
 	tearDownFundingManagers(t, alice, bob)
-	alice, bob = setupFundingManagers(t, func(cfg *fundingConfig) {
+	alice, bob = setupFundingManagers(t, func(cfg *Config) {
 		cfg.NoWumboChans = false
 		cfg.MaxChanSize = dcrutil.Amount(11e8)
 	})
@@ -3493,7 +3496,7 @@ func TestWumboChannelConfig(t *testing.T) {
 
 	// First we'll create a set of funding managers that will reject wumbo
 	// channels.
-	alice, bob := setupFundingManagers(t, func(cfg *fundingConfig) {
+	alice, bob := setupFundingManagers(t, func(cfg *Config) {
 		cfg.NoWumboChans = true
 	})
 
@@ -3506,7 +3509,7 @@ func TestWumboChannelConfig(t *testing.T) {
 		Peer:            bob,
 		TargetPubkey:    bob.privKey.PubKey(),
 		ChainHash:       fundingNetParams.GenesisHash,
-		LocalFundingAmt: funding.MaxDecredFundingAmount,
+		LocalFundingAmt: MaxDecredFundingAmount,
 		PushAmt:         lnwire.NewMAtomsFromAtoms(0),
 		Private:         false,
 		Updates:         updateChan,
@@ -3533,9 +3536,9 @@ func TestWumboChannelConfig(t *testing.T) {
 	// Next, we'll re-create the funding managers, but this time allowing
 	// wumbo channels explicitly.
 	tearDownFundingManagers(t, alice, bob)
-	alice, bob = setupFundingManagers(t, func(cfg *fundingConfig) {
+	alice, bob = setupFundingManagers(t, func(cfg *Config) {
 		cfg.NoWumboChans = false
-		cfg.MaxChanSize = funding.MaxDecredFundingAmountWumbo
+		cfg.MaxChanSize = MaxDecredFundingAmountWumbo
 	})
 
 	// Reset the Peer to the newly created one.

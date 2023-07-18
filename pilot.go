@@ -10,6 +10,7 @@ import (
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/chainreg"
+	"github.com/decred/dcrlnd/funding"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwire"
@@ -98,7 +99,7 @@ func (c *chanController) OpenChannel(target *secp256k1.PublicKey,
 
 	// Construct the open channel request and send it to the server to begin
 	// the funding workflow.
-	req := &InitFundingMsg{
+	req := &funding.InitFundingMsg{
 		TargetPubkey:     target,
 		ChainHash:        c.netParams.GenesisHash,
 		SubtractFees:     true,
