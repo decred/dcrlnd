@@ -19648,7 +19648,8 @@ type LightningClient interface {
 	// lncli: `enforcenodeping`
 	// EnforceNodePing attempts to ping the specified peer. If the request is
 	// canceled before a response is received from the remote peer, then this
-	// forces lnd to disconnect from the peer (and potentially attempt to reconnect).
+	// forces lnd to disconnect from the peer (and potentially attempt to
+	// reconnect).
 	EnforceNodePing(ctx context.Context, in *EnforceNodePingRequest, opts ...grpc.CallOption) (*EnforceNodePingResponse, error)
 	// lncli: `queryroutes`
 	// QueryRoutes attempts to query the daemon's Channel Router for a possible
@@ -20796,7 +20797,8 @@ type LightningServer interface {
 	// lncli: `enforcenodeping`
 	// EnforceNodePing attempts to ping the specified peer. If the request is
 	// canceled before a response is received from the remote peer, then this
-	// forces lnd to disconnect from the peer (and potentially attempt to reconnect).
+	// forces lnd to disconnect from the peer (and potentially attempt to
+	// reconnect).
 	EnforceNodePing(context.Context, *EnforceNodePingRequest) (*EnforceNodePingResponse, error)
 	// lncli: `queryroutes`
 	// QueryRoutes attempts to query the daemon's Channel Router for a possible

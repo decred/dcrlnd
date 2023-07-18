@@ -20,12 +20,12 @@ service InitialChainSync {
         returns (stream ChainSyncUpdate);
 }
 
-message ChainSyncSubscription {}
+message ChainSyncSubscription {
+}
 
-message ChainSyncUpdate{
+message ChainSyncUpdate {
     int64 block_height = 1;
     bytes block_hash = 2;
     int64 block_timestamp = 3;
     bool synced = 4;
 }
-

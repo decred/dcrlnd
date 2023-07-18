@@ -4530,7 +4530,8 @@ type WalletKitClient interface {
 	ListSweeps(ctx context.Context, in *ListSweepsRequest, opts ...grpc.CallOption) (*ListSweepsResponse, error)
 	// DeriveNextAccount generates the next account of the wallet.
 	DeriveNextAccount(ctx context.Context, in *DeriveNextAccountRequest, opts ...grpc.CallOption) (*DeriveNextAccountResponse, error)
-	// ExportPrivateKey exports a private key that is derived from a wallet address.
+	// ExportPrivateKey exports a private key that is derived from a wallet
+	// address.
 	ExportPrivateKey(ctx context.Context, in *ExportPrivateKeyRequest, opts ...grpc.CallOption) (*ExportPrivateKeyResponse, error)
 	// RescanWallet performs an on-chain rescan for wallet transactions.
 	RescanWallet(ctx context.Context, in *RescanWalletRequest, opts ...grpc.CallOption) (WalletKit_RescanWalletClient, error)
@@ -4908,7 +4909,8 @@ type WalletKitServer interface {
 	ListSweeps(context.Context, *ListSweepsRequest) (*ListSweepsResponse, error)
 	// DeriveNextAccount generates the next account of the wallet.
 	DeriveNextAccount(context.Context, *DeriveNextAccountRequest) (*DeriveNextAccountResponse, error)
-	// ExportPrivateKey exports a private key that is derived from a wallet address.
+	// ExportPrivateKey exports a private key that is derived from a wallet
+	// address.
 	ExportPrivateKey(context.Context, *ExportPrivateKeyRequest) (*ExportPrivateKeyResponse, error)
 	// RescanWallet performs an on-chain rescan for wallet transactions.
 	RescanWallet(*RescanWalletRequest, WalletKit_RescanWalletServer) error

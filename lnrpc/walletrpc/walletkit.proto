@@ -149,27 +149,31 @@ service WalletKit {
     /*
     DeriveNextAccount generates the next account of the wallet.
     */
-    rpc DeriveNextAccount(DeriveNextAccountRequest) returns (DeriveNextAccountResponse);
+    rpc DeriveNextAccount (DeriveNextAccountRequest)
+        returns (DeriveNextAccountResponse);
 
     /*
-    ExportPrivateKey exports a private key that is derived from a wallet address.
+    ExportPrivateKey exports a private key that is derived from a wallet
+    address.
     */
-    rpc ExportPrivateKey(ExportPrivateKeyRequest) returns (ExportPrivateKeyResponse);
+    rpc ExportPrivateKey (ExportPrivateKeyRequest)
+        returns (ExportPrivateKeyResponse);
 
     /*
     RescanWallet performs an on-chain rescan for wallet transactions.
     */
-    rpc RescanWallet (RescanWalletRequest) returns (stream RescanWalletResponse);
+    rpc RescanWallet (RescanWalletRequest)
+        returns (stream RescanWalletResponse);
 
     /*
     SpendUTXOs performs a custom on-chain spend of UTXOs.
     */
-    rpc SpendUTXOs(SpendUTXOsRequest) returns (SpendUTXOsResponse);
+    rpc SpendUTXOs (SpendUTXOsRequest) returns (SpendUTXOsResponse);
 
     /*
     GetWalletTx returns information about an existing wallet transaction.
     */
-    rpc GetWalletTx(GetWalletTxRequest) returns (GetWalletTxResponse);
+    rpc GetWalletTx (GetWalletTxRequest) returns (GetWalletTxResponse);
 
     /*
     LabelTransaction adds a label to a transaction. If the transaction already
@@ -666,17 +670,17 @@ message DeriveNextAccountRequest {
     string name = 1;
 }
 
-message DeriveNextAccountResponse {}
-
+message DeriveNextAccountResponse {
+}
 
 message ExportPrivateKeyRequest {
-  // The public address for which to export the private key.
-  string address = 1;
+    // The public address for which to export the private key.
+    string address = 1;
 }
 
 message ExportPrivateKeyResponse {
-  // The private key in WIF format.
-  string wif = 1;
+    // The private key in WIF format.
+    string wif = 1;
 }
 
 message RescanWalletRequest {
@@ -725,13 +729,13 @@ message SpendUTXOsResponse {
 }
 
 message GetWalletTxRequest {
-  bytes txid = 1;
+    bytes txid = 1;
 }
 
 message GetWalletTxResponse {
-  bytes raw_tx = 1;
-  int32 confirmations = 2;
-  bytes block_hash = 3;
+    bytes raw_tx = 1;
+    int32 confirmations = 2;
+    bytes block_hash = 3;
 }
 
 message LabelTransactionRequest {
@@ -786,7 +790,6 @@ message FundPsbtRequest {
     account is used.
     */
     string account = 5;
-
 }
 message FundPsbtResponse {
     /*
