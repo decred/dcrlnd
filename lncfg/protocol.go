@@ -17,10 +17,19 @@ type ProtocolOptions struct {
 	// (channels larger than 10.7 DCR) channels, which is the opposite of
 	// mini.
 	WumboChans bool `long:"wumbo-channels" description:"if set, then lnd will create and accept requests for channels larger chan 10.7 DCR"`
+
+	// Anchors enables anchor commitments.
+	Anchors bool `long:"anchors" description:"EXPERIMENTAL: some features of anchor channels don't work on decred's mainnet"`
 }
 
 // Wumbo returns true if lnd should permit the creation and acceptance of wumbo
 // channels.
 func (l *ProtocolOptions) Wumbo() bool {
 	return l.WumboChans
+}
+
+// NoAnchorCommitments returns true if we have disabled support for the anchor
+// commitment type.
+func (l *ProtocolOptions) NoAnchorCommitments() bool {
+	return !l.Anchors
 }

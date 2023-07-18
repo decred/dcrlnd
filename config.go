@@ -1158,7 +1158,7 @@ func ValidateConfig(cfg Config, usageMessage string) (*Config, error) {
 	}
 
 	// Enforce anchors are not used in mainnet.
-	if cfg.ActiveNetParams.Net == wire.MainNet && cfg.ProtocolOptions.AnchorCommitments() {
+	if cfg.ActiveNetParams.Net == wire.MainNet && !cfg.ProtocolOptions.NoAnchorCommitments() {
 		return nil, fmt.Errorf("cannot use anchor commitments on mainnet")
 	}
 
