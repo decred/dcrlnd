@@ -51,11 +51,6 @@ var (
 // call the setup code with no custom values on the channels set up.
 var noUpdate = func(a, b *channeldb.OpenChannel) {}
 
-func privKeyFromBytes(b []byte) (*secp256k1.PrivateKey, *secp256k1.PublicKey) {
-	k := secp256k1.PrivKeyFromBytes(b)
-	return k, k.PubKey()
-}
-
 // createTestPeer creates a channel between two nodes, and returns a peer for
 // one of the nodes, together with the channel seen from both nodes. It takes
 // an updateChan function which can be used to modify the default values on

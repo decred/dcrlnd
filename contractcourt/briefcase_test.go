@@ -295,6 +295,10 @@ func assertResolversEqual(t *testing.T, originalResolver ContractResolver,
 
 // TestContractInsertionRetrieval tests that were able to insert a set of
 // unresolved contracts into the log, and retrieve the same set properly.
+//
+// We disable govet in this case to avoid the complaint about a copied lock.
+//
+//nolint:govet
 func TestContractInsertionRetrieval(t *testing.T) {
 	t.Parallel()
 

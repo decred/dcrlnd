@@ -403,18 +403,6 @@ func (m *mockNotifier) RegisterSpendNtfn(outpoint *wire.OutPoint, _ []byte,
 	return nil, nil
 }
 
-func (m *mockNotifier) notifyBlock(hash chainhash.Hash, height uint32) {
-	m.RLock()
-	defer m.RUnlock()
-
-	for _, client := range m.epochClients {
-		client <- &chainntnfs.BlockEpoch{
-			Height: int32(height),
-			Hash:   &hash,
-		}
-	}
-}
-
 func (m *mockNotifier) RegisterBlockEpochNtfn(
 	bestBlock *chainntnfs.BlockEpoch) (*chainntnfs.BlockEpochEvent, error) {
 	m.RLock()
