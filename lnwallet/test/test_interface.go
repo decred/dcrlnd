@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"os"
 	"path"
@@ -2475,29 +2476,29 @@ func testSpendUnconfirmed(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 	txFeeRate := defaultFeeRate
 
 	// First we will empty out bob's wallet, sending the entire balance
-	// to alice.
-	bobBalance, err := bob.ConfirmedBalance(0, "")
-	if err != nil {
-		t.Fatalf("unable to retrieve bob's balance: %v", err)
+	// to alice. We check the balance by listing the utxos to calculate
+	// the required tx fee.
+	var bobBalance dcrutil.Amount
+	utxos, err := bob.ListUnspentWitness(0, math.MaxInt32, "")
+	require.Nil(t, err)
+	var sz input.TxSizeEstimator
+	for _, u := range utxos {
+		bobBalance += u.Value
+		sz.AddP2PKHInput()
 	}
-	txFee := txFeeRate.FeeForSize(3869) // Fee to spend 23 utxos to 1 output
+	sz.AddP2PKHOutput()
+
+	// The wallet internally adds a possible change output when estimating
+	// the size, therefore we add _another_ p2pkh output to account for that
+	// and avoid an error when spending the full amount. The resulting change
+	// will be dust, and the wallet will not actually add the change output.
+	sz.AddP2PKHOutput()
+
+	txFee := txFeeRate.FeeForSize(sz.Size()) // Fee to spend bob's utxos to 1 output
 	output := &wire.TxOut{
 		Value:    int64(bobBalance - txFee),
 		PkScript: alicePkScript,
 	}
-
-	/*
-		utxos, err := bob.ListUnspentWitness(0, 99999, "")
-		require.Nil(t, err)
-		var sz input.TxSizeEstimator
-		t.Logf("XXXXXXXXXXXXXXXXX %s - %d utxos", bobBalance, len(utxos))
-		for i, u := range utxos {
-			t.Logf("XXXXXXXXXXXXXXXXX %.2d - %s - %s", i, u.String(), u.Value)
-			sz.AddP2PKHInput()
-		}
-		sz.AddP2PKHOutput()
-		t.Logf("XXXXXXXXXXXXXXXX size %d fee %s", sz.Size(), txFeeRate.FeeForSize(sz.Size()))
-	*/
 
 	tx := sendCoins(t, miner, vw, bob, alice, output, txFeeRate, true, 1)
 	txHash := tx.TxHash()
