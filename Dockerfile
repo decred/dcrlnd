@@ -32,11 +32,10 @@ RUN apk --no-cache add \
 # Copy the binaries from the builder image.
 COPY --from=builder /go/bin/dcrlncli /bin/
 COPY --from=builder /go/bin/dcrlnd /bin/
-COPY --from=builder /go/src/github.com/decred/dcrlnd/scripts/verify-install.sh /
 
 # Store the SHA256 hash of the binaries that were just produced for later
 # verification.
-RUN sha256sum /bin/lnd /bin/lncli > /shasums.txt \
+RUN sha256sum /bin/dcrlnd /bin/dcrlncli > /shasums.txt \
   && cat /shasums.txt
 
 # Expose lnd ports (p2p, rpc).
