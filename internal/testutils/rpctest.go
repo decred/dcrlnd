@@ -1,7 +1,6 @@
 package testutils
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,6 +8,7 @@ import (
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/rpcclient/v8"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
+	"matheusd.com/testctx"
 )
 
 // NewSetupRPCTest attempts up to maxTries to setup an rpctest harness or
@@ -30,7 +30,7 @@ func NewSetupRPCTest(t *testing.T, maxTries int, netParams *chaincfg.Params,
 	for i := 0; i < maxTries; i++ {
 		harness, err = rpctest.New(t, netParams, handlers, args)
 		if err == nil {
-			err = harness.SetUp(context.Background(), setupChain, numMatureOutputs)
+			err = harness.SetUp(testctx.New(t), setupChain, numMatureOutputs)
 			if err == nil {
 				return harness, nil
 			} else {
