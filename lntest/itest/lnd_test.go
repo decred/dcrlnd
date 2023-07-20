@@ -15245,6 +15245,14 @@ func TestLightningNetworkDaemon(t *testing.T) {
 		"--default-remote-max-htlcs=150",
 	}
 
+	err = lndHarness.SetUp("", aliceBobArgs)
+	require.NoError(t,
+		err, "unable to set up test lightning network",
+	)
+	defer func() {
+		require.NoError(t, lndHarness.TearDown())
+	}()
+
 	// Run the subset of the test cases selected in this tranche.
 	t.Logf("Running %v integration tests", len(testCases))
 	for idx, testCase := range testCases {
@@ -15258,21 +15266,7 @@ func TestLightningNetworkDaemon(t *testing.T) {
 				testCase.name, " ", "_",
 			)
 
-			err = lndHarness.SetUp(cleanTestCaseName, aliceBobArgs)
-			require.NoError(t1,
-				err, "unable to set up test lightning network",
-			)
-			defer func() {
-				require.NoError(t1, lndHarness.TearDown())
-			}()
-
-			err = lndHarness.EnsureConnected(
-				context.Background(), lndHarness.Alice,
-				lndHarness.Bob,
-			)
-			require.NoError(t1,
-				err, "unable to connect alice to bob",
-			)
+			lndHarness.ModifyTestCaseName(cleanTestCaseName)
 
 			logLine := fmt.Sprintf(
 				"STARTING ============ %v ============\n",

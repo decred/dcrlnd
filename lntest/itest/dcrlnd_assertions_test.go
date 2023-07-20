@@ -8,6 +8,8 @@ import (
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lntest"
 	"github.com/decred/dcrlnd/lntest/wait"
+	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // assertCleanState ensures the state of the main test nodes and the mempool
@@ -17,6 +19,10 @@ func assertCleanState(h *harnessTest, net *lntest.NetworkHarness) {
 	if err != nil {
 		h.Fatalf("unable to get best height: %v", err)
 	}
+
+	err = net.EnsureConnected(testctx.New(h.t), net.Alice, net.Bob)
+	require.NoError(h.t, err, "unable to connect alice to bob")
+
 	assertNodeBlockHeight(h, net.Alice, int32(minerHeight))
 	assertNodeBlockHeight(h, net.Bob, int32(minerHeight))
 	assertNodeNumChannels(h, net.Alice, 0)

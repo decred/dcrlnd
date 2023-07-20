@@ -161,6 +161,11 @@ func (n *NetworkHarness) SetUpChain() error {
 	return nil
 }
 
+// ModifyTestCaseName modifies the current test case name.
+func (n *NetworkHarness) ModifyTestCaseName(testCase string) {
+	n.currentTestCase = testCase
+}
+
 // SetUp starts the initial seeder nodes within the test harness. The initial
 // node's wallets will be funded wallets with ten 1 DCR outputs each. Finally
 // rpc clients capable of communicating with the initial seeder nodes are
