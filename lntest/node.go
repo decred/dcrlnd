@@ -722,6 +722,22 @@ func (hn *HarnessNode) startRemoteWallet() error {
 			return err
 		}
 
+		// Wait for the wallet to be relocked. This is needed to avoid a
+		// wrongful lock event during the following syncing stage.
+		err = wait.NoError(func() error {
+			res, err := wallet.AccountUnlocked(ctxb, &pb.AccountUnlockedRequest{AccountNumber: 0})
+			if err != nil {
+				return err
+			}
+			if res.Unlocked {
+				return fmt.Errorf("wallet account still unlocked")
+			}
+			return nil
+		}, 30*time.Second)
+		if err != nil {
+			return err
+		}
+
 		err = hn.Cfg.BackendCfg.StartWalletSync(loader, password)
 		if err != nil {
 			return err
