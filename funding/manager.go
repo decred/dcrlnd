@@ -2580,8 +2580,8 @@ func (f *Manager) annAfterSixConfs(completeChan *channeldb.OpenChannel,
 	// don't leak any of our information.
 	announceChan := completeChan.ChannelFlags&lnwire.FFAnnounceChannel != 0
 	if !announceChan {
-		log.Debugf("Will not announce private channel %v.",
-			shortChanID.ToUint64())
+		log.Debugf("Will not announce private channel %s.",
+			shortChanID)
 
 		peerChan := make(chan lnpeer.Peer, 1)
 
@@ -2625,9 +2625,9 @@ func (f *Manager) annAfterSixConfs(completeChan *channeldb.OpenChannel,
 			numConfs = 6
 		}
 		txid := completeChan.FundingOutpoint.Hash
-		log.Debugf("Will announce channel %v after ChannelPoint"+
+		log.Debugf("Will announce channel %s after ChannelPoint"+
 			"(%v) has gotten %d confirmations",
-			shortChanID.ToUint64(), completeChan.FundingOutpoint,
+			shortChanID, completeChan.FundingOutpoint,
 			numConfs)
 
 		fundingScript, err := makeFundingScript(completeChan)
