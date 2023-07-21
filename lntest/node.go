@@ -1478,6 +1478,10 @@ func (hn *HarnessNode) lightningNetworkWatcher(subscribed chan error) {
 		// the current set of registered clients to see if we can
 		// dispatch any requests.
 		case graphUpdate := <-graphUpdates:
+			hn.LogPrintf("Got graph update updates=%d, closed=%d, nodes=%d",
+				len(graphUpdate.ChannelUpdates), len(graphUpdate.ClosedChans),
+				len(graphUpdate.NodeUpdates))
+
 			// For each new channel, we'll increment the number of
 			// edges seen by one.
 			for _, newChan := range graphUpdate.ChannelUpdates {

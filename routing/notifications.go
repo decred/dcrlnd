@@ -131,6 +131,9 @@ func (r *ChannelRouter) notifyTopologyChange(topologyDiff *TopologyChange) {
 			return spew.Sdump(topologyDiff)
 		}),
 	)
+	log.Debugf("Topology notification to %v clients, nodes=%d, updates=%d, closed=%d",
+		numClients, len(topologyDiff.NodeUpdates), len(topologyDiff.ChannelEdgeUpdates),
+		len(topologyDiff.ClosedChannels))
 
 	for _, client := range r.topologyClients {
 		client.wg.Add(1)
@@ -327,11 +330,13 @@ func addToTopologyChange(graph *channeldb.ChannelGraph, update *TopologyChange,
 		}
 
 		update.NodeUpdates = append(update.NodeUpdates, nodeUpdate)
+		log.Debugf("Topology change: New node %x", m.PubKeyBytes)
 		return nil
 
 	// We ignore initial channel announcements as we'll only send out
 	// updates once the individual edges themselves have been updated.
 	case *channeldb.ChannelEdgeInfo:
+		log.Debugf("ChannelEdgeInfo not a topology change")
 		return nil
 
 	// Any new ChannelUpdateAnnouncements will generate a corresponding
@@ -381,6 +386,8 @@ func addToTopologyChange(graph *channeldb.ChannelGraph, update *TopologyChange,
 		// TODO(roasbeef): add bit to toggle
 		update.ChannelEdgeUpdates = append(update.ChannelEdgeUpdates,
 			edgeUpdate)
+		log.Infof("Topology change: ChannelEdge %s (%s)",
+			edgeInfo.ChannelPoint, lnwire.NewShortChanIDFromInt(m.ChannelID))
 		return nil
 
 	default:
