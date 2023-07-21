@@ -15556,7 +15556,11 @@ func TestLightningNetworkDaemon(t *testing.T) {
 		"--logdir=" + minerLogDir,
 		"--maxorphantx=0",
 		"--nobanning",
-		// "--connect=" + chainBackend.P2PAddr(),
+		"--rpcmaxclients=100",
+		"--rpcmaxwebsockets=100",
+		"--rpcmaxconcurrentreqs=100",
+		"--logsize=100M",
+		"--maxsameip=200",
 	}
 	handlers := &rpcclient.NotificationHandlers{
 		OnTxAccepted: func(hash *chainhash.Hash, amt dcrutil.Amount) {

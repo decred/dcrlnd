@@ -19,6 +19,11 @@ func newBackend(t *testing.T, miner *rpctest.Harness, logDir string) (*rpctest.H
 		"--logdir=" + logDir,
 		"--maxorphantx=0",
 		"--nobanning",
+		"--rpcmaxclients=100",
+		"--rpcmaxwebsockets=100",
+		"--rpcmaxconcurrentreqs=100",
+		"--logsize=100M",
+		"--maxsameip=200",
 	}
 	netParams := chaincfg.SimNetParams()
 	chainBackend, err := testutils.NewSetupRPCTest(
