@@ -3,6 +3,7 @@ package itest
 import (
 	"context"
 	"fmt"
+	stdnet "net"
 	"strings"
 	"time"
 
@@ -16,6 +17,12 @@ import (
 // effect. It creates a node with a small connection timeout value, and connects
 // it to a non-routable IP address.
 func testNetworkConnectionTimeout(net *lntest.NetworkHarness, t *harnessTest) {
+	// Bind to a random port on localhost but never actually accept any
+	// connections. This makes any connection attempts timeout.
+	l, err := stdnet.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t.t, err)
+	defer l.Close()
+
 	var (
 		ctxt, _ = context.WithTimeout(
 			context.Background(), defaultTimeout,
@@ -23,9 +30,10 @@ func testNetworkConnectionTimeout(net *lntest.NetworkHarness, t *harnessTest) {
 		// testPub is a random public key for testing only.
 		testPub = "0332bda7da70fefe4b6ab92f53b3c4f4ee7999" +
 			"f312284a8e89c8670bb3f67dbee2"
-		// testHost is a non-routable IP address. It's used to cause a
-		// connection timeout.
-		testHost = "10.255.255.255"
+
+		// testHost is the previously bound addr that will not answer
+		// to any conn attempts.
+		testHost = l.Addr().String()
 	)
 
 	// First, test the global timeout settings.
