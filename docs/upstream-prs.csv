@@ -958,3 +958,223 @@ $20b42ce26			cli improv
 5047			account related functions; brought earlier
 3131			clean htlcswitch result db; brought earlier
 5159			only first commit; brought earlier
+4552			typo
+4434			tx labels
+4531			db call fix
+4505			global var refactor
+	4380		build tags (already builds all)
+	4550		gpg key (not applicable)
+4548			test tags
+4538			doc
+4493			del old invoices
+	4565		mod update
+4559			itest stuff
+	4573		already done
+4547			db perf
+4556			sample config
+	4600		version bump
+4310			lncli profiles
+4604			sample config
+4542			mock refactoring
+4440			rate limit peer flapping
+4607			cli arg
+4603			cli help
+4473			(partial) ignore private addr in safety check
+2428			lets encrypt rpc
+4591			wallet unload
+4606			prepare cpfp
+4602			add proportional pay attempt cost
+	4623		travis
+4452			connection timeout config
+4436			signrpc fix
+4624			config bugfix
+4625			lets encrypt rpc
+4457			etcd stuff
+4592			cpfp anchor sweeping
+4622			config dir
+4576			anchor justice in watchtowers
+4634			config doc
+	4353		neutrino
+4640			fuzz tests
+4647			vet fixes
+4589			itest stuff
+4645			interface refactoring
+4512			more stuff to channelbalance
+4650			cli arg parsing
+4657			itest whitelist
+4659			force fwd randomization
+	4662		neutrino
+4653			spend unconfirmed utxos
+4660			unify itest newminer()
+4649			interface refactoring
+4652			log nit
+4389			psbt
+4671			log
+4666			autopilot fix
+4673			psbt
+4668			autopilot
+	4554		ci go version
+4681			itest whitelist
+	4680		bitcoind
+4643			fuzz tests
+	4617		txindex=false in itests
+4688			dcrlncli arg
+4682			fuzz tests
+4626			CI conf check (parcial)
+4651			fuzz tests
+	4718		already done
+	4716		already done
+	4699		already done
+	4725		test fix
+4721			itest
+4708			perf improvement (invoices)
+	4635		bash completion
+4693			new lnrpc stuff
+4268			itest
+4487			code refactor
+4627			sigabrt
+4675			expose onion blob in rpc
+4701			expose assumechanvalid
+	4703		btcwallet
+4593			itest (out of order)
+4655			itest
+4546			coinselection tests
+4735			parametrize max local csv
+4705			kvdb interface
+4738			seed mnemonic check fix
+1288			pass macaroon after init
+4754			log
+2018			mark errored channels as borked
+	4753		typo
+4648			no tls option
+4756			itest
+4746			watchtower bugfix
+4683			upfront shutdown script improv
+4755			chainio healthcheck
+	4715		drop wallet tx history
+4691			grpc err mapping
+3672			invoice route hints
+	4763		already done
+4737			itest
+4744			custom dns seeding
+4751			make static remote key required
+4697			refactor contractcourt goroutines
+4667			db autocompaction
+4762			verbose listsweep
+	4773		docs
+4772			log level config
+4402			etcd itests
+4781			itest
+4784			typo
+4423			invoicesrpc signcompact signature change
+4783			fix
+	4769		CI
+4768			htlc dust calc
+4750			sweeper refactoring anchor htlcs
+4794			revert bork channel on error
+4790			cleanup pr (only partial)
+4801			logging
+4752			enforce requiring payaddr in payments
+	4777		CI
+4786			rate limit htlc updates
+3367			batch bbolt graph sync
+	4789		(brought earlier)
+4782			anchor channel support in watchtower
+4816			fix anchor itest
+4815			multiple watchower clients
+4806			(partial) fake onion addrs to neutrino
+4810			rate limit gossip
+4793			log
+4792			tls healthcheck
+	4817		codeowners
+4765			(partial) itest
+4780			recovery scenario
+4827			htlcswitch test flake
+4823			itest fixes
+4787			bbolt timeout arg
+4822			lnrpc data
+4841			typo
+4848			typo
+4830			small fixes
+4825			itest
+4850			itest
+4838			sweeper bugfix
+4828			itest
+4849			kvdb embed port
+4843			(partial) CI check commit
+	4842		dep
+4847			fix conn to legacy nodes
+4829			typo
+4851			sweeper avoid shutdown deadlock
+	4854		neutrino
+4857			Migration 20 (outpoint index)
+4859			itest
+4804			gossiper range fix
+	4858		CI
+4856			test parallelization
+	4852		CI
+4779			sweeper include htlc in sweep
+4797			make opts
+	4861		CI
+4865			chanrestore bugfix
+4840			zero fee anchor htlc outputs (ignorado config changes)
+4855			max anchor feerate
+4867			drop wallet tx history
+	4837		CI
+4869			etcd namespaces
+4757			fundingmanager to own package
+4872			bugfix peer feature flags
+4887			atomic bugfix
+4881			log
+4883			make rpc-format
+4885			watchtower logging
+4898			missing field in rpc request
+4895			(partial, reverted by 5003)
+	4879		(partial, release stuff)
+4907			(partial, release stuff)
+4917			anchors flag
+4921			healthcheck bump
+4918			itest
+4901			etcd itests
+4914			release and docker stuff
+4908			maintain wallet utxo
+4920			lnrpc missing bits
+	4926	V0.12.0-beta	docs
+4958			ignore unknown channel update
+4962			release
+4938			docker
+4944			docs
+4956			lnrpc
+	4952		CI
+4963			release
+2162			make
+4919			http error
+	4911		gen protos
+4974			typo
+4902			test refactor
+4978			lnrpc missing setup
+4934			add pinned syncers feature
+4924			invoice prevent mpp
+	4961		CI
+	4976		docker
+4979			routing test
+	4981		doc
+4983			make
+4993			typo
+4996			itest
+4945			allow no graph sync peers
+5006			gossiper rate limiter improvement
+4964			improv gossip db batching
+5007			tor ipv6 resolution
+	5012		rpc format
+	5013		CI
+5020			config
+5021			scripts
+5019			scripts
+5023			scripts
+5016			itest whitelist
+5026			htlcswitch test flake
+5017			Default max shard size
+5037			scripts
+5046			itest
+5043		v0.12.1-beta	perf routing
