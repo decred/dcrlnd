@@ -1400,12 +1400,11 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 	// maintaining persistent outbound connections and also accepting new
 	// incoming connections
 	cmgr, err := connmgr.New(&connmgr.Config{
-		Listeners:      listeners,
-		OnAccept:       s.InboundPeerConnected,
-		RetryDuration:  time.Second * 5,
-		TargetOutbound: 100,
-		DialAddr:       noiseDial(s.identityECDH, s.cfg.net, s.cfg.ConnectionTimeout),
-		OnConnection:   s.OutboundPeerConnected,
+		Listeners:     listeners,
+		OnAccept:      s.InboundPeerConnected,
+		RetryDuration: time.Second * 5,
+		DialAddr:      noiseDial(s.identityECDH, s.cfg.net, s.cfg.ConnectionTimeout),
+		OnConnection:  s.OutboundPeerConnected,
 	})
 	if err != nil {
 		return nil, err
