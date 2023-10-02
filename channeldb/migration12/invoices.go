@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/wire"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/lntypes"
-	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/tlv"
 )
 

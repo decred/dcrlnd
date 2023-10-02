@@ -14,7 +14,7 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
-	"github.com/decred/dcrlnd/lnwire"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 )
 
 var (

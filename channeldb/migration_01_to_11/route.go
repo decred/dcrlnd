@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrlnd/lnwire"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/record"
 	"github.com/decred/dcrlnd/tlv"
 	sphinx "github.com/decred/lightning-onion/v4"

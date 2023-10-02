@@ -8,8 +8,8 @@ import (
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/lntypes"
-	"github.com/decred/dcrlnd/lnwire"
 )
 
 // MigrateNodeAndEdgeUpdateIndex is a migration function that will update the

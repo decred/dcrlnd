@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/decred/dcrlnd/channeldb/kvdb"
-	"github.com/decred/dcrlnd/lnwire"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 )
 
 var emptyFeatures = lnwire.NewFeatureVector(nil, nil)

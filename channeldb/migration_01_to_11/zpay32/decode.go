@@ -14,7 +14,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 
-	"github.com/decred/dcrlnd/lnwire"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 )
 
 // Decode parses the provided encoded invoice and returns a decoded Invoice if
