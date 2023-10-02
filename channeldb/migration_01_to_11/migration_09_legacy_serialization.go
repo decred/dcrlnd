@@ -8,8 +8,8 @@ import (
 	"sort"
 
 	"github.com/decred/dcrlnd/channeldb/kvdb"
+	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/lntypes"
-	"github.com/decred/dcrlnd/lnwire"
 )
 
 var (
