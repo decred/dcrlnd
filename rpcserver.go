@@ -774,15 +774,6 @@ func (r *rpcServer) Start() error {
 		return nil
 	}
 
-	/*
-		var jsonrpcAddrNotifier jsonrpcListenerEventServer
-		var grpcAddrNotifier grpcListenerEventServer
-		if r.cfg.RPCListenerEvents {
-			jsonrpcAddrNotifier = newJSONRPCListenerEventServer(outgoingPipeMessages)
-			grpcAddrNotifier = newGRPCListenerEventServer(outgoingPipeMessages)
-		}
-	*/
-
 	// First, we'll start all the sub-servers to ensure that they're ready
 	// to take new requests in.
 	//

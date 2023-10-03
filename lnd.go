@@ -38,6 +38,7 @@ import (
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
+	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
 	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
@@ -369,6 +370,10 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		return err
 	}
 
+	// Initialize and register the syncer gRPC server.
+	syncerServer := initchainsyncrpc.New()
+	initchainsyncrpc.RegisterInitialChainSyncServer(grpcServer, syncerServer)
+
 	// Now that both the WalletUnlocker and LightningService have been
 	// registered with the GRPC server, we can start listening.
 	err = startGrpcListen(cfg, grpcServer, grpcListeners)
@@ -446,7 +451,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 		// the unlocker so it can forward it to the user. In no seed
 		// backup mode, there's nobody listening on the channel and we'd
 		// block here forever.
-		if !cfg.NoSeedBackup {
+		if !cfg.NoSeedBackup || isRemoteWallet {
 			adminMacBytes, err := bakeMacaroon(
 				ctx, macaroonService, adminPermissions(),
 			)
@@ -558,7 +563,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, shutdownChan <-chan struct{}) error {
 	ltndLog.Infof("Waiting for chain backend to finish sync, "+
 		"start_height=%v", bestHeight)
 
-	err = waitForInitialChainSync(activeChainControl, serverOpts, grpcServer)
+	err = waitForInitialChainSync(activeChainControl, syncerServer)
 	if errors.Is(err, errShutdownRequested) {
 		return nil
 	} else if err != nil {
@@ -1131,6 +1136,11 @@ func createWalletUnlockerService(cfg *Config, chanDB *channeldb.DB) *walletunloc
 func startGrpcListen(cfg *Config, grpcServer *grpc.Server,
 	listeners []*ListenerWithSignal) error {
 
+	var grpcAddrNotifier grpcListenerEventServer
+	if cfg.RPCListenerEvents {
+		grpcAddrNotifier = newGRPCListenerEventServer(outgoingPipeMessages)
+	}
+
 	// Use a WaitGroup so we can be sure the instructions on how to input the
 	// password is the last thing to be printed to the console.
 	var wg sync.WaitGroup
@@ -1142,6 +1152,7 @@ func startGrpcListen(cfg *Config, grpcServer *grpc.Server,
 
 			// Close the ready chan to indicate we are listening.
 			close(lis.Ready)
+			grpcAddrNotifier.notify(lis.Addr().String())
 
 			wg.Done()
 			_ = grpcServer.Serve(lis)
@@ -1168,6 +1179,11 @@ func startGrpcListen(cfg *Config, grpcServer *grpc.Server,
 // config.
 func startRestProxy(cfg *Config, rpcServer *rpcServer, restDialOpts []grpc.DialOption,
 	restListen func(net.Addr) (net.Listener, error)) (func(), error) {
+
+	var jsonrpcAddrNotifier jsonrpcListenerEventServer
+	if cfg.RPCListenerEvents {
+		jsonrpcAddrNotifier = newJSONRPCListenerEventServer(outgoingPipeMessages)
+	}
 
 	// We use the first RPC listener as the destination for our REST proxy.
 	// If the listener is set to listen on all interfaces, we replace it
@@ -1261,6 +1277,7 @@ func startRestProxy(cfg *Config, rpcServer *rpcServer, restDialOpts []grpc.DialO
 			// req ---> CORS handler --> WS proxy --->
 			//   REST proxy --> gRPC endpoint
 			corsHandler := allowCORS(restHandler, cfg.RestCORS)
+			jsonrpcAddrNotifier.notify(lis.Addr().String())
 
 			wg.Done()
 			err := http.Serve(lis, corsHandler)
