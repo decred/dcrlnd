@@ -231,6 +231,24 @@ func stringInSlice(a string, slice []string) bool {
 	return false
 }
 
+// calculateFeeRate uses atomsPerByte, from a request to calculate the fee
+// rate. This is a port from the upstream code to ease porting effort.
+func calculateFeeRate(atomsPerByte uint64, targetConf uint32,
+	estimator chainfee.Estimator) (chainfee.AtomPerKByte, error) {
+
+	// Default to satPerVByte, and overwrite it if satPerByte is set.
+	atomsPerKb := chainfee.AtomPerKByte(atomsPerByte * 1000)
+
+	// Based on the passed fee related parameters, we'll determine an
+	// appropriate fee rate for this transaction.
+	return sweep.DetermineFeePerKB(
+		estimator, sweep.FeePreference{
+			ConfTarget: targetConf,
+			FeeRate:    atomsPerKb,
+		},
+	)
+}
+
 // MainRPCServerPermissions returns a mapping of the main RPC server calls to
 // the permissions they require.
 func MainRPCServerPermissions() map[string][]bakery.Op {
@@ -1091,14 +1109,10 @@ func (r *rpcServer) EstimateFee(ctx context.Context,
 func (r *rpcServer) SendCoins(ctx context.Context,
 	in *lnrpc.SendCoinsRequest) (*lnrpc.SendCoinsResponse, error) {
 
-	// Based on the passed fee related parameters, we'll determine an
-	// appropriate fee rate for this transaction.
-	atomsPerKB := chainfee.AtomPerKByte(in.AtomsPerByte * 1000)
-	feePerKB, err := sweep.DetermineFeePerKB(
-		r.server.cc.FeeEstimator, sweep.FeePreference{
-			ConfTarget: uint32(in.TargetConf),
-			FeeRate:    atomsPerKB,
-		},
+	// Calculate an appropriate fee rate for this transaction.
+	feePerKB, err := calculateFeeRate(
+		uint64(in.AtomsPerByte),
+		uint32(in.TargetConf), r.server.cc.FeeEstimator,
 	)
 	if err != nil {
 		return nil, err
@@ -1297,14 +1311,10 @@ func (r *rpcServer) SendCoins(ctx context.Context,
 func (r *rpcServer) SendMany(ctx context.Context,
 	in *lnrpc.SendManyRequest) (*lnrpc.SendManyResponse, error) {
 
-	// Based on the passed fee related parameters, we'll determine an
-	// appropriate fee rate for this transaction.
-	atomsPerKB := chainfee.AtomPerKByte(in.AtomsPerByte * 1000)
-	feePerKB, err := sweep.DetermineFeePerKB(
-		r.server.cc.FeeEstimator, sweep.FeePreference{
-			ConfTarget: uint32(in.TargetConf),
-			FeeRate:    atomsPerKB,
-		},
+	// Calculate an appropriate fee rate for this transaction.
+	feePerKB, err := calculateFeeRate(
+		uint64(in.AtomsPerByte),
+		uint32(in.TargetConf), r.server.cc.FeeEstimator,
 	)
 	if err != nil {
 		return nil, err
@@ -1842,14 +1852,10 @@ func (r *rpcServer) parseOpenChannelReq(in *lnrpc.OpenChannelRequest,
 		return nil, fmt.Errorf("cannot open channel to self")
 	}
 
-	// Based on the passed fee related parameters, we'll determine an
-	// appropriate fee rate for the funding transaction.
-	atomsPerKB := chainfee.AtomPerKByte(in.AtomsPerByte * 1000)
-	feeRate, err := sweep.DetermineFeePerKB(
-		r.server.cc.FeeEstimator, sweep.FeePreference{
-			ConfTarget: uint32(in.TargetConf),
-			FeeRate:    atomsPerKB,
-		},
+	// Calculate an appropriate fee rate for this transaction.
+	feeRate, err := calculateFeeRate(
+		uint64(in.AtomsPerByte),
+		uint32(in.TargetConf), r.server.cc.FeeEstimator,
 	)
 	if err != nil {
 		return nil, err
@@ -2180,15 +2186,10 @@ func (r *rpcServer) CloseChannel(in *lnrpc.CloseChannelRequest,
 				"is offline (try force closing it instead): %v", err)
 		}
 
-		// Based on the passed fee related parameters, we'll determine
-		// an appropriate fee rate for the cooperative closure
-		// transaction.
-		atomsPerKB := chainfee.AtomPerKByte(in.AtomsPerByte * 1000)
-		feeRate, err := sweep.DetermineFeePerKB(
-			r.server.cc.FeeEstimator, sweep.FeePreference{
-				ConfTarget: uint32(in.TargetConf),
-				FeeRate:    atomsPerKB,
-			},
+		// Calculate an appropriate fee rate for this transaction.
+		feeRate, err := calculateFeeRate(
+			uint64(in.AtomsPerByte),
+			uint32(in.TargetConf), r.server.cc.FeeEstimator,
 		)
 		if err != nil {
 			return err

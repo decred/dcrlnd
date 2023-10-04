@@ -91,6 +91,9 @@ message TowerSession {
     the justice transaction in the event of a channel breach.
     */
     uint32 sweep_atoms_per_byte = 4;
+
+    // Upstream, this is used for the sweep_sats_per_vbyte field.
+    reserved 5;
 }
 
 message Tower {
@@ -176,4 +179,7 @@ message PolicyResponse {
     justice transactions in response to channel breaches.
     */
     uint32 sweep_atoms_per_byte = 2;
+
+    // Upstream, this is used for the sweep_sats_per_vbyte field.
+    reserved 3;
 }

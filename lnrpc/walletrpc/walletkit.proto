@@ -609,6 +609,12 @@ message PendingSweep {
     // The requested fee rate, expressed in atoms/byte, for this output.
     uint32 requested_atoms_per_byte = 9;
 
+    // Upstream, this is used for the sat_per_vbyte field.
+    reserved 10;
+
+    // Upstream, this is used for the requested_sat_per_vbyte field.
+    reserved 11;
+
     /*
     Whether this input must be force-swept. This means that it is swept even
     if it has a negative yield.
@@ -644,6 +650,9 @@ message BumpFeeRequest {
     if it has a negative yield.
     */
     bool force = 4;
+
+    // Upstream, this is used for the sat_per_vbyte field.
+    reserved 5;
 }
 
 message BumpFeeResponse {
@@ -791,7 +800,7 @@ message FundPsbtRequest {
         The fee rate, expressed in atoms/byte, that should be used to spend the
         input with.
         */
-        uint32 atoms_per_byte = 4;
+        uint64 atoms_per_byte = 4;
     }
 
     /*

@@ -1066,8 +1066,8 @@
           "description": "The target number of blocks that the transaction should be confirmed in."
         },
         "atoms_per_byte": {
-          "type": "integer",
-          "format": "int64",
+          "type": "string",
+          "format": "uint64",
           "description": "The fee rate, expressed in atoms/byte, that should be used to spend the\ninput with."
         },
         "account": {

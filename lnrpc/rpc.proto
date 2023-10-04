@@ -929,6 +929,9 @@ message EstimateFeeResponse {
 
     // The fee rate in atoms/byte.
     int64 feerate_atoms_per_byte = 2;
+
+    // Upstream, this is used for sat_per_vbyte.
+    reserved 3;
 }
 
 message SendManyRequest {
@@ -1755,6 +1758,9 @@ message CloseChannelRequest {
     to the upfront shutdown addresss.
     */
     string delivery_address = 5;
+
+    // Upstream, this is used for the sat_per_vbyte field.
+    reserved 6;
 }
 
 message CloseStatusUpdate {
@@ -1792,6 +1798,9 @@ message ReadyForPsbtFunding {
 }
 
 message OpenChannelRequest {
+    // Upstream, this is used for the sat_per_vbyte field.
+    reserved 1;
+
     /*
     The pubkey of the node to open a channel with. When using REST, this field
     must be encoded as base64.
