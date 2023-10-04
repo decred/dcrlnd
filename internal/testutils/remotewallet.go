@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"os/exec"
 	"path"
@@ -21,39 +20,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var (
-	activeNodes int32
-	lastPort    uint32 = 41213
-)
-
-// nextAvailablePort returns the first port that is available for listening by
-// a new node. It panics if no port is found and the maximum available TCP port
-// is reached.
-func nextAvailablePort() int {
-	port := atomic.AddUint32(&lastPort, 1)
-	for port < 65535 {
-		// If there are no errors while attempting to listen on this
-		// port, close the socket and return it as available. While it
-		// could be the case that some other process picks up this port
-		// between the time the socket is closed and it's reopened in
-		// the harness node, in practice in CI servers this seems much
-		// less likely than simply some other process already being
-		// bound at the start of the tests.
-		addr := fmt.Sprintf("127.0.0.1:%d", port)
-		l, err := net.Listen("tcp4", addr)
-		if err == nil {
-			err := l.Close()
-			if err == nil {
-				return int(port)
-			}
-			return int(port)
-		}
-		port = atomic.AddUint32(&lastPort, 1)
-	}
-
-	// No ports available? Must be a mistake.
-	panic("no ports available for listening")
-}
+var activeNodes int32
 
 type rpcSyncer struct {
 	c pb.WalletLoaderService_RpcSyncClient
@@ -131,22 +98,31 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 	tlsCertPath := path.Join(dataDir, "rpc.cert")
 	tlsKeyPath := path.Join(dataDir, "rpc.key")
 
+	pipeTX, err := newIPCPipePair(true, false)
+	if err != nil {
+		t.Fatalf("unable to create pipe for dcrd IPC: %v", err)
+	}
+	pipeRX, err := newIPCPipePair(false, true)
+	if err != nil {
+		t.Fatalf("unable to create pipe for dcrd IPC: %v", err)
+	}
+
 	// Setup the args to run the underlying dcrwallet.
 	id := atomic.AddInt32(&activeNodes, 1)
-	port := nextAvailablePort()
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	args := []string{
 		"--noinitialload",
 		"--debuglevel=debug",
 		"--simnet",
 		"--nolegacyrpc",
-		"--grpclisten=" + addr,
+		"--grpclisten=127.0.0.1:0",
 		"--appdata=" + dataDir,
 		"--tlscurve=P-256",
 		"--rpccert=" + tlsCertPath,
 		"--rpckey=" + tlsKeyPath,
 		"--clientcafile=" + tlsCertPath,
+		"--rpclistenerevents",
 	}
+	args = appendOSWalletArgs(&pipeTX, &pipeRX, args)
 
 	logFilePath := path.Join(fmt.Sprintf("output-remotedcrw-%.2d-%s.log",
 		id, nodeName))
@@ -163,11 +139,36 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 	cmd := exec.Command(dcrwalletExe, args...)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
+	setOSWalletCmdOptions(&pipeTX, &pipeRX, cmd)
 	err = cmd.Start()
 	if err != nil {
 		t.Logf("Wallet dir: %s", dataDir)
 		t.Fatalf("Unable to start %s dcrwallet: %v", nodeName, err)
 	}
+
+	// Read the subsystem addresses.
+	gotSubsysAddrs := make(chan struct{})
+	var grpcAddr string
+	go func() {
+		for grpcAddr == "" {
+			msg, err := nextIPCMessage(pipeTX.r)
+			if err != nil {
+				t.Logf("Unable to read next IPC message: %v", err)
+				return
+			}
+			switch msg := msg.(type) {
+			case boundGRPCListenAddrEvent:
+				grpcAddr = string(msg)
+				close(gotSubsysAddrs)
+			}
+		}
+
+		// Drain messages until the pipe is closed.
+		var err error
+		for err == nil {
+			_, err = nextIPCMessage(pipeRX.r)
+		}
+	}()
 
 	// Read the wallet TLS cert and client cert and key files.
 	var caCert *x509.CertPool
@@ -189,6 +190,13 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 	if err != nil {
 		t.Logf("Wallet dir: %s", dataDir)
 		t.Fatalf("Unable to read ca cert file: %v", err)
+	}
+
+	// Wait until the gRPC address is read via IPC.
+	select {
+	case <-gotSubsysAddrs:
+	case <-time.After(time.Second * 30):
+		t.Fatalf("wallet did not send gRPC address through IPC")
 	}
 
 	// Setup the TLS config and credentials.
@@ -215,7 +223,7 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 	ctxb := context.Background()
 	ctx, cancel := context.WithTimeout(ctxb, time.Second*30)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, addr, opts...)
+	conn, err := grpc.DialContext(ctx, grpcAddr, opts...)
 	if err != nil {
 		t.Logf("Wallet dir: %s", dataDir)
 		t.Fatalf("Unable to dial grpc: %v", err)
@@ -321,6 +329,9 @@ func NewCustomTestRemoteDcrwallet(t TB, nodeName, dataDir string,
 					nodeName, err)
 			}
 		}
+
+		pipeTX.close()
+		pipeRX.close()
 	}
 
 	return conn, cleanup
