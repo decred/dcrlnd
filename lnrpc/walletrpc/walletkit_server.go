@@ -1214,7 +1214,7 @@ func (w *WalletKit) FundPsbt(_ context.Context,
 		err           error
 		packet        *psbt.Packet
 		feeAtomsPerKB chainfee.AtomPerKByte
-		locks         []*utxoLock
+		locks         []*lnwallet.LockedOutput
 		rawPsbt       bytes.Buffer
 	)
 
@@ -1373,13 +1373,13 @@ func (w *WalletKit) FundPsbt(_ context.Context,
 	rpcLocks := make([]*UtxoLease, len(locks))
 	for idx, lock := range locks {
 		rpcLocks[idx] = &UtxoLease{
-			Id: lock.lockID[:],
+			Id: lock.LockID[:],
 			Outpoint: &lnrpc.OutPoint{
-				TxidBytes:   lock.outpoint.Hash[:],
-				TxidStr:     lock.outpoint.Hash.String(),
-				OutputIndex: lock.outpoint.Index,
+				TxidBytes:   lock.Outpoint.Hash[:],
+				TxidStr:     lock.Outpoint.Hash.String(),
+				OutputIndex: lock.Outpoint.Index,
 			},
-			Expiration: uint64(lock.expiration.Unix()),
+			Expiration: uint64(lock.Expiration.Unix()),
 		}
 	}
 

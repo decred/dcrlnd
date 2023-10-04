@@ -2,10 +2,12 @@ package lnwallet
 
 import (
 	"errors"
+	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrd/wire"
 )
 
 type WalletTransaction struct {
@@ -34,4 +36,12 @@ type ExtendedWalletController interface {
 	// belongs to the wallet. If the transaction does not exist in the
 	// wallet, then ErrWalletTxNotExist should be returned.
 	GetWalletTransaction(tx chainhash.Hash) (*WalletTransaction, error)
+}
+
+// LockedOutput is a type that contains an outpoint of an UTXO and its lock lease
+// information.
+type LockedOutput struct {
+	LockID     LockID
+	Outpoint   wire.OutPoint
+	Expiration time.Time
 }
