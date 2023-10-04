@@ -608,7 +608,7 @@ func fundPsbt(ctx *cli.Context) error {
 
 	case ctx.Uint64("atoms_per_byte") > 0:
 		req.Fees = &walletrpc.FundPsbtRequest_AtomsPerByte{
-			AtomsPerByte: uint32(ctx.Uint64("atoms_per_byte")),
+			AtomsPerByte: ctx.Uint64("atoms_per_byte"),
 		}
 	}
 
