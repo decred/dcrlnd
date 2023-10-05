@@ -552,6 +552,9 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		WalletAccountNb:             cfg.Dcrwallet.AccountNumber,
 		ActiveNetParams:             cfg.ActiveNetParams,
 		FeeURL:                      cfg.FeeURL,
+		Dialer: func(addr string) (net.Conn, error) {
+			return cfg.net.Dial("tcp", addr, cfg.ConnectionTimeout)
+		},
 	}
 	activeChainControl, err := chainreg.NewChainControl(ChainControlConfig)
 	if err != nil {
