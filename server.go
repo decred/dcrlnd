@@ -767,7 +767,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 
 	s.controlTower = routing.NewControlTower(paymentControl)
 
-	routingCfg := routing.Config{
+	s.chanRouter, err = routing.New(routing.Config{
 		Graph:               chanGraph,
 		Chain:               cc.ChainIO,
 		ChainView:           cc.ChainView,
@@ -779,14 +779,11 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		GraphPruneInterval:  time.Hour,
 		FirstTimePruneDelay: routing.DefaultFirstTimePruneDelay,
 		QueryBandwidth:      queryBandwidth,
+		AssumeChannelValid:  cfg.Routing.AssumeChannelValid,
 		NextPaymentID:       sequencer.NextID,
 		PathFindingConfig:   pathFindingConfig,
 		Clock:               clock.NewDefaultClock(),
-	}
-	if cfg.Routing != nil {
-		routingCfg.AssumeChannelValid = cfg.Routing.AssumeChannelValid
-	}
-	s.chanRouter, err = routing.New(routingCfg)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("can't create router: %v", err)
 	}
