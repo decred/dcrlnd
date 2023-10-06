@@ -514,7 +514,8 @@ func cleanupForceClose(t *harnessTest, net *lntest.NetworkHarness,
 		t.Fatalf("unable to generate blocks: %v", err)
 	}
 
-	// Wait until the channel is no longer marked pendingForceClose
+	// Wait until the channel is no longer marked pendingForceClose. This is
+	// only enforced in dcrlnd, not lnd.
 	txid, err := lnrpc.GetChanPointFundingTxid(chanPoint)
 	if err != nil {
 		t.Fatalf("unable to get txid: %v", err)
@@ -530,10 +531,27 @@ func cleanupForceClose(t *harnessTest, net *lntest.NetworkHarness,
 			return false
 		}
 
+		var blocksTilMaturity int32 = -1
 		for _, pendingClose := range pendingChanResp.PendingForceClosingChannels {
 			if pendingClose.Channel.ChannelPoint == chanPointStr {
-				return false
+				for _, htlc := range pendingClose.PendingHtlcs {
+					if htlc.BlocksTilMaturity > blocksTilMaturity {
+						blocksTilMaturity = htlc.BlocksTilMaturity
+					}
+				}
+
+				if blocksTilMaturity < 0 {
+					return false
+				}
 			}
+		}
+
+		// Mine blocks until all HTLC outputs are swept.
+		if blocksTilMaturity >= 0 {
+			mineBlocks(t, net, uint32(blocksTilMaturity), 0)
+			time.Sleep(sweep.DefaultBatchWindowDuration + time.Second)
+			mineBlocks(t, net, 1, 0)
+			return false
 		}
 
 		return true
