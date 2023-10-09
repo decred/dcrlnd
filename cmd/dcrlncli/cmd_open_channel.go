@@ -349,6 +349,8 @@ func openChannel(ctx *cli.Context) error {
 //	|  |-------channel pending------->|  |
 //	|  |-------channel open------------->|
 //	|                                    |
+//
+//nolint:govet
 func openChannelPsbt(rpcCtx context.Context, ctx *cli.Context,
 	client lnrpc.LightningClient,
 	req *lnrpc.OpenChannelRequest) error {
