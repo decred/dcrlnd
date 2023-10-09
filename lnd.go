@@ -393,7 +393,8 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 
 	// We'll create the WalletUnlockerService and check whether the wallet
 	// already exists.
-	pwService := createWalletUnlockerService(cfg, remoteChanDB, loaderOpts)
+	pwService := createWalletUnlockerService(cfg, loaderOpts)
+	pwService.SetDB(remoteChanDB)
 	walletExists, err := pwService.WalletExists()
 	if err != nil {
 		return err
@@ -1209,7 +1210,7 @@ type WalletUnlockParams struct {
 
 // createWalletUnlockerService creates a WalletUnlockerService from the passed
 // config.
-func createWalletUnlockerService(cfg *Config, chanDB *channeldb.DB,
+func createWalletUnlockerService(cfg *Config,
 	loaderOpts []walletloader.LoaderOption) *walletunlocker.UnlockerService {
 
 	chainConfig := cfg.Decred
@@ -1224,7 +1225,7 @@ func createWalletUnlockerService(cfg *Config, chanDB *channeldb.DB,
 	return walletunlocker.New(
 		chainConfig.ChainDir, cfg.ActiveNetParams.Params,
 		!cfg.SyncFreelist, macaroonFiles, cfg.DB.Bolt.DBTimeout,
-		chanDB, cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
+		cfg.Dcrwallet.GRPCHost, cfg.Dcrwallet.CertPath,
 		cfg.Dcrwallet.ClientKeyPath, cfg.Dcrwallet.ClientCertPath,
 		cfg.Dcrwallet.AccountNumber,
 	)

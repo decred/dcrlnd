@@ -13,7 +13,6 @@ import (
 	"decred.org/dcrwallet/v3/wallet"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/aezeed"
-	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnrpc"
@@ -148,7 +147,7 @@ func TestGenSeed(t *testing.T) {
 
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	// Now that the service has been created, we'll ask it to generate a
@@ -186,7 +185,7 @@ func TestGenSeedGenerateEntropy(t *testing.T) {
 	}()
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	// Now that the service has been created, we'll ask it to generate a
@@ -223,7 +222,7 @@ func TestGenSeedInvalidEntropy(t *testing.T) {
 	}()
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	// Now that the service has been created, we'll ask it to generate a
@@ -257,7 +256,7 @@ func TestInitWallet(t *testing.T) {
 	// Create new UnlockerService.
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	// Once we have the unlocker service created, we'll now instantiate a
@@ -346,7 +345,7 @@ func TestCreateWalletInvalidEntropy(t *testing.T) {
 	// Create new UnlockerService.
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	// We'll attempt to init the wallet with an invalid cipher seed and
@@ -379,7 +378,7 @@ func TestUnlockWallet(t *testing.T) {
 	// unlock.
 	service := walletunlocker.New(
 		testDir, testNetParams, true, nil, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	ctx := context.Background()
@@ -471,7 +470,7 @@ func TestChangeWalletPasswordNewRootkey(t *testing.T) {
 	// Create a new UnlockerService with our temp files.
 	service := walletunlocker.New(
 		testDir, testNetParams, true, tempFiles, kvdb.DefaultDBTimeout,
-		&channeldb.DB{}, "", "", "", "", 0,
+		"", "", "", "", 0,
 	)
 
 	ctx := context.Background()
@@ -583,7 +582,7 @@ func TestChangeWalletPasswordStateless(t *testing.T) {
 	service := walletunlocker.New(
 		testDir, testNetParams, true, []string{
 			tempMacFile, nonExistingFile,
-		}, kvdb.DefaultDBTimeout, nil, "", "", "", "", 0,
+		}, kvdb.DefaultDBTimeout, "", "", "", "", 0,
 	)
 
 	// Create a wallet we can try to unlock. We use the default password
