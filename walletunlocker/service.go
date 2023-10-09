@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -140,7 +141,9 @@ type UnlockerService struct {
 	chainDir       string
 	noFreelistSync bool
 	netParams      *chaincfg.Params
-	db             *channeldb.DB
+
+	// db is the db used for checking remote wallet unlocks.
+	db atomic.Pointer[channeldb.DB]
 
 	dcrwHost       string
 	dcrwCert       string
@@ -168,13 +171,12 @@ type UnlockerService struct {
 // New creates and returns a new UnlockerService.
 func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 	macaroonFiles []string, dbTimeout time.Duration,
-	db *channeldb.DB, dcrwHost, dcrwCert, dcrwClientKey,
+	dcrwHost, dcrwCert, dcrwClientKey,
 	dcrwClientCert string, dcrwAccount int32) *UnlockerService {
 
 	return &UnlockerService{
 		InitMsgs:       make(chan *WalletInitMsg, 1),
 		UnlockMsgs:     make(chan *WalletUnlockMsg, 1),
-		db:             db,
 		dcrwHost:       dcrwHost,
 		dcrwCert:       dcrwCert,
 		dcrwClientKey:  dcrwClientKey,
@@ -191,6 +193,12 @@ func New(chainDir string, params *chaincfg.Params, noFreelistSync bool,
 		noFreelistSync:          noFreelistSync,
 		resetWalletTransactions: false,
 	}
+}
+
+// SetDB sets the DB used for checking that unlocking remote wallets works. This
+// must be called before the service is
+func (u *UnlockerService) SetDB(db *channeldb.DB) {
+	u.db.Store(db)
 }
 
 func (u *UnlockerService) newLoader(recoveryWindow uint32) (*walletloader.Loader,
@@ -448,6 +456,11 @@ func tlsCertFromFile(fname string) (*x509.CertPool, error) {
 func (u *UnlockerService) unlockRemoteWallet(ctx context.Context,
 	in *lnrpc.UnlockWalletRequest) (*lnrpc.UnlockWalletResponse, error) {
 
+	db := u.db.Load()
+	if db == nil {
+		return nil, fmt.Errorf("attempting to unlock before unlocker service has DB")
+	}
+
 	// dcrwallet rpc.cert.
 	caCert, err := tlsCertFromFile(u.dcrwCert)
 	if err != nil {
@@ -541,7 +554,7 @@ func (u *UnlockerService) unlockRemoteWallet(ctx context.Context,
 		return nil, fmt.Errorf("unable to derive first external key: %v", err)
 	}
 	firstPubKeyBytes := firstKey.SerializedPubKey()
-	if err = u.db.CompareAndStoreAccountID(firstPubKeyBytes); err != nil {
+	if err = db.CompareAndStoreAccountID(firstPubKeyBytes); err != nil {
 		return nil, fmt.Errorf("account number %d failed to generate "+
 			"previously stored account ID: %v", u.dcrwAccount, err)
 	}
