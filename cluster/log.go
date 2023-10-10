@@ -9,6 +9,8 @@ import (
 const Subsystem = "CLUS"
 
 // log is a logger that is initialized with the slog.Disabled logger.
+//
+//nolint:unused
 var log slog.Logger
 
 // The default amount of logging is none.
