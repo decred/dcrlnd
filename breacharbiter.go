@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/blockchain/standalone/v2"
@@ -658,6 +659,17 @@ justiceTxBroadcast:
 		return
 	}
 	defer newBlockChan.Cancel()
+
+	// Drain the initial block epoch notification to avoid prematurely
+	// attempting the variant with multiple justice txs.
+	select {
+	case <-newBlockChan.Epochs:
+	case <-b.quit:
+	case <-time.After(time.Second):
+		// This case should not happen, but prevents a buggy notifier
+		// from blocking.
+		brarLog.Warnf("Buggy ChainNotifier did not send initial epoch")
+	}
 
 Loop:
 	for {
