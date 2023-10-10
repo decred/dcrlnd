@@ -17,7 +17,7 @@ import (
 	"decred.org/dcrwallet/v3/wallet/txrules"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 const (

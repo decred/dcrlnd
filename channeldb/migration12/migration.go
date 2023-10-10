@@ -3,8 +3,8 @@ package migration12
 import (
 	"bytes"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 var emptyFeatures = lnwire.NewFeatureVector(nil, nil)

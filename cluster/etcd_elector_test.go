@@ -1,3 +1,4 @@
+//go:build kvdb_etcd
 // +build kvdb_etcd
 
 package cluster
@@ -11,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
+	"github.com/decred/dcrlnd/kvdb/etcd"
 	"github.com/stretchr/testify/require"
 )
 

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/cluster"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/decred/dcrlnd/lnrpc"
 	"github.com/decred/dcrlnd/lnrpc/routerrpc"

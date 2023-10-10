@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/stretchr/testify/require"
 )
 

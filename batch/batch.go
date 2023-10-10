@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // errSolo is a sentinel error indicating that the requester should re-run the

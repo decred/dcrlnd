@@ -3,7 +3,7 @@ package lncfg_test
 import (
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lncfg"
 	"github.com/stretchr/testify/require"
 )

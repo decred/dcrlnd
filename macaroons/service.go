@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"google.golang.org/grpc/metadata"
 
 	"gopkg.in/macaroon-bakery.v2/bakery"

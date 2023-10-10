@@ -4,7 +4,7 @@
 package kvdb
 
 import (
-	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
+	"github.com/decred/dcrlnd/kvdb/etcd"
 )
 
 // TestBackend is conditionally set to etcd when the kvdb_etcd build tag is

@@ -7,8 +7,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/internal/snacl"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/macaroons"
 
 	"github.com/stretchr/testify/require"

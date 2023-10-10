@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // DumpDB dumps go code describing the contents of the database to stdout. This

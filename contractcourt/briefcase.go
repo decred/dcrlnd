@@ -11,8 +11,8 @@ import (
 	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwallet"
 )
 

@@ -3,7 +3,7 @@ package migration_01_to_11
 import (
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // TestSaneNextKeyFamilyIndex tests that the generation of key family indices

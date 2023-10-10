@@ -1,3 +1,4 @@
+//go:build kvdb_etcd
 // +build kvdb_etcd
 
 package cluster
@@ -6,11 +7,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/decred/dcrlnd/kvdb/etcd"
 	"github.com/matheusd/etcd/clientv3"
 	"github.com/matheusd/etcd/clientv3/concurrency"
 	"github.com/matheusd/etcd/clientv3/namespace"
 	"github.com/matheusd/etcd/pkg/transport"
-	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
 )
 
 const (

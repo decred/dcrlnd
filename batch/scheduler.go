@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // TimeScheduler is a batching engine that executes requests within a fixed

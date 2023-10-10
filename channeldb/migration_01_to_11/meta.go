@@ -1,7 +1,7 @@
 package migration_01_to_11
 
 import (
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 var (

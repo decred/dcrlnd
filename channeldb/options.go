@@ -3,8 +3,8 @@ package channeldb
 import (
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/clock"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 const (

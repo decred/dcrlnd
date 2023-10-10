@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 
 	"github.com/decred/dcrlnd/internal/snacl"
 )

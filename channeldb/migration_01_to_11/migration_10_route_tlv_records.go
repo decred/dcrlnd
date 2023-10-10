@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // MigrateRouteSerialization migrates the way we serialize routes across the

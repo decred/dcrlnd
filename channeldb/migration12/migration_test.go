@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/channeldb/migration12"
 	"github.com/decred/dcrlnd/channeldb/migtest"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lntypes"
 )
 

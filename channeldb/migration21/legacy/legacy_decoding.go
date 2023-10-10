@@ -6,9 +6,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/channeldb/migration21/common"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 func deserializeHtlcs(r io.Reader) ([]common.HTLC, error) {

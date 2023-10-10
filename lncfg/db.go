@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
-	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
+	"github.com/decred/dcrlnd/kvdb"
+	"github.com/decred/dcrlnd/kvdb/etcd"
 )
 
 const (
