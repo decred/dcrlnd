@@ -352,14 +352,14 @@ func SenderHTLCScript(senderHtlcKey, receiverHtlcKey,
 	return builder.Script()
 }
 
-// senderHtlcSpendRevoke constructs a valid witness allowing the receiver of an
+// SenderHtlcSpendRevokeWithKey constructs a valid witness allowing the receiver of an
 // HTLC to claim the output with knowledge of the revocation private key in the
 // scenario that the sender of the HTLC broadcasts a previously revoked
 // commitment transaction. A valid spend requires knowledge of the private key
 // that corresponds to their revocation base point and also the private key fro
 // the per commitment point, and a valid signature under the combined public
 // key.
-func senderHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
+func SenderHtlcSpendRevokeWithKey(signer Signer, signDesc *SignDescriptor,
 	revokeKey *secp256k1.PublicKey, sweepTx *wire.MsgTx) (TxWitness, error) {
 
 	sweepSig, err := signer.SignOutputRaw(sweepTx, signDesc)
@@ -402,7 +402,7 @@ func SenderHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
 		signDesc.DoubleTweak.PubKey(),
 	)
 
-	return senderHtlcSpendRevoke(signer, signDesc, revokeKey, sweepTx)
+	return SenderHtlcSpendRevokeWithKey(signer, signDesc, revokeKey, sweepTx)
 }
 
 // SenderHtlcSpendRedeem constructs a valid witness allowing the receiver of an
@@ -624,11 +624,11 @@ func ReceiverHtlcSpendRedeem(senderSig Signature,
 	return witnessStack, nil
 }
 
-// receiverHtlcSpendRevoke constructs a valid witness allowing the sender of an
+// ReceiverHtlcSpendRevokeWithKey constructs a valid witness allowing the sender of an
 // HTLC within a previously revoked commitment transaction to re-claim the
 // pending funds in the case that the receiver broadcasts this revoked
 // commitment transaction.
-func receiverHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
+func ReceiverHtlcSpendRevokeWithKey(signer Signer, signDesc *SignDescriptor,
 	revokeKey *secp256k1.PublicKey, sweepTx *wire.MsgTx) (TxWitness, error) {
 
 	// First, we'll generate a signature for the sweep transaction.  The
@@ -673,7 +673,7 @@ func ReceiverHtlcSpendRevoke(signer Signer, signDesc *SignDescriptor,
 		signDesc.DoubleTweak.PubKey(),
 	)
 
-	return receiverHtlcSpendRevoke(signer, signDesc, revokeKey, sweepTx)
+	return ReceiverHtlcSpendRevokeWithKey(signer, signDesc, revokeKey, sweepTx)
 }
 
 // ReceiverHtlcSpendTimeout constructs a valid witness allowing the sender of

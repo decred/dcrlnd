@@ -340,7 +340,7 @@ func TestHTLCSenderSpendValidation(t *testing.T) {
 					InputIndex:    0,
 				}
 
-				return senderHtlcSpendRevoke(bobSigner, signDesc,
+				return SenderHtlcSpendRevokeWithKey(bobSigner, signDesc,
 					revocationKey, sweepTx)
 			}),
 			true,
@@ -782,7 +782,7 @@ func TestHTLCReceiverSpendValidation(t *testing.T) {
 					InputIndex:    0,
 				}
 
-				return receiverHtlcSpendRevoke(aliceSigner,
+				return ReceiverHtlcSpendRevokeWithKey(aliceSigner,
 					signDesc, revocationKey, sweepTx)
 			}),
 			true,
