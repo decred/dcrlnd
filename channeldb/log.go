@@ -2,12 +2,12 @@ package channeldb
 
 import (
 	"github.com/decred/dcrlnd/build"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	mig "github.com/decred/dcrlnd/channeldb/migration"
 	"github.com/decred/dcrlnd/channeldb/migration12"
 	"github.com/decred/dcrlnd/channeldb/migration13"
 	"github.com/decred/dcrlnd/channeldb/migration16"
 	"github.com/decred/dcrlnd/channeldb/migration_01_to_11"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/slog"
 )
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/record"
 	"github.com/stretchr/testify/assert"

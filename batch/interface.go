@@ -1,6 +1,6 @@
 package batch
 
-import "github.com/decred/dcrlnd/channeldb/kvdb"
+import "github.com/decred/dcrlnd/kvdb"
 
 // Request defines an operation that can be batched into a single bbolt
 // transaction.

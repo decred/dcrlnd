@@ -3,8 +3,8 @@ package migration13
 import (
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/channeldb/migtest"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 const (

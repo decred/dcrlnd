@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwire"
 )
 

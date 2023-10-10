@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/tlv"
 )
 

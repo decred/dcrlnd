@@ -1,6 +1,6 @@
 package channeldb
 
-import "github.com/decred/dcrlnd/channeldb/kvdb"
+import "github.com/decred/dcrlnd/kvdb"
 
 // initDcrlndFeatures initializes features that are specific to dcrlnd.
 func (db *DB) initDcrlndFeatures() error {

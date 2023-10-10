@@ -11,12 +11,12 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/channeldb/migration21/common"
 	"github.com/decred/dcrlnd/channeldb/migration21/current"
 	"github.com/decred/dcrlnd/channeldb/migration21/legacy"
 	"github.com/decred/dcrlnd/channeldb/migtest"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 var (

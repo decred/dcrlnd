@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrlnd/chainntnfs"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lntest/mock"
 	sphinx "github.com/decred/lightning-onion/v4"
 )

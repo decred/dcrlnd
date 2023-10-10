@@ -3,7 +3,7 @@ package migration
 import (
 	"fmt"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // CreateTLB creates a new top-level bucket with the passed bucket identifier.

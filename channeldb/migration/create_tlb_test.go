@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/channeldb/migration"
 	"github.com/decred/dcrlnd/channeldb/migtest"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // TestCreateTLB asserts that a CreateTLB properly initializes a new top-level

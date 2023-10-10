@@ -12,8 +12,8 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/go-errors/errors"
 )

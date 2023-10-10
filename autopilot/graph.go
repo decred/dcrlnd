@@ -12,7 +12,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/routing/route"
 )

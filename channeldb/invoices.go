@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/feature"
 	"github.com/decred/dcrlnd/htlcswitch/hop"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lntypes"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/decred/dcrlnd/record"

@@ -18,9 +18,9 @@ import (
 
 	"github.com/decred/dcrlnd/chainntnfs"
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/input"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/labels"
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/lnwallet/chainfee"

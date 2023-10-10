@@ -1,3 +1,4 @@
+//go:build kvdb_etcd
 // +build kvdb_etcd
 
 package cluster
@@ -6,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb/etcd"
+	"github.com/decred/dcrlnd/kvdb/etcd"
 )
 
 // makeEtcdElector will construct a new etcdLeaderElector. It expects a cancel

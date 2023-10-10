@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	lnwire "github.com/decred/dcrlnd/channeldb/migration/lnwire21"
 	"github.com/decred/dcrlnd/channeldb/migration21/common"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 func serializeChanCommit(w io.Writer, c *common.ChannelCommitment) error { // nolint: dupl

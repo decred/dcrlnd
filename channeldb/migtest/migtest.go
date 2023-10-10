@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // MakeDB creates a new instance of the ChannelDB for testing purposes. A

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/routing/route"
 )
 

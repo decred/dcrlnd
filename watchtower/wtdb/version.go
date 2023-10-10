@@ -2,7 +2,7 @@ package wtdb
 
 import (
 	"github.com/decred/dcrlnd/channeldb"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 // migration is a function which takes a prior outdated version of the database

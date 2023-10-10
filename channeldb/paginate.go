@@ -1,6 +1,6 @@
 package channeldb
 
-import "github.com/decred/dcrlnd/channeldb/kvdb"
+import "github.com/decred/dcrlnd/kvdb"
 
 type paginator struct {
 	// cursor is the cursor which we are using to iterate through a bucket.

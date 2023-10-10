@@ -11,7 +11,6 @@ import (
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/wire"
-	"github.com/decred/dcrlnd/channeldb/kvdb"
 	mig "github.com/decred/dcrlnd/channeldb/migration"
 	"github.com/decred/dcrlnd/channeldb/migration12"
 	"github.com/decred/dcrlnd/channeldb/migration13"
@@ -20,6 +19,7 @@ import (
 	"github.com/decred/dcrlnd/channeldb/migration21"
 	"github.com/decred/dcrlnd/channeldb/migration_01_to_11"
 	"github.com/decred/dcrlnd/clock"
+	"github.com/decred/dcrlnd/kvdb"
 	"github.com/decred/dcrlnd/lnwire"
 	"github.com/go-errors/errors"
 )

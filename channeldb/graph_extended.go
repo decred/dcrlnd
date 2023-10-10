@@ -1,7 +1,7 @@
 package channeldb
 
 import (
-	"github.com/decred/dcrlnd/channeldb/kvdb"
+	"github.com/decred/dcrlnd/kvdb"
 )
 
 var (
