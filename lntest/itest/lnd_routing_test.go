@@ -1155,7 +1155,7 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 	)
 	timeLockDelta := uint32(chainreg.DefaultDecredTimeLockDelta)
 	updateFeeReq := &lnrpc.PolicyUpdateRequest{
-		BaseFeeMAtoms:   baseFeeMSat,
+		BaseFeeMAtoms: baseFeeMSat,
 		TimeLockDelta: timeLockDelta,
 		Scope: &lnrpc.PolicyUpdateRequest_ChanPoint{
 			ChanPoint: chanPointBobCarol,

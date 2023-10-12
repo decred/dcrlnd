@@ -3084,7 +3084,7 @@ func testChannelUnsettledBalance(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Connect Alice to Carol.
 	ctxt, _ := context.WithTimeout(ctxb, defaultTimeout)
-	net.ConnectNodes(ctxb, t.t, net.Alice, carol)
+	net.ConnectNodes(ctxt, t.t, net.Alice, carol)
 
 	// Open a channel between Alice and Carol.
 	ctxt, _ = context.WithTimeout(ctxb, channelOpenTimeout)
