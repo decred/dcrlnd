@@ -1157,6 +1157,13 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 	resp, err := carol.AddInvoice(ctxt, invoice)
 	require.NoError(t.t, err, "unable to create invoice for carol")
 
+	// Track how many payments Alice has previously done in other tests.
+	oldPaymentsResp, err := net.Alice.ListPayments(
+		ctxt, &lnrpc.ListPaymentsRequest{},
+	)
+	require.NoError(t.t, err)
+	newPaymentsStartIdx := oldPaymentsResp.LastIndexOffset
+
 	// Bob now updates the channel edge policy for the private channel.
 	const (
 		baseFeeMSat = 33000
@@ -1187,7 +1194,7 @@ func testUpdateChannelPolicyForPrivateChannel(net *lntest.NetworkHarness,
 	// one succeeded.
 	ctxt, _ = context.WithTimeout(ctxt, defaultTimeout)
 	paymentsResp, err := net.Alice.ListPayments(
-		ctxt, &lnrpc.ListPaymentsRequest{},
+		ctxt, &lnrpc.ListPaymentsRequest{IndexOffset: newPaymentsStartIdx},
 	)
 	require.NoError(t.t, err, "failed to obtain payments for Alice")
 	require.Equal(t.t, 1, len(paymentsResp.Payments), "expected 1 payment")
