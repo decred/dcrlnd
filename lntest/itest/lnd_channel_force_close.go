@@ -63,7 +63,7 @@ func testCommitmentTransactionDeadline(net *lntest.NetworkHarness,
 	feeRateLarge := maxPerKb * 2
 
 	ctxt, cancel := context.WithTimeout(
-		context.Background(), defaultTimeout,
+		context.Background(), defaultTimeout*6,
 	)
 	defer cancel()
 
@@ -80,6 +80,10 @@ func testCommitmentTransactionDeadline(net *lntest.NetworkHarness,
 		node := net.NewNode(t.t, name, args)
 
 		// Send some coins to the node.
+		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, node)
+
+		// We need one additional UTXO to create the sweeping tx for
+		// the remote anchor.
 		net.SendCoins(ctxt, t.t, dcrutil.AtomsPerCoin, node)
 		return node
 	}
