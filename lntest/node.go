@@ -1431,12 +1431,10 @@ func (hn *HarnessNode) stop() error {
 		// closed before a response is returned.
 		req := lnrpc.StopRequest{}
 		ctx := context.Background()
-		_, err := hn.LightningClient.StopDaemon(ctx, &req)
-		if err != nil {
-			return err
-		}
+		_, _ = hn.LightningClient.StopDaemon(ctx, &req)
 	}
 
+	// Stop the remote dcrwallet instance if running a remote wallet.
 	if hn.walletCmd != nil {
 		hn.walletCmd.Process.Signal(os.Interrupt)
 	}
