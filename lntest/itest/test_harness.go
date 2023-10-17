@@ -90,6 +90,7 @@ func (h *harnessTest) Skipf(format string, args ...interface{}) {
 // integration tests should mark test failures solely with this method due to
 // the error stack traces it produces.
 func (h *harnessTest) Fatalf(format string, a ...interface{}) {
+	h.t.Errorf("harnessTest.Fatal() time: %s", time.Now().Format("2006-01-02T15:04:05.999"))
 	if h.lndHarness != nil {
 		h.lndHarness.SaveProfilesPages()
 	}
