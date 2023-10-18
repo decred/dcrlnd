@@ -224,6 +224,8 @@ func testRestAPI(net *lntest.NetworkHarness, ht *harnessTest) {
 		tc := tc
 		ht.t.Run(tc.name, func(t *testing.T) {
 			tc.run(t, net.Alice, net.Bob)
+
+			assertCleanState(ht, net)
 		})
 	}
 
@@ -234,6 +236,8 @@ func testRestAPI(net *lntest.NetworkHarness, ht *harnessTest) {
 				t: t, testCase: ht.testCase, lndHarness: net,
 			}
 			tc.run(ht, net)
+
+			assertCleanState(ht, net)
 		})
 	}
 }
