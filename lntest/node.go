@@ -1545,6 +1545,7 @@ func (hn *HarnessNode) lightningNetworkWatcher(subscribed chan error) {
 				time.Now().String())
 			hn.LogPrintf(msg)
 			subscribed <- fmt.Errorf(msg)
+			cancelFunc()
 			return
 		}
 		close(subscribed)

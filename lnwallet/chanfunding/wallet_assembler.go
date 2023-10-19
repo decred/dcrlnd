@@ -251,7 +251,7 @@ func (w *WalletAssembler) ProvisionChannel(r *Request) (Intent, error) {
 	// spends across funding transactions.
 	err := w.cfg.CoinSelectLocker.WithCoinSelectLock(func() error {
 		log.Infof("Performing funding tx coin selection using %v "+
-			"sat/kw as fee rate", int64(r.FeeRate))
+			"atoms/kB as fee rate", int64(r.FeeRate))
 
 		// Find all unlocked unspent witness outputs that satisfy the
 		// minimum number of confirmations required. Coin selection in
