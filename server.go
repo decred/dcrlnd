@@ -2757,8 +2757,6 @@ func (s *server) prunePersistentPeerConnection(compressedPubKey [33]byte) {
 func (s *server) BroadcastMessage(skips map[route.Vertex]struct{},
 	msgs ...lnwire.Message) error {
 
-	srvrLog.Debugf("Broadcasting %v messages", len(msgs))
-
 	// Filter out peers found in the skips map. We synchronize access to
 	// peersByPub throughout this process to ensure we deliver messages to
 	// exact set of peers present at the time of invocation.
@@ -2767,7 +2765,7 @@ func (s *server) BroadcastMessage(skips map[route.Vertex]struct{},
 	for _, sPeer := range s.peersByPub {
 		if skips != nil {
 			if _, ok := skips[sPeer.PubKey()]; ok {
-				srvrLog.Tracef("Skipping %x in broadcast",
+				srvrLog.Debugf("Skipping %x in broadcast",
 					sPeer.PubKey())
 				continue
 			}
@@ -2777,10 +2775,16 @@ func (s *server) BroadcastMessage(skips map[route.Vertex]struct{},
 	}
 	s.mu.RUnlock()
 
+	srvrLog.Debugf("Broadcasting %v messages to %d peers with %d in skipList",
+		len(msgs), len(peers), len(skips))
+
 	// Iterate over all known peers, dispatching a go routine to enqueue
 	// all messages to each of peers.
 	var wg sync.WaitGroup
 	for _, sPeer := range peers {
+		srvrLog.Debugf("Sending messages [%s] to peer %s",
+			lnwire.MessagesTypesLogger(msgs), sPeer)
+
 		// Dispatch a go routine to enqueue all messages to this peer.
 		wg.Add(1)
 		s.wg.Add(1)

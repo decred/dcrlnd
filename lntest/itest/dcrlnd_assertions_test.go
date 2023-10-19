@@ -11,24 +11,30 @@ import (
 	"matheusd.com/testctx"
 )
 
-// assertCleanState ensures the state of the main test nodes and the mempool
-// are in a clean state (no open channels, no txs in the mempool, etc).
-func assertCleanState(h *harnessTest, net *lntest.NetworkHarness) {
+// assertCleanStateAliceBob ensures the state of the passed test nodes and the
+// mempool are in a clean state (no open channels, no txs in the mempool, etc).
+func assertCleanStateAliceBob(h *harnessTest, alice, bob *lntest.HarnessNode, net *lntest.NetworkHarness) {
 	_, minerHeight, err := net.Miner.Node.GetBestBlock(context.TODO())
 	if err != nil {
 		h.Fatalf("unable to get best height: %v", err)
 	}
 
-	net.EnsureConnected(testctx.New(h.t), h.t, net.Alice, net.Bob)
-	assertNodeBlockHeight(h, net.Alice, int32(minerHeight))
-	assertNodeBlockHeight(h, net.Bob, int32(minerHeight))
-	assertNodeNumChannels(h, net.Alice, 0)
-	assertNumPendingChannels(h, net.Alice, 0, 0, 0, 0)
-	assertNodeNumChannels(h, net.Bob, 0)
-	assertNumPendingChannels(h, net.Bob, 0, 0, 0, 0)
-	assertNumUnminedUnspent(h, net.Alice, 0)
-	assertNumUnminedUnspent(h, net.Bob, 0)
+	net.EnsureConnected(testctx.New(h.t), h.t, alice, bob)
+	assertNodeBlockHeight(h, alice, int32(minerHeight))
+	assertNodeBlockHeight(h, bob, int32(minerHeight))
+	assertNodeNumChannels(h, alice, 0)
+	assertNumPendingChannels(h, alice, 0, 0, 0, 0)
+	assertNodeNumChannels(h, bob, 0)
+	assertNumPendingChannels(h, bob, 0, 0, 0, 0)
+	assertNumUnminedUnspent(h, alice, 0)
+	assertNumUnminedUnspent(h, bob, 0)
 	waitForNTxsInMempool(net.Miner.Node, 0, minerMempoolTimeout)
+}
+
+// assertCleanState ensures the state of the main test nodes and the mempool
+// are in a clean state (no open channels, no txs in the mempool, etc).
+func assertCleanState(h *harnessTest, net *lntest.NetworkHarness) {
+	assertCleanStateAliceBob(h, net.Alice, net.Bob, net)
 }
 
 func assertNodeBlockHeight(t *harnessTest, node *lntest.HarnessNode, height int32) {

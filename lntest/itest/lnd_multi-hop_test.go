@@ -99,7 +99,8 @@ func testMultiHopHtlcClaims(net *lntest.NetworkHarness, t *harnessTest) {
 						"%s/%s ----\n",
 					testName, subTest.name,
 				)
-				AddToNodeLog(t, net.Alice, logLine)
+				AddToNodeLog(t, alice, logLine)
+				AddToNodeLog(t, bob, logLine)
 
 				success := ht.t.Run(subTest.name, func(t *testing.T) {
 					ht := newHarnessTest(t, net)
@@ -109,7 +110,7 @@ func testMultiHopHtlcClaims(net *lntest.NetworkHarness, t *harnessTest) {
 					net.SetFeeEstimate(10000)
 
 					subTest.test(net, ht, alice, bob, commitType)
-					assertCleanState(ht, ht.lndHarness)
+					assertCleanStateAliceBob(ht, alice, bob, ht.lndHarness)
 				})
 				if !success {
 					return
@@ -233,7 +234,8 @@ func createThreeHopNetwork(t *harnessTest, net *lntest.NetworkHarness,
 	)
 
 	chanp2str := func(chanp *lnrpc.ChannelPoint) string {
-		return fmt.Sprintf("%x:%d", chanp.GetFundingTxidBytes(),
+		txid, _ := lnrpc.GetChanPointFundingTxid(chanp)
+		return fmt.Sprintf("%s:%d", txid,
 			chanp.OutputIndex)
 	}
 
