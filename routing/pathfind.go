@@ -579,7 +579,7 @@ func findPath(g *graphParams, r *RestrictParams, cfg *PathFindingConfig,
 	absoluteAttemptCost := int64(cfg.AttemptCost) +
 		int64(amt)*cfg.AttemptCostPPM/1000000
 
-	log.Debugf("Pathfinding absolute attempt cost: %v sats",
+	log.Debugf("Pathfinding absolute attempt cost: %v atoms",
 		float64(absoluteAttemptCost)/1000)
 
 	// processEdge is a helper closure that will be used to make sure edges
