@@ -236,7 +236,7 @@ func AddInvoice(ctx context.Context, cfg *AddInvoiceConfig,
 			len(invoice.DescriptionHash))
 	}
 
-	// We set the max invoice amount to 100k BTC, which itself is several
+	// We set the max invoice amount to 100k DCR, which itself is several
 	// multiples off the current block reward.
 	maxInvoiceAmt := dcrutil.Amount(dcrutil.AtomsPerCoin * 100000)
 
