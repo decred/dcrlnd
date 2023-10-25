@@ -1178,3 +1178,176 @@ $20b42ce26			cli improv
 5037			scripts
 5046			itest
 5043		v0.12.1-beta	perf routing
+4162			AMP test
+4909			config mission control rpc
+4899			bugfix ignore ann for own channels
+5038			make
+3191			delete all failed payments 
+5049			stricter capacity check
+4923			tlv rewrite
+	5069		version bump
+4338			amp related refactorings
+5074			expose rpc stuff
+5078			fix comment
+5070			typo
+4517			store keylocator for revocation chain
+5073			remove MaxPayloadLength()
+5072			tlv benchmark
+5033			manually enable/disable channels via rpc
+4775			fix size constants
+5083			psbt
+4985			rpcserver & walletunlocker unification
+5086			mobile 
+5111			nil check
+5064			expose target-fee-conf cli
+5097			cli context
+5112			bugfix for #4985
+5068			expose config
+5002			expose amt_matoms to cli
+5005			add state rpc server
+5119			fix for #5097
+4590			shutdown bugfix
+5061			import mission control data
+5120			Additional error info
+5127			itest specify chain fee rate
+5102			add payment addr cli arg
+5095			wallet stuff (partially implemented)
+	5145		deps
+4704			(partial) sat_per_vbyte field
+4933			delay pruning zombies
+5133			bugfix dependency of jobs
+5116			fix deadlock
+5063			pprof addr arg
+5172			typo
+5010			mobile unlocker unification (cont. 5005)
+5178			docker mobile stuff
+5180			bugfix null pointer
+5108			sendtoroute AMP 
+5181			itest refactor
+5154			(partial) add dialer to chainreg
+5187			add configurable batching to commit ops
+5208			make
+5182			rpc stuff
+5204			fix possible nil panic
+5194			config
+	5193		neutrino
+5209			Bugfix 5108
+	4425		neutrino (persist rescan)
+4577			itest
+5192			add to rejection cache
+5207			rpc fix
+4599			mobile 
+4588			refactor fee estimation code
+	5221		dep
+5213			mobile 
+5228			itest whitelist
+	5034		CI stuff
+5138			stricter zombie pruning
+	5232		go.mod
+	5235		dep
+2522			cleanup on failed start
+5146			rpc fix
+5212			watchtower
+5198			mobile 
+	5135		bitcoind
+	5022		docker
+5214			race condition in payment
+5165			psbt
+	5238		go.mod
+5230			spec compliance
+4905			channel w/ unconfirmed utxos
+5205			hodl invoices refactor and bugfix
+5159			amp payments in rpc
+5156			recent blocks cache
+5224			invoices bugfix
+5237			websocket client fix
+5257			(partial) itest fix
+4878			etcd 
+5258			fix shutdown deadlock
+5246			perf refactoring
+4998			etcd clustering
+5227			zombie index
+5229			breach arbiter itest flakes
+	5275		btcd dep
+5268			itest whitelist
+	5277		neutrino dep
+5269			(partial) healthcheck module
+5284			typo
+5281			itest flakes in router
+5266			dry run importaccount
+5253			amp CLI
+5256			unlock with file
+5206			Height-based expiry watcher
+5036			fix penalty in anchor output case
+5274			anchor reservation amount
+	5291		psbt
+5293			rpc payment parameter validation
+5245			(partial) kvdb refactor
+	5296		neutrino dep
+5260			itest improv
+5725			(brought earlier) fix sendamp test from 5253
+5295			rpc nit getnodeinfo
+	5298		version bump
+5303			Bugfix 5295
+5309			rpc rest annotation fix
+5226			param nit
+5247			deprecate rpc field
+5305			perf improvement (restart htlc)
+	5314		version bump
+	5311		dep update
+5316			deadlock fix
+5164			doc
+5334			log nit
+5155			coin selection strategy config
+	5025		bitcoin signet
+	5322		docs 
+5328			bugfix synced_to_chain on assumeChanValid
+	5338		dep update
+5333			(partial) btcwallet addr types
+5336			Pseudo-reusable amp invoices
+5343			typo
+	5351		bitcoin signet
+	5350		version bump
+5352			release flags
+	5353	v0.13.0-beta	CI 
+	5399		CI 
+5299			more error info on routing error
+5248			parallel onion decoding
+5200			parameter fix
+5348			itest
+5358			log
+	5364		recovery info on shutdown
+5374			itest
+5369			secure upfront shutdown script
+5376			rpc doc
+5409			sample config
+	5417		release notes
+5404			Revert 5246
+5335			allow using abandonchannel rpc
+5355			block payments on zero bw channels
+5419			rpc nit
+5332			refactor payment state
+5429			itest
+5416			check tls file exists
+5420			itest
+5428			anchor commitments bugfix
+5431			followup to 5332
+5148			deadline to anchor output sweep
+	5371		docs
+5441			cli arg fix
+5452			expose pkg stuff
+5280			bugfix htlc interceptor
+5457			wallet unlock file
+5463			itest whitelist
+	5447		doc
+5478			Bugfix 5355
+5479		v0.13.1-beta	refactor err handling
+5554		v0.13.2-beta	fix amp payment reuse
+5781			variable dust limit
+5770			variable dust limit
+	5790		release stuff
+	5053	v0.13.4-beta	release stuff
+5615			(partial) (brought earlier) fix commitment_deadline
+7029			(brought earlier) fix blockcache test race
+5573			(brought earlier) fix race in routing test
+7126			(brought earlier) (partial) fix flake in testUpdateChannelPolicyForPrivateChannel
