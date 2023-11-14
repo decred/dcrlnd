@@ -62,6 +62,7 @@ func (s *Server) SubscribeChainSync(sub *ChainSyncSubscription, svr InitialChain
 			BlockHeight:    height,
 			BlockHash:      hash[:],
 			BlockTimestamp: ts,
+			Synced:         synced,
 		}
 		if err := svr.Send(updt); err != nil {
 			return err
