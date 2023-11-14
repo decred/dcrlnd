@@ -365,6 +365,12 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// Initialize and register the syncer gRPC server.
 	syncerServer := initchainsyncrpc.New()
 	initchainsyncrpc.RegisterInitialChainSyncServer(grpcServer, syncerServer)
+	for k, v := range initChainSyncPermissions {
+		err := interceptorChain.AddPermission(k, v)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Now that both the WalletUnlocker and LightningService have been
 	// registered with the GRPC server, we can start listening.

@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/decred/dcrlnd/lnrpc"
+	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
 	"github.com/decred/dcrlnd/macaroons"
 	"github.com/decred/dcrlnd/monitoring"
 	"github.com/decred/dcrlnd/subscribe"
@@ -510,6 +511,11 @@ func (r *InterceptorChain) checkRPCState(srv interface{}) error {
 		_, ok := srv.(lnrpc.WalletUnlockerServer)
 		if ok {
 			return ErrWalletUnlocked
+		}
+
+		_, isSyncerSvr := srv.(initchainsyncrpc.InitialChainSyncServer)
+		if isSyncerSvr {
+			return nil
 		}
 
 		return ErrRPCStarting
