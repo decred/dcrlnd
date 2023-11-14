@@ -2601,6 +2601,9 @@ func (d *AuthenticatedGossiper) updateChannel(info *channeldb.ChannelEdgeInfo,
 		return nil, nil, err
 	}
 
+	log.Infof("Created ChannelUpdate for channel %s with update time %v",
+		chanUpdate.ShortChannelID, edge.LastUpdate)
+
 	// We'll also create the original channel announcement so the two can
 	// be broadcast along side each other (if necessary), but only if we
 	// have a full channel announcement for this channel.
