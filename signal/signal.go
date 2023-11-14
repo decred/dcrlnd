@@ -62,6 +62,26 @@ func Intercept() (Interceptor, error) {
 	return channels, nil
 }
 
+// InterceptNoSignal returns an interceptor that does not listen to process
+// signals and relies on calls to ShutdownRequest to terminate.
+func InterceptNoSignal() Interceptor {
+	channels := Interceptor{
+		interruptChannel:       make(chan os.Signal, 1),
+		shutdownChannel:        make(chan struct{}),
+		shutdownRequestChannel: make(chan struct{}),
+		quit:                   make(chan struct{}),
+	}
+
+	go func() {
+		<-channels.shutdownRequestChannel
+		log.Infof("Received shutdown request.")
+		close(channels.quit)
+		close(channels.shutdownChannel)
+	}()
+
+	return channels
+}
+
 // mainInterruptHandler listens for SIGINT (Ctrl+C) signals on the
 // interruptChannel and shutdown requests on the shutdownRequestChannel, and
 // invokes the registered interruptCallbacks accordingly. It also listens for
