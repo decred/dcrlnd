@@ -559,13 +559,14 @@ func (d *AuthenticatedGossiper) ProcessRemoteAnnouncement(msg lnwire.Message,
 	// from the remote.
 	case *lnwire.ChannelAnnouncement:
 		ownKey := d.selfKey.SerializeCompressed()
-		ownErr := fmt.Errorf("ignoring remote ChannelAnnouncement " +
-			"for own channel")
+		ownErr := fmt.Errorf("ignoring remote ChannelAnnouncement "+
+			"for own channel %s received from %v", m.ShortChannelID,
+			peer)
 
 		if bytes.Equal(m.NodeID1[:], ownKey) ||
 			bytes.Equal(m.NodeID2[:], ownKey) {
 
-			log.Warn(ownErr)
+			log.Debug(ownErr)
 			errChan <- ownErr
 			return errChan
 		}
