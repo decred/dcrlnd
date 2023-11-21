@@ -14,13 +14,13 @@ require (
 	github.com/decred/dcrd/blockchain/standalone/v2 v2.2.0
 	github.com/decred/dcrd/chaincfg/chainhash v1.0.4
 	github.com/decred/dcrd/chaincfg/v3 v3.2.0
-	github.com/decred/dcrd/connmgr v1.1.0
+	github.com/decred/dcrd/connmgr v1.1.1
 	github.com/decred/dcrd/dcrec v1.0.1
-	github.com/decred/dcrd/dcrec/secp256k1/v2 v2.0.0
+	github.com/decred/dcrd/dcrec/secp256k1/v2 v2.0.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/decred/dcrd/dcrjson/v4 v4.0.1
 	github.com/decred/dcrd/dcrutil/v4 v4.0.1
-	github.com/decred/dcrd/gcs/v3 v3.0.0
+	github.com/decred/dcrd/gcs/v3 v3.0.1
 	github.com/decred/dcrd/gcs/v4 v4.0.0
 	github.com/decred/dcrd/hdkeychain/v3 v3.1.1
 	github.com/decred/dcrd/rpc/jsonrpc/types/v4 v4.0.0
@@ -50,12 +50,12 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/tv42/zbase32 v0.0.0-20220222190657-f76a9fc892fa
 	github.com/urfave/cli v1.20.0
-	go.etcd.io/bbolt v1.3.7
-	golang.org/x/crypto v0.8.0
-	golang.org/x/exp v0.0.0-20230711023510-fffb14384f22
-	golang.org/x/net v0.9.0
-	golang.org/x/sys v0.8.0
-	golang.org/x/time v0.3.0
+	go.etcd.io/bbolt v1.3.8
+	golang.org/x/crypto v0.15.0
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+	golang.org/x/net v0.18.0
+	golang.org/x/sys v0.14.0
+	golang.org/x/time v0.1.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
@@ -132,11 +132,11 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/mod v0.11.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.7.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/tools v0.8.0 // indirect
+	golang.org/x/mod v0.14.0 // indirect
+	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/tools v0.15.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
