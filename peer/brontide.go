@@ -1647,8 +1647,8 @@ func messageSummary(msg lnwire.Message) string {
 			msg.ChanID, int64(msg.FeePerKB))
 
 	case *lnwire.ChannelReestablish:
-		return fmt.Sprintf("next_local_height=%v, remote_tail_height=%v",
-			msg.NextLocalCommitHeight, msg.RemoteCommitTailHeight)
+		return fmt.Sprintf("next_local_height=%v, remote_tail_height=%v, chan_id=%v",
+			msg.NextLocalCommitHeight, msg.RemoteCommitTailHeight, msg.ChanID)
 
 	case *lnwire.ReplyShortChanIDsEnd:
 		return fmt.Sprintf("chain_hash=%v, complete=%v", msg.ChainHash,
