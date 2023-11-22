@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/gcs/v3/blockcf2"
 	"github.com/decred/dcrd/gcs/v4"
+	"github.com/decred/dcrd/gcs/v4/blockcf2"
 	"github.com/decred/dcrd/wire"
 )
 
