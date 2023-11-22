@@ -472,8 +472,6 @@ github.com/decred/dcrd/addrmgr/v2 v2.0.2 h1:h7PF1FoWcGUBcOhon7hK4Du7gT4KJb2/dCC4
 github.com/decred/dcrd/addrmgr/v2 v2.0.2/go.mod h1:lMupOhByAzVJN7EFWSGLeGTrlvvx38uCY4D+bPf2AT4=
 github.com/decred/dcrd/bech32 v1.1.3 h1:EeipVC1dO4zkjTjyqvrWt6JT2Ajr1EHZt+BAmWN864s=
 github.com/decred/dcrd/bech32 v1.1.3/go.mod h1:jliqHZmCbVfT06Lh1mQywEKFVidRclbBJIUmwdoKhu0=
-github.com/decred/dcrd/blockchain/stake/v4 v4.0.0 h1:PwoCjCTbRvDUZKKs6N2Haus8XcbVXCJ9iGVs8C9sKwQ=
-github.com/decred/dcrd/blockchain/stake/v4 v4.0.0/go.mod h1:bOgG7YTbTOWQgtHLL2l1Y9gBHIuM86zwVcQtsoGlZlQ=
 github.com/decred/dcrd/blockchain/stake/v5 v5.0.0 h1:WyxS8zMvTMpC5qYC9uJY+UzuV/x9ko4z20qBtH5Hzzs=
 github.com/decred/dcrd/blockchain/stake/v5 v5.0.0/go.mod h1:5sSjMq9THpnrLkW0SjEqIBIo8qq2nXzc+m7k9oFVVmY=
 github.com/decred/dcrd/blockchain/standalone/v2 v2.2.0 h1:v3yfo66axjr3oLihct+5tLEeM9YUzvK3i/6e2Im6RO0=
@@ -503,7 +501,6 @@ github.com/decred/dcrd/crypto/blake256 v1.0.1/go.mod h1:2OfgNZ5wDpcsFmHmCK5gZTPc
 github.com/decred/dcrd/crypto/ripemd160 v1.0.1/go.mod h1:F0H8cjIuWTRoixr/LM3REB8obcWkmYx0gbxpQWR8RPg=
 github.com/decred/dcrd/crypto/ripemd160 v1.0.2 h1:TvGTmUBHDU75OHro9ojPLK+Yv7gDl2hnUvRocRCjsys=
 github.com/decred/dcrd/crypto/ripemd160 v1.0.2/go.mod h1:uGfjDyePSpa75cSQLzNdVmWlbQMBuiJkvXw/MNKRY4M=
-github.com/decred/dcrd/database/v3 v3.0.0/go.mod h1:8EyKddB8rXDi6/CDOdYc/7qL1//sb6iwg9DctP0ZJF4=
 github.com/decred/dcrd/database/v3 v3.0.1 h1:oaklASAsUBwDoRgaS961WYqecFMZNhI1k+BmGgeW7/U=
 github.com/decred/dcrd/database/v3 v3.0.1/go.mod h1:IErr/Z62pFLoPZTMPGxedbcIuseGk0w3dszP3AFbXyw=
 github.com/decred/dcrd/dcrec v1.0.0/go.mod h1:HIaqbEJQ+PDzQcORxnqen5/V1FR3B4VpIfmePklt8Q8=
@@ -524,8 +521,6 @@ github.com/decred/dcrd/dcrjson/v4 v4.0.1/go.mod h1:2qVikafVF9/X3PngQVmqkbUbyAl32
 github.com/decred/dcrd/dcrutil/v4 v4.0.0/go.mod h1:QQpX5WVH3/ixVtiW15xZMe+neugXX3l2bsrYgq6nz4M=
 github.com/decred/dcrd/dcrutil/v4 v4.0.1 h1:E+d2TNbpOj0f1L9RqkZkEm1QolFjajvkzxWC5WOPf1s=
 github.com/decred/dcrd/dcrutil/v4 v4.0.1/go.mod h1:7EXyHYj8FEqY+WzMuRkF0nh32ueLqhutZDoW4eQ+KRc=
-github.com/decred/dcrd/gcs/v3 v3.0.1 h1:9P24YXXYyBBj1N1KM8ot3xEVbYAlr7ceAwTW3SoQg5k=
-github.com/decred/dcrd/gcs/v3 v3.0.1/go.mod h1:EBseSXCw7BLP/kMMae5X3kOEpHmW/H+w6xgoJ+cOA1c=
 github.com/decred/dcrd/gcs/v4 v4.0.0 h1:bet+Ax1ZFUqn2M0g1uotm0b8F6BZ9MmblViyJ088E8k=
 github.com/decred/dcrd/gcs/v4 v4.0.0/go.mod h1:9z+EBagzpEdAumwS09vf/hiGaR8XhNmsBgaVq6u7/NI=
 github.com/decred/dcrd/hdkeychain/v3 v3.1.1 h1:4WhyHNBy7ec6qBUC7Fq7JFVGSd7bpuR5H+AJRID8Lyk=
@@ -760,7 +755,6 @@ github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7Bd
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
 github.com/jedib0t/go-pretty v4.3.0+incompatible h1:CGs8AVhEKg/n9YbUenWmNStRW2PHJzaeDodcfvRAbIo=
 github.com/jedib0t/go-pretty v4.3.0+incompatible/go.mod h1:XemHduiw8R651AF9Pt4FwCTKeG3oo7hrHJAoznj9nag=
-github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jessevdk/go-flags v1.5.0 h1:1jKYvbxEjfUl0fmqTCOfonvskHHXMjBySTLW4y9LFvc=
 github.com/jessevdk/go-flags v1.5.0/go.mod h1:Fw0T6WPc1dYxT4mKEZRfG5kJhaTDP9pj1c2EWnYs/m4=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
