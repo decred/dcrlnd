@@ -1296,6 +1296,12 @@ message Channel {
     int64 chan_reestablish_wait_time_ms = 900;
 
     /*
+    The short channel id represented as a string, to ease log parsing. This is
+    the same as chan_id, but returned directly in the string representation.
+    */
+    string short_chan_id = 901;
+
+    /*
     The number of seconds that the channel has been monitored by the channel
     scoring system. Scores are currently not persisted, so this value may be
     less than the lifetime of the channel [EXPERIMENTAL].
@@ -1372,6 +1378,12 @@ enum Initiator {
 message ChannelCloseSummary {
     // The outpoint (txid:index) of the funding transaction.
     string channel_point = 1;
+
+    /*
+    The short channel id represented as a string, to ease log parsing. This is
+    the same as chan_id, but returned directly in the string representation.
+    */
+    string short_chan_id = 900;
 
     //  The unique channel ID for the channel.
     uint64 chan_id = 2 [jstype = JS_STRING];
@@ -2122,6 +2134,12 @@ message PendingChannelsResponse {
     message PendingChannel {
         string remote_node_pub = 1;
         string channel_point = 2;
+
+        /*
+        The short channel id represented as a string, to ease log parsing. This is
+        the same as chan_id, but returned directly in the string representation.
+        */
+        string short_chan_id = 900;
 
         int64 capacity = 3;
 

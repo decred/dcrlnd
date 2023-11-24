@@ -3027,6 +3027,7 @@ func (r *rpcServer) PendingChannels(ctx context.Context,
 				RemoteChanReserveAtoms: int64(pendingChan.RemoteChanCfg.ChanReserve),
 				Initiator:              rpcInitiator(pendingChan.IsInitiator),
 				CommitmentType:         rpcCommitmentType(pendingChan.ChanType),
+				ShortChanId:            pendingChan.ShortChannelID.String(),
 			},
 			CommitSize: commitSize,
 			CommitFee:  int64(localCommitment.CommitFee),
@@ -3064,6 +3065,7 @@ func (r *rpcServer) PendingChannels(ctx context.Context,
 			LocalBalance:   int64(pendingClose.SettledBalance),
 			CommitmentType: lnrpc.CommitmentType_UNKNOWN_COMMITMENT_TYPE,
 			Initiator:      lnrpc.Initiator_INITIATOR_UNKNOWN,
+			ShortChanId:    pendingClose.ShortChanID.String(),
 		}
 
 		// Lookup the channel in the historical channel bucket to obtain
@@ -3213,6 +3215,7 @@ func (r *rpcServer) PendingChannels(ctx context.Context,
 			RemoteChanReserveAtoms: int64(waitingClose.RemoteChanCfg.ChanReserve),
 			Initiator:              rpcInitiator(waitingClose.IsInitiator),
 			CommitmentType:         rpcCommitmentType(waitingClose.ChanType),
+			ShortChanId:            waitingClose.ShortChannelID.String(),
 		}
 
 		waitingCloseResp := &lnrpc.PendingChannelsResponse_WaitingCloseChannel{
@@ -3722,6 +3725,7 @@ func createRPCOpenChannel(r *rpcServer, graph *channeldb.ChannelGraph,
 		return nil, err
 	}
 	channel.ChanReestablishWaitTimeMs = waitTime.Milliseconds()
+	channel.ShortChanId = dbChannel.ShortChannelID.String()
 
 	// If the server hasn't fully started yet, it's possible that the
 	// channel event store hasn't either, so it won't be able to consume any
@@ -3804,6 +3808,7 @@ func (r *rpcServer) createRPCClosedChannel(
 	channel := &lnrpc.ChannelCloseSummary{
 		Capacity:          int64(dbChannel.Capacity),
 		RemotePubkey:      nodeID,
+		ShortChanId:       dbChannel.ShortChanID.String(),
 		CloseHeight:       dbChannel.CloseHeight,
 		CloseType:         closeType,
 		ChannelPoint:      dbChannel.ChanPoint.String(),
