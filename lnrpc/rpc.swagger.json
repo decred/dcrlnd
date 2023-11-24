@@ -2507,6 +2507,10 @@
         "channel_point": {
           "type": "string"
         },
+        "short_chan_id": {
+          "type": "string",
+          "description": "The short channel id represented as a string, to ease log parsing. This is\nthe same as chan_id, but returned directly in the string representation."
+        },
         "capacity": {
           "type": "string",
           "format": "int64"
@@ -2890,6 +2894,10 @@
           "format": "int64",
           "description": "The total amount of time the remote peer has been online while NOT sending\na ChannelReestablish message."
         },
+        "short_chan_id": {
+          "type": "string",
+          "description": "The short channel id represented as a string, to ease log parsing. This is\nthe same as chan_id, but returned directly in the string representation."
+        },
         "lifetime": {
           "type": "string",
           "format": "int64",
@@ -3127,6 +3135,10 @@
         "channel_point": {
           "type": "string",
           "description": "The outpoint (txid:index) of the funding transaction."
+        },
+        "short_chan_id": {
+          "type": "string",
+          "description": "The short channel id represented as a string, to ease log parsing. This is\nthe same as chan_id, but returned directly in the string representation."
         },
         "chan_id": {
           "type": "string",
