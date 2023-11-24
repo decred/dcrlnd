@@ -327,6 +327,7 @@ func (d *DB) Path() string {
 var topLevelBuckets = [][]byte{
 	openChannelBucket,
 	closedChannelBucket,
+	chanReestablishWaitTimeBucket, // DCR only
 	forwardingLogBucket,
 	fwdPackagesKey,
 	invoiceBucket,
