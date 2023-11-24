@@ -30,6 +30,7 @@ import (
 	"gopkg.in/macaroon.v2"
 
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/decred/dcrlnd/automation"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/cert"
@@ -987,6 +988,17 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 		}
 		defer tower.Stop()
 	}
+
+	// Start the dcrlnd specific automation services.
+	autoServer := automation.NewServer(&automation.Config{
+		Automation:   cfg.Automation,
+		CloseChannel: rpcServer.CloseChannel,
+		DB:           remoteChanDB,
+	})
+	if err := autoServer.Start(); err != nil {
+		return err
+	}
+	defer autoServer.Stop()
 
 	// Wait for shutdown signal from either a graceful server stop or from
 	// the interrupt handler.
