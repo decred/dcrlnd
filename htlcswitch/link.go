@@ -659,6 +659,10 @@ func (l *channelLink) syncChanStates() error {
 			"ChannelPoint(%v): %v", l.channel.ChannelPoint(), err)
 	}
 
+	// Track how long the peer is online while NOT sending a
+	// ChannelReestablish.
+	sendTime := time.Now()
+
 	var msgsToReSend []lnwire.Message
 
 	// Next, we'll wait indefinitely to receive the ChanSync message. The
@@ -740,7 +744,25 @@ func (l *channelLink) syncChanStates() error {
 			l.cfg.Peer.SendMessage(false, msg)
 		}
 
+		// Channel reestablish successfully received, so reset the wait
+		// time.
+		err := l.cfg.Switch.cfg.DB.ResetChanReestablishWaitTime(l.shortChanID)
+		if err != nil {
+			l.log.Errorf("Unable to reset ChannelReestblish wait "+
+				"time: %v", err)
+		}
+
 	case <-l.quit:
+		// Channel reestablish not received while peer was online. Track
+		// how long we waited for a ChannelReestasblish message.
+		waitTime := time.Since(sendTime)
+		l.log.Debugf("Adding +%s to channel reestablish wait time", waitTime)
+		err := l.cfg.Switch.cfg.DB.AddToChanReestablishWaitTime(l.shortChanID, waitTime)
+		if err != nil {
+			l.log.Errorf("Unable to track wait time for "+
+				"ChannelReestblish msg: %v", err)
+		}
+
 		return ErrLinkShuttingDown
 	}
 
