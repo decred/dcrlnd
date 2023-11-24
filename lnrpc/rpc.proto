@@ -1290,6 +1290,12 @@ message Channel {
     CommitmentType commitment_type = 26;
 
     /*
+    The total amount of time the remote peer has been online while NOT sending
+    a ChannelReestablish message.
+    */
+    int64 chan_reestablish_wait_time_ms = 900;
+
+    /*
     The number of seconds that the channel has been monitored by the channel
     scoring system. Scores are currently not persisted, so this value may be
     less than the lifetime of the channel [EXPERIMENTAL].

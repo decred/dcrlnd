@@ -2885,6 +2885,11 @@
           "$ref": "#/definitions/lnrpcCommitmentType",
           "description": "The commitment type used by this channel."
         },
+        "chan_reestablish_wait_time_ms": {
+          "type": "string",
+          "format": "int64",
+          "description": "The total amount of time the remote peer has been online while NOT sending\na ChannelReestablish message."
+        },
         "lifetime": {
           "type": "string",
           "format": "int64",
