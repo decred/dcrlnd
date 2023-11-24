@@ -3714,6 +3714,13 @@ func createRPCOpenChannel(r *rpcServer, graph *channeldb.ChannelGraph,
 		channel.CloseAddress = addresses[0].String()
 	}
 
+	// Additional decred-specific data for channels.
+	waitTime, err := dbChannel.Db.GetChanReestablishWaitTime(dbChannel.ShortChannelID)
+	if err != nil {
+		return nil, err
+	}
+	channel.ChanReestablishWaitTimeMs = waitTime.Milliseconds()
+
 	// If the server hasn't fully started yet, it's possible that the
 	// channel event store hasn't either, so it won't be able to consume any
 	// requests until then. To prevent blocking, we'll just omit the uptime
