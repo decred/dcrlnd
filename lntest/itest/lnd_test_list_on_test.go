@@ -356,6 +356,10 @@ var allTestCases = []*testCase{
 		test: testNetworkConnectionTimeout,
 	},
 	{
+		name: "missing channelreestablish auto closes channel",
+		test: testMissingChanReestablishAutoClosesChan,
+	},
+	{
 		name: "stateless init",
 		test: testStatelessInit,
 	},

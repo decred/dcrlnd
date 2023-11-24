@@ -2266,8 +2266,10 @@ out:
 			rpcsLog.Tracef("[closechannel] sending update: %v",
 				rpcClosingUpdate)
 
-			if err := updateStream.Send(rpcClosingUpdate); err != nil {
-				return err
+			if updateStream != nil {
+				if err := updateStream.Send(rpcClosingUpdate); err != nil {
+					return err
+				}
 			}
 
 			// If a final channel closing updates is being sent,

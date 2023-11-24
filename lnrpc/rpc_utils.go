@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/lnwallet"
 )
 
@@ -87,6 +88,17 @@ func ExtractMinConfs(minConfs int32, spendUnconfirmed bool) (int32, error) {
 	// explicitly by the caller.
 	default:
 		return minConfs, nil
+	}
+}
+
+// OutpointToChanPoint transforms a standard wire outpoint (that represents a
+// channel id) into a ChannelPoint.
+func OutpointToChanPoint(out *wire.OutPoint) *ChannelPoint {
+	return &ChannelPoint{
+		FundingTxid: &ChannelPoint_FundingTxidBytes{
+			FundingTxidBytes: out.Hash[:],
+		},
+		OutputIndex: out.Index,
 	}
 }
 

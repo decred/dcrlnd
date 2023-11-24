@@ -2,6 +2,7 @@ package dcrlnd
 
 import (
 	"github.com/decred/dcrd/connmgr"
+	"github.com/decred/dcrlnd/automation"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/chainntnfs"
@@ -134,6 +135,7 @@ func SetupLoggers(root *build.RotatingLogWriter, interceptor signal.Interceptor)
 	AddSubLogger(root, "KCHN", interceptor, keychain.UseLogger)
 	AddSubLogger(root, "CSCN", interceptor, chainscan.UseLogger)
 	AddSubLogger(root, "CSDR", interceptor, csdrivers.UseLogger)
+	AddSubLogger(root, "AUTO", interceptor, automation.UseLogger)
 
 	AddSubLogger(root, "LNWL", interceptor, lnwallet.UseLogger)
 	AddSubLogger(root, "DISC", interceptor, discovery.UseLogger)

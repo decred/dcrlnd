@@ -276,6 +276,8 @@ type Config struct {
 
 	Autopilot *lncfg.AutoPilot `group:"Autopilot" namespace:"autopilot"`
 
+	Automation *lncfg.Automation `group:"Automation" namespace:"automation"`
+
 	Tor *lncfg.Tor `group:"Tor" namespace:"tor"`
 
 	SubRPCServers *subRPCServerConfigs `group:"subrpc"`
@@ -438,6 +440,9 @@ func DefaultConfig() Config {
 			Heuristic: map[string]float64{
 				"top_centrality": 1.0,
 			},
+		},
+		Automation: &lncfg.Automation{
+			ForceCloseChanReestablishWait: 60 * 60 * 24 * 3, // 3 days
 		},
 		PaymentsExpirationGracePeriod: defaultPaymentsExpirationGracePeriod,
 		TrickleDelay:                  defaultTrickleDelay,
