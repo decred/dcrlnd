@@ -11,8 +11,8 @@ import (
 	"github.com/decred/dcrlnd/chainscan/csdrivers"
 	"github.com/decred/dcrlnd/lnwallet"
 
-	"decred.org/dcrwallet/v3/errors"
-	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/errors"
+	"decred.org/dcrwallet/v4/wallet"
 )
 
 // Compile time check to ensure DcrWallet fulfills lnwallet.BlockChainIO.

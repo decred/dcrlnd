@@ -8,10 +8,11 @@ import (
 	"os"
 	"time"
 
-	"decred.org/dcrwallet/v3/chain"
-	"decred.org/dcrwallet/v3/p2p"
-	"decred.org/dcrwallet/v3/spv"
-	wallet "decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/chain"
+	"decred.org/dcrwallet/v4/p2p"
+	"decred.org/dcrwallet/v4/spv"
+	wallet "decred.org/dcrwallet/v4/wallet"
+	"decred.org/dcrwallet/v4/wallet/udb"
 	"github.com/decred/dcrd/addrmgr/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -33,6 +34,8 @@ func init() {
 	wallet.UseLogger(build.NewSubLogger("DCRW", nil))
 	p2p.UseLogger(build.NewSubLogger("DCRW", nil))
 	spv.UseLogger(build.NewSubLogger("DCRW", nil))
+	chain.UseLogger(build.NewSubLogger("DCRW", nil))
+	udb.UseLogger(build.NewSubLogger("DCRW", nil))
 }
 
 // NewRPCSyncingTestWallet creates a test wallet that syncs itself using the
@@ -144,10 +147,32 @@ func NewSPVSyncingTestWallet(t TB, p2pAddr string) (*wallet.Wallet, func()) {
 	lp := p2p.NewLocalPeer(w.ChainParams(), addr, amgr)
 	syncer := spv.NewSyncer(w, lp)
 	syncer.SetPersistentPeers([]string{p2pAddr})
+	syncedChan := make(chan struct{})
+	spvNtfns := &spv.Notifications{
+		Synced: func(isSynced bool) {
+			if isSynced {
+				select {
+				case <-syncedChan:
+				default:
+					close(syncedChan)
+				}
+			}
+		},
+	}
+	syncer.SetNotifications(spvNtfns)
 	w.SetNetworkBackend(syncer)
 	ctx, cancel := context.WithCancel(context.Background())
 	syncerChan := make(chan error, 1)
 	go func() { syncerChan <- syncer.Run(ctx) }()
+
+	// Wait until the initial sync completes.
+	select {
+	case <-syncedChan:
+	case err := <-syncerChan:
+		t.Fatalf("syncer.Run failed: %v", err)
+	case <-time.After(30 * time.Second):
+		t.Fatalf("timeout waiting for initial spv sync")
+	}
 
 	cleanUp := func() {
 		cancel()

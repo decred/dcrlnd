@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"decred.org/dcrwallet/v3/errors"
-	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/errors"
+	"decred.org/dcrwallet/v4/wallet"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/gcs/v4"
 	"github.com/decred/dcrd/wire"

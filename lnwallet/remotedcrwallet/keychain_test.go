@@ -11,7 +11,7 @@ import (
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwallet"
 
-	base "decred.org/dcrwallet/v3/wallet"
+	base "decred.org/dcrwallet/v4/wallet"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/wallet"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/btcwalletcompat"

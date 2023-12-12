@@ -1,6 +1,6 @@
 package lncfg
 
-import "decred.org/dcrwallet/v3/p2p"
+import "decred.org/dcrwallet/v4/p2p"
 
 type DcrwalletConfig struct {
 	GRPCHost       string `long:"grpchost" description:"The wallet's grpc listening address. If a port is omitted, then the default port for the selected chain parameters will be used."`

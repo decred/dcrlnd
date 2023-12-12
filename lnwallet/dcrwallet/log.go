@@ -1,11 +1,11 @@
 package dcrwallet
 
 import (
-	"decred.org/dcrwallet/v3/chain"
-	"decred.org/dcrwallet/v3/p2p"
-	"decred.org/dcrwallet/v3/spv"
-	base "decred.org/dcrwallet/v3/wallet"
-	"decred.org/dcrwallet/v3/wallet/udb"
+	"decred.org/dcrwallet/v4/chain"
+	"decred.org/dcrwallet/v4/p2p"
+	"decred.org/dcrwallet/v4/spv"
+	base "decred.org/dcrwallet/v4/wallet"
+	"decred.org/dcrwallet/v4/wallet/udb"
 	"github.com/decred/dcrd/addrmgr/v2"
 	"github.com/decred/dcrlnd/build"
 	"github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"

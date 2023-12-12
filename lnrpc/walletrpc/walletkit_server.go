@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/wallet"
 	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec"

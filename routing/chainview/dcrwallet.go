@@ -1,7 +1,7 @@
 package chainview
 
 import (
-	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/wallet"
 	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/chainntnfs/dcrwnotify"
 	"github.com/decred/dcrlnd/chainntnfs/remotedcrwnotify"

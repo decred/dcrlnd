@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"decred.org/dcrwallet/v3/wallet"
+	"decred.org/dcrwallet/v4/wallet"
 	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
 	"github.com/decred/dcrlnd/lnwallet"

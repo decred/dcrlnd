@@ -14,7 +14,7 @@ import (
 	"github.com/decred/dcrlnd/blockcache"
 	"github.com/decred/dcrlnd/lnwallet"
 
-	"decred.org/dcrwallet/v3/errors"
+	"decred.org/dcrwallet/v4/errors"
 )
 
 var (

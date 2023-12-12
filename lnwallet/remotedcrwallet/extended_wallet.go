@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v4/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"

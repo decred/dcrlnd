@@ -18,7 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	pb "decred.org/dcrwallet/v3/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v4/rpc/walletrpc"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"

@@ -10,8 +10,8 @@ import (
 	"github.com/decred/dcrd/addrmgr/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 
-	"decred.org/dcrwallet/v3/p2p"
-	"decred.org/dcrwallet/v3/spv"
+	"decred.org/dcrwallet/v4/p2p"
+	"decred.org/dcrwallet/v4/spv"
 )
 
 type SPVSyncerConfig struct {

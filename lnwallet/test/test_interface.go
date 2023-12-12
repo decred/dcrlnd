@@ -24,7 +24,7 @@ import (
 	"golang.org/x/exp/slices"
 	"matheusd.com/testctx"
 
-	_ "decred.org/dcrwallet/v3/wallet/drivers/bdb"
+	_ "decred.org/dcrwallet/v4/wallet/drivers/bdb"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
