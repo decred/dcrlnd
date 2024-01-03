@@ -354,11 +354,11 @@ func testKeyClash(t *testing.T, db walletdb.DB) {
 
 		b, err := apple.CreateBucket([]byte("key"))
 		require.Nil(t, b)
-		require.Error(t, walletdb.ErrIncompatibleValue, b)
+		require.Error(t, walletdb.ErrIncompatibleValue, err)
 
 		b, err = apple.CreateBucketIfNotExists([]byte("key"))
 		require.Nil(t, b)
-		require.Error(t, walletdb.ErrIncompatibleValue, b)
+		require.Error(t, walletdb.ErrIncompatibleValue, err)
 
 		return nil
 	}, func() {})
