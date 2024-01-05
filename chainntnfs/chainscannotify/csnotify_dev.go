@@ -32,7 +32,6 @@ func (n *ChainscanNotifier) UnsafeStart(bestHeight int64, bestHash *chainhash.Ha
 	runAndLogOnError(n.ctx, n.historical.Run, "historical")
 
 	n.chainEvents = n.tipWatcher.ChainEvents(n.ctx)
-	n.chainUpdates.Start()
 
 	n.wg.Add(1)
 	go n.handleChainEvents()
@@ -51,9 +50,8 @@ func (n *ChainscanNotifier) UnsafeStart(bestHeight int64, bestHash *chainhash.Ha
 	loop:
 		for {
 			select {
-			case ntfn := <-n.chainUpdates.ChanOut():
-				lastReceivedNtfn := ntfn.(*filteredBlock)
-				if int64(lastReceivedNtfn.height) >= syncHeight {
+			case ntfn := <-n.chainUpdates:
+				if int64(ntfn.height) >= syncHeight {
 					break loop
 				}
 			case <-timeout:

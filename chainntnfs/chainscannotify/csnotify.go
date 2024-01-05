@@ -90,7 +90,7 @@ type ChainscanNotifier struct {
 
 	bestBlock chainntnfs.BlockEpoch
 
-	chainUpdates *queue.ConcurrentQueue
+	chainUpdates chan *filteredBlock
 
 	// spendHintCache is a cache used to query and update the latest height
 	// hints for an outpoint. Each height hint represents the earliest
@@ -142,7 +142,7 @@ func New(chainSrc ChainSource,
 
 		blockEpochClients: make(map[uint64]*blockEpochRegistration),
 
-		chainUpdates: queue.NewConcurrentQueue(10),
+		chainUpdates: make(chan *filteredBlock, 100),
 
 		spendHintCache:   spendHintCache,
 		confirmHintCache: confirmHintCache,
@@ -186,17 +186,14 @@ func (n *ChainscanNotifier) startNotifier() error {
 	runAndLogOnError(n.ctx, n.historical.Run, "historical")
 
 	n.chainEvents = n.tipWatcher.ChainEvents(n.ctx)
-	n.chainUpdates.Start()
 
 	currentHash, currentHeight, err := n.chainConn.c.CurrentTip(n.ctx)
 	if err != nil {
-		n.chainUpdates.Stop()
 		return err
 	}
 
 	currentHeader, err := n.chainConn.c.GetBlockHeader(n.ctx, currentHash)
 	if err != nil {
-		n.chainUpdates.Stop()
 		return err
 	}
 
@@ -243,8 +240,6 @@ func (n *ChainscanNotifier) Stop() error {
 
 	close(n.quit)
 	n.wg.Wait()
-
-	n.chainUpdates.Stop()
 
 	// Notify all pending clients of our shutdown by closing the related
 	// notification channels.
@@ -331,7 +326,7 @@ func (n *ChainscanNotifier) handleChainEvents() {
 		}
 
 		select {
-		case n.chainUpdates.ChanIn() <- fb:
+		case n.chainUpdates <- fb:
 		case <-n.ctx.Done():
 			return
 		}
@@ -413,8 +408,7 @@ out:
 				msg.errorChan <- nil
 			}
 
-		case item := <-n.chainUpdates.ChanOut():
-			update := item.(*filteredBlock)
+		case update := <-n.chainUpdates:
 			if update.connect {
 				if *update.prevHash != *n.bestBlock.Hash {
 					// Handle the case where the notifier
