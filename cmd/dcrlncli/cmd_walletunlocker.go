@@ -227,8 +227,8 @@ mnemonicCheck:
 		fmt.Printf("Do you have an existing cipher seed " +
 			"mnemonic or extended master root key you want to " +
 			"use?\nEnter 'y' to use an existing cipher seed " +
-			"mnemonic, 'x' to use an extended master root key " +
-			"\nor 'n' to create a new seed (Enter y/x/n): ")
+			"mnemonic " +
+			"\nor 'n' to create a new seed (Enter y/n): ")
 
 		reader := bufio.NewReader(os.Stdin)
 		answer, err := reader.ReadString('\n')
@@ -244,10 +244,6 @@ mnemonicCheck:
 		switch answer {
 		case "y":
 			hasMnemonic = true
-			break mnemonicCheck
-
-		case "x":
-			hasXprv = true
 			break mnemonicCheck
 
 		case "n":
