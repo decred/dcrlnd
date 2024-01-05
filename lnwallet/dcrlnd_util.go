@@ -75,3 +75,11 @@ func DeriveAddrsFromExtPub(xpub *hdkeychain.ExtendedKey, addrParams stdaddr.Addr
 
 	return intAddrs, extAddrs, nil
 }
+
+// cacheCommitmentTxHash fills the cachedTxHash of a *commitment for logging.
+func cacheCommitmentTxHash(commit *commitment) *commitment {
+	if commit != nil && commit.txn != nil {
+		commit.txn.CachedTxHash()
+	}
+	return commit
+}

@@ -629,6 +629,7 @@ func (s *UtxoSweeper) collector(blockEpochs <-chan *chainntnfs.BlockEpoch) {
 			log.Debugf("Detected spend related to in flight inputs "+
 				"(is_ours=%v): %v",
 				newLogClosure(func() string {
+					spend.SpendingTx.CachedTxHash()
 					return spew.Sdump(spend.SpendingTx)
 				}), isOurTx,
 			)
@@ -1263,6 +1264,7 @@ func (s *UtxoSweeper) sweep(inputs inputSet, feeRate chainfee.AtomPerKByte,
 
 	log.Tracef("Sweep tx at height=%v: %v", currentHeight,
 		newLogClosure(func() string {
+			tx.CachedTxHash()
 			return spew.Sdump(tx)
 		}),
 	)

@@ -617,6 +617,7 @@ justiceTxBroadcast:
 	finalTx := justiceTxs.spendAll
 
 	brarLog.Debugf("Broadcasting justice tx: %v", newLogClosure(func() string {
+		finalTx.CachedTxHash()
 		return spew.Sdump(finalTx)
 	}))
 
@@ -754,6 +755,7 @@ Loop:
 				brarLog.Debugf("Broadcasting justice tx "+
 					"spending commitment outs: %v",
 					newLogClosure(func() string {
+						tx.CachedTxHash()
 						return spew.Sdump(tx)
 					}))
 
@@ -771,6 +773,7 @@ Loop:
 				brarLog.Debugf("Broadcasting justice tx "+
 					"spending HTLC outs: %v",
 					newLogClosure(func() string {
+						tx.CachedTxHash()
 						return spew.Sdump(tx)
 					}))
 

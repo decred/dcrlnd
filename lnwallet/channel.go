@@ -1762,7 +1762,7 @@ func (lc *LightningChannel) restoreCommitState(
 
 	lc.log.Debugf("starting local commitment: %v",
 		newLogClosure(func() string {
-			return spew.Sdump(lc.localCommitChain.tail())
+			return spew.Sdump(cacheCommitmentTxHash(lc.localCommitChain.tail()))
 		}),
 	)
 
@@ -1778,7 +1778,7 @@ func (lc *LightningChannel) restoreCommitState(
 
 	lc.log.Debugf("starting remote commitment: %v",
 		newLogClosure(func() string {
-			return spew.Sdump(lc.remoteCommitChain.tail())
+			return spew.Sdump(cacheCommitmentTxHash(lc.remoteCommitChain.tail()))
 		}),
 	)
 
@@ -1813,7 +1813,7 @@ func (lc *LightningChannel) restoreCommitState(
 
 		lc.log.Debugf("pending remote commitment: %v",
 			newLogClosure(func() string {
-				return spew.Sdump(lc.remoteCommitChain.tip())
+				return spew.Sdump(cacheCommitmentTxHash(lc.remoteCommitChain.tip()))
 			}),
 		)
 
@@ -3599,7 +3599,7 @@ func (lc *LightningChannel) SignNextCommitment() (lnwire.Sig, []lnwire.Sig, []ch
 		newCommitView.ourBalance,
 		newCommitView.theirBalance,
 		newLogClosure(func() string {
-			return spew.Sdump(newCommitView.txn)
+			return spew.Sdump(cacheCommitmentTxHash(newCommitView).txn)
 		}),
 	)
 
@@ -4386,7 +4386,7 @@ func (lc *LightningChannel) ReceiveNewCommitment(commitSig lnwire.Sig,
 		"their_balance=%v, commit_tx: %v",
 		localCommitmentView.ourBalance, localCommitmentView.theirBalance,
 		newLogClosure(func() string {
-			return spew.Sdump(localCommitmentView.txn)
+			return spew.Sdump(cacheCommitmentTxHash(localCommitmentView).txn)
 		}),
 	)
 
