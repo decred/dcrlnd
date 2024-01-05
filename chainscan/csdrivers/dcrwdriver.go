@@ -90,6 +90,7 @@ func (d *DcrwalletCSDriver) Run(ctx context.Context) error {
 					Hash:     b.BlockHash(),
 					Height:   int32(b.Height),
 					PrevHash: b.PrevBlock,
+					Header:   b,
 				}
 
 				d.signalEventReaders(e)
@@ -114,6 +115,7 @@ func (d *DcrwalletCSDriver) Run(ctx context.Context) error {
 					Height:   int32(b.Header.Height),
 					CFKey:    key,
 					Filter:   filter,
+					Header:   b.Header,
 				}
 
 				d.signalEventReaders(e)

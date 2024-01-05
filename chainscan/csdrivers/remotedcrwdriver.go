@@ -93,6 +93,8 @@ func (d *RemoteWalletCSDriver) Run(ctx context.Context) error {
 		return err
 	}
 
+	getHeaderReq := &walletrpc.BlockInfoRequest{}
+
 nextntfn:
 	for {
 		var resp *walletrpc.TransactionNotificationsResponse
@@ -112,10 +114,23 @@ nextntfn:
 				break nextntfn
 			}
 
+			var headerRes *walletrpc.BlockInfoResponse
+			getHeaderReq.BlockHash = hash[:]
+			headerRes, err = d.wsvc.BlockInfo(ctx, getHeaderReq)
+			if err != nil {
+				break nextntfn
+			}
+			header := new(wire.BlockHeader)
+			err = header.FromBytes(headerRes.BlockHeader)
+			if err != nil {
+				break nextntfn
+			}
+
 			e := chainscan.BlockDisconnectedEvent{
 				Hash:     *hash,
 				Height:   b.Height,
 				PrevHash: *prevHash,
+				Header:   header,
 			}
 
 			d.signalEventReaders(e)
@@ -144,12 +159,25 @@ nextntfn:
 				break nextntfn
 			}
 
+			var headerRes *walletrpc.BlockInfoResponse
+			getHeaderReq.BlockHash = hash[:]
+			headerRes, err = d.wsvc.BlockInfo(ctx, getHeaderReq)
+			if err != nil {
+				break nextntfn
+			}
+			header := new(wire.BlockHeader)
+			err = header.FromBytes(headerRes.BlockHeader)
+			if err != nil {
+				break nextntfn
+			}
+
 			e := chainscan.BlockConnectedEvent{
 				PrevHash: *prevHash,
 				Hash:     *hash,
 				Height:   bl.Height,
 				CFKey:    cfKey,
 				Filter:   filter,
+				Header:   header,
 			}
 			d.signalEventReaders(e)
 		}

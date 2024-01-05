@@ -8,12 +8,14 @@ import (
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/gcs/v4"
+	"github.com/decred/dcrd/wire"
 )
 
 type ChainEvent interface {
 	BlockHash() *chainhash.Hash
 	BlockHeight() int32
 	PrevBlockHash() *chainhash.Hash
+	BlockHeader() *wire.BlockHeader
 
 	nop()
 }
@@ -24,11 +26,13 @@ type BlockConnectedEvent struct {
 	PrevHash chainhash.Hash
 	CFKey    [16]byte
 	Filter   *gcs.FilterV2
+	Header   *wire.BlockHeader
 }
 
 func (e BlockConnectedEvent) BlockHash() *chainhash.Hash     { return &e.Hash }
 func (e BlockConnectedEvent) BlockHeight() int32             { return e.Height }
 func (e BlockConnectedEvent) PrevBlockHash() *chainhash.Hash { return &e.PrevHash }
+func (e BlockConnectedEvent) BlockHeader() *wire.BlockHeader { return e.Header }
 func (e BlockConnectedEvent) nop()                           {}
 func (e BlockConnectedEvent) blockCF() *blockCFilter {
 	return &blockCFilter{
@@ -43,10 +47,12 @@ type BlockDisconnectedEvent struct {
 	Hash     chainhash.Hash
 	Height   int32
 	PrevHash chainhash.Hash
+	Header   *wire.BlockHeader
 }
 
 func (e BlockDisconnectedEvent) BlockHash() *chainhash.Hash     { return &e.Hash }
 func (e BlockDisconnectedEvent) BlockHeight() int32             { return e.Height }
+func (e BlockDisconnectedEvent) BlockHeader() *wire.BlockHeader { return e.Header }
 func (e BlockDisconnectedEvent) PrevBlockHash() *chainhash.Hash { return &e.PrevHash }
 func (e BlockDisconnectedEvent) nop()                           {}
 

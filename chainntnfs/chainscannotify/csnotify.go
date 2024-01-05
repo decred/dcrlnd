@@ -194,6 +194,12 @@ func (n *ChainscanNotifier) startNotifier() error {
 		return err
 	}
 
+	currentHeader, err := n.chainConn.c.GetBlockHeader(n.ctx, currentHash)
+	if err != nil {
+		n.chainUpdates.Stop()
+		return err
+	}
+
 	chainntnfs.Log.Debugf("Starting txnotifier at height %d hash %s",
 		currentHeight, currentHash)
 
@@ -203,8 +209,9 @@ func (n *ChainscanNotifier) startNotifier() error {
 	)
 
 	n.bestBlock = chainntnfs.BlockEpoch{
-		Height: currentHeight,
-		Hash:   currentHash,
+		Height:      currentHeight,
+		Hash:        currentHash,
+		BlockHeader: currentHeader,
 	}
 
 	n.wg.Add(2)
@@ -262,6 +269,7 @@ type filteredBlock struct {
 	hash     *chainhash.Hash
 	height   int32
 	prevHash *chainhash.Hash
+	header   *wire.BlockHeader
 
 	txns []*dcrutil.Tx
 
@@ -314,6 +322,7 @@ func (n *ChainscanNotifier) handleChainEvents() {
 			hash:     e.BlockHash(),
 			height:   e.BlockHeight(),
 			prevHash: e.PrevBlockHash(),
+			header:   e.BlockHeader(),
 		}
 
 		if _, ok := e.(chainscan.BlockConnectedEvent); ok {
@@ -376,6 +385,7 @@ out:
 					n.notifyBlockEpochClient(
 						msg, n.bestBlock.Height,
 						n.bestBlock.Hash,
+						n.bestBlock.BlockHeader,
 					)
 
 					msg.errorChan <- nil
@@ -396,7 +406,7 @@ out:
 
 				for _, block := range missedBlocks {
 					n.notifyBlockEpochClient(
-						msg, block.Height, block.Hash,
+						msg, block.Height, block.Hash, block.BlockHeader,
 					)
 				}
 
@@ -478,12 +488,18 @@ func (n *ChainscanNotifier) handleMissedBlocks(newBestBlock chainntnfs.BlockEpoc
 				"mainchain block hash (%s)", m.Hash, bh)
 		}
 
+		header, err := n.chainConn.c.GetBlockHeader(n.ctx, bh)
+		if err != nil {
+			return
+		}
+
 		e := chainscan.BlockConnectedEvent{
 			Height:   m.Height,
 			Hash:     *bh,
 			CFKey:    cfkey,
 			Filter:   filter,
 			PrevHash: *prevHash,
+			Header:   header,
 		}
 		if err := n.tipWatcher.ForceRescan(n.ctx, &e); err != nil {
 			return
@@ -494,6 +510,7 @@ func (n *ChainscanNotifier) handleMissedBlocks(newBestBlock chainntnfs.BlockEpoc
 			height:   e.BlockHeight(),
 			prevHash: prevHash,
 			txns:     n.drainTipWatcherTxs(e.BlockHash()),
+			header:   e.BlockHeader(),
 		}
 		prevHash = bh
 
@@ -527,27 +544,31 @@ func (n *ChainscanNotifier) handleBlockConnected(newBlock *filteredBlock) error 
 	// satisfy any client requests based upon the new block.
 	n.bestBlock.Hash = newBlockHash
 	n.bestBlock.Height = int32(newBlockHeight)
+	n.bestBlock.BlockHeader = newBlock.header
 
-	n.notifyBlockEpochs(int32(newBlockHeight), newBlockHash)
+	n.notifyBlockEpochs(int32(newBlockHeight), newBlockHash, newBlock.header)
 	return n.txNotifier.NotifyHeight(newBlockHeight)
 }
 
 // notifyBlockEpochs notifies all registered block epoch clients of the newly
 // connected block to the main chain.
-func (n *ChainscanNotifier) notifyBlockEpochs(newHeight int32, newHash *chainhash.Hash) {
+func (n *ChainscanNotifier) notifyBlockEpochs(newHeight int32, newHash *chainhash.Hash,
+	newHeader *wire.BlockHeader) {
+
 	for _, client := range n.blockEpochClients {
-		n.notifyBlockEpochClient(client, newHeight, newHash)
+		n.notifyBlockEpochClient(client, newHeight, newHash, newHeader)
 	}
 }
 
 // notifyBlockEpochClient sends a registered block epoch client a notification
 // about a specific block.
 func (n *ChainscanNotifier) notifyBlockEpochClient(epochClient *blockEpochRegistration,
-	height int32, hash *chainhash.Hash) {
+	height int32, hash *chainhash.Hash, header *wire.BlockHeader) {
 
 	epoch := &chainntnfs.BlockEpoch{
-		Height: height,
-		Hash:   hash,
+		Height:      height,
+		Hash:        hash,
+		BlockHeader: header,
 	}
 
 	select {
