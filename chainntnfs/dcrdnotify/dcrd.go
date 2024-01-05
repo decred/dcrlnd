@@ -186,14 +186,21 @@ func (n *DcrdNotifier) startNotifier() error {
 		return err
 	}
 
+	currentHeader, err := n.chainConn.GetBlockHeader(context.TODO(), currentHash)
+	if err != nil {
+		n.chainUpdates.Stop()
+		return err
+	}
+
 	n.txNotifier = chainntnfs.NewTxNotifier(
 		uint32(currentHeight), chainntnfs.ReorgSafetyLimit,
 		n.confirmHintCache, n.spendHintCache, n.chainParams,
 	)
 
 	n.bestBlock = chainntnfs.BlockEpoch{
-		Height: int32(currentHeight),
-		Hash:   currentHash,
+		Height:      int32(currentHeight),
+		Hash:        currentHash,
+		BlockHeader: currentHeader,
 	}
 
 	n.wg.Add(1)
@@ -396,6 +403,7 @@ out:
 					n.notifyBlockEpochClient(
 						msg, n.bestBlock.Height,
 						n.bestBlock.Hash,
+						n.bestBlock.BlockHeader,
 					)
 
 					msg.errorChan <- nil
@@ -416,7 +424,7 @@ out:
 
 				for _, block := range missedBlocks {
 					n.notifyBlockEpochClient(
-						msg, block.Height, block.Hash,
+						msg, block.Height, block.Hash, block.BlockHeader,
 					)
 				}
 
@@ -649,8 +657,9 @@ func (n *DcrdNotifier) handleBlockConnected(newBlock *filteredBlock) error {
 	// satisfy any client requests based upon the new block.
 	n.bestBlock.Hash = &newBlockHash
 	n.bestBlock.Height = int32(newBlockHeight)
+	n.bestBlock.BlockHeader = newBlock.header
 
-	n.notifyBlockEpochs(int32(newBlockHeight), &newBlockHash)
+	n.notifyBlockEpochs(int32(newBlockHeight), &newBlockHash, newBlock.header)
 	return n.txNotifier.NotifyHeight(newBlockHeight)
 }
 
@@ -687,20 +696,22 @@ func (n *DcrdNotifier) fetchFilteredBlockForBlockHash(bh *chainhash.Hash) (*filt
 
 // notifyBlockEpochs notifies all registered block epoch clients of the newly
 // connected block to the main chain.
-func (n *DcrdNotifier) notifyBlockEpochs(newHeight int32, newHash *chainhash.Hash) {
+func (n *DcrdNotifier) notifyBlockEpochs(newHeight int32, newHash *chainhash.Hash,
+	newHeader *wire.BlockHeader) {
 	for _, client := range n.blockEpochClients {
-		n.notifyBlockEpochClient(client, newHeight, newHash)
+		n.notifyBlockEpochClient(client, newHeight, newHash, newHeader)
 	}
 }
 
 // notifyBlockEpochClient sends a registered block epoch client a notification
 // about a specific block.
 func (n *DcrdNotifier) notifyBlockEpochClient(epochClient *blockEpochRegistration,
-	height int32, hash *chainhash.Hash) {
+	height int32, hash *chainhash.Hash, header *wire.BlockHeader) {
 
 	epoch := &chainntnfs.BlockEpoch{
-		Height: height,
-		Hash:   hash,
+		Height:      height,
+		Hash:        hash,
+		BlockHeader: header,
 	}
 
 	select {
