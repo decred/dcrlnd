@@ -94,14 +94,14 @@ UNIT_TARGETED ?= no
 # targeted case. Otherwise, default to running all tests.
 ifeq ($(UNIT_TARGETED), yes)
 UNIT := $(GOTEST) -count=1 -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) $(UNITPKG)
-UNIT_DEBUG := $(GOTEST) -v -tags="$(DEV_TAGS) $(LOG_TAGS)" $(TEST_FLAGS) $(UNITPKG)
-UNIT_RACE := $(GOTEST) -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) -race -gcflags=all=-d=checkptr=0 $(UNITPKG)
+UNIT_DEBUG := $(GOTEST) -count=1 -v -tags="$(DEV_TAGS) $(LOG_TAGS)" $(TEST_FLAGS) $(UNITPKG)
+UNIT_RACE := $(GOTEST) -count=1 -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) -race -gcflags=all=-d=checkptr=0 $(UNITPKG)
 endif
 
 ifeq ($(UNIT_TARGETED), no)
-UNIT := $(GOLIST) | xargs -I{} sh -c '$(GOTEST) -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) {} || exit 255'
-UNIT_DEBUG := $(GOLIST) | $(XARGS) env $(GOTEST) -v -tags="$(DEV_TAGS) $(LOG_TAGS)" $(TEST_FLAGS)
-UNIT_RACE := $(GOLIST) | xargs -I{} sh -c 'env $(RACE_ENV) $(GOTEST) -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) -race -gcflags=all=-d=checkptr=0 {} || exit 255'
+UNIT := $(GOLIST) | xargs -I{} sh -c '$(GOTEST) -count=1 -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) {} || exit 255'
+UNIT_DEBUG := $(GOLIST) | $(XARGS) env $(GOTEST) -count=1 -v -tags="$(DEV_TAGS) $(LOG_TAGS)" $(TEST_FLAGS)
+UNIT_RACE := $(GOLIST) | xargs -I{} sh -c 'env $(RACE_ENV) $(GOTEST) -count=1 -tags="$(DEV_TAGS) $(LOG_TAGS) $(UTEST_TAGS)" $(TEST_FLAGS) -race -gcflags=all=-d=checkptr=0 {} || exit 255'
 endif
 
 
