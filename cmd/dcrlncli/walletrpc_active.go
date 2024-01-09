@@ -62,6 +62,7 @@ func walletCommands() []cli.Command {
 				listLeasesCommand,
 				psbtCommand,
 				accountsCommand,
+				rescanWalletCommand,
 			},
 		},
 	}
