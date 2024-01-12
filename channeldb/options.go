@@ -19,10 +19,10 @@ const (
 	DefaultChannelCacheSize = 20000
 
 	// DefaultPreAllocCacheNumNodes is the default number of channels we
-	// assume for mainnet for pre-allocating the graph cache. As of
-	// September 2021, there currently are 14k nodes in a strictly pruned
-	// graph, so we choose a number that is slightly higher.
-	DefaultPreAllocCacheNumNodes = 15000
+	// assume for mainnet for pre-allocating the graph cache. Decred's
+	// LN is significantly smaller than Bitcoin's, therefore this number
+	// is smaller than lnd's default.
+	DefaultPreAllocCacheNumNodes = 1000
 )
 
 // Options holds parameters for tuning and customizing a channeldb.DB.
