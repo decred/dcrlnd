@@ -43,21 +43,3 @@ func (c *ChannelGraph) IsKnownSpent(channelID uint64) (bool, error) {
 
 	return knownSpent, err
 }
-
-// LocalOpenChanIDs returns a map of channel IDs of all open channels in the
-// local DB.
-func (c *ChannelGraph) LocalOpenChanIDs() (map[uint64]struct{}, error) {
-	// Note: this is less efficient than it could be, because it iterates
-	// through the entire list of channels and then discards all that just
-	// to extract the channel id. In the future, decode that field directly.
-	openChans, err := c.db.FetchAllOpenChannels()
-	if err != nil {
-		return nil, err
-	}
-
-	res := make(map[uint64]struct{}, len(openChans))
-	for _, c := range openChans {
-		res[c.ShortChanID().ToUint64()] = struct{}{}
-	}
-	return res, nil
-}

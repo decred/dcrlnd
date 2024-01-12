@@ -169,6 +169,7 @@ func createTestCtxFromGraphInstanceAssumeValid(t *testing.T,
 			return next, nil
 		},
 		PathFindingConfig:   pathFindingConfig,
+		LocalOpenChanIDs:    func() (map[uint64]struct{}, error) { return map[uint64]struct{}{}, nil },
 		Clock:               clock.NewTestClock(time.Unix(1, 0)),
 		AssumeChannelValid:  assumeValid,
 		StrictZombiePruning: strictPruning,

@@ -354,6 +354,10 @@ type Config struct {
 	// PathFindingConfig defines global path finding parameters.
 	PathFindingConfig PathFindingConfig
 
+	// LocalOpenChanIDs should return a list of short channel IDs for all
+	// open channels. This is a dcrlnd-only feature.
+	LocalOpenChanIDs func() (map[uint64]struct{}, error)
+
 	// Clock is mockable time provider.
 	Clock clock.Clock
 
@@ -2584,7 +2588,7 @@ func (r *ChannelRouter) ForEachNode(cb func(*channeldb.LightningNode) error) err
 func (r *ChannelRouter) ForAllOutgoingChannels(cb func(kvdb.RTx,
 	*channeldb.ChannelEdgeInfo, *channeldb.ChannelEdgePolicy) error) error {
 
-	openChans, err := r.cfg.Graph.LocalOpenChanIDs()
+	openChans, err := r.cfg.LocalOpenChanIDs()
 	if err != nil {
 		return fmt.Errorf("unable to query local open chan IDs: %v", err)
 	}

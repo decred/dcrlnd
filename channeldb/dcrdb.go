@@ -123,3 +123,21 @@ func (d *DB) initDcrlndFeatures() error {
 		return nil
 	}, func() {})
 }
+
+// LocalOpenChanIDs returns a map of channel IDs of all open channels in the
+// local DB.
+func (d *DB) LocalOpenChanIDs() (map[uint64]struct{}, error) {
+	// Note: this is less efficient than it could be, because it iterates
+	// through the entire list of channels and then discards all that just
+	// to extract the channel id. In the future, decode that field directly.
+	openChans, err := d.FetchAllOpenChannels()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[uint64]struct{}, len(openChans))
+	for _, c := range openChans {
+		res[c.ShortChanID().ToUint64()] = struct{}{}
+	}
+	return res, nil
+}

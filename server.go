@@ -795,6 +795,7 @@ func newServer(cfg *Config, listenAddrs []net.Addr,
 		AssumeChannelValid:  cfg.Routing.AssumeChannelValid,
 		NextPaymentID:       sequencer.NextID,
 		PathFindingConfig:   pathFindingConfig,
+		LocalOpenChanIDs:    dbs.chanStateDB.LocalOpenChanIDs,
 		Clock:               clock.NewDefaultClock(),
 		StrictZombiePruning: strictPruning,
 	})
