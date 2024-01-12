@@ -35,11 +35,11 @@ var addInvoiceCommand = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "amt",
-			Usage: "The amt of atoms in this invoice",
+			Usage: "The amount of atoms in this invoice",
 		},
 		cli.Int64Flag{
-			Name:  "amt_msat",
-			Usage: "the amt of millisatoshis in this invoice",
+			Name:  "amt_matoms",
+			Usage: "The amount of milliatoms in this invoice",
 		},
 		cli.StringFlag{
 			Name: "description_hash",
@@ -96,8 +96,8 @@ func addInvoice(ctx *cli.Context) error {
 	args := ctx.Args()
 
 	amt = ctx.Int64("amt")
-	amtMAtoms = ctx.Int64("amt_msat")
-	if !ctx.IsSet("amt") && !ctx.IsSet("amt_msat") && args.Present() {
+	amtMAtoms = ctx.Int64("amt_matoms")
+	if !ctx.IsSet("amt") && !ctx.IsSet("amt_matoms") && args.Present() {
 		amt, err = strconv.ParseInt(args.First(), 10, 64)
 		args = args.Tail()
 		if err != nil {

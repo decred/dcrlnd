@@ -4954,6 +4954,12 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 	}
 
 	amt := dcrutil.Amount(invoice.Value)
+	if invoice.ValueMAtoms != 0 {
+		amt = dcrutil.Amount(invoice.ValueMAtoms / 1000)
+		if invoice.ValueMAtoms%1000 > 0 {
+			amt += 1
+		}
+	}
 
 	// Loop through all available channels, check for liveliness and capacity.
 	var maxInbound dcrutil.Amount
