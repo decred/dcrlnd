@@ -394,6 +394,7 @@ func main() {
 		queryRoutesCommand,
 		getNetworkInfoCommand,
 		debugLevelCommand,
+		calcPayStatsCommand,
 		decodePayReqCommand,
 		listChainTxnsCommand,
 		stopCommand,

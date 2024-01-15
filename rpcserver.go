@@ -438,6 +438,10 @@ func MainRPCServerPermissions() map[string][]bakery.Op {
 			Entity: "info",
 			Action: "write",
 		}},
+		"/lnrpc.Lightning/CalcPaymentStats": {{
+			Entity: "info",
+			Action: "write",
+		}},
 		"/lnrpc.Lightning/DecodePayReq": {{
 			Entity: "offchain",
 			Action: "read",
@@ -6033,6 +6037,26 @@ func (r *rpcServer) DebugLevel(ctx context.Context,
 	}
 
 	return &lnrpc.DebugLevelResponse{}, nil
+}
+
+func (r *rpcServer) CalcPaymentStats(ctx context.Context,
+	req *lnrpc.CalcPaymentStatsRequest) (*lnrpc.CalcPaymentStatsResponse, error) {
+
+	stats, err := r.server.remoteChanDB.CalcPaymentStats()
+	if err != nil {
+		return nil, err
+	}
+	return &lnrpc.CalcPaymentStatsResponse{
+		Total:     stats.Total,
+		Failed:    stats.Failed,
+		Succeeded: stats.Succeeded,
+
+		HtlcAttempts: stats.HTLCAttempts,
+		HtlcFailed:   stats.HTLCFailed,
+		HtlcSettled:  stats.HTLCSettled,
+
+		OldDupePayments: stats.OldDupePayments,
+	}, nil
 }
 
 // DecodePayReq takes an encoded payment request string and attempts to decode

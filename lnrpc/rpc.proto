@@ -419,6 +419,12 @@ service Lightning {
     */
     rpc DebugLevel (DebugLevelRequest) returns (DebugLevelResponse);
 
+    /* lncli: `calcpaymentstats`
+    CalcPaymentStats goes through the DB and generates a report on total
+    number of payments recorded.
+    */
+    rpc CalcPaymentStats (CalcPaymentStatsRequest) returns (CalcPaymentStatsResponse);
+
     /* lncli: `feereport`
     FeeReport allows the caller to obtain a report detailing the current fee
     schedule enforced by the node globally for each channel.
@@ -3475,6 +3481,18 @@ message DebugLevelRequest {
 }
 message DebugLevelResponse {
     string sub_systems = 1;
+}
+
+message CalcPaymentStatsRequest {
+}
+message CalcPaymentStatsResponse {
+    uint64 total = 1;
+    uint64 failed = 2;
+    uint64 succeeded = 3;
+    uint64 htlc_attempts = 4;
+    uint64 htlc_failed = 5;
+    uint64 htlc_settled = 6;
+    uint64 old_dupe_payments = 7;
 }
 
 message PayReqString {

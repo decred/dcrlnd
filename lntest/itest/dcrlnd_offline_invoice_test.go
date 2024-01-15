@@ -8,7 +8,12 @@ import (
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrlnd/lnrpc"
+	"github.com/decred/dcrlnd/lnrpc/invoicesrpc"
+	"github.com/decred/dcrlnd/lnrpc/routerrpc"
 	"github.com/decred/dcrlnd/lntest"
+	"github.com/decred/dcrlnd/lntypes"
+	"github.com/stretchr/testify/require"
+	"matheusd.com/testctx"
 )
 
 // testOfflineHopInvoice tests whether trying to pay an invoice to an offline
@@ -200,4 +205,107 @@ func testOfflineHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 	closeChannelAndAssert(ctxt, t, net, carol, chanPointCarol, false)
 	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
 	closeChannelAndAssert(ctxt, t, net, dave, chanPointDave, false)
+}
+
+// testCalcPayStats asserts the correctness of the CalcPaymentStats RPC.
+func testCalcPayStats(net *lntest.NetworkHarness, t *harnessTest) {
+	ctxb, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	alice := net.NewNode(t.t, "Alice", nil)
+	defer shutdownAndAssert(net, t, alice)
+	net.SendCoins(testctx.New(t), t.t, dcrutil.AtomsPerCoin, alice)
+
+	bob := net.NewNode(t.t, "Bob", nil)
+	defer shutdownAndAssert(net, t, bob)
+	net.ConnectNodes(testctx.New(t), t.t, alice, bob)
+
+	// Open a channel between alice and bob.
+	chanReq := lntest.OpenChannelParams{
+		Amt: defaultChanAmt,
+	}
+
+	ctxt, _ := context.WithTimeout(ctxb, channelOpenTimeout)
+	chanPoint := openChannelAndAssert(ctxt, t, net, alice, bob, chanReq)
+
+	// Complete 5 payments.
+	const numPayments = 5
+	const paymentAmt = 1000
+	payReqs, _, _, err := createPayReqs(
+		bob, paymentAmt, numPayments,
+	)
+	require.NoError(t.t, err)
+	err = completePaymentRequests(
+		ctxt, alice, alice.RouterClient,
+		payReqs, true,
+	)
+	require.NoError(t.t, err)
+
+	// Create and fail a payment (by using a hold invoice).
+	var (
+		preimage = lntypes.Preimage{1, 2, 3, 4, 5}
+		payHash  = preimage.Hash()
+	)
+	invoiceReq := &invoicesrpc.AddHoldInvoiceRequest{
+		Value:      30000,
+		CltvExpiry: 40,
+		Hash:       payHash[:],
+	}
+
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	bobInvoice, err := bob.AddHoldInvoice(ctxt, invoiceReq)
+	require.NoError(t.t, err)
+	_, err = alice.RouterClient.SendPaymentV2(
+		ctxb, &routerrpc.SendPaymentRequest{
+			PaymentRequest: bobInvoice.PaymentRequest,
+			TimeoutSeconds: 60,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
+		},
+	)
+	require.NoError(t.t, err)
+	waitForInvoiceAccepted(t, bob, payHash)
+	_, err = bob.CancelInvoice(ctxt, &invoicesrpc.CancelInvoiceMsg{PaymentHash: payHash[:]})
+	require.NoError(t.t, err)
+
+	// Create but do not settle a payment (by using a hold invoice).
+	var (
+		preimage2 = lntypes.Preimage{1, 2, 3, 4, 5, 6}
+		payHash2  = preimage2.Hash()
+	)
+	invoiceReq2 := &invoicesrpc.AddHoldInvoiceRequest{
+		Value:      30000,
+		CltvExpiry: 40,
+		Hash:       payHash2[:],
+	}
+
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	bobInvoice2, err := bob.AddHoldInvoice(ctxt, invoiceReq2)
+	require.NoError(t.t, err)
+	_, err = alice.RouterClient.SendPaymentV2(
+		ctxb, &routerrpc.SendPaymentRequest{
+			PaymentRequest: bobInvoice2.PaymentRequest,
+			TimeoutSeconds: 60,
+			FeeLimitMAtoms: noFeeLimitMAtoms,
+		},
+	)
+	require.NoError(t.t, err)
+	waitForInvoiceAccepted(t, bob, payHash2)
+
+	// Fetch the payment stats.
+	ctxt, _ = context.WithTimeout(ctxb, defaultTimeout)
+	payStats, err := alice.CalcPaymentStats(ctxt, &lnrpc.CalcPaymentStatsRequest{})
+	require.NoError(t.t, err)
+	require.Equal(t.t, uint64(7), payStats.Total)
+	require.Equal(t.t, uint64(5), payStats.Succeeded)
+	require.Equal(t.t, uint64(1), payStats.Failed)
+	require.Equal(t.t, uint64(7), payStats.HtlcAttempts)
+	require.Equal(t.t, uint64(1), payStats.HtlcFailed)
+	require.Equal(t.t, uint64(5), payStats.HtlcSettled)
+	require.Equal(t.t, uint64(0), payStats.OldDupePayments)
+
+	// Clean up the channel.
+	_, err = bob.CancelInvoice(ctxt, &invoicesrpc.CancelInvoiceMsg{PaymentHash: payHash2[:]})
+	require.NoError(t.t, err)
+	ctxt, _ = context.WithTimeout(ctxb, channelCloseTimeout)
+	closeChannelAndAssert(ctxt, t, net, alice, chanPoint, false)
 }
