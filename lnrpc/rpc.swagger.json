@@ -2718,6 +2718,39 @@
         }
       }
     },
+    "lnrpcCalcPaymentStatsResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "failed": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "succeeded": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "htlc_attempts": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "htlc_failed": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "htlc_settled": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "old_dupe_payments": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "lnrpcChain": {
       "type": "object",
       "properties": {

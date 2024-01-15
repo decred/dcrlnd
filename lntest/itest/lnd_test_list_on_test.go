@@ -129,6 +129,10 @@ var allTestCases = []*testCase{
 		test: testPrivateChannels,
 	},
 	{
+		name: "calc payment stats",
+		test: testCalcPayStats,
+	},
+	{
 		name: "private channel update policy",
 		test: testUpdateChannelPolicyForPrivateChannel,
 	},
