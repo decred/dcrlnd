@@ -1,6 +1,7 @@
 package watchtower
 
 import (
+	"context"
 	"net"
 	"sync/atomic"
 
@@ -107,7 +108,7 @@ func New(cfg *Config) (*Standalone, error) {
 
 // Start idempotently starts the Standalone, an error is returned if the
 // subsystems could not be initialized.
-func (w *Standalone) Start() error {
+func (w *Standalone) Start(ctx context.Context) error {
 	if !atomic.CompareAndSwapUint32(&w.started, 0, 1) {
 		return nil
 	}
@@ -126,7 +127,7 @@ func (w *Standalone) Start() error {
 	if err := w.lookout.Start(); err != nil {
 		return err
 	}
-	if err := w.server.Start(); err != nil {
+	if err := w.server.Start(ctx); err != nil {
 		w.lookout.Stop()
 		return err
 	}

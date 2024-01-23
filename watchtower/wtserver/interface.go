@@ -1,6 +1,7 @@
 package wtserver
 
 import (
+	"context"
 	"io"
 	"net"
 	"time"
@@ -17,7 +18,7 @@ type Interface interface {
 	InboundPeerConnected(Peer)
 
 	// Start sets up the watchtower server.
-	Start() error
+	Start(context.Context) error
 
 	// Stop cleans up the watchtower's current connections and resources.
 	Stop() error

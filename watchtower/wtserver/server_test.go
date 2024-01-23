@@ -2,6 +2,7 @@ package wtserver_test
 
 import (
 	"bytes"
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -66,7 +67,7 @@ func initServer(t *testing.T, db wtserver.DB,
 		t.Fatalf("unable to create server: %v", err)
 	}
 
-	if err = s.Start(); err != nil {
+	if err = s.Start(context.TODO()); err != nil {
 		t.Fatalf("unable to start server: %v", err)
 	}
 

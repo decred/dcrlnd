@@ -918,7 +918,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	// Set up an autopilot manager from the current config. This will be
 	// used to manage the underlying autopilot agent, starting and stopping
 	// it at will.
-	atplCfg, err := initAutoPilot(server, cfg.Autopilot, cfg, cfg.ActiveNetParams)
+	atplCfg, err := initAutoPilot(ctx, server, cfg.Autopilot, cfg, cfg.ActiveNetParams)
 	if err != nil {
 		err := fmt.Errorf("unable to initialize autopilot: %v", err)
 		ltndLog.Error(err)
@@ -961,7 +961,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 
 	// With all the relevant chains initialized, we can finally start the
 	// server itself.
-	if err := server.Start(); err != nil {
+	if err := server.Start(ctx); err != nil {
 		err := fmt.Errorf("unable to start server: %v", err)
 		ltndLog.Error(err)
 		return err
@@ -981,7 +981,7 @@ func Main(cfg *Config, lisCfg ListenerCfg, interceptor signal.Interceptor) error
 	}
 
 	if cfg.Watchtower.Active {
-		if err := tower.Start(); err != nil {
+		if err := tower.Start(ctx); err != nil {
 			err := fmt.Errorf("unable to start watchtower: %v", err)
 			ltndLog.Error(err)
 			return err

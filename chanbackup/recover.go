@@ -1,6 +1,7 @@
 package chanbackup
 
 import (
+	"context"
 	"net"
 
 	"github.com/davecgh/go-spew/spew"
@@ -29,7 +30,7 @@ type PeerConnector interface {
 	// available addresses. Once this method returns with a non-nil error,
 	// the connector should attempt to persistently connect to the target
 	// peer in the background as a persistent attempt.
-	ConnectPeer(node *secp256k1.PublicKey, addrs []net.Addr) error
+	ConnectPeer(ctx context.Context, node *secp256k1.PublicKey, addrs []net.Addr) error
 }
 
 // Recover attempts to recover the static channel state from a set of static
@@ -68,7 +69,7 @@ func Recover(backups []Single, restorer ChannelRestorer,
 			}), backup.FundingOutpoint)
 
 		err = peerConnector.ConnectPeer(
-			backup.RemoteNodePub, backup.Addresses,
+			context.TODO(), backup.RemoteNodePub, backup.Addresses,
 		)
 		if err != nil {
 			return err

@@ -15,6 +15,7 @@ require (
 	github.com/decred/dcrd/chaincfg/chainhash v1.0.4
 	github.com/decred/dcrd/chaincfg/v3 v3.2.0
 	github.com/decred/dcrd/connmgr v1.1.1
+	github.com/decred/dcrd/connmgr/v3 v3.1.1
 	github.com/decred/dcrd/dcrec v1.0.1
 	github.com/decred/dcrd/dcrec/secp256k1/v2 v2.0.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
@@ -79,7 +80,6 @@ require (
 	github.com/decred/dcrd v1.8.0 // indirect
 	github.com/decred/dcrd/certgen v1.1.2 // indirect
 	github.com/decred/dcrd/chaincfg v1.5.2 // indirect
-	github.com/decred/dcrd/connmgr/v3 v3.1.1 // indirect
 	github.com/decred/dcrd/container/apbf v1.0.1 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.0.1 // indirect
 	github.com/decred/dcrd/crypto/ripemd160 v1.0.2 // indirect

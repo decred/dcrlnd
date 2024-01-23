@@ -1,6 +1,7 @@
 package wtclient_test
 
 import (
+	"context"
 	"encoding/binary"
 	"net"
 	"sync"
@@ -435,7 +436,7 @@ func newHarness(t *testing.T, cfg harnessCfg) *testHarness {
 		t.Fatalf("Unable to create wtclient: %v", err)
 	}
 
-	if err := server.Start(); err != nil {
+	if err := server.Start(context.TODO()); err != nil {
 		t.Fatalf("Unable to start wtserver: %v", err)
 	}
 
@@ -485,7 +486,7 @@ func (h *testHarness) startServer() {
 
 	h.net.setConnCallback(h.server.InboundPeerConnected)
 
-	if err := h.server.Start(); err != nil {
+	if err := h.server.Start(context.TODO()); err != nil {
 		h.t.Fatalf("unable to start wtserver: %v", err)
 	}
 }

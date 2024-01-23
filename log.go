@@ -1,7 +1,7 @@
 package dcrlnd
 
 import (
-	"github.com/decred/dcrd/connmgr"
+	"github.com/decred/dcrd/connmgr/v3"
 	"github.com/decred/dcrlnd/automation"
 	"github.com/decred/dcrlnd/autopilot"
 	"github.com/decred/dcrlnd/build"

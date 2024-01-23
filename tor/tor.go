@@ -2,6 +2,7 @@ package tor
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/decred/dcrd/connmgr"
+	"github.com/decred/dcrd/connmgr/v3"
 	"github.com/miekg/dns"
 	"golang.org/x/net/proxy"
 )
@@ -124,7 +125,7 @@ func dial(address, socksAddr string, streamIsolation bool,
 // LookupHost performs DNS resolution on a given host via Tor's native resolver.
 // Only IPv4 addresses are returned.
 func LookupHost(host, socksAddr string) ([]string, error) {
-	ip, err := connmgr.TorLookupIP(host, socksAddr)
+	ip, err := connmgr.TorLookupIP(context.TODO(), host, socksAddr)
 	if err != nil {
 		return nil, err
 	}

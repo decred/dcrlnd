@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/connmgr"
+	"github.com/decred/dcrd/connmgr/v3"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/wire"
@@ -341,9 +341,9 @@ func parseAddr(address string, netCfg tor.Net) (net.Addr, error) {
 // noiseDial is a factory function which creates a connmgr compliant dialing
 // function by returning a closure which includes the server's identity key.
 func noiseDial(idKey keychain.SingleKeyECDH,
-	netCfg tor.Net, timeout time.Duration) func(net.Addr) (net.Conn, error) {
+	netCfg tor.Net, timeout time.Duration) func(context.Context, net.Addr) (net.Conn, error) {
 
-	return func(a net.Addr) (net.Conn, error) {
+	return func(ctx context.Context, a net.Addr) (net.Conn, error) {
 		lnAddr := a.(*lnwire.NetAddress)
 		return brontide.Dial(idKey, lnAddr, timeout, netCfg.Dial)
 	}
@@ -1481,7 +1481,7 @@ func (c cleaner) run() {
 // Start starts the main daemon server, all requested listeners, and any helper
 // goroutines.
 // NOTE: This function is safe for concurrent access.
-func (s *server) Start() error {
+func (s *server) Start(ctx context.Context) error {
 	var startErr error
 
 	// If one sub system fails to start, the following code ensures that the
@@ -1706,11 +1706,7 @@ func (s *server) Start() error {
 			return
 		}
 
-		s.connMgr.Start()
-		cleanup = cleanup.add(func() error {
-			s.connMgr.Stop()
-			return nil
-		})
+		go s.connMgr.Run(ctx)
 
 		// Give enough time for any outstanding, brontide-accepted
 		// connections to percolate through the connMgr and be
@@ -1718,7 +1714,7 @@ func (s *server) Start() error {
 		// connections.
 		time.Sleep(time.Millisecond * 200)
 
-		if err := s.establishPersistentConnections(); err != nil {
+		if err := s.establishPersistentConnections(ctx); err != nil {
 			startErr = err
 			return
 		}
@@ -1844,7 +1840,6 @@ func (s *server) Stop() error {
 		if err := s.htlcNotifier.Stop(); err != nil {
 			srvrLog.Warnf("failed to stop htlcNotifier: %v", err)
 		}
-		s.connMgr.Stop()
 		if err := s.invoices.Stop(); err != nil {
 			srvrLog.Warnf("failed to stop invoices: %v", err)
 		}
@@ -2523,7 +2518,7 @@ type nodeAddresses struct {
 // to all our direct channel collaborators. In order to promote liveness of our
 // active channels, we instruct the connection manager to attempt to establish
 // and maintain persistent connections to all our direct channel counterparties.
-func (s *server) establishPersistentConnections() error {
+func (s *server) establishPersistentConnections(ctx context.Context) error {
 	// nodeAddrsMap stores the combination of node public keys and addresses
 	// that we'll attempt to reconnect to. PubKey strings are used as keys
 	// since other PubKey forms can't be compared.
@@ -2701,9 +2696,9 @@ func (s *server) establishPersistentConnections() error {
 			if numOutboundConns < numInstantInitReconnect ||
 				!s.cfg.StaggerInitialReconnect {
 
-				go s.connMgr.Connect(connReq)
+				go s.connMgr.Connect(ctx, connReq)
 			} else {
-				go s.delayInitialReconnect(connReq)
+				go s.delayInitialReconnect(ctx, connReq)
 			}
 		}
 
@@ -2718,11 +2713,11 @@ func (s *server) establishPersistentConnections() error {
 // maxInitReconnectDelay.
 //
 // NOTE: This method MUST be run as a goroutine.
-func (s *server) delayInitialReconnect(connReq *connmgr.ConnReq) {
+func (s *server) delayInitialReconnect(ctx context.Context, connReq *connmgr.ConnReq) {
 	delay := time.Duration(prand.Intn(maxInitReconnectDelay)) * time.Second
 	select {
 	case <-time.After(delay):
-		s.connMgr.Connect(connReq)
+		s.connMgr.Connect(ctx, connReq)
 	case <-s.quit:
 	}
 }
@@ -3007,13 +3002,14 @@ func (s *server) InboundPeerConnected(conn net.Conn) {
 	// having duplicate connections to the same peer. We forgo adding a
 	// default case as we expect these to be the only error values returned
 	// from findPeerByPubStr.
+	ctx := context.TODO()
 	connectedPeer, err := s.findPeerByPubStr(pubStr)
 	switch err {
 	case ErrPeerNotConnected:
 		// We were unable to locate an existing connection with the
 		// target peer, proceed to connect.
 		s.cancelConnReqs(pubStr, nil)
-		s.peerConnected(conn, nil, true)
+		s.peerConnected(ctx, conn, nil, true)
 
 	case nil:
 		// We already have a connection with the incoming peer. If the
@@ -3042,7 +3038,7 @@ func (s *server) InboundPeerConnected(conn net.Conn) {
 		s.removePeer(connectedPeer)
 		s.ignorePeerTermination[connectedPeer] = struct{}{}
 		s.scheduledPeerConnection[pubStr] = func() {
-			s.peerConnected(conn, nil, true)
+			s.peerConnected(ctx, conn, nil, true)
 		}
 	}
 }
@@ -3116,12 +3112,13 @@ func (s *server) OutboundPeerConnected(connReq *connmgr.ConnReq, conn net.Conn) 
 	// we need to drop the stale connection. We forgo adding a default case
 	// as we expect these to be the only error values returned from
 	// findPeerByPubStr.
+	ctx := context.TODO()
 	connectedPeer, err := s.findPeerByPubStr(pubStr)
 	switch err {
 	case ErrPeerNotConnected:
 		// We were unable to locate an existing connection with the
 		// target peer, proceed to connect.
-		s.peerConnected(conn, connReq, false)
+		s.peerConnected(ctx, conn, connReq, false)
 
 	case nil:
 		// We already have a connection open with the target peer.
@@ -3152,7 +3149,7 @@ func (s *server) OutboundPeerConnected(connReq *connmgr.ConnReq, conn net.Conn) 
 		s.removePeer(connectedPeer)
 		s.ignorePeerTermination[connectedPeer] = struct{}{}
 		s.scheduledPeerConnection[pubStr] = func() {
-			s.peerConnected(conn, connReq, false)
+			s.peerConnected(ctx, conn, connReq, false)
 		}
 	}
 }
@@ -3210,7 +3207,7 @@ func (s *server) cancelConnReqs(pubStr string, skip *uint64) {
 // peer by adding it to the server's global list of all active peers, and
 // starting all the goroutines the peer needs to function properly. The inbound
 // boolean should be true if the peer initiated the connection to us.
-func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
+func (s *server) peerConnected(ctx context.Context, conn net.Conn, connReq *connmgr.ConnReq,
 	inbound bool) {
 
 	brontideConn := conn.(*brontide.Conn)
@@ -3325,7 +3322,7 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 	// includes sending and receiving Init messages, which would be a DOS
 	// vector if we held the server's mutex throughout the procedure.
 	s.wg.Add(1)
-	go s.peerInitializer(p)
+	go s.peerInitializer(ctx, p)
 }
 
 // addPeer adds the passed peer to the server's global state of all active
@@ -3374,7 +3371,7 @@ func (s *server) addPeer(p *peer.Brontide) {
 // be signaled of the new peer once the method returns.
 //
 // NOTE: This MUST be launched as a goroutine.
-func (s *server) peerInitializer(p *peer.Brontide) {
+func (s *server) peerInitializer(ctx context.Context, p *peer.Brontide) {
 	defer s.wg.Done()
 
 	// Avoid initializing peers while the server is exiting.
@@ -3394,7 +3391,7 @@ func (s *server) peerInitializer(p *peer.Brontide) {
 	// the peer is ever added to the ignorePeerTermination map, indicating
 	// that the server has already handled the removal of this peer.
 	s.wg.Add(1)
-	go s.peerTerminationWatcher(p, ready)
+	go s.peerTerminationWatcher(ctx, p, ready)
 
 	// Start the peer! If an error occurs, we Disconnect the peer, which
 	// will unblock the peerTerminationWatcher.
@@ -3435,7 +3432,7 @@ func (s *server) peerInitializer(p *peer.Brontide) {
 // successfully, otherwise the peer should be disconnected instead.
 //
 // NOTE: This MUST be launched as a goroutine.
-func (s *server) peerTerminationWatcher(p *peer.Brontide, ready chan struct{}) {
+func (s *server) peerTerminationWatcher(ctx context.Context, p *peer.Brontide, ready chan struct{}) {
 	defer s.wg.Done()
 
 	p.WaitForDisconnect(ready)
@@ -3595,7 +3592,7 @@ func (s *server) peerTerminationWatcher(p *peer.Brontide, ready chan struct{}) {
 			srvrLog.Debugf("Attempting to re-establish persistent "+
 				"connection to peer %v", p)
 
-			s.connMgr.Connect(connReq)
+			s.connMgr.Connect(ctx, connReq)
 		}()
 	}
 }
@@ -3654,7 +3651,7 @@ func (s *server) removePeer(p *peer.Brontide) {
 // connection is established, or the initial handshake process fails.
 //
 // NOTE: This function is safe for concurrent access.
-func (s *server) ConnectToPeer(addr *lnwire.NetAddress,
+func (s *server) ConnectToPeer(ctx context.Context, addr *lnwire.NetAddress,
 	perm bool, timeout time.Duration) error {
 
 	targetPub := string(addr.IdentityKey.SerializeCompressed())
@@ -3706,7 +3703,7 @@ func (s *server) ConnectToPeer(addr *lnwire.NetAddress,
 		)
 		s.mu.Unlock()
 
-		go s.connMgr.Connect(connReq)
+		go s.connMgr.Connect(ctx, connReq)
 
 		return nil
 	}

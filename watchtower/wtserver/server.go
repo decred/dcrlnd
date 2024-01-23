@@ -2,6 +2,7 @@ package wtserver
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/connmgr"
+	"github.com/decred/dcrd/connmgr/v3"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrlnd/keychain"
 	"github.com/decred/dcrlnd/lnwire"
@@ -126,14 +127,14 @@ func New(cfg *Config) (*Server, error) {
 }
 
 // Start begins listening on the server's listeners.
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	s.started.Do(func() {
 		log.Infof("Starting watchtower server")
 
-		s.wg.Add(1)
+		s.wg.Add(2)
 		go s.peerHandler()
 
-		s.connMgr.Start()
+		go s.connMgr.Run(ctx)
 
 		log.Infof("Watchtower server started successfully")
 	})
@@ -144,8 +145,6 @@ func (s *Server) Start() error {
 func (s *Server) Stop() error {
 	s.stopped.Do(func() {
 		log.Infof("Stopping watchtower server")
-
-		s.connMgr.Stop()
 
 		close(s.quit)
 		s.wg.Wait()
@@ -431,6 +430,6 @@ func logMessage(peer Peer, msg wtwire.Message, read bool) {
 }
 
 // noDial is a dummy dial method passed to the server's connmgr.
-func noDial(string, string) (net.Conn, error) {
+func noDial(context.Context, string, string) (net.Conn, error) {
 	return nil, fmt.Errorf("watchtower cannot make outgoing conns")
 }

@@ -2,6 +2,7 @@ package chanbackup
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -31,8 +32,8 @@ type mockPeerConnector struct {
 	callCount int
 }
 
-func (m *mockPeerConnector) ConnectPeer(node *secp256k1.PublicKey,
-	addrs []net.Addr) error {
+func (m *mockPeerConnector) ConnectPeer(context.Context, *secp256k1.PublicKey,
+	[]net.Addr) error {
 
 	if m.fail {
 		return fmt.Errorf("fail")
