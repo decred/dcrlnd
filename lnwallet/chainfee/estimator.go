@@ -123,16 +123,19 @@ var _ Estimator = (*StaticEstimator)(nil)
 // the RPC interface of an active dcrd node. This implementation will proxy any
 // fee estimation requests to dcrd's RPC interface.
 type DcrdEstimator struct {
+	ctx    context.Context
+	cancel func()
+
 	// fallbackFeePerKB is the fall back fee rate in atoms/kB that is
 	// returned if the fee estimator does not yet have enough data to
 	// actually produce fee estimates.
 	fallbackFeePerKB AtomPerKByte
 
-	// minFeePerKB is the minimum fee, in atoms/kB, that we should enforce.
-	// This will be used as the default fee rate for a transaction when the
-	// estimated fee rate is too low to allow the transaction to propagate
-	// through the network.
-	minFeePerKB AtomPerKByte
+	// minFeeManager is used to query the current minimum fee, in atoms/kB,
+	// that we should enforce. This will be used to determine fee rate for
+	// a transaction when the estimated fee rate is too low to allow the
+	// transaction to propagate through the network.
+	minFeeManager *minFeeManager
 
 	dcrdConn *rpcclient.Client
 }
@@ -152,7 +155,11 @@ func NewDcrdEstimator(rpcConfig rpcclient.ConnConfig,
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &DcrdEstimator{
+		ctx:              ctx,
+		cancel:           cancel,
 		fallbackFeePerKB: fallBackFeeRate,
 		dcrdConn:         chainConn,
 	}, nil
@@ -168,31 +175,47 @@ func (b *DcrdEstimator) Start() error {
 		return err
 	}
 
-	// Once the connection to the backend node has been established, we'll
-	// query it for its minimum relay fee.
-	info, err := b.dcrdConn.GetInfo(ctx)
+	// Once the connection to the backend node has been established, we
+	// can initialise the minimum relay fee manager which queries the
+	// chain backend for the minimum relay fee on construction.
+	minRelayFeeManager, err := newMinFeeManager(
+		defaultUpdateInterval, b.fetchMinRelayFee,
+	)
 	if err != nil {
 		return err
+
+	}
+	b.minFeeManager = minRelayFeeManager
+
+	return nil
+}
+
+func (b *DcrdEstimator) fetchMinRelayFee() (AtomPerKByte, error) {
+	// Once the connection to the backend node has been established, we'll
+	// query it for its minimum relay fee.
+	info, err := b.dcrdConn.GetInfo(b.ctx)
+	if err != nil {
+		return 0, err
 	}
 
 	relayFee, err := dcrutil.NewAmount(info.RelayFee)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// By default, we'll use the backend node's minimum relay fee as the
 	// minimum fee rate we'll propose for transactions. However, if this
 	// happens to be lower than our fee floor, we'll enforce that instead.
-	b.minFeePerKB = AtomPerKByte(relayFee)
-	if b.minFeePerKB < FeePerKBFloor {
+	minFeePerKB := AtomPerKByte(relayFee)
+	if minFeePerKB < FeePerKBFloor {
 		log.Warnf("Dcrd returned fee rate of %s which is "+
-			"lower than the floor rate", b.minFeePerKB)
-		b.minFeePerKB = FeePerKBFloor
+			"lower than the floor rate", minFeePerKB)
+		minFeePerKB = FeePerKBFloor
 	}
 
-	log.Debugf("Using minimum fee rate of %s", b.minFeePerKB)
+	log.Debugf("Using minimum fee rate of %s", minFeePerKB)
 
-	return nil
+	return minFeePerKB, nil
 }
 
 // Stop stops any spawned goroutines and cleans up the resources used
@@ -200,8 +223,8 @@ func (b *DcrdEstimator) Start() error {
 //
 // NOTE: This method is part of the FeeEstimator interface.
 func (b *DcrdEstimator) Stop() error {
+	b.cancel()
 	b.dcrdConn.Shutdown()
-
 	return nil
 }
 
@@ -210,7 +233,7 @@ func (b *DcrdEstimator) Stop() error {
 //
 // NOTE: This method is part of the FeeEstimator interface.
 func (b *DcrdEstimator) RelayFeePerKB() AtomPerKByte {
-	return b.minFeePerKB
+	return b.minFeeManager.fetchMinFee()
 }
 
 // EstimateFeePerKB queries the connected chain client for a fee estimation for
@@ -245,7 +268,7 @@ func (b *DcrdEstimator) EstimateFeePerKB(numBlocks uint32) (AtomPerKByte, error)
 // confTarget blocks. The estimate is returned in atom/kB.
 func (b *DcrdEstimator) fetchEstimate(confTarget uint32) (AtomPerKByte, error) {
 	// First, we'll fetch the estimate for our confirmation target.
-	dcrPerKB, err := b.dcrdConn.EstimateSmartFee(context.TODO(), int64(confTarget),
+	dcrPerKB, err := b.dcrdConn.EstimateSmartFee(b.ctx, int64(confTarget),
 		dcrjson.EstimateSmartFeeConservative)
 	if err != nil {
 		return 0, err
@@ -260,11 +283,11 @@ func (b *DcrdEstimator) fetchEstimate(confTarget uint32) (AtomPerKByte, error) {
 	atomsPerKB := AtomPerKByte(atoms)
 
 	// Finally, we'll enforce our fee floor.
-	if atomsPerKB < b.minFeePerKB {
+	minFee := b.minFeeManager.fetchMinFee()
+	if atomsPerKB < minFee {
 		log.Debugf("Estimated fee rate of %s is too low, "+
-			"using fee floor of %s", atomsPerKB,
-			b.minFeePerKB)
-		atomsPerKB = b.minFeePerKB
+			"using fee floor of %s", atomsPerKB, minFee)
+		atomsPerKB = minFee
 	}
 
 	log.Debugf("Returning %s for conf target of %d",
