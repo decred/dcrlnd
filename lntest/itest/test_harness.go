@@ -258,17 +258,17 @@ func mineBlocksFast(t *harnessTest, net *lntest.NetworkHarness,
 	return blocks
 }
 
-// mineBlocksSlow mines 'num' of blocks and checks that blocks are present in
+// mineBlocks mines 'num' of blocks and checks that blocks are present in
 // the mining node's blockchain. numTxs should be set to the number of
 // transactions (excluding the coinbase) we expect to be included in the first
 // mined block. Between each mined block an artificial delay is introduced to
 // give all network participants time to catch up.
 //
-// NOTE: This function currently is just an alias for mineBlocksSlow.
+// NOTE: This function currently is just an alias for mineBlocksFast.
 func mineBlocks(t *harnessTest, net *lntest.NetworkHarness,
 	num uint32, numTxs int) []*wire.MsgBlock {
 
-	return mineBlocksSlow(t, net, num, numTxs)
+	return mineBlocksFast(t, net, num, numTxs)
 }
 
 // mineBlocksSlow mines 'num' of blocks and checks that blocks are present in
