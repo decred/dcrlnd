@@ -532,9 +532,12 @@ func (w *WalletKit) NextAddr(ctx context.Context,
 		account = req.Account
 	}
 
-	addr, err := w.cfg.Wallet.NewAddress(
-		lnwallet.PubKeyHash, false, account,
-	)
+	addrType := lnwallet.PubKeyHash
+	if req.Type != AddressType_UNKNOWN {
+		return nil, fmt.Errorf("only the default address type (0) is supported")
+	}
+
+	addr, err := w.cfg.Wallet.NewAddress(addrType, req.Change, account)
 	if err != nil {
 		return nil, err
 	}
