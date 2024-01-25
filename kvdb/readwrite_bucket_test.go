@@ -401,6 +401,7 @@ func testBucketCreateDelete(t *testing.T, db walletdb.DB) {
 	require.NoError(t, err)
 }
 
+//nolint:unused
 func testTopLevelBucketCreation(t *testing.T, db walletdb.DB) {
 	require.NoError(t, Update(db, func(tx walletdb.ReadWriteTx) error {
 		// Try to delete all data (there is none).
@@ -449,6 +450,7 @@ func testTopLevelBucketCreation(t *testing.T, db walletdb.DB) {
 	}, func() {}))
 }
 
+//nolint:unused
 func testBucketOperations(t *testing.T, db walletdb.DB) {
 	require.NoError(t, Update(db, func(tx walletdb.ReadWriteTx) error {
 		// Create top level bucket.
@@ -589,6 +591,7 @@ func testBucketOperations(t *testing.T, db walletdb.DB) {
 	}, func() {}))
 }
 
+//nolint:unused
 func testSubBucketSequence(t *testing.T, db walletdb.DB) {
 	require.NoError(t, Update(db, func(tx walletdb.ReadWriteTx) error {
 		// Create top level bucket.

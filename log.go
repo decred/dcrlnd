@@ -22,6 +22,7 @@ import (
 	"github.com/decred/dcrlnd/htlcswitch"
 	"github.com/decred/dcrlnd/invoices"
 	"github.com/decred/dcrlnd/keychain"
+	"github.com/decred/dcrlnd/kvdb/postgres"
 	"github.com/decred/dcrlnd/lnrpc/autopilotrpc"
 	"github.com/decred/dcrlnd/lnrpc/chainrpc"
 	"github.com/decred/dcrlnd/lnrpc/invoicesrpc"
@@ -135,6 +136,8 @@ func SetupLoggers(root *build.RotatingLogWriter, interceptor signal.Interceptor)
 	AddSubLogger(root, "CSCN", interceptor, chainscan.UseLogger)
 	AddSubLogger(root, "CSDR", interceptor, csdrivers.UseLogger)
 	AddSubLogger(root, "AUTO", interceptor, automation.UseLogger)
+	AddSubLogger(root, "PGDB", interceptor, postgres.UseLogger)
+	AddSubLogger(root, "LCCH", interceptor, localchans.UseLogger)
 
 	AddSubLogger(root, "LNWL", interceptor, lnwallet.UseLogger)
 	AddSubLogger(root, "DISC", interceptor, discovery.UseLogger)

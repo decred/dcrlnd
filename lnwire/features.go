@@ -158,18 +158,6 @@ const (
 	//
 	// TODO: Decide on actual feature bit value.
 	ExplicitChannelTypeOptional = 2021
-
-	// maxAllowedSize is a maximum allowed size of feature vector.
-	//
-	// NOTE: Within the protocol, the maximum allowed message size is 65535
-	// bytes for all messages. Accounting for the overhead within the feature
-	// message to signal the type of message, that leaves us with 65533 bytes
-	// for the init message itself.  Next, we reserve 4 bytes to encode the
-	// lengths of both the local and global feature vectors, so 65529 bytes
-	// for the local and global features. Knocking off one byte for the sake
-	// of the calculation, that leads us to 32764 bytes for each feature
-	// vector, or 131056 different features.
-	maxAllowedSize = 32764
 )
 
 // IsRequired returns true if the feature bit is even, and false otherwise.

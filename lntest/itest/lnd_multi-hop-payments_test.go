@@ -398,13 +398,13 @@ func updateChannelPolicy(t *harnessTest, node *lntest.HarnessNode,
 	expectedPolicy := &lnrpc.RoutingPolicy{
 		FeeBaseMAtoms:      baseFee,
 		FeeRateMilliMAtoms: feeRate,
-		TimeLockDelta:    timeLockDelta,
-		MinHtlc:          1000, // default value
+		TimeLockDelta:      timeLockDelta,
+		MinHtlc:            1000, // default value
 		MaxHtlcMAtoms:      maxHtlc,
 	}
 
 	updateFeeReq := &lnrpc.PolicyUpdateRequest{
-		BaseFeeMAtoms:   baseFee,
+		BaseFeeMAtoms: baseFee,
 		FeeRate:       float64(feeRate) / testFeeBase,
 		TimeLockDelta: timeLockDelta,
 		Scope: &lnrpc.PolicyUpdateRequest_ChanPoint{

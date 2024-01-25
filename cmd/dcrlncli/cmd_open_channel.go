@@ -693,9 +693,9 @@ var batchOpenChannelCommand = cli.Command{
 type batchChannelJSON struct {
 	NodePubkey         string `json:"node_pubkey,omitempty"`
 	LocalFundingAmount int64  `json:"local_funding_amount,omitempty"`
-	PushAtoms            int64  `json:"push_sat,omitempty"`
+	PushAtoms          int64  `json:"push_sat,omitempty"`
 	Private            bool   `json:"private,omitempty"`
-	MinHtlcMAtoms        int64  `json:"min_htlc_msat,omitempty"`
+	MinHtlcMAtoms      int64  `json:"min_htlc_msat,omitempty"`
 	RemoteCsvDelay     uint32 `json:"remote_csv_delay,omitempty"`
 	CloseAddress       string `json:"close_address,omitempty"`
 	PendingChanID      string `json:"pending_chan_id,omitempty"`
@@ -717,7 +717,7 @@ func batchOpenChannel(ctx *cli.Context) error {
 	minConfs := int32(ctx.Uint64("min_confs"))
 	req := &lnrpc.BatchOpenChannelRequest{
 		TargetConf:       int32(ctx.Int64("conf_target")),
-		AtomsPerByte:      int64(ctx.Uint64("sat_per_vbyte")),
+		AtomsPerByte:     int64(ctx.Uint64("sat_per_vbyte")),
 		MinConfs:         minConfs,
 		SpendUnconfirmed: minConfs == 0,
 		Label:            ctx.String("label"),
@@ -749,9 +749,9 @@ func batchOpenChannel(ctx *cli.Context) error {
 		req.Channels[idx] = &lnrpc.BatchOpenChannel{
 			NodePubkey:         pubKeyBytes,
 			LocalFundingAmount: jsonChannel.LocalFundingAmount,
-			PushAtoms:            jsonChannel.PushAtoms,
+			PushAtoms:          jsonChannel.PushAtoms,
 			Private:            jsonChannel.Private,
-			MinHtlcMAtoms:        jsonChannel.MinHtlcMAtoms,
+			MinHtlcMAtoms:      jsonChannel.MinHtlcMAtoms,
 			RemoteCsvDelay:     jsonChannel.RemoteCsvDelay,
 			CloseAddress:       jsonChannel.CloseAddress,
 			PendingChanId:      pendingChanBytes,

@@ -1291,7 +1291,7 @@ func (f *Manager) handleFundingOpen(peer lnpeer.Peer,
 		return
 	}
 
-	chainHash := chainhash.Hash(msg.ChainHash)
+	chainHash := msg.ChainHash
 	req := &lnwallet.InitFundingReserveMsg{
 		ChainHash:        &chainHash,
 		PendingChanID:    msg.PendingChannelID,

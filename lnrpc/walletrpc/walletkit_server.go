@@ -41,11 +41,6 @@ import (
 )
 
 const (
-	// subServerName is the name of the sub rpc server. We'll use this name
-	// to register ourselves, and we also require that the main
-	// SubServerConfigDispatcher instance recognize as the name of our
-	subServerName = "WalletKitRPC"
-
 	// importedAddrsAccountName is the name of the account with imported
 	// scripts/pubkeys.
 	importedAddrsAccountName = "imported"

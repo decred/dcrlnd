@@ -3637,9 +3637,7 @@ func (s *server) peerTerminationWatcher(p *peer.Brontide, ready chan struct{}) {
 	}
 
 	// Get the last address that we used to connect to the peer.
-	addrs := []net.Addr{
-		p.NetAddress().Address,
-	}
+	var addrs []net.Addr
 
 	// We'll ensure that we locate all the peers advertised addresses for
 	// reconnection purposes.
