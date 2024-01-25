@@ -1,6 +1,8 @@
 package keychain
 
 import (
+	"fmt"
+
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
@@ -69,8 +71,7 @@ func (p *PrivKeyMessageSigner) SignMessage(msg []byte,
 
 	var digest []byte
 	if doubleHash {
-		digest1 := chainhash.HashB(msg)
-		digest = chainhash.HashB(digest1)
+		return nil, fmt.Errorf("dcrlnd does not do doubleHash signing")
 	} else {
 		digest = chainhash.HashB(msg)
 	}
@@ -82,8 +83,7 @@ func (p *PrivKeyMessageSigner) SignMessageCompact(msg []byte,
 
 	var digest []byte
 	if doubleHash {
-		digest1 := chainhash.HashB(msg)
-		digest = chainhash.HashB(digest1)
+		return nil, fmt.Errorf("dcrlnd does not do doubleHash signing")
 	} else {
 		digest = chainhash.HashB(msg)
 	}

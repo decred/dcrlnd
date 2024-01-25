@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"fmt"
+
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
@@ -51,8 +53,7 @@ func (s *SecretKeyRing) SignMessage(_ keychain.KeyLocator,
 
 	var digest []byte
 	if doubleHash {
-		digest1 := chainhash.HashB(msg)
-		digest = chainhash.HashB(digest1)
+		return nil, fmt.Errorf("dcrlnd does not do doubleHash signing")
 	} else {
 		digest = chainhash.HashB(msg)
 	}

@@ -246,8 +246,7 @@ func (kr *HDKeyRing) SignMessage(keyLoc KeyLocator,
 
 	var digest []byte
 	if doubleHash {
-		digest1 := chainhash.HashB(msg)
-		digest = chainhash.HashB(digest1)
+		return nil, fmt.Errorf("dcrlnd does not do doubleHash signing")
 	} else {
 		digest = chainhash.HashB(msg)
 	}

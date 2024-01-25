@@ -272,8 +272,7 @@ func (b *DcrWallet) SignMessage(keyLoc keychain.KeyLocator,
 	// Double hash and sign the data.
 	var digest []byte
 	if double {
-		digest1 := chainhash.HashB(msg)
-		digest = chainhash.HashB(digest1)
+		return nil, fmt.Errorf("dcrlnd does not do doubleHash signing")
 	} else {
 		digest = chainhash.HashB(msg)
 	}
