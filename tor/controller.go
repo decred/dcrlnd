@@ -257,21 +257,22 @@ func (c *Controller) sendCommand(command string) (int, string, error) {
 // readResponse reads the replies from Tor to the controller. The reply has the
 // following format,
 //
-//   Reply = SyncReply / AsyncReply
-//   SyncReply = *(MidReplyLine / DataReplyLine) EndReplyLine
-//   AsyncReply = *(MidReplyLine / DataReplyLine) EndReplyLine
+//	Reply = SyncReply / AsyncReply
+//	SyncReply = *(MidReplyLine / DataReplyLine) EndReplyLine
+//	AsyncReply = *(MidReplyLine / DataReplyLine) EndReplyLine
 //
-//   MidReplyLine = StatusCode "-" ReplyLine
-//   DataReplyLine = StatusCode "+" ReplyLine CmdData
-//   EndReplyLine = StatusCode SP ReplyLine
-//   ReplyLine = [ReplyText] CRLF
-//   ReplyText = XXXX
-//   StatusCode = 3DIGIT
+//	MidReplyLine = StatusCode "-" ReplyLine
+//	DataReplyLine = StatusCode "+" ReplyLine CmdData
+//	EndReplyLine = StatusCode SP ReplyLine
+//	ReplyLine = [ReplyText] CRLF
+//	ReplyText = XXXX
+//	StatusCode = 3DIGIT
 //
 // Unless specified otherwise, multiple lines in a single reply from Tor daemon
 // to the controller are guaranteed to share the same status code. Read more on
 // this topic:
-//   https://gitweb.torproject.org/torspec.git/tree/control-spec.txt#n158
+//
+//	https://gitweb.torproject.org/torspec.git/tree/control-spec.txt#n158
 //
 // NOTE: this code is influenced by https://github.com/Yawning/bulb.
 func (c *Controller) readResponse(expected int) (int, string, error) {
