@@ -152,3 +152,11 @@ func assertNumUnminedUnspent(t *harnessTest, node *lntest.HarnessNode, expected 
 		t.Fatalf("failed asserting nb of unmined unspent: %v", err)
 	}
 }
+
+func chanPointFundingToOutpoint(cp *lnrpc.ChannelPoint) wire.OutPoint {
+	txId, err := lnrpc.GetChanPointFundingTxid(cp)
+	if err != nil {
+		panic(err)
+	}
+	return wire.OutPoint{Hash: *txId, Index: cp.OutputIndex}
+}

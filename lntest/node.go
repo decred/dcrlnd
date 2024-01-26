@@ -2119,6 +2119,9 @@ func (hn *HarnessNode) handleChannelEdgeUpdates(
 		}
 		hn.openChans[op]++
 
+		hn.LogPrintf("Got open chan update for %s (edges %d, watchers %d)",
+			op, hn.openChans[op], len(hn.openChanWatchers[op]))
+
 		// For this new channel, if the number of edges seen is less
 		// than two, then the channel hasn't been fully announced yet.
 		if numEdges := hn.openChans[op]; numEdges < 2 {
@@ -2165,6 +2168,7 @@ func (hn *HarnessNode) handleOpenChannelWatchRequest(req *chanWatchRequest) {
 	// If this is an open request, then it can be dispatched if the number
 	// of edges seen for the channel is at least two.
 	if numEdges := hn.openChans[targetChan]; numEdges >= 2 {
+		hn.LogPrintf("Already have targetChan opened: %s", targetChan)
 		close(req.eventChan)
 		return
 	}
@@ -2176,6 +2180,7 @@ func (hn *HarnessNode) handleOpenChannelWatchRequest(req *chanWatchRequest) {
 	// it.
 	chanFound := checkChanPointInGraph(context.Background(), hn, targetChan)
 	if chanFound {
+		hn.LogPrintf("Already have targetChan in graph: %s", targetChan)
 		close(req.eventChan)
 		return
 	}
@@ -2186,6 +2191,7 @@ func (hn *HarnessNode) handleOpenChannelWatchRequest(req *chanWatchRequest) {
 		hn.openChanWatchers[targetChan],
 		req.eventChan,
 	)
+	hn.LogPrintf("Registered targetChan to wait for open: %s", targetChan)
 }
 
 // handleClosedChannelUpdate takes a series of closed channel updates, extracts

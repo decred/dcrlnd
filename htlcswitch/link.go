@@ -751,6 +751,10 @@ func (l *channelLink) syncChanStates() error {
 			return err
 		}
 
+		l.log.Debugf("Processed chan sync msg: %d msgsToReSend, "+
+			"%d openedCircuits, %d closedCircuits", len(msgsToReSend),
+			len(openedCircuits), len(closedCircuits))
+
 		// Repopulate any identifiers for circuits that may have been
 		// opened or unclosed. This may happen if we needed to
 		// retransmit a commitment signature message.

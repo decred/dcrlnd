@@ -1823,6 +1823,8 @@ func (lc *LightningChannel) restoreCommitState(
 			pendingCommitPoint, false, lc.channelState.ChanType,
 			&lc.channelState.LocalChanCfg, &lc.channelState.RemoteChanCfg,
 		)
+	} else {
+		lc.log.Debugf("no pending remote commitment")
 	}
 
 	// Fetch remote updates that we have acked but not yet signed for.
@@ -1836,6 +1838,9 @@ func (lc *LightningChannel) restoreCommitState(
 	if err != nil {
 		return err
 	}
+
+	lc.log.Debugf("%d unsignedAckedUpdateds, %d remoteUnsignedLocalUpdates",
+		len(unsignedAckedUpdates), len(remoteUnsignedLocalUpdates))
 
 	// Finally, with the commitment states restored, we'll now restore the
 	// state logs based on the current local+remote commit, and any pending
@@ -3808,6 +3813,8 @@ func (lc *LightningChannel) ProcessChanSyncMsg(
 	// Their view of our commit chain is consistent with our view.
 	case msg.RemoteCommitTailHeight == localTailHeight:
 		// In sync, don't have to do anything.
+		lc.log.Debugf("sync: RemoteTailHeight %d == localTailHeight %d",
+			msg.RemoteCommitTailHeight, localTailHeight)
 
 	// We owe them a revocation if the tail of our current commitment chain
 	// is one greater than what they _think_ our commitment tail is. In
@@ -3895,6 +3902,8 @@ func (lc *LightningChannel) ProcessChanSyncMsg(
 
 	// They have received our latest commitment, life is good.
 	case msg.NextLocalCommitHeight == remoteTipHeight+1:
+		lc.log.Debugf("sync: NextLocalCommitHeight %d == remoteTipHeight+1 %d",
+			msg.NextLocalCommitHeight, remoteTipHeight+1)
 
 	// We owe them a commitment if the tip of their chain (from our Pov) is
 	// equal to what they think their next commit height should be. We'll

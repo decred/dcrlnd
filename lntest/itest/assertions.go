@@ -97,10 +97,10 @@ func openChannelAndAssert(t *harnessTest, net *lntest.NetworkHarness,
 
 	// They should also notice this channel from topology subscription.
 	err = alice.WaitForNetworkChannelOpen(ctxt, fundingChanPoint)
-	require.NoError(t.t, err)
+	require.Nil(t.t, err, "%s did not see channel open: %v", alice.Name(), err)
 
 	err = bob.WaitForNetworkChannelOpen(ctxt, fundingChanPoint)
-	require.NoError(t.t, err)
+	require.Nil(t.t, err, "%s did not see channel open: %v", bob.Name(), err)
 
 	return fundingChanPoint
 }
@@ -169,7 +169,8 @@ func closeChannelAndAssertType(t *harnessTest,
 	expectDisable := !curPolicy.Disabled
 
 	closeUpdates, _, err := net.CloseChannel(node, fundingChanPoint, force)
-	require.NoError(t.t, err, "unable to close channel")
+	require.NoError(t.t, err, "unable to close channel %s from %s (force=%v)",
+		chanPointFundingToOutpoint(fundingChanPoint), node.Name(), force)
 
 	// If the channel policy was enabled prior to the closure, wait until we
 	// received the disabled update.
