@@ -223,6 +223,9 @@ func testForwardInterceptor(net *lntest.NetworkHarness, t *harnessTest) {
 	cancelInterceptor()
 	wg.Wait()
 
+	// Hopefully will be fixed by upstream PR 6825.
+	time.Sleep(time.Millisecond * 1000)
+
 	// Verify that we don't get notified about already completed HTLCs
 	// We do that by restarting alice, the sender the HTLCs. Under
 	// https://github.com/decred/dcrlnd/issues/5115
