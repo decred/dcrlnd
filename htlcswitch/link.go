@@ -1241,10 +1241,14 @@ func (l *channelLink) htlcManager() {
 			// and return to prevent the htlcManager goroutine from
 			// processing any more updates. The full link shutdown
 			// will be triggered by RemoveLink in the peer.
-			if l.channel.IsChannelClean() {
+			uncleanReasons := l.channel.ReasonsChannelUnclean()
+			if uncleanReasons == "" {
 				req.err <- nil
 				return
 			}
+
+			l.log.Warnf("Link cannot be shutdown due to reasons: %s",
+				uncleanReasons)
 
 			// Otherwise, the channel has lingering updates, send
 			// an error and continue.
