@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -541,6 +542,16 @@ func (n *ChainscanNotifier) handleBlockConnected(newBlock *filteredBlock) error 
 	n.bestBlock.BlockHeader = newBlock.header
 
 	n.notifyBlockEpochs(int32(newBlockHeight), newBlockHash, newBlock.header)
+
+	// Delay spend/confirm notifications until the block epoch ntfn has
+	// (likely) been processed. This helps prevent classes of errors that
+	// happen due to racing the spend/conf ntfn and tracking the current
+	// block height in some subsystems.
+	select {
+	case <-time.After(5 * time.Millisecond):
+	case <-n.quit:
+	}
+
 	return n.txNotifier.NotifyHeight(newBlockHeight)
 }
 
