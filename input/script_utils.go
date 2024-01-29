@@ -869,23 +869,30 @@ func SecondLevelHtlcScript(revocationKey, delayKey *secp256k1.PublicKey,
 // spent in a particular way, and to a particular output.
 //
 // Possible Input Scripts:
-//  * To revoke an HTLC output that has been transitioned to the claim+delay
-//    state:
-//    * <revoke sig> 1
 //
-//  * To claim an HTLC output, either with a pre-image or due to a timeout:
-//    * <delay sig> 0
+//   - To revoke an HTLC output that has been transitioned to the claim+delay
+//     state:
+//
+//   - <revoke sig> 1
+//
+//   - To claim an HTLC output, either with a pre-image or due to a timeout:
+//
+//   - <delay sig> 0
 //
 // OP_IF
-//     <revoke key>
+//
+//	<revoke key>
+//
 // OP_ELSE
-//     <lease maturity in blocks>
-//     OP_CHECKLOCKTIMEVERIFY
-//     OP_DROP
-//     <delay in blocks>
-//     OP_CHECKSEQUENCEVERIFY
-//     OP_DROP
-//     <delay key>
+//
+//	<lease maturity in blocks>
+//	OP_CHECKLOCKTIMEVERIFY
+//	OP_DROP
+//	<delay in blocks>
+//	OP_CHECKSEQUENCEVERIFY
+//	OP_DROP
+//	<delay key>
+//
 // OP_ENDIF
 // OP_CHECKSIG
 func LeaseSecondLevelHtlcScript(revocationKey, delayKey *secp256k1.PublicKey,
@@ -1102,18 +1109,20 @@ func CommitScriptToSelf(csvTimeout uint32, selfKey, revokeKey *secp256k1.PublicK
 // can claim all the settled funds in the channel, plus the unsettled funds.
 //
 // Possible Input Scripts:
-//     REVOKE:     <sig> 1
-//     SENDRSWEEP: <sig> <emptyvector>
+//
+//	REVOKE:     <sig> 1
+//	SENDRSWEEP: <sig> <emptyvector>
 //
 // Output Script:
-//     OP_IF
-//         <revokeKey>
-//     OP_ELSE
-//         <absoluteLeaseExpiry> OP_CHECKLOCKTIMEVERIFY OP_DROP
-//         <numRelativeBlocks> OP_CHECKSEQUENCEVERIFY OP_DROP
-//         <timeKey>
-//     OP_ENDIF
-//     OP_CHECKSIG
+//
+//	OP_IF
+//	    <revokeKey>
+//	OP_ELSE
+//	    <absoluteLeaseExpiry> OP_CHECKLOCKTIMEVERIFY OP_DROP
+//	    <numRelativeBlocks> OP_CHECKSEQUENCEVERIFY OP_DROP
+//	    <timeKey>
+//	OP_ENDIF
+//	OP_CHECKSIG
 func LeaseCommitScriptToSelf(selfKey, revokeKey *secp256k1.PublicKey,
 	csvTimeout, leaseExpiry uint32) ([]byte, error) {
 
@@ -1312,12 +1321,14 @@ func CommitScriptToRemoteConfirmed(key *secp256k1.PublicKey) ([]byte, error) {
 // transaction. The money can only be spend after one confirmation.
 //
 // Possible Input Scripts:
-//     SWEEP: <sig>
+//
+//	SWEEP: <sig>
 //
 // Output Script:
-//	<key> OP_CHECKSIGVERIFY
-//      <lease maturity in blocks> OP_CHECKLOCKTIMEVERIFY OP_DROP
-//	1 OP_CHECKSEQUENCEVERIFY
+//
+//		<key> OP_CHECKSIGVERIFY
+//	     <lease maturity in blocks> OP_CHECKLOCKTIMEVERIFY OP_DROP
+//		1 OP_CHECKSEQUENCEVERIFY
 func LeaseCommitScriptToRemoteConfirmed(key *secp256k1.PublicKey,
 	leaseExpiry uint32) ([]byte, error) {
 
