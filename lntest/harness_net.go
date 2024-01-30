@@ -1602,7 +1602,9 @@ func (n *NetworkHarness) sendCoins(amt dcrutil.Amount, target *HarnessNode,
 // that the new block can propagate to the voting node and votes for the new
 // block can be generated and published.
 func (n *NetworkHarness) Generate(nb uint32) ([]*chainhash.Hash, error) {
-	return n.Miner.votingWallet.GenerateBlocks(context.TODO(), nb)
+	ctx, cancel := context.WithTimeout(n.runCtx, time.Second*10*time.Duration(nb))
+	defer cancel()
+	return n.Miner.votingWallet.GenerateBlocks(ctx, nb)
 }
 
 // SlowGenerate generates blocks with a large time interval between them. This

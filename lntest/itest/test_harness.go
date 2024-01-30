@@ -236,12 +236,10 @@ func mineBlocksFast(t *harnessTest, net *lntest.NetworkHarness,
 	blocks := make([]*wire.MsgBlock, num)
 
 	blockHashes, err := net.Generate(num)
-	if err != nil {
-		t.Fatalf("unable to generate blocks: %v", err)
-	}
+	require.NoError(t.t, err)
 
 	for i, blockHash := range blockHashes {
-		block, err := net.Miner.Node.GetBlock(context.Background(), blockHash)
+		block, err := net.Miner.Node.GetBlock(testctx.New(t), blockHash)
 		if err != nil {
 			t.Fatalf("unable to get block: %v", err)
 		}
