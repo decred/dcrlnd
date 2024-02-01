@@ -2,9 +2,6 @@ package psbt
 
 import (
 	"bytes"
-
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
 
 // PartialSig encapsulate a (BTC public key, ECDSA signature)
@@ -26,25 +23,4 @@ func (s PartialSigSorter) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 func (s PartialSigSorter) Less(i, j int) bool {
 	return bytes.Compare(s[i].PubKey, s[j].PubKey) < 0
-}
-
-// validatePubkey checks if pubKey is *any* valid pubKey serialization in a
-// Bitcoin context (compressed/uncomp. OK).
-func validatePubkey(pubKey []byte) bool {
-	_, err := secp256k1.ParsePubKey(pubKey)
-	return err == nil
-}
-
-// validateSignature checks that the passed byte slice is a valid DER-encoded
-// ECDSA signature, including the sighash flag.  It does *not* of course
-// validate the signature against any message or public key.
-func validateSignature(sig []byte) bool {
-	_, err := ecdsa.ParseDERSignature(sig)
-	return err == nil
-}
-
-// checkValid checks that both the pubkey and sig are valid. See the methods
-// (PartialSig, validatePubkey, validateSignature) for more details.
-func (ps *PartialSig) checkValid() bool {
-	return validatePubkey(ps.PubKey) && validateSignature(ps.Signature)
 }

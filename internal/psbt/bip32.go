@@ -3,8 +3,6 @@ package psbt
 import (
 	"bytes"
 	"encoding/binary"
-
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // Bip32Derivation encapsulates the data for the input and output
@@ -20,12 +18,6 @@ type Bip32Derivation struct {
 
 	// Bip32Path is the BIP 32 path with child index as a distinct integer.
 	Bip32Path []uint32
-}
-
-// checkValid ensures that the PubKey in the Bip32Derivation struct is valid.
-func (pb *Bip32Derivation) checkValid() bool {
-	_, err := secp256k1.ParsePubKey(pb.PubKey)
-	return err == nil
 }
 
 // Bip32Sorter implements sort.Interface for the Bip32Derivation struct.
