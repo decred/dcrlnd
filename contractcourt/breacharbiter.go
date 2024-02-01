@@ -509,6 +509,22 @@ func (b *BreachArbiter) waitForSpendEvent(breachInfo *retributionInfo,
 	select {
 	// A goroutine have signalled that a spend occurred.
 	case <-anySpend:
+		// The notifier may still be in the process of dispatching the
+		// spend notifications, therefore wait for a few milliseconds
+		// before signalling the close event to give a chance for all
+		// goroutines to receive them (in case the notifier is slow in
+		// dispatching the sequential spend notifications).
+		//
+		// Note: this is not done in upstream lnd because the resulting
+		// transactions are invalid if they are double-spent. This was
+		// determined by a flake in the testRevokedCloseRetributionRemoteHodl
+		// integration test that happens on SPV.
+		select {
+		case <-time.After(10 * time.Millisecond):
+		case <-b.quit:
+			return nil, errBrarShuttingDown
+		}
+
 		// Signal for the remaining goroutines to exit.
 		close(exit)
 		wg.Wait()
