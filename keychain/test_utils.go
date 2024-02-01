@@ -18,6 +18,9 @@ var versionZeroKeyFamilies = []KeyFamily{
 	KeyFamilyDelayBase,
 	KeyFamilyRevocationRoot,
 	KeyFamilyNodeKey,
+	KeyFamilyStaticBackup,
+	KeyFamilyTowerSession,
+	KeyFamilyTowerID,
 }
 
 func assertEqualKeyLocator(t *testing.T, a, b KeyLocator) {

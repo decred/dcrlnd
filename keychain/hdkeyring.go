@@ -67,6 +67,10 @@ func (kr *HDKeyRing) DeriveNextKey(keyFam KeyFamily) (KeyDescriptor, error) {
 
 	masterPub := kr.masterPubs[keyFam]
 
+	if masterPub == nil {
+		return KeyDescriptor{}, fmt.Errorf("invalid key family %d", keyFam)
+	}
+
 	for {
 		// Derive the key and skip to next if invalid.
 		index, err := kr.nextIndex(keyFam)
@@ -132,17 +136,17 @@ func (kr *HDKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.PrivateKey
 		return nil, errPubOnlyKeyRing
 	}
 
-	// We'll grab the master pub key for the provided account (family) then
-	// manually derive the addresses here.
-	masterPriv, err := kr.fetchMasterPriv(keyDesc.Family)
-	if err != nil {
-		return nil, err
-	}
-
 	// If the public key isn't set or they have a non-zero index,
 	// then we know that the caller instead knows the derivation
 	// path for a key.
 	if keyDesc.PubKey == nil || keyDesc.Index > 0 {
+		// We'll grab the master pub key for the provided account (family) then
+		// manually derive the addresses here.
+		masterPriv, err := kr.fetchMasterPriv(keyDesc.Family)
+		if err != nil {
+			return nil, err
+		}
+
 		exPrivKey, err := masterPriv.Child(keyDesc.Index)
 		if err != nil {
 			return nil, err
@@ -154,33 +158,51 @@ func (kr *HDKeyRing) DerivePrivKey(keyDesc KeyDescriptor) (*secp256k1.PrivateKey
 		return secp256k1.PrivKeyFromBytes(serPrivKey), nil
 	}
 
-	// If the public key isn't nil, then this indicates that we
-	// need to scan for the private key, assuming that we know the
-	// valid key family.
-	for i := 0; i < MaxKeyRangeScan; i++ {
-		// Derive the next key in the range and fetch its
-		// managed address.
-		privKey, err := masterPriv.Child(uint32(i))
-		if err == hdkeychain.ErrInvalidChild {
-			continue
-		}
+	// If the request sent a nonzero keyfamily, we only check that one.
+	// Otherwise, we'll derive pubkeys for every keyfamily.
+	familyStart, familyEnd := 0, int(KeyFamilyLastKF)
+	if keyDesc.Family != 0 {
+		familyStart = int(keyDesc.Family)
+		familyEnd = familyStart
+	}
 
+	// If the public key isn't nil, then this indicates that we
+	// need to scan for the private key.
+	for family := familyStart; family <= familyEnd; family += 1 {
+		masterPriv, err := kr.fetchMasterPriv(KeyFamily(family))
 		if err != nil {
 			return nil, err
 		}
 
-		pubKey, err := secp256k1.ParsePubKey(privKey.SerializedPubKey())
-		if err != nil {
-			// simply skip invalid keys here
-			continue
+		if masterPriv == nil {
+			return nil, fmt.Errorf("masterPriv for key family %d not found", family)
 		}
 
-		if keyDesc.PubKey.IsEqual(pubKey) {
-			serPriv, err := privKey.SerializedPrivKey()
+		for i := 0; i < MaxKeyRangeScan; i++ {
+			// Derive the next key in the range and fetch its
+			// managed address.
+			privKey, err := masterPriv.Child(uint32(i))
+			if err == hdkeychain.ErrInvalidChild {
+				continue
+			}
+
 			if err != nil {
 				return nil, err
 			}
-			return secp256k1.PrivKeyFromBytes(serPriv), nil
+
+			pubKey, err := secp256k1.ParsePubKey(privKey.SerializedPubKey())
+			if err != nil {
+				// simply skip invalid keys here
+				continue
+			}
+
+			if keyDesc.PubKey.IsEqual(pubKey) {
+				serPriv, err := privKey.SerializedPrivKey()
+				if err != nil {
+					return nil, err
+				}
+				return secp256k1.PrivKeyFromBytes(serPriv), nil
+			}
 		}
 	}
 
