@@ -1107,8 +1107,9 @@ func testReorgConf(miner *rpctest.Harness, vw *rpctest.VotingWallet,
 	notifier chainntnfs.TestChainNotifier, scriptDispatch bool, t *testing.T) {
 
 	// Set up a new miner that we can use to cause a reorg.
+	extraArgs := []string{"--txindex", "--logdir=.miner2"}
 	miner2, err := testutils.NewSetupRPCTest(
-		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, false, 0,
+		testctx.New(t), 5, netParams, nil, extraArgs, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
