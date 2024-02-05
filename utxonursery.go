@@ -1424,6 +1424,9 @@ func (k *kidOutput) Decode(r io.Reader) error {
 }
 
 // TODO(bvu): copied from channeldb, remove repetition
+//
+// Note(decred): this cannot be moved to use the channeldb version because it
+// does not include the outpoint's tree field.
 func writeOutpoint(w io.Writer, o *wire.OutPoint) error {
 	// TODO(roasbeef): make all scratch buffers on the stack
 	scratch := make([]byte, 4)
@@ -1436,10 +1439,15 @@ func writeOutpoint(w io.Writer, o *wire.OutPoint) error {
 
 	byteOrder.PutUint32(scratch, o.Index)
 	_, err := w.Write(scratch)
+
+	// Note(decred): this does not include the Tree field
 	return err
 }
 
 // TODO(bvu): copied from channeldb, remove repetition
+//
+// Note(decred): this cannot be moved to use the channeldb version because it
+// does not include the outpoint's tree field.
 func readOutpoint(r io.Reader, o *wire.OutPoint) error {
 	scratch := make([]byte, 4)
 
@@ -1454,6 +1462,7 @@ func readOutpoint(r io.Reader, o *wire.OutPoint) error {
 	}
 	o.Index = byteOrder.Uint32(scratch)
 
+	// Note(decred): this does not include the Tree field
 	return nil
 }
 

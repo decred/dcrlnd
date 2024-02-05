@@ -195,6 +195,10 @@ var (
 			number:    22,
 			migration: mig.CreateTLB(setIDIndexBucket),
 		},
+		// Note: There are decred-only changes in the codec which may
+		// require porting when bringing upstream migrations from lnd.
+		// In particular:
+		// - {read,write}Outpoint include the tree.
 	}
 
 	// Big endian is the preferred byte order, due to cursor scans over

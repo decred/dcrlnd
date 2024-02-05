@@ -30,6 +30,8 @@ func writeOutpoint(w io.Writer, o *wire.OutPoint) error {
 	if err := binary.Write(w, byteOrder, o.Index); err != nil {
 		return err
 	}
+
+	// Note: this is decred-only.
 	if err := binary.Write(w, byteOrder, o.Tree); err != nil {
 		return err
 	}
@@ -46,6 +48,8 @@ func readOutpoint(r io.Reader, o *wire.OutPoint) error {
 	if err := binary.Read(r, byteOrder, &o.Index); err != nil {
 		return err
 	}
+
+	// Note: this is decred-only.
 	if err := binary.Read(r, byteOrder, &o.Tree); err != nil {
 		return err
 	}
