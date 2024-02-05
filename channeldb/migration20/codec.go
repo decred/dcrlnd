@@ -20,6 +20,8 @@ func writeOutpoint(w io.Writer, o *wire.OutPoint) error {
 		return err
 	}
 
+	// Note(decred): This is missing the tree.
+
 	return nil
 }
 
@@ -31,6 +33,8 @@ func readOutpoint(r io.Reader, o *wire.OutPoint) error {
 	if err := binary.Read(r, byteOrder, &o.Index); err != nil {
 		return err
 	}
+
+	// Note(decred): This is missing the tree.
 
 	return nil
 }

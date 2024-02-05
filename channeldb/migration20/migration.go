@@ -59,6 +59,8 @@ func MigrateOutpointIndex(tx kvdb.RwTx) error {
 		return err
 	}
 
+	log.Infof("Found %d open %d closed", len(openList), len(closedList))
+
 	// Get the outpoint bucket which was created in migration 19.
 	bucket := tx.ReadWriteBucket(outpointBucket)
 
@@ -90,6 +92,7 @@ func getOpenOutpoints(tx kvdb.RwTx) ([]*wire.OutPoint, error) {
 		// Ensure that the key is the same size as a pubkey and the
 		// value is nil.
 		if len(k) != 33 || v != nil {
+			log.Warnf("key not 33 bytes (%x)", k)
 			return nil
 		}
 
@@ -101,6 +104,7 @@ func getOpenOutpoints(tx kvdb.RwTx) ([]*wire.OutPoint, error) {
 		return nodeBucket.ForEach(func(k, v []byte) error {
 			// If there's a value it's not a bucket.
 			if v != nil {
+				log.Warnf("key not a bucket: %x", k)
 				return nil
 			}
 
@@ -113,6 +117,7 @@ func getOpenOutpoints(tx kvdb.RwTx) ([]*wire.OutPoint, error) {
 			return chainBucket.ForEach(func(k, v []byte) error {
 				// If there's a value it's not a bucket.
 				if v != nil {
+					log.Warnf("entry in chainBucket not a bucket: %x", k)
 					return nil
 				}
 
@@ -123,6 +128,8 @@ func getOpenOutpoints(tx kvdb.RwTx) ([]*wire.OutPoint, error) {
 				}
 
 				ops = append(ops, &op)
+
+				log.Infof("Appending as open channel %s", op)
 
 				return nil
 			})
