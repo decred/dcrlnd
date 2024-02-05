@@ -1262,6 +1262,12 @@ func (d *DB) syncVersions(versions []version) error {
 		// In dry-run mode, return an error to prevent the transaction
 		// from committing.
 		if d.dryRun {
+			// In dry run mode, also attempt dcrlnd migrations
+			// before stopping.
+			if err := d.syncDcrlndDBVersions(tx); err != nil {
+				return err
+			}
+
 			return ErrDryRunMigrationOK
 		}
 

@@ -34,7 +34,7 @@ func TestOpenWithCreate(t *testing.T) {
 
 	// Next, open thereby creating channeldb for the first time.
 	dbPath := filepath.Join(tempDirName, "cdb")
-	backend, cleanup, err := kvdb.GetTestBackend(dbPath, "cdb")
+	backend, cleanup, err := kvdb.GetTestBackend(dbPath, dbName)
 	if err != nil {
 		t.Fatalf("unable to get test db backend: %v", err)
 	}
