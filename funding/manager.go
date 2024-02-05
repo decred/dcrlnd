@@ -41,9 +41,11 @@ var (
 	byteOrder = binary.BigEndian
 )
 
-// WriteOutpoint writes an outpoint to an io.Writer. This is not the same as
+// writeOutpoint writes an outpoint to an io.Writer. This is not the same as
 // the channeldb variant as this uses WriteVarBytes for the Hash.
-func WriteOutpoint(w io.Writer, o *wire.OutPoint) error {
+//
+// Note(decred): This does not include the Tree field of the outpoint.
+func writeOutpoint(w io.Writer, o *wire.OutPoint) error {
 	scratch := make([]byte, 4)
 
 	if err := wire.WriteVarBytes(w, 0, o.Hash[:]); err != nil {
@@ -52,6 +54,9 @@ func WriteOutpoint(w io.Writer, o *wire.OutPoint) error {
 
 	byteOrder.PutUint32(scratch, o.Index)
 	_, err := w.Write(scratch)
+
+	// Note(decred): this does not include the Tree field of the outpoint.
+
 	return err
 }
 
@@ -3551,7 +3556,7 @@ func (f *Manager) saveChannelOpeningState(chanPoint *wire.OutPoint,
 		}
 
 		var outpointBytes bytes.Buffer
-		if err = WriteOutpoint(&outpointBytes, chanPoint); err != nil {
+		if err = writeOutpoint(&outpointBytes, chanPoint); err != nil {
 			return err
 		}
 
@@ -3583,7 +3588,7 @@ func (f *Manager) getChannelOpeningState(chanPoint *wire.OutPoint) (
 		}
 
 		var outpointBytes bytes.Buffer
-		if err := WriteOutpoint(&outpointBytes, chanPoint); err != nil {
+		if err := writeOutpoint(&outpointBytes, chanPoint); err != nil {
 			return err
 		}
 
@@ -3612,7 +3617,7 @@ func (f *Manager) deleteChannelOpeningState(chanPoint *wire.OutPoint) error {
 		}
 
 		var outpointBytes bytes.Buffer
-		if err := WriteOutpoint(&outpointBytes, chanPoint); err != nil {
+		if err := writeOutpoint(&outpointBytes, chanPoint); err != nil {
 			return err
 		}
 
