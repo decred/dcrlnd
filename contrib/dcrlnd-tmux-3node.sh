@@ -75,7 +75,7 @@ enablevoting = 1
 enableticketbuyer = 1
 rpcconnect = 127.0.0.1:19556
 ticketbuyer.limit = 5
-disablecointypeupgrades = 1
+debuglevel = debug
 EOF
 
 cat > "${NODES_ROOT}/dcrdata.conf" <<EOF
@@ -96,6 +96,8 @@ tlskeypath = ${NODES_ROOT}/dcrlnd0/tls.key
 rpclisten = 127.0.0.1:20000
 restlisten = 127.0.0.1:20001
 listen = 127.0.0.1:20002
+maxlogfiles = 100
+
 
 debuglevel = debug
 
@@ -118,6 +120,7 @@ tlskeypath = ${NODES_ROOT}/dcrlnd1/tls.key
 rpclisten = 127.0.0.1:20100
 restlisten = 127.0.0.1:20101
 listen = 127.0.0.1:20102
+maxlogfiles = 100
 
 debuglevel = debug
 
@@ -140,6 +143,7 @@ tlskeypath = ${NODES_ROOT}/dcrlnd2/tls.key
 rpclisten = 127.0.0.1:20200
 restlisten = 127.0.0.1:20201
 listen = 127.0.0.1:20202
+maxlogfiles = 100
 
 debuglevel = debug
 
