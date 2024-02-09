@@ -132,6 +132,10 @@ func testMultiHopLocalForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 		// commit sweep.
 		numBlocks -= defaultCSV
 	}
+
+	// Reduce by one the nb of blocks because the arbitrator can send on
+	// the block prior to the limit expiring.
+	numBlocks -= 1
 	_, err = net.Generate(numBlocks)
 	require.NoError(t.t, err)
 
@@ -146,7 +150,8 @@ func testMultiHopLocalForceCloseOnChainHtlcTimeout(net *lntest.NetworkHarness,
 
 			if c.PendingHtlcs[0].Stage != 1 {
 				return fmt.Errorf("bob's htlc should have "+
-					"advanced to the first stage: %v", err)
+					"advanced to the first stage: %v",
+					c.PendingHtlcs[0].Stage)
 			}
 
 			return nil
