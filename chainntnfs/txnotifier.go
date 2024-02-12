@@ -1630,6 +1630,20 @@ func (n *TxNotifier) NotifyHeight(height uint32) error {
 					continue
 				}
 
+				// ConnectTip() and NotifyHeight are not atomic
+				// and may race with historical searches, if a
+				// search is slow. So it could happen that the
+				// sema conf is found during the historical
+				// search and the tip. Therefore, prevent sending
+				// the updated if the conf has already been sent
+				// or there are pending updates to be fetched.
+				// This is triggered during the
+				// historical_conf_dispatch_with_script_dispatch
+				// test for the chainscan driver.
+				if ntfn.dispatched || len(ntfn.Event.Updates) == cap(ntfn.Event.Updates) {
+					continue
+				}
+
 				select {
 				case ntfn.Event.Updates <- numConfsLeft:
 				case <-n.quit:
