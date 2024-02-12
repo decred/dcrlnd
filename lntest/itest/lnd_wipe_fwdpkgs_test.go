@@ -141,6 +141,11 @@ func setupFwdPkgTest(net *lntest.NetworkHarness,
 		},
 	)
 
+	// Before we continue, make sure Alice has seen the channel between Bob
+	// and Carol.
+	err := alice.WaitForNetworkChannelOpen(chanPointBC)
+	require.NoError(t.t, err)
+
 	ctxt, cancel := context.WithTimeout(ctxb, defaultTimeout)
 	defer cancel()
 
