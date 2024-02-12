@@ -29,6 +29,10 @@ func NewSetupRPCTest(ctx context.Context, maxTries int, netParams *chaincfg.Para
 	for i := 0; i < maxTries; i++ {
 		harness, err = rpctest.New(nil, netParams, handlers, args)
 		if err == nil {
+			// It shouldn't take more than a minute to start a
+			// node.
+			ctx, cancel := context.WithTimeout(ctx, time.Minute)
+			defer cancel()
 			err = harness.SetUp(ctx, setupChain, numMatureOutputs)
 			if err == nil {
 				return harness, nil
