@@ -1351,3 +1351,232 @@ $20b42ce26			cli improv
 7029			(brought earlier) fix blockcache test race
 5573			(brought earlier) fix race in routing test
 7126			(brought earlier) (partial) fix flake in testUpdateChannelPolicyForPrivateChannel
+5236			preimage in lnrpc
+5487			extra log
+5475			typo
+5471			itest
+5448			sample config
+	5472		btcwallet
+5462			typo
+5504			typo
+5383			fuzz tests
+5449			itest
+5481			kvdb
+5525			etcd
+	5520		CI
+5537			trivial fix
+	5545		CI
+5503			docs
+5516			etcd
+	5543		CI
+5547			etcd
+5533			rpc data
+5526			import checks
+5514			etcd payment id
+5542			itest
+5541			typo
+	5553		docs
+5515			perf improvement (missioncontrol)
+	5576		go.mod
+5579			itest flake
+5473			grpc gateway update
+5534			macaroon permissions
+5582			healthcheck bump
+	5588		CI
+5535			typo
+5577			improv err msg
+5484			database refactor
+5564			noboostrap refactor
+5521			itest
+	5601		falafel/wasm bindings
+5509			itest
+5513			etcd
+5460			cli
+5607			itest
+	5613		CI
+4884			memory perf improv
+5528			recovery from backup on force close
+5616			itest
+5603			test refactor
+	5614		CI
+5620			doc
+5395			fuzz tests
+5609			doc
+5508			log
+5442			psbt
+5591			rpc check
+5559			itest
+5536			systemd startup
+5410			tor
+	5354		btcd itest
+5646			itest
+4717			init wallet from xpriv
+	5657		doc
+5659			CI
+	5623		doc
+5643			dbtx bug
+	5629		btcwallet privkey mgmt
+5621			headers in ping msgs
+5622			memory perf improv
+5453			(partial) ntfns race condition
+5676			log
+	5627		doc
+5669			dynamic chan type negotiation
+5356			batch channel open
+5692			docs
+	5688		CI
+5635			db perf improvement
+5697			API change
+	5706		readme
+5695			error logs
+5702			itest etcd
+5660			add delete single payment func
+5716			etcd unit test
+5465			chain ntfn bug fix
+5637			itest
+5315			bugfix block catchup router
+	5731		CI
+5304			macaroon permissions
+5732			bugfix ping
+5686			healthcheck
+	5734		CI
+5405			api change
+	5738		go.mod
+5743			bugfix nil pointer
+5611			itest
+	5751		go.mod
+5722			log
+	5737		ported by updating etcd to v3.5.7
+5748			test flake
+5640			etcd
+5683			rest api
+5618			chan close improv
+5101			gRPC interceptor
+	5772		go.mod
+5366			postgres
+	5765		doc
+5784			doc
+5785			update dep
+4364			channeldb cleanup (fwd of closed channels)
+5699			cli deletepayments
+5745			code move
+5797			bugfix for 4364
+5768			rpc api change
+5527			nofreelistsync validation
+5766			docs
+5804			itest
+5808			test flake
+	5650		go version
+	5807		go.mod
+5802			err on config error
+	5789		go.mod
+5665			fix spend with anchor channels
+	5759		go.mod
+	5761		go.mod
+5642			pathfinding perf improv (in memory graph cache)
+5363			psbt
+5538			peer reconnect bug fix
+5811			(partial) itest
+5483			fee rate mgmt
+5838			log
+	5826		CI
+5833			itest
+5834			cli bugfix
+5777			lnd init
+5842			mobile
+5832			log
+5708			interface refactoring
+5839			conn bugfix
+5794			tor hidden service bugfix
+5674			itest
+5689			remote signer wallet
+5346			custom wire msg
+5512			bandwidth hints in pathfind
+	5813		go.mod
+5709			commitment type for lightning pool
+	5879		docker
+5845			itest
+5881			log
+	5893		dep
+5874			spec compliance
+5598			pathfinding result interp
+5840			make mem graph db optional
+5895			label tx
+5897			api
+5828			test
+5803			amp invoice repeat payment
+5901			htlc interceptor bugfix
+	5917		doc
+5913			log
+5550			postgres
+5878			log
+5896			doc
+5916			doc
+5905			itest
+5922			fix panic
+	5928		CI
+	5933		dep
+5902			bugfix (cache premature anns)
+5873			graph cache
+5925			conn bugfix
+5930			--nossedbackup fix
+5941			fix deadlock
+5950			interceptor middleware
+5948			main err handling
+	5970		dep
+	5985		release scripts
+5990			cli panic bugfix
+5991			cli flag
+5992		v0.14.0-beta	postgres
+	5998		release notes
+5961			log
+	5999		submodules bump
+6012			error check
+	6015		CI
+6016			tor hidden service check
+6021			log
+6026			multiple issue fixes
+6027		v0.14.1-beta	fix explicit funding flow
+6035			CI
+6049			etcd
+6071			error msg
+6062			feerate bugfix
+6068			fix bbolt memory corruption
+6060			cli change
+5539			psbt
+5854			code refactor unify marshal
+6076			fee enforcement
+6073			error msg
+6075			explicit chan type
+6082			bootstrap conn peers
+5971			Chanclose api expose chanstatusflags
+6108			postgres
+6116			postgres
+6054			premature ann bugfix
+5756			itest
+6052			itest
+6139			itest
+6006			(partial) psbt/remote signer wallet
+6140			butfix shutdown
+6146			api close tx id
+6144			fix memory leak
+6159			fix old nodes start
+6180			api change
+6111			perf improvement (graph cache loading)
+6185			macaroon api
+6158			breach resolver for breached outputs
+6200			fee rate round bugfix
+6201			branch PR
+6226		v0.14.2-beta	fee limit bugfix
+6182			code refactor
+6332			fix deadlock
+6314			bugfix sig validation
+6274			remote double spent anchor outputs
+6342			etcd
+6359			REST bugfix
+6341			(partial) signOutputRaw itest
+5888		v0.14.3-beta.rc1	sample config (2021-11-29)
+6385			disable legacy onion payload
+6352			mpp race condition
+7016		v0.14.4-beta	dep update
+7099		v0.14.5-beta	dep update
