@@ -387,8 +387,8 @@ cloud.google.com/go/workflows v1.8.0/go.mod h1:ysGhmEajwZxGn1OhGOGKsTXc5PyxOc0vf
 cloud.google.com/go/workflows v1.9.0/go.mod h1:ZGkj1aFIOd9c8Gerkjjq7OW7I5+l6cSvT3ujaO/WwSA=
 decred.org/cspp/v2 v2.1.0 h1:HeHb9+BFqrBaAPc6CsPiUpPFmC1uyBM2mJZUAbUXkRw=
 decred.org/cspp/v2 v2.1.0/go.mod h1:9nO3bfvCheOPIFZw5f6sRQ42CjBFB5RKSaJ9Iq6G4MA=
-decred.org/dcrwallet/v3 v3.1.1-0.20240123171509-cb3222c211b9 h1:pzXtrLFRbHUeyz/SrgJ8Xez15lk65yCXkZqx+lxLUsQ=
-decred.org/dcrwallet/v3 v3.1.1-0.20240123171509-cb3222c211b9/go.mod h1:KYWzL2R6ghBLSvB7XXU9S29QwgcqnApCvONMDJ6KCR0=
+decred.org/dcrwallet/v3 v3.1.1-0.20240219233943-89327b1f292f h1:U7Hqknl9iWt1VXK1e++4ezMWXr8QDg1PMZv5yq4fzZQ=
+decred.org/dcrwallet/v3 v3.1.1-0.20240219233943-89327b1f292f/go.mod h1:KYWzL2R6ghBLSvB7XXU9S29QwgcqnApCvONMDJ6KCR0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
