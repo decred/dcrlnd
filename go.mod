@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.18
 
 require (
-	decred.org/dcrwallet/v3 v3.1.1-0.20240219233943-89327b1f292f
+	decred.org/dcrwallet/v3 v3.1.1-0.20240303162647-7352f6fb06da
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
