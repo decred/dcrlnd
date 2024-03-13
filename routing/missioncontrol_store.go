@@ -45,6 +45,10 @@ type missionControlStore struct {
 	// queue stores all pending payment results not yet added to the store.
 	queue *list.List
 
+	// queueChan is signalled when the first item is put into queue after
+	// a storeResult().
+	queueChan chan struct{}
+
 	// keys holds the stored MC store item keys in the order of storage.
 	// We use this list when adding/deleting items from the database to
 	// avoid cursor use which may be slow in the remote DB case.
@@ -101,6 +105,7 @@ func newMissionControlStore(db kvdb.Backend, maxRecords int,
 		done:          make(chan struct{}),
 		db:            db,
 		queue:         list.New(),
+		queueChan:     make(chan struct{}, 1),
 		keys:          keys,
 		keysMap:       keysMap,
 		maxRecords:    maxRecords,
@@ -267,8 +272,17 @@ func deserializeResult(k, v []byte) (*paymentResult, error) {
 // AddResult adds a new result to the db.
 func (b *missionControlStore) AddResult(rp *paymentResult) {
 	b.queueMx.Lock()
-	defer b.queueMx.Unlock()
 	b.queue.PushBack(rp)
+	signalRun := b.queue.Len() == 1
+	b.queueMx.Unlock()
+
+	// Signal run() that the queue is non-empty.
+	if signalRun {
+		select {
+		case <-b.done:
+		case b.queueChan <- struct{}{}:
+		}
+	}
 }
 
 // stop stops the store ticker goroutine.
@@ -282,13 +296,17 @@ func (b *missionControlStore) run() {
 	b.wg.Add(1)
 
 	go func() {
-		ticker := time.NewTicker(b.flushInterval)
-		defer ticker.Stop()
+		// TimerChan is non-null when there are items to be stored.
+		var timerChan <-chan time.Time
 		defer b.wg.Done()
 
 		for {
 			select {
-			case <-ticker.C:
+			case <-b.queueChan:
+				timerChan = time.After(b.flushInterval)
+
+			case <-timerChan:
+				timerChan = nil
 				if err := b.storeResults(); err != nil {
 					log.Errorf("Failed to update mission "+
 						"control store: %v", err)
