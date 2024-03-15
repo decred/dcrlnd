@@ -2,12 +2,12 @@ package routing
 
 import (
 	"bytes"
-	"container/list"
 	"encoding/binary"
 	"fmt"
 	"sync"
 	"time"
 
+	list "github.com/bahlo/generic-list-go"
 	"github.com/decred/dcrd/wire"
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/kvdb"
@@ -43,7 +43,7 @@ type missionControlStore struct {
 	queueMx sync.Mutex
 
 	// queue stores all pending payment results not yet added to the store.
-	queue *list.List
+	queue *list.List[*paymentResult]
 
 	// queueChan is signalled when the first item is put into queue after
 	// a storeResult().
@@ -52,7 +52,7 @@ type missionControlStore struct {
 	// keys holds the stored MC store item keys in the order of storage.
 	// We use this list when adding/deleting items from the database to
 	// avoid cursor use which may be slow in the remote DB case.
-	keys *list.List
+	keys *list.List[string]
 
 	// keysMap holds the stored MC store item keys. We use this map to check
 	// if a new payment result has already been stored.
@@ -70,7 +70,7 @@ func newMissionControlStore(db kvdb.Backend, maxRecords int,
 	flushInterval time.Duration) (*missionControlStore, error) {
 
 	var (
-		keys    *list.List
+		keys    *list.List[string]
 		keysMap map[string]struct{}
 	)
 
@@ -92,7 +92,7 @@ func newMissionControlStore(db kvdb.Backend, maxRecords int,
 
 		return nil
 	}, func() {
-		keys = list.New()
+		keys = list.New[string]()
 		keysMap = make(map[string]struct{})
 	})
 	if err != nil {
@@ -104,7 +104,7 @@ func newMissionControlStore(db kvdb.Backend, maxRecords int,
 	return &missionControlStore{
 		done:          make(chan struct{}),
 		db:            db,
-		queue:         list.New(),
+		queue:         list.New[*paymentResult](),
 		queueChan:     make(chan struct{}, 1),
 		keys:          keys,
 		keysMap:       keysMap,
@@ -131,7 +131,7 @@ func (b *missionControlStore) clear() error {
 		return err
 	}
 
-	b.queue = list.New()
+	b.queue = list.New[*paymentResult]()
 	return nil
 }
 
@@ -328,7 +328,7 @@ func (b *missionControlStore) storeResults() error {
 	// return early from the func without running any updates.
 	isEmpty := l.Len() == 0
 	if !isEmpty {
-		b.queue = list.New()
+		b.queue = list.New[*paymentResult]()
 	}
 	b.queueMx.Unlock()
 
@@ -340,7 +340,7 @@ func (b *missionControlStore) storeResults() error {
 	// Create a deduped list of new entries.
 	newKeys := make(map[string]*paymentResult, l.Len())
 	for e := l.Front(); e != nil; {
-		pr := e.Value.(*paymentResult)
+		pr := e.Value
 		key := string(getResultKey(pr))
 		if _, ok := b.keysMap[key]; ok {
 			e, _ = e.Next(), l.Remove(e)
@@ -362,7 +362,7 @@ func (b *missionControlStore) storeResults() error {
 
 		// Delete as many as needed from old keys.
 		for e := b.keys.Front(); len(delKeys) < toDelete && e != nil; {
-			delKeys = append(delKeys, e.Value.(string))
+			delKeys = append(delKeys, e.Value)
 			e = e.Next()
 		}
 
@@ -370,7 +370,7 @@ func (b *missionControlStore) storeResults() error {
 		// list of new keys.
 		for e := l.Front(); len(delKeys) < toDelete && e != nil; {
 			toDelete--
-			pr := e.Value.(*paymentResult)
+			pr := e.Value
 			key := string(getResultKey(pr))
 			delete(newKeys, key)
 			l.Remove(e)
@@ -384,7 +384,7 @@ func (b *missionControlStore) storeResults() error {
 		bucket := tx.ReadWriteBucket(resultsKey)
 
 		for e := l.Front(); e != nil; e = e.Next() {
-			pr := e.Value.(*paymentResult)
+			pr := e.Value
 			// Serialize result into key and value byte slices.
 			k, v, err := serializeResult(pr)
 			if err != nil {
@@ -425,7 +425,7 @@ func (b *missionControlStore) storeResults() error {
 		b.keys.Remove(b.keys.Front())
 	}
 	for e := l.Front(); e != nil; e = e.Next() {
-		pr := e.Value.(*paymentResult)
+		pr := e.Value
 		key := string(getResultKey(pr))
 		b.keys.PushBack(key)
 	}
