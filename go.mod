@@ -6,6 +6,7 @@ require (
 	decred.org/dcrwallet/v3 v3.1.1-0.20240303162647-7352f6fb06da
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344
+	github.com/bahlo/generic-list-go v0.2.0
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.1
