@@ -379,14 +379,14 @@ func addToTopologyChange(graph *channeldb.ChannelGraph, update *TopologyChange,
 			FeeRate:         m.FeeProportionalMillionths,
 			AdvertisingNode: aNode,
 			ConnectingNode:  cNode,
-			Disabled:        m.ChannelFlags&lnwire.ChanUpdateDisabled != 0,
+			Disabled:        m.ChannelFlags.IsDisabled(),
 		}
 
 		// TODO(roasbeef): add bit to toggle
 		update.ChannelEdgeUpdates = append(update.ChannelEdgeUpdates,
 			edgeUpdate)
-		log.Infof("Topology change: ChannelEdge %s (%s)",
-			edgeInfo.ChannelPoint, lnwire.NewShortChanIDFromInt(m.ChannelID))
+		log.Infof("Topology change: ChannelEdge %s (%s) disabled:%v",
+			edgeInfo.ChannelPoint, lnwire.NewShortChanIDFromInt(m.ChannelID), edgeUpdate.Disabled)
 		return nil
 
 	default:
