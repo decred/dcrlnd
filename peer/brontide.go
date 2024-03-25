@@ -1753,7 +1753,13 @@ func (p *Brontide) logWireMessage(msg lnwire.Message, read bool) {
 		summaryPrefix = "Sending"
 	}
 
-	peerLog.Debugf("%v", newLogClosure(func() string {
+	logger := peerLog
+	switch msg.(type) {
+	case *lnwire.Ping, *lnwire.Pong:
+		logger = pingLog
+	}
+
+	logger.Debugf("%v", newLogClosure(func() string {
 		// Debug summary of message.
 		summary := messageSummary(msg)
 		if len(summary) > 0 {
@@ -1781,7 +1787,7 @@ func (p *Brontide) logWireMessage(msg lnwire.Message, read bool) {
 		prefix = "writeMessage to"
 	}
 
-	peerLog.Tracef(prefix+" %v: %v", p, newLogClosure(func() string {
+	logger.Tracef(prefix+" %v: %v", p, newLogClosure(func() string {
 		return spew.Sdump(msg)
 	}))
 }

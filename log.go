@@ -139,6 +139,7 @@ func SetupLoggers(root *build.RotatingLogWriter, interceptor signal.Interceptor)
 	AddSubLogger(root, "AUTO", interceptor, automation.UseLogger)
 	AddSubLogger(root, "PGDB", interceptor, postgres.UseLogger)
 	AddSubLogger(root, "LCCH", interceptor, localchans.UseLogger)
+	AddSubLogger(root, "PING", interceptor, peer.UsePingLogger)
 
 	AddSubLogger(root, "LNWL", interceptor, lnwallet.UseLogger)
 	AddSubLogger(root, "DISC", interceptor, discovery.UseLogger)
