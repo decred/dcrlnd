@@ -8,19 +8,29 @@ import (
 // peerLog is a logger that is initialized with the slog.Disabled logger.
 var peerLog slog.Logger
 
+// pingLog is a logger that is used to log sent and received ping/pong
+// messages.
+var pingLog slog.Logger
+
 // The default amount of logging is none.
 func init() {
 	UseLogger(build.NewSubLogger("PEER", nil))
+	UseLogger(build.NewSubLogger("PING", nil))
 }
 
 // DisableLog disables all logging output.
 func DisableLog() {
 	UseLogger(slog.Disabled)
+	UsePingLogger(slog.Disabled)
 }
 
 // UseLogger uses a specified Logger to output package logging info.
 func UseLogger(logger slog.Logger) {
 	peerLog = logger
+}
+
+func UsePingLogger(logger slog.Logger) {
+	pingLog = logger
 }
 
 // logClosure is used to provide a closure over expensive logging operations
