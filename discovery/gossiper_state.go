@@ -67,6 +67,14 @@ func (d *AuthenticatedGossiper) updateGossiperMsgTS(peer route.Vertex, ts time.T
 		return
 	}
 
+	// Ignore updates when the timestamp is in the future, to avoid missing
+	// future updates when someone announced with an incorrect timestamp.
+	if ts.After(time.Now()) {
+		log.Tracef("GossipSyncer(%s): ignoring update to future ts %s",
+			peer, ts)
+		return
+	}
+
 	// Only update the stored last sync time if we're in active sync mode.
 	// Storing at other times could cause us to store a timestamp received
 	// from a historical search.
@@ -97,6 +105,15 @@ func (g *GossipSyncer) initialGossipTimestamp() time.Time {
 	ts, err := g.cfg.gossiperState.ReadPeerLastGossipMsgTS(g.cfg.peerPub)
 	if err != nil {
 		return time.Now()
+	}
+
+	// When we wrongly stored the timestamp as a date in the future, use
+	// a date in the past as initial gossip timestamp. This prevents some
+	// classes of bugs where we never receive new gossip messages because
+	// we stored a timestamp in the future.
+	now := time.Now()
+	if ts.After(now) {
+		ts = now.Add(-time.Hour * 24)
 	}
 
 	return ts
