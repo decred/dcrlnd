@@ -2,6 +2,7 @@ package channeldb
 
 import (
 	dcrmigration01 "github.com/decred/dcrlnd/channeldb/dcrmigrations/migration01"
+	dcrmigration02 "github.com/decred/dcrlnd/channeldb/dcrmigrations/migration02"
 	"github.com/decred/dcrlnd/kvdb"
 )
 
@@ -13,6 +14,7 @@ var (
 	// dcrDbVersions are the decred-only migrations.
 	dcrDbVersions = []version{
 		{number: 1, migration: dcrmigration01.FixMigration20},
+		{number: 2, migration: dcrmigration02.RemoveFutureTimestampFromPeers},
 	}
 )
 
