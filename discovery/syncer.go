@@ -1251,6 +1251,8 @@ func (g *GossipSyncer) FilterGossipMsgs(msgs ...msgWithSenders) {
 	// If the peer doesn't have an update horizon set, then we won't send
 	// it any new update messages.
 	if g.remoteUpdateHorizon == nil {
+		log.Tracef("GossipSyncer(%x): filtering due to no remoteUpdateHorizon",
+			g.cfg.peerPub[:])
 		return
 	}
 
@@ -1346,6 +1348,14 @@ func (g *GossipSyncer) FilterGossipMsgs(msgs ...msgWithSenders) {
 		case *lnwire.ChannelUpdate:
 			if passesFilter(msg.Timestamp) {
 				msgsToSend = append(msgsToSend, msg)
+			} else {
+				ts := time.Unix(int64(msg.Timestamp), 0)
+				log.Tracef("GossipSyncer(%x): ChannelUpdate does "+
+					"not pass filter chan=%s ts=%s hz_start=%s "+
+					"hz_end=%s", g.cfg.peerPub[:],
+					msg.ShortChannelID, ts.Format(time.RFC3339),
+					startTime.Format(time.RFC3339),
+					endTime.Format(time.RFC3339))
 			}
 
 		// Similarly, we only send node announcements if the update

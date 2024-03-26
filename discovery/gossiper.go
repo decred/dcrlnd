@@ -2122,9 +2122,12 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 		) {
 
 			log.Debugf("Ignored stale edge policy: peer=%v, "+
-				"source=%x, msg=%s, is_remote=%v", nMsg.peer,
+				"source=%x, msg=%s, is_remote=%v, channel=%s, "+
+				"ts=%s", nMsg.peer,
 				nMsg.source.SerializeCompressed(),
-				nMsg.msg.MsgType(), nMsg.isRemote)
+				nMsg.msg.MsgType(), nMsg.isRemote,
+				msg.ShortChannelID,
+				timestamp.Format(time.RFC3339))
 
 			nMsg.err <- nil
 			return nil, true
