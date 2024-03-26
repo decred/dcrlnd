@@ -3,6 +3,7 @@ package channeldb
 import (
 	"github.com/decred/dcrlnd/build"
 	dcrmigration01 "github.com/decred/dcrlnd/channeldb/dcrmigrations/migration01"
+	dcrmigration02 "github.com/decred/dcrlnd/channeldb/dcrmigrations/migration02"
 	mig "github.com/decred/dcrlnd/channeldb/migration"
 	"github.com/decred/dcrlnd/channeldb/migration12"
 	"github.com/decred/dcrlnd/channeldb/migration13"
@@ -44,4 +45,5 @@ func UseLogger(logger slog.Logger) {
 	kvdb.UseLogger(logger)
 
 	dcrmigration01.UseLogger(logger)
+	dcrmigration02.UseLogger(logger)
 }
