@@ -5357,6 +5357,7 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 
 	// Loop through all available channels, check for liveliness and capacity.
 	var maxInbound dcrutil.Amount
+	var debugErrs []string
 	for _, channel := range openChannels {
 		// Ensure the channel is active and the remote peer is online, which is
 		// required to receive from this channel.
@@ -5364,6 +5365,8 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 		if _, err := r.server.FindPeer(channel.IdentityPub); err != nil {
 			// We're not connected to the peer, therefore can't receive htlcs
 			// from it.
+			debugErrs = append(debugErrs,
+				fmt.Sprintf("unable to find peer for chanpoint %s: %v", chanPoint, err))
 			continue
 		}
 
@@ -5372,12 +5375,16 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 		channelID := lnwire.NewChanIDFromOutPoint(chanPoint)
 		var link htlcswitch.ChannelUpdateHandler
 		if link, err = r.server.htlcSwitch.GetLink(channelID); err != nil {
+			debugErrs = append(debugErrs,
+				fmt.Sprintf("failed to get link for chanpoint %s: %v", chanPoint, err))
 			continue
 		}
 
 		// If this link isn' eligible for htcl forwarding, it means we can't
 		// receive from it.
 		if !link.EligibleToForward() {
+			debugErrs = append(debugErrs,
+				fmt.Sprintf("link is not eligable to forward chanpoint %s -- skipping", chanPoint))
 			continue
 		}
 
@@ -5400,6 +5407,10 @@ func (r *rpcServer) checkCanReceiveInvoice(ctx context.Context,
 
 	if maxInbound == 0 {
 		return errors.New("no online channels found")
+	}
+
+	for _, debugErr := range debugErrs {
+		rpcsLog.Debugf("addinvoice(amt %d): %v", amt, debugErr)
 	}
 
 	missingCap := amt - maxInbound
