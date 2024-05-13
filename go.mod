@@ -1,6 +1,6 @@
 module github.com/decred/dcrlnd
 
-go 1.18
+go 1.20
 
 require (
 	decred.org/dcrwallet/v3 v3.1.1-0.20240303162647-7352f6fb06da
