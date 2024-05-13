@@ -77,7 +77,13 @@ func NewRPCSyncingTestWallet(t TB, rpcConfig *rpcclient.ConnConfig) (*wallet.Wal
 	syncerCtx, cancel := context.WithCancel(context.Background())
 	initialSync := make(chan struct{})
 	syncer.SetCallbacks(&chain.Callbacks{
-		Synced: func(_ bool) { close(initialSync) },
+		Synced: func(_ bool) {
+			select {
+			case <-initialSync:
+			default:
+				close(initialSync)
+			}
+		},
 	})
 	go syncer.Run(syncerCtx)
 
