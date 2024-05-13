@@ -15,10 +15,11 @@ import (
 )
 
 type SPVSyncerConfig struct {
-	Peers      []string
-	Net        *chaincfg.Params
-	AppDataDir string
-	DialFunc   p2p.DialFunc
+	Peers          []string
+	Net            *chaincfg.Params
+	AppDataDir     string
+	DialFunc       p2p.DialFunc
+	DisableRelayTx bool
 }
 
 // SPVSyncer implements the required methods for synchronizing a DcrWallet
@@ -59,6 +60,7 @@ func (s *SPVSyncer) start(w *DcrWallet) error {
 	if s.cfg.DialFunc != nil {
 		lp.SetDialFunc(s.cfg.DialFunc)
 	}
+	lp.SetDisableRelayTx(s.cfg.DisableRelayTx)
 
 	syncer := spv.NewSyncer(w.wallet, lp)
 	if len(s.cfg.Peers) > 0 {

@@ -12,5 +12,7 @@ type DcrwalletConfig struct {
 	SPV        bool     `long:"spv" description:"Whether to use SPV mode when using an embedded wallet"`
 	SPVConnect []string `long:"spvconnect" description:"Addresses to connect to when using spv mode"`
 
+	DisableRelayTx bool `long:"disablerelaytx" description:"Disable receiving mempool transactions in SPV mode"`
+
 	DialFunc p2p.DialFunc
 }

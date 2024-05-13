@@ -568,10 +568,11 @@ func (d *DefaultWalletImpl) BuildWalletConfig(ctx context.Context,
 			d.cfg.ActiveNetParams.Params)
 	case !isRemoteWallet && d.cfg.Dcrwallet.SPV:
 		spvCfg := &dcrwallet.SPVSyncerConfig{
-			Peers:      d.cfg.Dcrwallet.SPVConnect,
-			Net:        d.cfg.ActiveNetParams.Params,
-			AppDataDir: filepath.Join(d.cfg.Decred.ChainDir),
-			DialFunc:   d.cfg.Dcrwallet.DialFunc,
+			Peers:          d.cfg.Dcrwallet.SPVConnect,
+			Net:            d.cfg.ActiveNetParams.Params,
+			AppDataDir:     filepath.Join(d.cfg.Decred.ChainDir),
+			DialFunc:       d.cfg.Dcrwallet.DialFunc,
+			DisableRelayTx: d.cfg.Dcrwallet.DisableRelayTx,
 		}
 		walletConfig.Syncer, err = dcrwallet.NewSPVSyncer(spvCfg)
 	}
