@@ -546,15 +546,30 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 
 	ctxb := context.Background()
 
+	// NOTE(decred): the original upstream test that reorgs all the way to
+	// genesis has been removed here in favor of only testing the 10-way
+	// reorg due to SPV not (easily) exposing a reorg all the way to
+	// genesis.
+
 	// Create a node that has a shorter chain than the main chain, so we
 	// can trigger a reorg.
 	reorgNode, err := testutils.NewSetupRPCTest(
-		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, true, 5,
+		testctx.New(t), 5, netParams, nil, []string{"--txindex"}, false, 0,
 	)
 	if err != nil {
 		t.Fatalf("unable to create mining node: %v", err)
 	}
 	defer reorgNode.TearDown()
+
+	// Connect the node with the short chain to the main node, and wait
+	// for their chains to synchronize.
+	if err := rpctest.ConnectNode(ctxb, reorgNode, node); err != nil {
+		t.Fatalf("unable to connect harnesses: %v", err)
+	}
+	nodeSlice := []*rpctest.Harness{node, reorgNode}
+	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
+		t.Fatalf("unable to join node on blocks: %v", err)
+	}
 
 	// Init a chain view that has this node as its block source.
 	cleanUpFunc, reorgView, err := chainViewInit(t, reorgNode)
@@ -575,58 +590,9 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 	newBlocks := reorgView.FilteredBlocks()
 	disconnectedBlocks := reorgView.DisconnectedBlocks()
 
-	_, oldHeight, err := reorgNode.Node.GetBestBlock(context.TODO())
-	if err != nil {
-		t.Fatalf("unable to get current height: %v", err)
-	}
-
-	// Now connect the node with the short chain to the main node, and wait
-	// for their chains to synchronize. The short chain will be reorged all
-	// the way back to genesis.
-	if err := rpctest.ConnectNode(ctxb, reorgNode, node); err != nil {
-		t.Fatalf("unable to connect harnesses: %v", err)
-	}
-	nodeSlice := []*rpctest.Harness{node, reorgNode}
-	if err := rpctest.JoinNodes(ctxb, nodeSlice, rpctest.Blocks); err != nil {
-		t.Fatalf("unable to join node on blocks: %v", err)
-	}
-
 	_, newHeight, err := reorgNode.Node.GetBestBlock(context.TODO())
 	if err != nil {
 		t.Fatalf("unable to get current height: %v", err)
-	}
-
-	// We should be getting oldHeight number of blocks marked as
-	// stale/disconnected. We expect to first get all stale blocks,
-	// then the new blocks. We also ensure a strict ordering.
-	for i := int64(0); i < oldHeight+newHeight; i++ {
-		select {
-		case block := <-newBlocks:
-			if i < oldHeight {
-				t.Fatalf("did not expect to get new block "+
-					"in iteration %d, old height: %v", i,
-					oldHeight)
-			}
-			expectedHeight := i - oldHeight + 1
-			if block.Height != expectedHeight {
-				t.Fatalf("expected to receive connected "+
-					"block at height %d, instead got at %d",
-					expectedHeight, block.Height)
-			}
-		case block := <-disconnectedBlocks:
-			if i >= oldHeight {
-				t.Fatalf("did not expect to get stale block "+
-					"in iteration %d", i)
-			}
-			expectedHeight := oldHeight - i
-			if block.Height != expectedHeight {
-				t.Fatalf("expected to receive disconnected "+
-					"block at height %d, instead got at %d",
-					expectedHeight, block.Height)
-			}
-		case <-time.After(10 * time.Second):
-			t.Fatalf("timeout waiting for block")
-		}
 	}
 
 	// Now we trigger a small reorg, by disconnecting the nodes, mining
@@ -689,7 +655,7 @@ func testFilterBlockDisconnected(node *rpctest.Harness,
 		}
 	}
 
-	_, oldHeight, err = reorgNode.Node.GetBestBlock(context.TODO())
+	_, oldHeight, err := reorgNode.Node.GetBestBlock(context.TODO())
 	if err != nil {
 		t.Fatalf("unable to get current height: %v", err)
 	}
