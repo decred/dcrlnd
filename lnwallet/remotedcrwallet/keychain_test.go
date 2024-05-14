@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/keychain"
@@ -77,8 +78,9 @@ func createTestWallet() (func(), *hdkeychain.ExtendedKey, *channeldb.DB, onchain
 
 	pass := []byte("test")
 
+	birthday := time.Now().Add(-time.Hour * 24)
 	baseWallet, err := loader.CreateNewWallet(
-		context.Background(), pass, pass, testHDSeed[:],
+		context.Background(), pass, pass, testHDSeed[:], birthday,
 	)
 	if err != nil {
 		return nil, nil, nil, nil, err

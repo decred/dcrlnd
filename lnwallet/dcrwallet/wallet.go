@@ -122,7 +122,7 @@ func New(cfg Config) (*DcrWallet, error) {
 		if !walletExists {
 			// Wallet has never been created, perform initial set up.
 			wallet, err = loader.CreateNewWallet(context.TODO(), cfg.PublicPass, cfg.PrivatePass,
-				cfg.HdSeed)
+				cfg.HdSeed, time.Now().Add(-time.Hour*24))
 			if err != nil {
 				return nil, err
 			}

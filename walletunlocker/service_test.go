@@ -69,10 +69,11 @@ func createTestWalletWithPw(t *testing.T, pubPw, privPw []byte, dir string,
 	*/
 
 	// Create a new test wallet that uses fast scrypt as KDF.
+	birthday := time.Now().Add(-time.Hour * 24)
 	netDir := dcrwallet.NetworkDir(dir, netParams)
 	loader := walletloader.NewLoader(netParams, netDir, wallet.DefaultGapLimit)
 	_, err := loader.CreateNewWallet(
-		context.Background(), pubPw, privPw, testSeed,
+		context.Background(), pubPw, privPw, testSeed, birthday,
 	)
 	require.NoError(t, err)
 	err = loader.UnloadWallet()

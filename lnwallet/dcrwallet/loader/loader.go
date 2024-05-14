@@ -17,6 +17,7 @@ import (
 	"decred.org/dcrwallet/v4/wallet"
 	_ "decred.org/dcrwallet/v4/wallet/drivers/bdb" // driver loaded during init
 	"decred.org/dcrwallet/v4/wallet/txrules"
+	"decred.org/dcrwallet/v4/wallet/udb"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
@@ -205,7 +206,8 @@ func (l *Loader) CreateNewWalletExtendedKey(ctx context.Context,
 // CreateNewWallet creates a new wallet using the provided public and private
 // passphrases.  The seed is optional.  If non-nil, addresses are derived from
 // this seed.  If nil, a secure random seed is generated.
-func (l *Loader) CreateNewWallet(ctx context.Context, pubPassphrase, privPassphrase, seed []byte) (w *wallet.Wallet, err error) {
+func (l *Loader) CreateNewWallet(ctx context.Context, pubPassphrase,
+	privPassphrase, seed []byte, birthday time.Time) (w *wallet.Wallet, err error) {
 	const op errors.Op = "loader.CreateNewWallet"
 
 	defer l.mu.Unlock()
@@ -278,6 +280,14 @@ func (l *Loader) CreateNewWallet(ctx context.Context, pubPassphrase, privPassphr
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	bs := &udb.BirthdayState{
+		SetFromTime: true,
+		Time:        birthday,
+	}
+	if err := w.SetBirthState(ctx, bs); err != nil {
 		return nil, errors.E(op, err)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"decred.org/dcrwallet/v4/wallet"
 	"github.com/decred/dcrlnd/chainreg"
@@ -81,7 +82,8 @@ func noSeedBackupWalletInit(ctx context.Context, cfg *Config, privPass, pubPass 
 	if _, err := io.ReadFull(rand.Reader, seed[:]); err != nil {
 		return nil, err
 	}
-	return loader.CreateNewWallet(ctx, pubPass, privPass, seed[:])
+	return loader.CreateNewWallet(ctx, pubPass, privPass, seed[:],
+		time.Now().Add(-time.Hour*24))
 }
 
 type RemoteWalletBuilder struct {

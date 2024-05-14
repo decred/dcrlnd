@@ -59,8 +59,9 @@ func NewRPCSyncingTestWallet(t TB, rpcConfig *rpcclient.ConnConfig) (*wallet.Wal
 
 	pass := []byte("test")
 
+	birthday := time.Now().Add(-time.Hour * 24)
 	w, err := loader.CreateNewWallet(
-		context.Background(), pass, pass, testHDSeed[:],
+		context.Background(), pass, pass, testHDSeed[:], birthday,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -130,8 +131,9 @@ func NewSPVSyncingTestWallet(t TB, p2pAddr string) (*wallet.Wallet, func()) {
 
 	pass := []byte("test")
 
+	birthday := time.Now().Add(-time.Hour * 24)
 	w, err := loader.CreateNewWallet(
-		context.Background(), pass, pass, testHDSeed[:],
+		context.Background(), pass, pass, testHDSeed[:], birthday,
 	)
 	if err != nil {
 		t.Fatal(err)

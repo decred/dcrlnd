@@ -339,11 +339,15 @@ func (u *UnlockerService) GenSeed(_ context.Context,
 		}
 	}
 
+	// Subtract 24h from the birthday, to ensure no reorgs could possibly
+	// make us miss some transactions.
+	birthday := time.Now().Add(-time.Hour * 24)
+
 	// Now that we have our set of entropy, we'll create a new cipher seed
 	// instance.
 	//
 	cipherSeed, err := aezeed.New(
-		keychain.KeyDerivationVersion, &entropy, time.Now(),
+		keychain.KeyDerivationVersion, &entropy, birthday,
 	)
 	if err != nil {
 		return nil, err

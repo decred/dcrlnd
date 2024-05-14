@@ -933,6 +933,7 @@ func waitForWalletPassword(cfg *Config,
 			birthday = cipherSeed.BirthdayTime()
 			newWallet, err = loader.CreateNewWallet(
 				ctx, password, password, cipherSeed.Entropy[:],
+				birthday,
 			)
 
 		// No seed was given, we're importing a wallet from its extended
