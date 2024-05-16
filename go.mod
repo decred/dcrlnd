@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.20
 
 require (
-	decred.org/dcrwallet/v4 v4.0.0-20240516171148-1920377bb49f
+	decred.org/dcrwallet/v4 v4.0.0
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344
 	github.com/bahlo/generic-list-go v0.2.0
@@ -28,7 +28,7 @@ require (
 	github.com/decred/dcrd/rpcclient/v8 v8.0.1
 	github.com/decred/dcrd/txscript/v4 v4.1.1
 	github.com/decred/dcrd/wire v1.7.0
-	github.com/decred/dcrtest/dcrdtest v1.0.1-0.20231217203517-3d06801da382
+	github.com/decred/dcrtest/dcrdtest v1.0.1-0.20240514160637-ade8c37ad1db
 	github.com/decred/lightning-onion/v4 v4.0.0
 	github.com/decred/slog v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.25.0

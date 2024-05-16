@@ -35,8 +35,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 decred.org/cspp/v2 v2.2.0 h1:VSOUC1w0Wo+QOGS0r1XO6TLnO16X67KuvpDmRRYyr08=
 decred.org/cspp/v2 v2.2.0/go.mod h1:9nO3bfvCheOPIFZw5f6sRQ42CjBFB5RKSaJ9Iq6G4MA=
-decred.org/dcrwallet/v4 v4.0.0-20240516171148-1920377bb49f h1:N5J6Dyq1yN8kDcF8S6MPgLDx0WmGqtyY5k3mXpgDCzE=
-decred.org/dcrwallet/v4 v4.0.0-20240516171148-1920377bb49f/go.mod h1:LiqE26KHkc+yiDA5D/wp+x/4ir1ylHQurDNxwgsfkP4=
+decred.org/dcrwallet/v4 v4.0.0 h1:e0azQaaWQhW/2d7pGYtUhUqWrojQyf5YPGi5bwfZ5KE=
+decred.org/dcrwallet/v4 v4.0.0/go.mod h1:LiqE26KHkc+yiDA5D/wp+x/4ir1ylHQurDNxwgsfkP4=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -185,8 +185,8 @@ github.com/decred/dcrd/wire v1.2.0/go.mod h1:/JKOsLInOJu6InN+/zH5AyCq3YDIOW/Eqcf
 github.com/decred/dcrd/wire v1.5.0/go.mod h1:fzAjVqw32LkbAZIt5mnrvBR751GTa3e0rRQdOIhPY3w=
 github.com/decred/dcrd/wire v1.7.0 h1:5JHiDjEQeS4XUl4PfnTZYLwAD/E/+LwBmPRec/fP76o=
 github.com/decred/dcrd/wire v1.7.0/go.mod h1:lAqrzV0SU4kyV6INLEJgDtUjJaTaVKrbF4LHtaYl+zU=
-github.com/decred/dcrtest/dcrdtest v1.0.1-0.20231217203517-3d06801da382 h1:8BmWipm7/z/HwcN1hD+JMne7xF66SqJEGASs/qBmN0o=
-github.com/decred/dcrtest/dcrdtest v1.0.1-0.20231217203517-3d06801da382/go.mod h1:kbRQzyWu1IfukYZqCioVyJokzu1ifvIXzVDrXReeOsQ=
+github.com/decred/dcrtest/dcrdtest v1.0.1-0.20240514160637-ade8c37ad1db h1:IKGKAJaubsFC+aIoeSQP/Ne9jSdwk8H/IjJz1HUoHVs=
+github.com/decred/dcrtest/dcrdtest v1.0.1-0.20240514160637-ade8c37ad1db/go.mod h1:kbRQzyWu1IfukYZqCioVyJokzu1ifvIXzVDrXReeOsQ=
 github.com/decred/go-socks v1.1.0 h1:dnENcc0KIqQo3HSXdgboXAHgqsCIutkqq6ntQjYtm2U=
 github.com/decred/go-socks v1.1.0/go.mod h1:sDhHqkZH0X4JjSa02oYOGhcGHYp12FsY1jQ/meV8md0=
 github.com/decred/lightning-onion/v4 v4.0.0 h1:p4WRnx0YFoqD8rq/VHUtfBp24K/cHFJ8tO/gutkWIyI=
