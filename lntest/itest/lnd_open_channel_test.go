@@ -164,9 +164,9 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 
 	// Connecting to the temporary miner should now cause our original
 	// chain to be re-orged out.
-	err = rpctest.ConnectNode(ctxb, net.Miner.Harness, tempMiner.Harness)
+	err = rpctest.ConnectNode(testctx.New(t), net.Miner.Harness, tempMiner.Harness)
 	if err != nil {
-		t.Fatalf("unable to remove node: %v", err)
+		t.Fatalf("unable to connect nodes: %v", err)
 	}
 
 	nodes := []*rpctest.Harness{tempMiner.Harness, net.Miner.Harness}
