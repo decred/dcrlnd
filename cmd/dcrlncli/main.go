@@ -287,7 +287,7 @@ func main() {
 	}
 
 	// Build the standard version string.
-	versionStr := fmt.Sprintf("%s (Go version %s %s/%s)\n",
+	versionStr := fmt.Sprintf("%s (Go version %s %s/%s)",
 		build.Version(), runtime.Version(), runtime.GOOS, runtime.GOARCH)
 
 	app := cli.NewApp()
