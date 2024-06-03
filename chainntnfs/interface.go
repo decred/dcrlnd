@@ -654,7 +654,7 @@ func IsTxIndexDisabledError(err error) bool {
 		return false
 	}
 
-	errNoTxIndexMsg := "The transaction index must be enabled"
+	errNoTxIndexMsg := "the transaction index must be enabled"
 	return strings.Contains(err.Error(), errNoTxIndexMsg)
 }
 
