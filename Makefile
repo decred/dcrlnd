@@ -35,13 +35,13 @@ ITEST_LDFLAGS := -ldflags "-X $(PKG)/build.Commit=$(COMMIT)"
 RELEASE_LDFLAGS := $(call make_ldflags, $(RELEASE_TAGS), -s -w -buildid=)
 
 DCRD_REPO := github.com/decred/dcrd
-DCRD_COMMIT := release-v2.0.1
+DCRD_COMMIT := release-v2.0.2
 DCRD_META := "$(DCRD_COMMIT).from-dcrlnd"
 DCRD_LDFLAGS := "-X github.com/decred/dcrd/internal/version.BuildMetadata=$(DCRD_META)"
 DCRD_TMPDIR := $(shell mktemp -d)
 
 DCRWALLET_REPO := github.com/decred/dcrwallet
-DCRWALLET_COMMIT := release-v2.0.1
+DCRWALLET_COMMIT := release-v2.0.2
 DCRWALLET_META := $(DCRWALLET_COMMIT).from-dcrlnd
 DCRWALLET_LDFLAGS := "-X decred.org/dcrwallet/version.BuildMetadata=$(DCRWALLET_META)"
 DCRWALLET_TMPDIR := $(shell mktemp -d)

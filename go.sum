@@ -35,8 +35,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 decred.org/cspp/v2 v2.2.0 h1:VSOUC1w0Wo+QOGS0r1XO6TLnO16X67KuvpDmRRYyr08=
 decred.org/cspp/v2 v2.2.0/go.mod h1:9nO3bfvCheOPIFZw5f6sRQ42CjBFB5RKSaJ9Iq6G4MA=
-decred.org/dcrwallet/v4 v4.1.0 h1:/Gyp6IQ1JKBPkqJqoeypjIbSkKE3gOqvtYfnxnBf+d0=
-decred.org/dcrwallet/v4 v4.1.0/go.mod h1:IzS8Q7ZAcLUEP4cWcL+zjpcp1XDfFuiz10wCLpb1d+4=
+decred.org/dcrwallet/v4 v4.1.1 h1:imwPBboytp1PH6V8q7/JLTHiKgj/Scq9a3I1WmnJv0Y=
+decred.org/dcrwallet/v4 v4.1.1/go.mod h1:WxerkRcUGVreJsAI0ptCBPUujPUmWncbdYbme8Kl5r0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -170,8 +170,8 @@ github.com/decred/dcrd/lru v1.1.2 h1:KdCzlkxppuoIDGEvCGah1fZRicrDH36IipvlB1ROkFY
 github.com/decred/dcrd/lru v1.1.2/go.mod h1:gEdCVgXs1/YoBvFWt7Scgknbhwik3FgVSzlnCcXL2N8=
 github.com/decred/dcrd/math/uint256 v1.0.1 h1:SUMHmqi4GQwBNdueS5Pjj6Pzr3fZrc31skpSuEb6e64=
 github.com/decred/dcrd/math/uint256 v1.0.1/go.mod h1:7M/y9wJJvlyNG/f/X6mxxhxo9dgloZHFiOfbiscl75A=
-github.com/decred/dcrd/mixing v0.2.0 h1:6aQiJuyu3D4OduSRPLta6GX6FZEi4XCxuQVNt26H0rY=
-github.com/decred/dcrd/mixing v0.2.0/go.mod h1:W3K7yJKmoI03G2U5Yw+HSRNe6lLBegi63ZR6fFLnM9c=
+github.com/decred/dcrd/mixing v0.3.0 h1:eUHpTdwTqXUllnn1ZYLfxucW/2UOkMmx4CyztipTJ9g=
+github.com/decred/dcrd/mixing v0.3.0/go.mod h1:W3K7yJKmoI03G2U5Yw+HSRNe6lLBegi63ZR6fFLnM9c=
 github.com/decred/dcrd/peer/v3 v3.0.2 h1:akcB/L5tZcV/LV5LsiAAeShzvus8mjwvkLI20b1aSUM=
 github.com/decred/dcrd/peer/v3 v3.0.2/go.mod h1:J3Wwi3biKzsIoQS61LnpFyjDgP7oigdoptf2r6yNMBQ=
 github.com/decred/dcrd/rpc/jsonrpc/types/v4 v4.3.0 h1:l0DnCcILTNrpy8APF3FLN312ChpkQaAuW30aC/RgBaw=

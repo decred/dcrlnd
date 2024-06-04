@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.20
 
 require (
-	decred.org/dcrwallet/v4 v4.1.0
+	decred.org/dcrwallet/v4 v4.1.1
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344
 	github.com/bahlo/generic-list-go v0.2.0
@@ -98,7 +98,7 @@ require (
 	github.com/decred/dcrd/dcrec/edwards/v2 v2.0.3 // indirect
 	github.com/decred/dcrd/lru v1.1.2 // indirect
 	github.com/decred/dcrd/math/uint256 v1.0.1 // indirect
-	github.com/decred/dcrd/mixing v0.2.0 // indirect
+	github.com/decred/dcrd/mixing v0.3.0 // indirect
 	github.com/decred/dcrd/peer/v3 v3.0.2 // indirect
 	github.com/decred/go-socks v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
