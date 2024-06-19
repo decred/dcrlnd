@@ -29,7 +29,7 @@ require (
 	github.com/decred/dcrd/txscript/v4 v4.1.1
 	github.com/decred/dcrd/wire v1.7.0
 	github.com/decred/dcrtest/dcrdtest v1.0.1-0.20240514160637-ade8c37ad1db
-	github.com/decred/lightning-onion/v4 v4.0.0
+	github.com/decred/lightning-onion/v4 v4.0.1
 	github.com/decred/slog v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.25.0
 	github.com/ghodss/yaml v1.0.0
