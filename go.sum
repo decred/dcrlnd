@@ -35,8 +35,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 decred.org/cspp/v2 v2.2.0 h1:VSOUC1w0Wo+QOGS0r1XO6TLnO16X67KuvpDmRRYyr08=
 decred.org/cspp/v2 v2.2.0/go.mod h1:9nO3bfvCheOPIFZw5f6sRQ42CjBFB5RKSaJ9Iq6G4MA=
-decred.org/dcrwallet/v4 v4.1.2 h1:NESPkLLpLXwrsWRmeDSLM/O5NaSMFSyjQrG+9m0iuzk=
-decred.org/dcrwallet/v4 v4.1.2/go.mod h1:Ivu6THxbdMLGxKTa/eJT7vDr2awmKok7gEh82oCxs/s=
+decred.org/dcrwallet/v4 v4.1.3-0.20240624134826-39fd48b821f4 h1:7TMxCxlZM+91wWysJtU5w2ElnKOSiKBDCi/1rqcEy0I=
+decred.org/dcrwallet/v4 v4.1.3-0.20240624134826-39fd48b821f4/go.mod h1:Ivu6THxbdMLGxKTa/eJT7vDr2awmKok7gEh82oCxs/s=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
