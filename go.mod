@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.20
 
 require (
-	decred.org/dcrwallet/v4 v4.1.3
+	decred.org/dcrwallet/v4 v4.2.0
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344
 	github.com/bahlo/generic-list-go v0.2.0
@@ -76,7 +76,7 @@ require (
 )
 
 require (
-	decred.org/cspp/v2 v2.2.0 // indirect
+	decred.org/cspp/v2 v2.3.0 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -93,14 +93,14 @@ require (
 	github.com/decred/dcrd/connmgr/v3 v3.1.2 // indirect
 	github.com/decred/dcrd/container/apbf v1.0.1 // indirect
 	github.com/decred/dcrd/container/lru v1.0.0 // indirect
-	github.com/decred/dcrd/crypto/blake256 v1.0.1 // indirect
+	github.com/decred/dcrd/crypto/blake256 v1.1.0 // indirect
 	github.com/decred/dcrd/crypto/rand v1.0.0 // indirect
 	github.com/decred/dcrd/crypto/ripemd160 v1.0.2 // indirect
 	github.com/decred/dcrd/database/v3 v3.0.2 // indirect
 	github.com/decred/dcrd/dcrec/edwards/v2 v2.0.3 // indirect
 	github.com/decred/dcrd/lru v1.1.2 // indirect
 	github.com/decred/dcrd/math/uint256 v1.0.1 // indirect
-	github.com/decred/dcrd/mixing v0.4.1 // indirect
+	github.com/decred/dcrd/mixing v0.4.2 // indirect
 	github.com/decred/dcrd/peer/v3 v3.0.2 // indirect
 	github.com/decred/go-socks v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
