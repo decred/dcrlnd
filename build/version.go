@@ -27,7 +27,7 @@ const (
 const (
 	appMajor uint = 0
 	appMinor uint = 7
-	appPatch uint = 5
+	appPatch uint = 6
 )
 
 var (
