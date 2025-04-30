@@ -314,7 +314,7 @@ func (d *DefaultWalletImpl) BuildWalletConfig(ctx context.Context,
 		// We have the password now, we can ask the unlocker service to
 		// do the unlock for us.
 		unlockedWallet, unloadWalletFn, err := d.pwService.LoadAndUnlock(
-			ctx, pwBytes, 0,
+			ctx, pwBytes, wallet.DefaultGapLimit,
 		)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error unlocking "+
