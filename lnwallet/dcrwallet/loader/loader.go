@@ -186,6 +186,7 @@ func (l *Loader) CreateWatchingOnlyWallet(ctx context.Context, extendedPubKey st
 		AllowHighFees:           l.allowHighFees,
 		RelayFee:                l.relayFee,
 		Params:                  l.chainParams,
+		DisableMixing:           true,
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
@@ -277,6 +278,7 @@ func (l *Loader) CreateNewWallet(ctx context.Context, pubPassphrase,
 		AllowHighFees:           l.allowHighFees,
 		RelayFee:                l.relayFee,
 		Params:                  l.chainParams,
+		DisableMixing:           true,
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
@@ -338,6 +340,7 @@ func (l *Loader) OpenExistingWallet(ctx context.Context, pubPassphrase []byte) (
 		AllowHighFees:           l.allowHighFees,
 		RelayFee:                l.relayFee,
 		Params:                  l.chainParams,
+		DisableMixing:           true,
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
