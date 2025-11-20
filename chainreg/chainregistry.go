@@ -300,19 +300,23 @@ func NewPartialChainControl(cfg *Config) (*PartialChainControl, func(), error) {
 				cfg.ActiveNetParams.RPCPort)
 		}
 
-		dcrdUser := dcrdMode.RPCUser
-		dcrdPass := dcrdMode.RPCPass
 		cc.RPCConfig = &rpcclient.ConnConfig{
 			Host:                 dcrdHost,
 			Endpoint:             "ws",
-			User:                 dcrdUser,
-			Pass:                 dcrdPass,
 			Certificates:         rpcCert,
 			DisableTLS:           false,
 			DisableConnectOnNew:  true,
 			DisableAutoReconnect: false,
 		}
-
+		if dcrdMode.RPCClientCert != "" {
+			cc.RPCConfig.AuthType = rpcclient.AuthTypeClientCert
+			cc.RPCConfig.ClientCert = dcrdMode.RPCClientCert
+			cc.RPCConfig.ClientKey = dcrdMode.RPCClientKey
+		} else {
+			cc.RPCConfig.AuthType = rpcclient.AuthTypeBasic
+			cc.RPCConfig.User = dcrdMode.RPCUser
+			cc.RPCConfig.Pass = dcrdMode.RPCPass
+		}
 		// Verify that the provided dcrd instance exists, is reachable,
 		// it's on the correct network and has the features required
 		// for dcrlnd to perform its work.

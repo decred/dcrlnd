@@ -5,6 +5,7 @@
 package dcrlnd
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -1468,6 +1469,19 @@ func parseRPCParams(cConfig *lncfg.Chain, nodeConfig interface{},
 	var daemonName, confDir, confFile string
 	switch conf := nodeConfig.(type) {
 	case *lncfg.DcrdConfig:
+		// If either RPCClientCert or RPCClientKey are set, assume
+		// clientcert auth is wanted.
+		if conf.RPCClientCert != "" || conf.RPCClientKey != "" {
+			if conf.RPCUser != "" || conf.RPCPass != "" {
+				return fmt.Errorf("rpc user and pass may not be used with clientcert")
+			}
+			if _, err := tls.LoadX509KeyPair(conf.RPCClientCert,
+				conf.RPCClientKey); err != nil {
+				return fmt.Errorf("failed to load dcrd client keypair: %w", err)
+			}
+			return nil
+		}
+
 		// If both RPCUser and RPCPass are set, we assume those
 		// credentials are good to use.
 		if conf.RPCUser != "" && conf.RPCPass != "" {
