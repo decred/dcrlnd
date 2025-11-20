@@ -25,7 +25,7 @@ require (
 	github.com/decred/dcrd/gcs/v4 v4.1.0
 	github.com/decred/dcrd/hdkeychain/v3 v3.1.2
 	github.com/decred/dcrd/rpc/jsonrpc/types/v4 v4.3.0
-	github.com/decred/dcrd/rpcclient/v8 v8.0.1
+	github.com/decred/dcrd/rpcclient/v8 v8.0.2-0.20251120183434-709b0d251ee0
 	github.com/decred/dcrd/txscript/v4 v4.1.1
 	github.com/decred/dcrd/wire v1.7.0
 	github.com/decred/dcrtest/dcrdtest v1.0.1-0.20240514160637-ade8c37ad1db

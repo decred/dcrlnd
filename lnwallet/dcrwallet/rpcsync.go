@@ -2,14 +2,14 @@ package dcrwallet
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
 
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/rpcclient/v8"
-
 	"decred.org/dcrwallet/v4/chain"
 	"decred.org/dcrwallet/v4/errors"
+	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/rpcclient/v8"
 )
 
 // RPCSyncer implements the required methods for synchronizing a DcrWallet
@@ -38,12 +38,28 @@ func NewRPCSyncer(rpcConfig rpcclient.ConnConfig, net *chaincfg.Params) (*RPCSyn
 
 // start the syncer backend and begin synchronizing the given wallet.
 func (s *RPCSyncer) start(w *DcrWallet) error {
+	var clientCert, clientKey []byte
+	var err error
 
+	if s.rpcConfig.ClientCert != "" {
+		clientCert, err = os.ReadFile(s.rpcConfig.ClientCert)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	if s.rpcConfig.ClientKey != "" {
+		clientKey, err = os.ReadFile(s.rpcConfig.ClientKey)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
 	chainRpcOpts := chain.RPCOptions{
-		Address: s.rpcConfig.Host,
-		User:    s.rpcConfig.User,
-		Pass:    s.rpcConfig.Pass,
-		CA:      s.rpcConfig.Certificates,
+		Address:    s.rpcConfig.Host,
+		User:       s.rpcConfig.User,
+		Pass:       s.rpcConfig.Pass,
+		CA:         s.rpcConfig.Certificates,
+		ClientCert: clientCert,
+		ClientKey:  clientKey,
 	}
 
 	disableDiscoverAccts, err := w.cfg.DB.AccountDiscoveryDisabled()
