@@ -59,8 +59,8 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 
 		logLine := fmt.Sprintf("=== %s: Starting connection iteration %d\n",
 			time.Now(), i)
-		net.Alice.AddToLog(logLine)
-		net.Bob.AddToLog(logLine)
+		net.Alice.AddToLog("%s", logLine)
+		net.Bob.AddToLog("%s", logLine)
 
 		var aliceReply, bobReply error
 		wg := new(sync.WaitGroup)
@@ -94,8 +94,8 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 
 		logLine = fmt.Sprintf("=== %s: Connections requests sent. Will check on status\n",
 			time.Now())
-		net.Alice.AddToLog(logLine)
-		net.Bob.AddToLog(logLine)
+		net.Alice.AddToLog("%s", logLine)
+		net.Bob.AddToLog("%s", logLine)
 
 		// Sanity check connection number.
 		assertConnected(t, net.Alice, net.Bob)
@@ -117,8 +117,8 @@ func testConcurrentNodeConnection(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 	logLine := fmt.Sprintf("=== %s: Reconnection tests successful\n",
 		time.Now())
-	net.Alice.AddToLog(logLine)
-	net.Bob.AddToLog(logLine)
+	net.Alice.AddToLog("%s", logLine)
+	net.Bob.AddToLog("%s", logLine)
 
 	// Wait for the final disconnection to release all resources, then
 	// ensure both nodes are connected again.

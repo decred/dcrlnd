@@ -247,11 +247,11 @@ func TestCoinSelect(t *testing.T) {
 				feeRate, test.outputValue, dustLimit, test.coins,
 			)
 			if !test.expectErr && err != nil {
-				t.Fatalf(err.Error())
+				t.Fatal(err.Error())
 			}
 
 			if test.expectErr && err == nil {
-				t.Fatalf("expected error")
+				t.Fatal("expected error")
 			}
 
 			// If we got an expected error, there is nothing more to test.
@@ -465,7 +465,7 @@ func TestCoinSelectSubtractFees(t *testing.T) {
 			if err != nil {
 				switch {
 				case test.expectErr == "":
-					t.Fatalf(err.Error())
+					t.Fatal(err.Error())
 
 				case test.expectErr != removeAmounts(err.Error()):
 					t.Fatalf("expected error '%v', got '%v'",

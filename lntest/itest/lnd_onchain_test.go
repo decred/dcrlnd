@@ -170,7 +170,7 @@ func runCPFP(net *lntest.NetworkHarness, t *harnessTest,
 		return nil
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 }
 
@@ -502,7 +502,7 @@ func testAnchorThirdPartySpend(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 	err = checkNumWaitingCloseChannels(pendingChanResp, 1)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Get the normal channel outpoint so we can track it in the set of
@@ -517,7 +517,7 @@ func testAnchorThirdPartySpend(net *lntest.NetworkHarness, t *harnessTest) {
 	}
 	waitingClose, err := findWaitingCloseChannel(pendingChanResp, &chanPoint)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// At this point, the channel is waiting close, and we have both the

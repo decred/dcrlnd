@@ -108,6 +108,10 @@ func (h *harnessTest) Fatalf(format string, a ...interface{}) {
 	}
 }
 
+func (h *harnessTest) Fatal(s string) {
+	h.Fatalf("%v", s)
+}
+
 // RunTestCase executes a harness test case. Any errors or panics will be
 // represented as fatal.
 func (h *harnessTest) RunTestCase(testCase *testCase) {

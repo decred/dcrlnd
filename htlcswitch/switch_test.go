@@ -511,11 +511,11 @@ func TestSwitchForwardFailAfterFullAdd(t *testing.T) {
 	// Now we will restart bob, leaving the forwarding decision for this
 	// htlc is in the half-added state.
 	if err := s.Stop(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	if err := cdb.Close(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	cdb2, err := channeldb.Open(tempPath)
@@ -550,10 +550,10 @@ func TestSwitchForwardFailAfterFullAdd(t *testing.T) {
 	}
 
 	if s2.circuits.NumPending() != 1 {
-		t.Fatalf("wrong amount of half circuits")
+		t.Fatal("wrong amount of half circuits")
 	}
 	if s2.circuits.NumOpen() != 1 {
-		t.Fatalf("wrong amount of circuits")
+		t.Fatal("wrong amount of circuits")
 	}
 
 	// Craft a failure message from the remote peer.
@@ -566,7 +566,7 @@ func TestSwitchForwardFailAfterFullAdd(t *testing.T) {
 
 	// Send the fail packet from the remote peer through the switch.
 	if err := s2.ForwardPackets(nil, fail); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Pull packet from alice's link, as it should have gone through
@@ -710,11 +710,11 @@ func TestSwitchForwardSettleAfterFullAdd(t *testing.T) {
 	// Now we will restart bob, leaving the forwarding decision for this
 	// htlc is in the half-added state.
 	if err := s.Stop(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	if err := cdb.Close(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	cdb2, err := channeldb.Open(tempPath)
@@ -767,7 +767,7 @@ func TestSwitchForwardSettleAfterFullAdd(t *testing.T) {
 
 	// Send the settle packet from the remote peer through the switch.
 	if err := s2.ForwardPackets(nil, settle); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Pull packet from alice's link, as it should have gone through
@@ -904,11 +904,11 @@ func TestSwitchForwardDropAfterFullAdd(t *testing.T) {
 	// Now we will restart bob, leaving the forwarding decision for this
 	// htlc is in the half-added state.
 	if err := s.Stop(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	if err := cdb.Close(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	cdb2, err := channeldb.Open(tempPath)
@@ -1064,11 +1064,11 @@ func TestSwitchForwardFailAfterHalfAdd(t *testing.T) {
 	// Now we will restart bob, leaving the forwarding decision for this
 	// htlc is in the half-added state.
 	if err := s.Stop(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	if err := cdb.Close(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	cdb2, err := channeldb.Open(tempPath)
@@ -1229,11 +1229,11 @@ func TestSwitchForwardCircuitPersistence(t *testing.T) {
 	}
 
 	if err := s.Stop(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	if err := cdb.Close(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	cdb2, err := channeldb.Open(tempPath)
@@ -1326,7 +1326,7 @@ func TestSwitchForwardCircuitPersistence(t *testing.T) {
 	}
 
 	if err := cdb2.Close(); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	cdb3, err := channeldb.Open(tempPath)
@@ -3227,7 +3227,7 @@ func TestSwitchHoldForward(t *testing.T) {
 
 	defer func() {
 		if err := s.Stop(); err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 	}()
 

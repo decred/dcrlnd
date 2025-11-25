@@ -295,7 +295,7 @@ func testSphinxReplayPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		assertAmountSent(0, carol, dave), 3*time.Second,
 	)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// With the first payment sent, restart dave to make sure he is
@@ -328,7 +328,7 @@ func testSphinxReplayPersistence(net *lntest.NetworkHarness, t *harnessTest) {
 		assertAmountSent(0, carol, dave), 3*time.Second,
 	)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	closeChannelAndAssert(t, net, carol, chanPoint, true)

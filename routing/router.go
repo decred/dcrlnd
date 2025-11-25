@@ -1107,7 +1107,7 @@ func (r *ChannelRouter) networkHandler() {
 						err, ErrParentValidationFailed,
 					):
 						update.err <- newErrf(
-							ErrIgnored, err.Error(),
+							ErrIgnored, "%v", err.Error(),
 						)
 
 					default:

@@ -428,7 +428,7 @@ func (r *RPCAcceptor) validateAcceptorResponse(dustLimit dcrutil.Amount,
 
 	// If we reject the channel, and have a custom error, then we use it.
 	case haveCustomError:
-		return false, fmt.Errorf(req.Error), nil, nil
+		return false, fmt.Errorf("%s", req.Error), nil, nil
 
 	// Otherwise, we have rejected the channel with no custom error, so we
 	// just use a generic error to fail the channel.

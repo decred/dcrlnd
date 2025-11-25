@@ -6,6 +6,7 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -218,7 +219,7 @@ func extractPathArgs(ctx *cli.Context) (string, string, error) {
 	if numNets > 1 {
 		str := "extractPathArgs: The testnet, regtest, and simnet params" +
 			"can't be used together -- choose one of the three"
-		err := fmt.Errorf(str)
+		err := errors.New(str)
 
 		return "", "", err
 	}
