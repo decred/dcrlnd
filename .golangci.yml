@@ -14,7 +14,7 @@ linters:
     - bidichk
     - bodyclose
     - errchkjson
-    - exportloopref
+#    - exportloopref
     - gofmt
     - gosimple
     - govet
@@ -30,7 +30,7 @@ linters:
 
 issues:
   # Only show newly introduced problems.
-  new-from-rev: 01f696afce2f9c0d4ed854edefa3846891d01d8a
+  # new-from-rev: 01f696afce2f9c0d4ed854edefa3846891d01d8a
 
   exclude-rules:
     # Exclude gosec from running for tests so that tests with weak randomness

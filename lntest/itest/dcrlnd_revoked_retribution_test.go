@@ -493,7 +493,7 @@ func testRevokedCloseRetributionRemoteHodlSecondLevel(net *lntest.NetworkHarness
 		}, defaultTimeout)
 	}
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	justiceTx, err := net.Miner.Node.GetRawTransaction(context.Background(), justiceTxid)

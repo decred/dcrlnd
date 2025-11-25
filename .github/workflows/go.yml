@@ -9,18 +9,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ['1.21', '1.22']
+        go: ['1.24', '1.25']
     steps:
       - name: Set up Go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 #v5.0.0
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 #5.5.0
         with:
           go-version: ${{ matrix.go }}
 
       - name: Check out source
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
 
       - name: Install Linters
-        run: "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.0"
+        run: "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8"
 
       - name: Check golangci-lint version
         run: golangci-lint --version
@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.21']
+        go: ['1.25']
         testsuite:
           - unit-race # unit tests
           - itest-parallel-run # embedded wallet using dcrd for sync and chain ops
@@ -60,12 +60,12 @@ jobs:
           - itest-parallel-run walletimpl=remotewallet backend=spv # remote wallet spv sync
     steps:
       - name: Set up Go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 #v5.0.0
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 #5.5.0
         with:
           go-version: ${{ matrix.go }}
 
       - name: Check out source
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
 
       - name: Download the test binaries
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 #v4.1.8

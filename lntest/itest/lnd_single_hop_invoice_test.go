@@ -94,7 +94,7 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		3*time.Second,
 	)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Create another invoice for Bob, this time leaving off the preimage
@@ -127,7 +127,7 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		3*time.Second,
 	)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Next send a keysend payment.
@@ -155,7 +155,7 @@ func testSingleHopInvoice(net *lntest.NetworkHarness, t *harnessTest) {
 		3*time.Second,
 	)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Assert that the invoice has the proper AMP fields set, since the

@@ -1230,8 +1230,8 @@ func (l *channelLink) htlcManager() {
 			err := l.processHodlQueue(htlcResolution)
 			if err != nil {
 				l.fail(LinkFailureError{code: ErrInternalError},
-					fmt.Sprintf("process hodl queue: %v",
-						err.Error()),
+					"process hodl queue: %v",
+					err.Error(),
 				)
 				return
 			}
@@ -2895,7 +2895,7 @@ func (l *channelLink) processRemoteAdds(fwdPkg *channeldb.FwdPkg,
 			)
 			if err != nil {
 				l.fail(LinkFailureError{code: ErrInternalError},
-					err.Error(),
+					"%v", err.Error(),
 				)
 
 				return

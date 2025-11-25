@@ -1193,7 +1193,7 @@ func testInvoiceRoutingHints(net *lntest.NetworkHarness, t *harnessTest) {
 		return true
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	hops := decoded.RouteHints[0].HopHints

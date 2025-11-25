@@ -437,7 +437,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 	}
 	err = checkNumWaitingCloseChannels(pendingChanResp, 1)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Compute the outpoint of the channel, which we will use repeatedly to
@@ -453,7 +453,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 
 	waitingClose, err := findWaitingCloseChannel(pendingChanResp, &op)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Immediately after force closing, all of the funds should be in limbo.
@@ -593,7 +593,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return nil
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	// The following restart is intended to ensure that outputs from the
@@ -721,7 +721,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return nil
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Generate an additional block, which should cause the CSV delayed
@@ -856,7 +856,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return true
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	// Compute the height preceding that which will cause the htlc CLTV
@@ -930,7 +930,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return nil
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Now, generate the block which will cause Alice to broadcast the
@@ -1142,7 +1142,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return predErr == nil
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	// Generate a block that causes Alice to sweep the htlc outputs in the
@@ -1270,7 +1270,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return true
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	// Generate the final block that sweeps all htlc funds into the user's
@@ -1308,7 +1308,7 @@ func channelForceClosureTest(net *lntest.NetworkHarness, t *harnessTest,
 		return true
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	// At this point, Carol should now be aware of her new immediately

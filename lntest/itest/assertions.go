@@ -778,7 +778,7 @@ func assertChannelPolicy(t *harnessTest, node *lntest.HarnessNode,
 	for _, policy := range policies {
 		err := lntest.CheckChannelPolicy(policy, expectedPolicy)
 		if err != nil {
-			t.Fatalf(fmt.Sprintf("%v: %s", err.Error(), node))
+			t.Fatalf("%v: %s", err.Error(), node)
 		}
 	}
 }
@@ -814,7 +814,7 @@ func assertMinerBlockHeightDelta(t *harnessTest,
 		return true
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 }
 

@@ -741,7 +741,7 @@ func testExportChannelBackup(net *lntest.NetworkHarness, t *harnessTest) {
 			return nil
 		}, defaultTimeout)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 	}
 	assertMultiBackupFound := func() func(bool, map[wire.OutPoint]struct{}) {

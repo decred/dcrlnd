@@ -100,8 +100,8 @@ func testMultiHopHtlcClaims(net *lntest.NetworkHarness, t *harnessTest) {
 						"%s/%s ----\n",
 					testName, subTest.name,
 				)
-				alice.AddToLog(logLine)
-				bob.AddToLog(logLine)
+				alice.AddToLog("%s", logLine)
+				bob.AddToLog("%s", logLine)
 
 				success := ht.t.Run(subTest.name, func(t *testing.T) {
 					ht := newHarnessTest(t, net)

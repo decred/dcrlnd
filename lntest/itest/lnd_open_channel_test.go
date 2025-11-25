@@ -224,7 +224,7 @@ func testOpenChannelAfterReorg(net *lntest.NetworkHarness, t *harnessTest) {
 		return true
 	}, defaultTimeout)
 	if err != nil {
-		t.Fatalf(predErr.Error())
+		t.Fatal(predErr.Error())
 	}
 
 	// Wait again for any outstanding ops in the subsystems to catch up.
