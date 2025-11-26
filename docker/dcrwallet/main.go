@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	pb "decred.org/dcrwallet/v4/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v5/rpc/walletrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

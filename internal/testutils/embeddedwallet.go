@@ -8,12 +8,12 @@ import (
 	"os"
 	"time"
 
-	"decred.org/dcrwallet/v4/chain"
-	"decred.org/dcrwallet/v4/p2p"
-	"decred.org/dcrwallet/v4/spv"
-	wallet "decred.org/dcrwallet/v4/wallet"
-	"decred.org/dcrwallet/v4/wallet/udb"
-	"github.com/decred/dcrd/addrmgr/v2"
+	"decred.org/dcrwallet/v5/chain"
+	"decred.org/dcrwallet/v5/p2p"
+	"decred.org/dcrwallet/v5/spv"
+	wallet "decred.org/dcrwallet/v5/wallet"
+	"decred.org/dcrwallet/v5/wallet/udb"
+	"github.com/decred/dcrd/addrmgr/v3"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/rpcclient/v8"
@@ -145,7 +145,7 @@ func NewSPVSyncingTestWallet(t TB, p2pAddr string) (*wallet.Wallet, func()) {
 
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 0}
 	amgrDir := tempDir
-	amgr := addrmgr.New(amgrDir, net.LookupIP)
+	amgr := addrmgr.New(amgrDir)
 	lp := p2p.NewLocalPeer(w.ChainParams(), addr, amgr)
 	syncer := spv.NewSyncer(w, lp)
 	syncer.SetPersistentPeers([]string{p2pAddr})

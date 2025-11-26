@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	pb "decred.org/dcrwallet/v4/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v5/rpc/walletrpc"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/decred/dcrlnd/lnrpc"
 	"google.golang.org/grpc"
