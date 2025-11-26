@@ -20,7 +20,7 @@ import (
 	"github.com/decred/dcrlnd/lnwallet"
 	"github.com/decred/dcrlnd/macaroons"
 
-	"decred.org/dcrwallet/v4/wallet"
+	"decred.org/dcrwallet/v5/wallet"
 	"github.com/decred/dcrlnd/lnwallet/dcrwallet"
 	walletloader "github.com/decred/dcrlnd/lnwallet/dcrwallet/loader"
 	"google.golang.org/grpc"

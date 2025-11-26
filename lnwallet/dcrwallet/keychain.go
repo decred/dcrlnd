@@ -6,8 +6,8 @@ import (
 	"github.com/decred/dcrlnd/channeldb"
 	"github.com/decred/dcrlnd/keychain"
 
-	"decred.org/dcrwallet/v4/wallet"
-	"decred.org/dcrwallet/v4/wallet/udb"
+	"decred.org/dcrwallet/v5/wallet"
+	"decred.org/dcrwallet/v5/wallet/udb"
 	"github.com/decred/dcrd/hdkeychain/v3"
 )
 

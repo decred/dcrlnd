@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	pb "decred.org/dcrwallet/v4/rpc/walletrpc"
+	pb "decred.org/dcrwallet/v5/rpc/walletrpc"
 	rpctest "github.com/decred/dcrtest/dcrdtest"
 )
 

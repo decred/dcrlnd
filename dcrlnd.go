@@ -8,7 +8,7 @@ import (
 	"io"
 	"time"
 
-	"decred.org/dcrwallet/v4/wallet"
+	"decred.org/dcrwallet/v5/wallet"
 	"github.com/decred/dcrlnd/chainreg"
 	"github.com/decred/dcrlnd/lnrpc/initchainsyncrpc"
 	"github.com/decred/dcrlnd/lnwallet"

@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/decred/dcrd/addrmgr/v2"
+	"github.com/decred/dcrd/addrmgr/v3"
 	"github.com/decred/dcrd/chaincfg/v3"
 
-	"decred.org/dcrwallet/v4/p2p"
-	"decred.org/dcrwallet/v4/spv"
+	"decred.org/dcrwallet/v5/p2p"
+	"decred.org/dcrwallet/v5/spv"
 )
 
 type SPVSyncerConfig struct {
@@ -46,9 +46,6 @@ func NewSPVSyncer(cfg *SPVSyncerConfig) (*SPVSyncer, error) {
 
 // start the syncer backend and begin synchronizing the given wallet.
 func (s *SPVSyncer) start(w *DcrWallet) error {
-
-	lookup := net.LookupIP
-
 	disableDiscoverAccts, err := w.cfg.DB.AccountDiscoveryDisabled()
 	if err != nil {
 		return err
@@ -56,7 +53,7 @@ func (s *SPVSyncer) start(w *DcrWallet) error {
 
 	addr := &net.TCPAddr{IP: net.ParseIP("::1"), Port: 0}
 	amgrDir := filepath.Join(s.cfg.AppDataDir, s.cfg.Net.Name)
-	amgr := addrmgr.New(amgrDir, lookup)
+	amgr := addrmgr.New(amgrDir)
 
 	s.wg.Add(1)
 	go func() {

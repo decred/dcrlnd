@@ -11,12 +11,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	pb "decred.org/dcrwallet/v4/rpc/walletrpc"
-	"decred.org/dcrwallet/v4/wallet"
-	base "decred.org/dcrwallet/v4/wallet"
+	pb "decred.org/dcrwallet/v5/rpc/walletrpc"
+	"decred.org/dcrwallet/v5/wallet"
+	base "decred.org/dcrwallet/v5/wallet"
 	"google.golang.org/grpc"
 
-	"decred.org/dcrwallet/v4/wallet/txauthor"
+	"decred.org/dcrwallet/v5/wallet/txauthor"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"

@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
-	"decred.org/dcrwallet/v4/errors"
-	"decred.org/dcrwallet/v4/wallet"
-	_ "decred.org/dcrwallet/v4/wallet/drivers/bdb" // driver loaded during init
-	"decred.org/dcrwallet/v4/wallet/txrules"
-	"decred.org/dcrwallet/v4/wallet/udb"
+	"decred.org/dcrwallet/v5/errors"
+	"decred.org/dcrwallet/v5/wallet"
+	_ "decred.org/dcrwallet/v5/wallet/drivers/bdb" // driver loaded during init
+	"decred.org/dcrwallet/v5/wallet/txrules"
+	"decred.org/dcrwallet/v5/wallet/udb"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/hdkeychain/v3"
@@ -186,7 +186,7 @@ func (l *Loader) CreateWatchingOnlyWallet(ctx context.Context, extendedPubKey st
 		AllowHighFees:           l.allowHighFees,
 		RelayFee:                l.relayFee,
 		Params:                  l.chainParams,
-		DisableMixing:           true,
+		MixingEnabled:           false,
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
@@ -278,7 +278,7 @@ func (l *Loader) CreateNewWallet(ctx context.Context, pubPassphrase,
 		AllowHighFees:           l.allowHighFees,
 		RelayFee:                l.relayFee,
 		Params:                  l.chainParams,
-		DisableMixing:           true,
+		MixingEnabled:           false,
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
@@ -340,7 +340,7 @@ func (l *Loader) OpenExistingWallet(ctx context.Context, pubPassphrase []byte) (
 		AllowHighFees:           l.allowHighFees,
 		RelayFee:                l.relayFee,
 		Params:                  l.chainParams,
-		DisableMixing:           true,
+		MixingEnabled:           false,
 	}
 	w, err = wallet.Open(ctx, cfg)
 	if err != nil {
