@@ -3,7 +3,7 @@ module github.com/decred/dcrlnd
 go 1.24.0
 
 require (
-	decred.org/dcrwallet/v5 v5.0.1
+	decred.org/dcrwallet/v5 v5.0.2
 	github.com/NebulousLabs/go-upnp v0.0.0-20181203152547-b32978b8ccbf
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344
 	github.com/bahlo/generic-list-go v0.2.0
@@ -27,7 +27,7 @@ require (
 	github.com/decred/dcrd/rpc/jsonrpc/types/v4 v4.4.0
 	github.com/decred/dcrd/rpcclient/v8 v8.1.0
 	github.com/decred/dcrd/txscript/v4 v4.1.2
-	github.com/decred/dcrd/wire v1.7.1
+	github.com/decred/dcrd/wire v1.7.2
 	github.com/decred/dcrtest/dcrdtest v1.0.1-0.20240514160637-ade8c37ad1db
 	github.com/decred/lightning-onion/v4 v4.0.1
 	github.com/decred/slog v1.2.0
@@ -104,7 +104,7 @@ require (
 	github.com/decred/dcrd/mixing v0.6.0 // indirect
 	github.com/decred/dcrd/peer/v3 v3.0.2 // indirect
 	github.com/decred/go-socks v1.1.0 // indirect
-	github.com/decred/vspd/client/v4 v4.0.1 // indirect
+	github.com/decred/vspd/client/v4 v4.0.2 // indirect
 	github.com/decred/vspd/types/v3 v3.0.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
