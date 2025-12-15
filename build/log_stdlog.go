@@ -1,5 +1,4 @@
 //go:build stdlog
-// +build stdlog
 
 package build
 

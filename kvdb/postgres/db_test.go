@@ -1,5 +1,4 @@
 //go:build kvdb_postgres
-// +build kvdb_postgres
 
 package postgres
 
@@ -7,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"context"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/btcsuite/btcwallet/walletdb/walletdbtest"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 // TestInterface performs all interfaces tests for this database driver.

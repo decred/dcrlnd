@@ -1,5 +1,4 @@
 //go:build no_autopilotrpc
-// +build no_autopilotrpc
 
 package main
 

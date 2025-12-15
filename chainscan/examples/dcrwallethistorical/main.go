@@ -127,7 +127,7 @@ func main() {
 			findMore(
 				chainscan.SpentOutPoint(outp, scriptVer, script),
 				chainscan.WithFoundCallback(foundSpendCb),
-				chainscan.WithEndHeight(int32(bestHeight)),
+				chainscan.WithEndHeight(bestHeight),
 			)
 		}
 
@@ -135,7 +135,7 @@ func main() {
 			Target: chainscan.ConfirmedScript(0, script),
 			Options: []chainscan.Option{
 				chainscan.WithFoundCallback(foundCb),
-				chainscan.WithEndHeight(int32(bestHeight)),
+				chainscan.WithEndHeight(bestHeight),
 			},
 		}
 		targets = append(targets, target)

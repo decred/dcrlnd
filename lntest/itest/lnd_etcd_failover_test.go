@@ -1,5 +1,4 @@
 //go:build kvdb_etcd
-// +build kvdb_etcd
 
 package itest
 

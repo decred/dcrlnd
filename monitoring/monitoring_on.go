@@ -1,5 +1,4 @@
 //go:build monitoring
-// +build monitoring
 
 package monitoring
 

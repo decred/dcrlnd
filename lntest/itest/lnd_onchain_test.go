@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 	"matheusd.com/testctx"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"

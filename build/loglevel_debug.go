@@ -1,5 +1,4 @@
 //go:build dev && debug
-// +build dev,debug
 
 package build
 
