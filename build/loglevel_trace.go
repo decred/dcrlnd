@@ -1,5 +1,4 @@
 //go:build dev && trace
-// +build dev,trace
 
 package build
 

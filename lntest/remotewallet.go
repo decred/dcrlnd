@@ -1,5 +1,4 @@
 //go:build remotewallet
-// +build remotewallet
 
 package lntest
 

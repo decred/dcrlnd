@@ -1,5 +1,4 @@
 //go:build embeddedwallet_dcrw
-// +build embeddedwallet_dcrw
 
 package lntest
 

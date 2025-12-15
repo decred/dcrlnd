@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"context"
 	"github.com/decred/slog"
 	"github.com/gorilla/websocket"
-	"golang.org/x/net/context"
 )
 
 const (

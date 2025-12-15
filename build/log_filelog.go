@@ -1,5 +1,4 @@
 //go:build filelog
-// +build filelog
 
 package build
 

@@ -1,5 +1,4 @@
 //go:build dev && error
-// +build dev,error
 
 package build
 

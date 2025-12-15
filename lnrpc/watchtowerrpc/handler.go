@@ -1,5 +1,4 @@
 //go:build !no_watchtowerrpc
-// +build !no_watchtowerrpc
 
 package watchtowerrpc
 

@@ -1,5 +1,4 @@
 //go:build spv
-// +build spv
 
 package lntest
 
