@@ -163,6 +163,7 @@ func (b *DcrdFilteredChainView) onBlockConnected(blockHeader []byte, txns [][]by
 		var mtx wire.MsgTx
 		if err := mtx.FromBytes(txBytes); err != nil {
 			log.Warnf("Received block connected with malformed tx: %v", err)
+			b.filterMtx.Unlock()
 			return
 		}
 		mtxs[i] = &mtx
