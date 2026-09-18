@@ -61,9 +61,11 @@ type chainscanFilteredChainView struct {
 	// blocks will be sent over.
 	filterBlockReqs chan *filterBlockReq
 
-	chainSource   chainscanChainSource
-	tipWatcher    *chainscan.TipWatcher
-	chainEvents   <-chan chainscan.ChainEvent
+	chainSource chainscanChainSource
+	tipWatcher  *chainscan.TipWatcher
+	chainEvents <-chan chainscan.ChainEvent
+
+	tipTxsMtx     sync.Mutex
 	tipWatcherTxs map[chainhash.Hash]map[*wire.MsgTx]chainscan.Event
 
 	ctx       context.Context
@@ -174,12 +176,14 @@ func (b *chainscanFilteredChainView) Stop() error {
 
 func (b *chainscanFilteredChainView) foundAtTip(e chainscan.Event, _ chainscan.FindFunc) {
 	log.Tracef("Found at tip bh %s: %s", e.BlockHash, e)
+	b.tipTxsMtx.Lock()
 	txs, ok := b.tipWatcherTxs[e.BlockHash]
 	if !ok {
 		txs = make(map[*wire.MsgTx]chainscan.Event)
 		b.tipWatcherTxs[e.BlockHash] = txs
 	}
 	txs[e.Tx] = e
+	b.tipTxsMtx.Unlock()
 }
 
 // filterBlock filters the given block hash against a currently processed block
@@ -188,8 +192,11 @@ func (b *chainscanFilteredChainView) foundAtTip(e chainscan.Event, _ chainscan.F
 // This removes any found spent utxos from the tipWatcher and the list of
 // watched utxos.
 func (b *chainscanFilteredChainView) filterBlock(bh *chainhash.Hash) []*wire.MsgTx {
+	b.tipTxsMtx.Lock()
 	matches := b.tipWatcherTxs[*bh]
 	delete(b.tipWatcherTxs, *bh)
+	b.tipTxsMtx.Unlock()
+
 	txs := make([]*wire.MsgTx, 0, len(matches))
 	b.filterMtx.Lock()
 	for _, m := range matches {
