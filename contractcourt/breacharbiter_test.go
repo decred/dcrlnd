@@ -1253,6 +1253,10 @@ func TestBreachCreateJusticeTx(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, justiceTxs)
 
+	require.Equal(t, input.LNTxVersion, justiceTxs.spendAll.Version)
+	require.Equal(t, input.LNTxVersion, justiceTxs.spendCommitOuts.Version)
+	require.Equal(t, input.LNTxVersion, justiceTxs.spendHTLCs.Version)
+
 	// The spendAll tx should be spending all the outputs. This is the
 	// "regular" justice transaction type.
 	require.Len(t, justiceTxs.spendAll.TxIn, len(breachedOutputs))
