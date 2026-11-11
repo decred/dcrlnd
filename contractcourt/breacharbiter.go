@@ -1449,6 +1449,7 @@ func (b *BreachArbiter) sweepSpendableOutputsTxn(txSize int64,
 	// With the fee calculated, we can now create the transaction using the
 	// information gathered above and the provided retribution information.
 	txn := wire.NewMsgTx()
+	txn.Version = input.LNTxVersion
 
 	// We begin by adding the output to which our funds will be deposited.
 	txn.AddTxOut(&wire.TxOut{
